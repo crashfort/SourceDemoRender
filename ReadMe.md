@@ -1,6 +1,6 @@
 ## Source Demo Render
 
-Tool to create movies for Source 2013 games. To install you place SourceDemoRender.dll in your mod directory and then type **plugin_load sourcedemorender** in console at the main menu. If you want to see all available commands you can type **cvarlist sdr_** in the console, a description is available for all variables.
+Tool to create movies for Source 2013 games. To install you place SourceDemoRender.dll in your mod directory and sdr_load / sdr_unload in cfg\. Then type **exec sdr_load** in the console at the main menu. If you want to see all available commands you can type **cvarlist sdr_** in the console, a description is available for all variables.
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
