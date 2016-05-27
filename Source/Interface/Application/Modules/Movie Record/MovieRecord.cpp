@@ -108,6 +108,40 @@ namespace
 			"engine.dll", "CL_StartMovie",
 			[](PARAMETERS)
 			{
+				auto sdrpath = SDR_OutputDirectory.GetString();
+
+				auto res = SHCreateDirectoryExA(nullptr, sdrpath, nullptr);
+
+				switch (res)
+				{
+					case ERROR_SUCCESS:
+					case ERROR_ALREADY_EXISTS:
+					case ERROR_FILE_EXISTS:
+					{
+						break;
+					}
+
+					case ERROR_BAD_PATHNAME:
+					case ERROR_PATH_NOT_FOUND:
+					case ERROR_FILENAME_EXCED_RANGE:
+					{
+						Warning("SDR: Movie output path is invalid\n");
+						return;
+					}
+
+					case ERROR_CANCELLED:
+					{
+						Warning("SDR: Extra directories were created but are hidden, aborting\n");
+						return;
+					}
+
+					default:
+					{
+						Warning("SDR: Some unknown error happened when starting movie, related to sdr_outputdir\n");
+						return;
+					}
+				}
+				
 				CurrentMovie.Width = width;
 				CurrentMovie.Height = height;
 

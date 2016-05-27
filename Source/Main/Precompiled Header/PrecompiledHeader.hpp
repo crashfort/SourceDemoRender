@@ -5,6 +5,8 @@
 #include <Windows.h>
 #include <Psapi.h>
 
+#include <ShlObj.h>
+
 #include <vector>
 #include <string>
 #include <chrono>
