@@ -1,0 +1,295 @@
+#include "PrecompiledHeader.hpp"
+#include "Interface\Application\Application.hpp"
+
+#include "dbg.h"
+
+#include "HLAE\HLAE.hpp"
+#include "HLAE\Sampler.hpp"
+
+#undef min
+#undef max
+
+namespace
+{
+	template <typename Str, typename... Format>
+	void SDR_DebugMsg(Str message, Format... format)
+	{
+		#if _DEBUG
+		Msg(message, format...);
+		#endif
+	}
+
+	struct MovieData : public SDR::Sampler::IFramePrinter
+	{
+		size_t Width;
+		size_t Height;
+
+		size_t CurrentFrame = 0;
+		size_t FinishedFrames = 0;
+
+		double SamplingTime = 0.0;
+
+		enum
+		{
+			/*
+				Order: Blue Green Red
+			*/
+			BytesPerPixel = 3
+		};
+
+		size_t GetImageSizeInBytes() const
+		{
+			return (Width * Height) * BytesPerPixel;
+		}
+
+		using BufferType = unsigned char;
+		using BufferStoreType = BufferType[];
+
+		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
+
+		BufferType* ActiveFrame;
+		bool HasFrameDone = false;
+
+		virtual void Print(BufferStoreType data) override
+		{
+			ActiveFrame = data;
+			HasFrameDone = true;
+		}
+	};
+
+	MovieData CurrentMovie;
+}
+
+namespace
+{
+	ConVar SDR_FrameRate("sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING, "Movie output framerate", true, 30, true, 1000);	
+
+	ConVar SDR_Exposure("sdr_render_exposure", "1.0", FCVAR_NEVER_AS_STRING, "Frame exposure fraction", true, 0, true, 1);
+	ConVar SDR_SamplesPerSecond("sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING, "Game framerate in samples");
+	
+	ConVar SDR_FrameStrength("sdr_render_framestrength", "1.0", FCVAR_NEVER_AS_STRING,
+									"Controls clearing of the sampling buffer upon framing. "
+									"The lower the value the more cross-frame motion blur",
+									true, 0, true, 1);
+	
+	ConVar SDR_SampleMethod("sdr_render_samplemethod", "1", FCVAR_NEVER_AS_STRING,
+								   "Selects the integral approximation method: "
+								   "0: 1 point, rectangle method, 1: 2 point, trapezoidal rule",
+								   true, 0, true, 1);
+
+	ConVar SDR_OutputDirectory("sdr_outputdir", "", 0, "Where to save the output frames. UTF8 names are not supported in Source");
+	ConVar SDR_OutputName("sdr_outputname", "", 0, "Prefix name of frames. UTF8 names are not supported in Source");
+
+	/*
+		Ugly but the patterns are unsigned chars anyway
+	*/
+	#define SDR_PATTERN(pattern) reinterpret_cast<const byte*>(pattern)
+
+	namespace Module_CL_StartMovie
+	{
+		#define CALLING __cdecl
+		#define RETURNTYPE void
+
+		/*
+			The 7th parameter (unk) was been added in Source 2013, it's not there in Source 2007
+		*/
+		#define PARAMETERS const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk
+		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
+		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+
+		/*
+			0x100BCAC0 static IDA address May 22 2016
+		*/
+		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\xA1\x00\x00\x00\x00\xD9\x45\x18\x56\x57\xF3\x0F\x10\x40\x00");
+		auto Mask = "xxxxx????x????xxxxxxxxx?";
+
+		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		{
+			"engine.dll", "CL_StartMovie",
+			[](PARAMETERS)
+			{
+				CurrentMovie.Width = width;
+				CurrentMovie.Height = height;
+
+				CALLORIGINAL(filename, flags, width, height, framerate, jpegquality, unk);
+
+				/*
+					The original function sets host_framerate to 30 so we override it
+				*/
+				auto hostframerate = g_pCVar->FindVar("host_framerate");
+				hostframerate->SetValue(SDR_SamplesPerSecond.GetInt());
+
+				auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
+				auto movieframeratems = 1.0 / static_cast<double>(SDR_FrameRate.GetInt());
+				auto moviexposure = SDR_Exposure.GetFloat();
+				auto movieframestrength = SDR_FrameStrength.GetFloat();
+				
+				using SampleMethod = SDR::Sampler::EasySamplerSettings::Method;
+				SampleMethod moviemethod;
+				
+				switch (SDR_SampleMethod.GetInt())
+				{
+					case 0:
+					{
+						moviemethod = SampleMethod::ESM_Rectangle;
+						break;
+					}
+
+					case 1:
+					{
+						moviemethod = SampleMethod::ESM_Trapezoid;
+						break;
+					}
+				}
+
+				SDR::Sampler::EasySamplerSettings settings
+				(
+					MovieData::BytesPerPixel * width, height,
+					moviemethod,
+					movieframeratems,
+					0.0,
+					moviexposure,
+					movieframestrength
+				);
+
+				CurrentMovie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>(settings, framepitch, &CurrentMovie);
+
+			}, Pattern, Mask
+		};
+	}
+
+	namespace Module_CL_EndMovie
+	{
+		#define CALLING __cdecl
+		#define RETURNTYPE void
+		#define PARAMETERS
+		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
+		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+
+		/*
+			0x100BAE40 static IDA address May 22 2016
+		*/
+		auto Pattern = SDR_PATTERN("\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00\x00\xD9\x05\x00\x00\x00\x00\x51\xB9\x00\x00\x00\x00");
+		auto Mask = "xx?????xx????xx????xx????";
+
+		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		{
+			"engine.dll", "CL_EndMovie",
+			[](PARAMETERS)
+			{
+				CurrentMovie = MovieData();
+
+				CALLORIGINAL();
+
+				auto hostframerate = g_pCVar->FindVar("host_framerate");
+				hostframerate->SetValue(0);
+
+			}, Pattern, Mask
+		};
+	}
+
+	namespace Module_VID_ProcessMovieFrame
+	{
+		#define CALLING __cdecl
+		#define RETURNTYPE void
+
+		/*
+			First parameter (info) is a MovieInfo_t structure, but we don't need it
+		*/
+		#define PARAMETERS void* info, bool jpeg, const char* filename, int width, int height, unsigned char* data
+		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
+		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+
+		/*
+			0x10201030 static IDA address May 22 2016
+		*/
+		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x83\xEC\x30\x8D\x4D\xD0\x6A\x00\x6A\x00\x6A\x00\xE8\x00\x00\x00\x00");
+		auto Mask = "xxxxxxxxxxxxxxxx????";
+
+		/*
+			Data passed to this is in BGR888 format
+		*/
+		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		{
+			"engine.dll", "VID_ProcessMovieFrame",
+			[](PARAMETERS)
+			{
+				auto& movie = CurrentMovie;
+
+				SDR_DebugMsg("SDR: Frame %d (%d)\n", movie.CurrentFrame, movie.FinishedFrames);
+
+				auto sampleframerate = 1.0 / static_cast<double>(SDR_SamplesPerSecond.GetInt());
+				auto& time = movie.SamplingTime;
+
+				if (movie.Sampler->CanSkipConstant(time, sampleframerate))
+				{
+					movie.Sampler->Sample(nullptr, time);
+				}
+
+				else
+				{
+					movie.Sampler->Sample(data, time);
+				}
+
+				if (movie.HasFrameDone)
+				{
+					CALLORIGINAL(info, jpeg, filename, width, height, movie.ActiveFrame);
+					movie.HasFrameDone = false;
+				}
+
+				time += sampleframerate;
+				movie.CurrentFrame++;
+
+			}, Pattern, Mask
+		};
+	}
+
+	namespace Module_CBaseFileSystem_WriteFile
+	{
+		#define CALLING __fastcall
+		#define RETURNTYPE bool
+		#define PARAMETERS void* thisptr, void* edx, const char* filename, const char* path, CUtlBuffer& buffer
+		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
+		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+
+		/*
+			0x1000E680 static IDA address May 22 2016
+		*/
+		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x53\x8B\x5D\x10\xBA\x00\x00\x00\x00\x57\x8B\xF9\x8A\x43\x15\xA8\x01");
+		auto Mask = "xxxxxxxx????xxxxxxxx";
+
+		/*
+			Problem with this function is that "filename" and "path" are passed as UTF8, but
+			are never converted to wchar on Windows in the engine. This limits all characters which is bad.
+		*/
+		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		{
+			"FileSystem_Stdio.dll", "CBaseFileSystem_WriteFile",
+			[](PARAMETERS)
+			{
+				if (CurrentMovie.HasFrameDone)
+				{
+					CUtlString frameformat;
+					frameformat.Format("%s_%05d.tga", SDR_OutputName.GetString(), CurrentMovie.FinishedFrames);
+
+					auto targetpath = SDR_OutputDirectory.GetString();
+					auto filenameformat = CUtlString::PathJoin(targetpath, frameformat.Get());
+
+					auto finalname = filenameformat.Get();
+
+					auto ret = CALLORIGINAL(thisptr, edx, finalname, targetpath, buffer);
+
+					if (ret)
+					{
+						CurrentMovie.FinishedFrames++;
+					}
+
+					return ret;
+				}
+
+				return CALLORIGINAL(thisptr, edx, filename, path, buffer);
+
+			}, Pattern, Mask
+		};
+	}
+}
