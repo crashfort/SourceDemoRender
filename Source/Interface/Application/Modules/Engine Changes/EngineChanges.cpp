@@ -27,7 +27,7 @@ namespace
 		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
 
 		/*
-			0x0E776D80 static IDA address June 3 2016
+			0x10216D80 static IDA address June 3 2016
 		*/
 		auto Pattern = SDR_PATTERN("\x83\x3D\x00\x00\x00\x00\x00\x74\x4F\x8B\x0D\x00\x00\x00\x00\x8B\x01\x8B\x40\x40\xFF\xD0");
 		auto Mask = "xx?????xxxx????xxxxxxx";
