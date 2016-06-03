@@ -80,11 +80,6 @@ namespace
 	ConVar SDR_OutputDirectory("sdr_outputdir", "", 0, "Where to save the output frames. UTF8 names are not supported in Source");
 	ConVar SDR_OutputName("sdr_outputname", "", 0, "Prefix name of frames. UTF8 names are not supported in Source");
 
-	/*
-		Ugly but the patterns are unsigned chars anyway
-	*/
-	#define SDR_PATTERN(pattern) reinterpret_cast<const byte*>(pattern)
-
 	namespace Module_CL_StartMovie
 	{
 		#define CALLING __cdecl

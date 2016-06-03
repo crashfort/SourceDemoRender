@@ -20,6 +20,7 @@
 
 using namespace std::chrono_literals;
 
+#include "eiface.h"
 #include "cdll_int.h"
 #include "engine\iserverplugin.h"
 #include "tier2\tier2.h"
@@ -33,6 +34,7 @@ namespace SDR
 	{
 		IPlayerInfoManager* PlayerInfoManager;
 		CGlobalVars* Globals;
+		IVEngineClient* EngineClient;
 	};
 
 	const EngineInterfaces& GetEngineInterfaces();

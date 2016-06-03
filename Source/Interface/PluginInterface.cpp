@@ -184,6 +184,7 @@ namespace
 		std::vector<InterfaceBase*> addedinterfaces;
 
 		ServerFactoryLocal<IPlayerInfoManager> T1(addedinterfaces, &Interfaces.PlayerInfoManager, INTERFACEVERSION_PLAYERINFOMANAGER);
+		InterfaceFactoryLocal<IVEngineClient> T2(addedinterfaces, &Interfaces.EngineClient, VENGINE_CLIENT_INTERFACE_VERSION);
 
 		for (auto ptr : addedinterfaces)
 		{

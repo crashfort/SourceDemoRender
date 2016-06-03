@@ -92,6 +92,9 @@
     <ClCompile Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Interface\Application\Modules\Movie Record\HLAE\Readme.txt" />

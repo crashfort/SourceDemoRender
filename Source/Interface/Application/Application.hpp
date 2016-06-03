@@ -127,4 +127,45 @@ namespace SDR
 	private:
 		uintptr_t Address;
 	};
+
+	class PointerModuleStaticAddress final : public HookModuleBase
+	{
+	public:
+		PointerModuleStaticAddress(const char* library, const char* name, uintptr_t address) :
+			HookModuleBase(library, name, nullptr),
+			Address(address)
+		{
+			AddModule(this);
+		}
+
+		virtual MH_STATUS Create() override
+		{
+			/*
+				IDA starts addresses at this value
+			*/
+			Address -= 0x10000000;
+			
+			LibraryModuleBase library(Library);
+			Address += (size_t)library.MemoryBase;
+
+			TargetFunction = (void*)Address;
+
+			auto res = ReadProcessMemory(GetCurrentProcess(), TargetFunction, &TargetFunction, sizeof(TargetFunction), nullptr);
+
+			if (!res)
+			{
+				return MH_ERROR_FUNCTION_NOT_FOUND;
+			}
+
+			return MH_OK;
+		}
+		
+	private:
+		uintptr_t Address;
+	};
 }
+
+/*
+	Ugly but the patterns are unsigned chars anyway
+*/
+#define SDR_PATTERN(pattern) reinterpret_cast<const byte*>(pattern)
