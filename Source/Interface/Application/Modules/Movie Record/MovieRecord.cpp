@@ -81,6 +81,8 @@ namespace
 	ConVar SDR_OutputDirectory("sdr_outputdir", "", 0, "Where to save the output frames. UTF8 names are not supported in Source");
 	ConVar SDR_OutputName("sdr_outputname", "", 0, "Prefix name of frames. UTF8 names are not supported in Source");
 
+	ConVar SDR_FlashWindow("sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "Flash window when endmovie is called", true, 0, true, 1);
+
 	namespace Module_CL_StartMovie
 	{
 		#define CALLING __cdecl
@@ -215,6 +217,12 @@ namespace
 
 				auto hostframerate = g_pCVar->FindVar("host_framerate");
 				hostframerate->SetValue(0);
+
+				if (SDR_FlashWindow.GetBool())
+				{
+					auto& interfaces = SDR::GetEngineInterfaces();
+					interfaces.EngineClient->FlashWindow();
+				}
 
 			}, Pattern, Mask
 		};
