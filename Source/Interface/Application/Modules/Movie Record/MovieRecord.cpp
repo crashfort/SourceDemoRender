@@ -43,14 +43,15 @@ namespace
 		}
 
 		using BufferType = unsigned char;
-		using BufferStoreType = BufferType[];
 
 		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
 
 		BufferType* ActiveFrame;
 		bool HasFrameDone = false;
 
-		virtual void Print(BufferStoreType data) override
+		std::unique_ptr<BufferType[]> EngineFrameHeapData;
+
+		virtual void Print(BufferType* data) override
 		{
 			ActiveFrame = data;
 			HasFrameDone = true;
@@ -89,8 +90,8 @@ namespace
 			The 7th parameter (unk) was been added in Source 2013, it's not there in Source 2007
 		*/
 		#define PARAMETERS const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk
-		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
-		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
+		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
 
 		/*
 			0x100BCAC0 static IDA address May 22 2016
@@ -98,7 +99,7 @@ namespace
 		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\xA1\x00\x00\x00\x00\xD9\x45\x18\x56\x57\xF3\x0F\x10\x40\x00");
 		auto Mask = "xxxxx????x????xxxxxxxxx?";
 
-		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
 			"engine.dll", "CL_StartMovie",
 			[](PARAMETERS)
@@ -183,6 +184,8 @@ namespace
 
 				CurrentMovie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>(settings, framepitch, &CurrentMovie);
 
+				CurrentMovie.EngineFrameHeapData = std::make_unique<MovieData::BufferType[]>(CurrentMovie.GetImageSizeInBytes());
+
 			}, Pattern, Mask
 		};
 	}
@@ -192,8 +195,8 @@ namespace
 		#define CALLING __cdecl
 		#define RETURNTYPE void
 		#define PARAMETERS
-		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
-		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
+		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
 
 		/*
 			0x100BAE40 static IDA address May 22 2016
@@ -201,7 +204,7 @@ namespace
 		auto Pattern = SDR_PATTERN("\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00\x00\xD9\x05\x00\x00\x00\x00\x51\xB9\x00\x00\x00\x00");
 		auto Mask = "xx?????xx????xx????xx????";
 
-		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
 			"engine.dll", "CL_EndMovie",
 			[](PARAMETERS)
@@ -226,8 +229,8 @@ namespace
 			First parameter (info) is a MovieInfo_t structure, but we don't need it
 		*/
 		#define PARAMETERS void* info, bool jpeg, const char* filename, int width, int height, unsigned char* data
-		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
-		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
+		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
 
 		/*
 			0x10201030 static IDA address May 22 2016
@@ -238,7 +241,7 @@ namespace
 		/*
 			Data passed to this is in BGR888 format
 		*/
-		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
 			"engine.dll", "VID_ProcessMovieFrame",
 			[](PARAMETERS)
@@ -273,13 +276,80 @@ namespace
 		};
 	}
 
+	namespace Module_CVideoMode_WriteMovieFrame
+	{
+		#define CALLING __fastcall
+		#define RETURNTYPE void
+		#define PARAMETERS void* thisptr, void* edx, void* info	
+		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
+		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
+
+		/*
+			0x102011B0 static IDA address June 3 2016
+		*/
+		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x51\x80\x3D\x00\x00\x00\x00\x00\x53\x8B\x5D\x08\x57\x8B\xF9\x8B\x83\x00\x00\x00\x00");
+		auto Mask = "xxxxxx?????xxxxxxxxx????";
+
+		/*
+			The "thisptr" in this context is a CVideoMode_MaterialSystem in this structure:
+			
+			CVideoMode_MaterialSystem
+				CVideoMode_Common
+					IVideoMode
+
+			WriteMovieFrame belongs to CVideoMode_Common and ReadScreenPixels overriden by CVideoMode_MaterialSystem.
+			The global engine variable "videomode" is of type CVideoMode_MaterialSystem which is what called WriteMovieFrame.
+			
+			For more usage see: VideoMode_Create (0x10201130) and VideoMode_Destroy (0x10201190)
+			Static IDA addresses June 3 2016
+
+			The purpose of overriding this function completely is to prevent the constant image buffer
+			allocation that Valve does every movie frame. We just provide one buffer that gets reused.
+		*/
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "CVideoMode_WriteMovieFrame",
+			[](PARAMETERS)
+			{
+				namespace ProcessModule = Module_VID_ProcessMovieFrame;
+				using ProcessFrameType = ProcessModule::ThisFunction;
+
+				static auto processframeaddr = ProcessModule::ThisHook.GetNewFunction();
+				static auto processframefunc = static_cast<ProcessFrameType>(processframeaddr);
+
+				/*
+					0x101FFF80 static IDA address June 3 2016
+				*/
+				static auto readscreenpxaddr = SDR::GetAddressFromPattern
+				(
+					"engine.dll",
+					SDR_PATTERN("\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"),
+					"xxxxxxxx?????xx????xx????"
+				);
+
+				using ReadScreenPxType = void(__fastcall*)(void*, void*, int x, int y, int w, int h, void* buffer, int format);
+				static auto readscreenpxfunc = static_cast<ReadScreenPxType>(readscreenpxaddr);
+
+				auto buffer = CurrentMovie.EngineFrameHeapData.get();
+
+				auto width = CurrentMovie.Width;
+				auto height = CurrentMovie.Height;
+
+				readscreenpxfunc(thisptr, edx, 0, 0, width, height, buffer, 3);
+
+				processframefunc(info, false, nullptr, width, height, buffer);
+
+			}, Pattern, Mask
+		};
+	}
+
 	namespace Module_CBaseFileSystem_WriteFile
 	{
 		#define CALLING __fastcall
 		#define RETURNTYPE bool
 		#define PARAMETERS void* thisptr, void* edx, const char* filename, const char* path, CUtlBuffer& buffer
-		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
-		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
+		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
 
 		/*
 			0x1000E680 static IDA address May 22 2016
@@ -291,7 +361,7 @@ namespace
 			Problem with this function is that "filename" and "path" are passed as UTF8, but
 			are never converted to wchar on Windows in the engine. This limits all characters which is bad.
 		*/
-		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
 			"FileSystem_Stdio.dll", "CBaseFileSystem_WriteFile",
 			[](PARAMETERS)
