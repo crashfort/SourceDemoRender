@@ -10,14 +10,6 @@ namespace
 
 	TabData EngineFocusData;
 
-	SDR::PointerModuleStaticAddress BaseClient
-	{
-		/*
-			0x10216D80 static IDA address June 3 2016
-		*/
-		"engine.dll", "IBaseClientDLL*", 0x10441E58
-	};
-
 	namespace Module_VGUI_ActivateMouse
 	{
 		#define CALLING __cdecl
