@@ -12,9 +12,10 @@
 #include <chrono>
 #include <ctime>
 #include <thread>
-#include <future>
 #include <memory>
-#include <climits>
+#include <deque>
+#include <thread>
+#include <atomic>
 
 #include "MinHookCPP.hpp"
 
@@ -27,6 +28,7 @@ using namespace std::chrono_literals;
 #include "game\server\iplayerinfo.h"
 #include "convar.h"
 #include "utlbuffer.h"
+#include "filesystem.h"
 
 namespace SDR
 {
@@ -35,6 +37,7 @@ namespace SDR
 		IPlayerInfoManager* PlayerInfoManager;
 		CGlobalVars* Globals;
 		IVEngineClient* EngineClient;
+		IFileSystem* FileSystem;
 	};
 
 	const EngineInterfaces& GetEngineInterfaces();

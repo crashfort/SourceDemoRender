@@ -11,13 +11,11 @@
 
 namespace
 {
-	template <typename Str, typename... Format>
-	void SDR_DebugMsg(Str message, Format... format)
-	{
-		#if _DEBUG
-		Msg(message, format...);
-		#endif
-	}
+	#ifdef _DEBUG
+	#define SDR_DebugMsg Msg
+	#else
+	#define SDR_DebugMsg
+	#endif
 
 	struct MovieData : public SDR::Sampler::IFramePrinter
 	{
@@ -51,6 +49,9 @@ namespace
 
 		std::unique_ptr<BufferType[]> EngineFrameHeapData;
 
+		std::deque<CUtlBuffer> FramesToWriteBuffer;
+		std::thread FrameBufferThread;
+
 		virtual void Print(BufferType* data) override
 		{
 			ActiveFrame = data;
@@ -59,6 +60,28 @@ namespace
 	};
 
 	MovieData CurrentMovie;
+
+	std::atomic_bool ShouldStopBufferThread = false;
+	std::atomic_bool ShouldPauseBufferThread = false;
+
+	void MovieShutdown()
+	{
+		/*
+			If the buffer thread is not running, no movie is started
+		*/
+		if (!ShouldStopBufferThread)
+		{
+			ShouldStopBufferThread = true;
+			CurrentMovie.FrameBufferThread.join();
+			CurrentMovie = MovieData();
+		}
+	}
+
+	/*
+		In case endmovie never gets called,
+		this hanldes the plugin_unload
+	*/
+	SDR::PluginShutdownFunctionAdder A1(MovieShutdown);
 }
 
 namespace
@@ -82,6 +105,52 @@ namespace
 	ConVar SDR_OutputName("sdr_outputname", "", 0, "Prefix name of frames. UTF8 names are not supported in Source");
 
 	ConVar SDR_FlashWindow("sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "Flash window when endmovie is called", true, 0, true, 1);
+
+	void FrameBufferThreadHandler()
+	{
+		auto& interfaces = SDR::GetEngineInterfaces();
+		auto& buffer = CurrentMovie.FramesToWriteBuffer;
+
+		while (!ShouldStopBufferThread)
+		{
+			while (!buffer.empty())
+			{
+				while (ShouldPauseBufferThread)
+				{
+					std::this_thread::sleep_for(1ms);
+				}
+
+				auto& cur = buffer.front();
+
+				CUtlString frameformat;
+				frameformat.Format("%s_%05d.tga", SDR_OutputName.GetString(), CurrentMovie.FinishedFrames);
+
+				auto targetpath = SDR_OutputDirectory.GetString();
+				auto filenameformat = CUtlString::PathJoin(targetpath, frameformat.Get());
+
+				auto finalname = filenameformat.Get();
+
+				auto res = interfaces.FileSystem->WriteFile(finalname, targetpath, cur);
+
+				/*
+					Should probably handle this or something
+				*/
+				if (!res)
+				{
+					Warning("SDR: Could not write movie frame\n");
+				}
+
+				else
+				{
+					CurrentMovie.FinishedFrames++;
+				}
+
+				buffer.pop_front();
+			}
+
+			std::this_thread::sleep_for(500ms);
+		}
+	}
 
 	namespace Module_CL_StartMovie
 	{
@@ -188,6 +257,10 @@ namespace
 
 				CurrentMovie.EngineFrameHeapData = std::make_unique<MovieData::BufferType[]>(CurrentMovie.GetImageSizeInBytes());
 
+				ShouldStopBufferThread = false;
+				ShouldPauseBufferThread = false;
+				CurrentMovie.FrameBufferThread = std::thread(FrameBufferThreadHandler);
+
 			}, Pattern, Mask
 		};
 	}
@@ -211,7 +284,7 @@ namespace
 			"engine.dll", "CL_EndMovie",
 			[](PARAMETERS)
 			{
-				CurrentMovie = MovieData();
+				MovieShutdown();
 
 				CALLORIGINAL();
 
@@ -271,10 +344,61 @@ namespace
 					movie.Sampler->Sample(data, time);
 				}
 
+				/*
+					The reason we override the default VID_ProcessMovieFrame is
+					because that one creates a local CUtlBuffer for every frame and then destroys it.
+					Better that we store them ourselves and iterate over the buffered frames to
+					write them out in another thread.
+				*/
 				if (movie.HasFrameDone)
 				{
-					CALLORIGINAL(info, jpeg, filename, width, height, movie.ActiveFrame);
 					movie.HasFrameDone = false;
+
+					ShouldPauseBufferThread = true;
+
+					/*
+						A new empty buffer
+					*/
+					CurrentMovie.FramesToWriteBuffer.emplace_back();
+					auto& newbuf = CurrentMovie.FramesToWriteBuffer.back();
+
+					/*
+						0x1022AD50 static IDA address June 4 2016
+					*/
+					static auto tgawriteraddr = SDR::GetAddressFromPattern
+					(
+						"engine.dll",
+						SDR_PATTERN("\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"),
+						"xxxxxxxxxxxxxxxxxxxxxxxxxx????"
+					);
+
+					using TGAWriterType = bool(__cdecl*)
+					(
+						unsigned char* data,
+						CUtlBuffer& buffer,
+						int width,
+						int height,
+						int srcformat,
+						int dstformat
+					);
+
+					static auto tgawriterfunc = static_cast<TGAWriterType>(tgawriteraddr);
+
+					/*
+						3 = IMAGE_FORMAT_BGR888
+						2 = IMAGE_FORMAT_RGB888
+					*/
+					auto res = tgawriterfunc(movie.ActiveFrame, newbuf, width, height, 3, 2);
+
+					/*
+						Should probably handle this or something
+					*/
+					if (!res)
+					{
+						Warning("SDR: Could not create TGA image\n");
+					}
+					
+					ShouldPauseBufferThread = false;
 				}
 
 				time += sampleframerate;
@@ -335,7 +459,18 @@ namespace
 					"xxxxxxxx?????xx????xx????"
 				);
 
-				using ReadScreenPxType = void(__fastcall*)(void*, void*, int x, int y, int w, int h, void* buffer, int format);
+				using ReadScreenPxType = void(__fastcall*)
+				(
+					void*,
+					void*,
+					int x,
+					int y,
+					int w,
+					int h,
+					void* buffer,
+					int format
+				);
+
 				static auto readscreenpxfunc = static_cast<ReadScreenPxType>(readscreenpxaddr);
 
 				auto buffer = CurrentMovie.EngineFrameHeapData.get();
@@ -346,55 +481,6 @@ namespace
 				readscreenpxfunc(thisptr, edx, 0, 0, width, height, buffer, 3);
 
 				processframefunc(info, false, nullptr, width, height, buffer);
-
-			}, Pattern, Mask
-		};
-	}
-
-	namespace Module_CBaseFileSystem_WriteFile
-	{
-		#define CALLING __fastcall
-		#define RETURNTYPE bool
-		#define PARAMETERS void* thisptr, void* edx, const char* filename, const char* path, CUtlBuffer& buffer
-		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
-		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
-
-		/*
-			0x1000E680 static IDA address May 22 2016
-		*/
-		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x53\x8B\x5D\x10\xBA\x00\x00\x00\x00\x57\x8B\xF9\x8A\x43\x15\xA8\x01");
-		auto Mask = "xxxxxxxx????xxxxxxxx";
-
-		/*
-			Problem with this function is that "filename" and "path" are passed as UTF8, but
-			are never converted to wchar on Windows in the engine. This limits all characters which is bad.
-		*/
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"FileSystem_Stdio.dll", "CBaseFileSystem_WriteFile",
-			[](PARAMETERS)
-			{
-				if (CurrentMovie.HasFrameDone)
-				{
-					CUtlString frameformat;
-					frameformat.Format("%s_%05d.tga", SDR_OutputName.GetString(), CurrentMovie.FinishedFrames);
-
-					auto targetpath = SDR_OutputDirectory.GetString();
-					auto filenameformat = CUtlString::PathJoin(targetpath, frameformat.Get());
-
-					auto finalname = filenameformat.Get();
-
-					auto ret = CALLORIGINAL(thisptr, edx, finalname, targetpath, buffer);
-
-					if (ret)
-					{
-						CurrentMovie.FinishedFrames++;
-					}
-
-					return ret;
-				}
-
-				return CALLORIGINAL(thisptr, edx, filename, path, buffer);
 
 			}, Pattern, Mask
 		};

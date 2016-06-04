@@ -71,6 +71,18 @@ namespace SDR
 
 	void AddModule(HookModuleBase* module);
 
+	using ShutdownFuncType = void(*)();
+	void AddPluginShutdownFunction(ShutdownFuncType function);
+
+	class PluginShutdownFunctionAdder final
+	{
+	public:
+		PluginShutdownFunctionAdder(ShutdownFuncType function)
+		{
+			AddPluginShutdownFunction(function);
+		}
+	};
+
 	void* GetAddressFromPattern(const LibraryModuleBase& library, const byte* pattern, const char* mask);
 
 	template <typename FuncSignature>

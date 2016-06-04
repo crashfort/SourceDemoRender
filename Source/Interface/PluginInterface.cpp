@@ -179,14 +179,16 @@ namespace
 	bool SourceDemoRenderPlugin::Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory)
 	{
 		ConnectTier1Libraries(&interfacefactory, 1);
+		ConnectTier2Libraries(&interfacefactory, 1);
 		ConVar_Register();
 
-		std::vector<InterfaceBase*> addedinterfaces;
+		std::vector<InterfaceBase*> added;
 
-		ServerFactoryLocal<IPlayerInfoManager> T1(addedinterfaces, &Interfaces.PlayerInfoManager, INTERFACEVERSION_PLAYERINFOMANAGER);
-		InterfaceFactoryLocal<IVEngineClient> T2(addedinterfaces, &Interfaces.EngineClient, VENGINE_CLIENT_INTERFACE_VERSION);
+		ServerFactoryLocal<IPlayerInfoManager> T1(added, &Interfaces.PlayerInfoManager, INTERFACEVERSION_PLAYERINFOMANAGER);
+		InterfaceFactoryLocal<IVEngineClient> T2(added, &Interfaces.EngineClient, VENGINE_CLIENT_INTERFACE_VERSION);
+		InterfaceFactoryLocal<IFileSystem> T3(added, &Interfaces.FileSystem, FILESYSTEM_INTERFACE_VERSION);
 
-		for (auto ptr : addedinterfaces)
+		for (auto ptr : added)
 		{
 			auto res = ptr->Create(interfacefactory, gameserverfactory);
 
@@ -213,10 +215,11 @@ namespace
 
 	void SourceDemoRenderPlugin::Unload()
 	{
+		SDR::Close();
+
 		ConVar_Unregister();
 		DisconnectTier1Libraries();
-
-		SDR::Close();
+		DisconnectTier2Libraries();
 	}
 }
 

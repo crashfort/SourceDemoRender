@@ -7,6 +7,7 @@ namespace
 	struct Application
 	{
 		std::vector<SDR::HookModuleBase*> Modules;
+		std::vector<void(*)()> OnCloseFunctions;
 	};
 
 	Application MainApplication;
@@ -86,12 +87,22 @@ bool SDR::Setup()
 
 void SDR::Close()
 {
+	for (auto&& func : MainApplication.OnCloseFunctions)
+	{
+		func();
+	}
+
 	MH_Uninitialize();
 }
 
 void SDR::AddModule(HookModuleBase* module)
 {
 	MainApplication.Modules.push_back(module);
+}
+
+void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
+{
+	MainApplication.OnCloseFunctions.push_back(function);
 }
 
 void* SDR::GetAddressFromPattern(const LibraryModuleBase& library, const byte* pattern, const char* mask)
