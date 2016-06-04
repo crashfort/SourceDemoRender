@@ -15,6 +15,7 @@ To build this yourself you need to change the property sheet value named $(SDK20
 - **sdr_render_samplespersecond** - Game framerate in samples. [Read more](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3Amirv_sample_sps)
 - **sdr_render_framestrength** *(0.0 to 1.0)* - 0 to 1 fraction how much a new frame clears the previous. [Read more](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3A__mirv_sample_frame_strength)
 - **sdr_render_samplemethod** *(0 or 1)* - The integral approximation method. 0: Rectangle method, 1: Trapezoidal rule. [Read more](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3A__mirv_sample_smethod)
+- **sdr_endmovieflash** *(0 or 1)* - Flash the window when endmovie gets called. This can be used with the demo director to do "endmovie" on a certain tick so you don't have to keep looking at the window.
 
 More details about sampling can be [read here](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3ASampling-System).
 
