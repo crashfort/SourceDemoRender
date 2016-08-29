@@ -15,8 +15,8 @@ namespace
 		#define CALLING __cdecl
 		#define RETURNTYPE void
 		#define PARAMETERS
-		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
-		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
+		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
 
 		/*
 			0x10216D80 static IDA address June 3 2016
@@ -27,7 +27,7 @@ namespace
 		/*
 			This is needed because it's responsible for locking the mouse inside the window
 		*/
-		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
 			"engine.dll", "VGUI_ActivateMouse",
 			[](PARAMETERS)
@@ -58,8 +58,8 @@ namespace
 		#define CALLING __fastcall
 		#define RETURNTYPE void
 		#define PARAMETERS void* thisptr, void* edx, const InputEvent_t& event
-		#define THISFUNCTION RETURNTYPE(CALLING*)(PARAMETERS)
-		#define CALLORIGINAL reinterpret_cast<THISFUNCTION>(ThisHook.GetOriginalFunction())
+		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
+		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
 
 		/*
 			0x102013C0 static IDA address June 3 2016
@@ -67,7 +67,7 @@ namespace
 		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x8B\x45\x08\x83\x78\x08\x00\x0F\x95\xC0\x0F\xB6\xC0\x89\x45\x08\x5D\xE9\x00\x00\x00\x00");
 		auto Mask = "xxxxxxxxxxxxxxxxxxxxx????";
 
-		SDR::HookModuleMask<THISFUNCTION> ThisHook
+		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
 			"engine.dll", "CGame_AppActivate",
 			[](PARAMETERS)
