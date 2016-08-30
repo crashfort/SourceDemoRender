@@ -19,6 +19,8 @@ namespace
 
 	struct MovieData : public SDR::Sampler::IFramePrinter
 	{
+		bool IsStarted = false;
+
 		size_t Width;
 		size_t Height;
 
@@ -66,9 +68,11 @@ namespace
 
 	void MovieShutdown()
 	{
-		/*
-			If the buffer thread is not running, no movie is started
-		*/
+		if (!CurrentMovie.IsStarted)
+		{
+			return;
+		}
+
 		if (!ShouldStopBufferThread)
 		{
 			ShouldStopBufferThread = true;
@@ -252,6 +256,8 @@ namespace
 					moviexposure,
 					movieframestrength
 				);
+
+				CurrentMovie.IsStarted = true;
 
 				CurrentMovie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>(settings, framepitch, &CurrentMovie);
 
