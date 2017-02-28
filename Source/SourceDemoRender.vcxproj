@@ -95,13 +95,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDK2013Root)common\;$(SDK2013Root)public\;$(SDK2013Root)public\tier0\;$(SDK2013Root)public\tier1\;$(SDK2013Root)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDK2013Root)lib\common\;$(SDK2013Root)lib\public\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -125,7 +125,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDK2013Root)common\;$(SDK2013Root)public\;$(SDK2013Root)public\tier0\;$(SDK2013Root)public\tier1\;$(SDK2013Root)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -133,7 +133,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDK2013Root)lib\common\;$(SDK2013Root)lib\public\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

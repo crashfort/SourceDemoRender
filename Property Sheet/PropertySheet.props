@@ -2,13 +2,13 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <SDK2013Root>C:\VS\Source SDK 2013\Source\</SDK2013Root>
+    <SDR_2013SDK_ROOT>C:\VS\Source SDK 2013\Source\</SDR_2013SDK_ROOT>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
   <ItemGroup>
-    <BuildMacro Include="SDK2013Root">
-      <Value>$(SDK2013Root)</Value>
+    <BuildMacro Include="SDR_2013SDK_ROOT">
+      <Value>$(SDR_2013SDK_ROOT)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
