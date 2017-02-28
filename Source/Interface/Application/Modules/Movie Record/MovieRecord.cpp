@@ -68,7 +68,7 @@ namespace
 	std::atomic_bool ShouldStopBufferThread = false;
 	std::atomic_bool ShouldPauseBufferThread = false;
 
-	void MovieShutdown()
+	void SDR_MovieShutdown()
 	{
 		if (!CurrentMovie.IsStarted)
 		{
@@ -87,7 +87,7 @@ namespace
 		In case endmovie never gets called,
 		this hanldes the plugin_unload
 	*/
-	SDR::PluginShutdownFunctionAdder A1(MovieShutdown);
+	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
 }
 
 namespace
@@ -359,7 +359,7 @@ namespace
 		template <typename T = void>
 		void __cdecl Override()
 		{
-			MovieShutdown();
+			SDR_MovieShutdown();
 
 			ThisHook.GetOriginal()();
 
