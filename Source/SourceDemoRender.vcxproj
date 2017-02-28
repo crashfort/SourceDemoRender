@@ -192,6 +192,7 @@
     </ClCompile>
     <ClCompile Include="Interface\Application\Application.cpp" />
     <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp" />
+    <ClCompile Include="Interface\Application\Modules\Latency Remove\LatencyRemove.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\HLAE\Sampler.cpp" />

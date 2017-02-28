@@ -7,13 +7,13 @@ namespace
 	struct Application
 	{
 		std::vector<SDR::HookModuleBase*> Modules;
-		std::vector<void(*)()> OnCloseFunctions;
+		std::vector<SDR::ShutdownFuncType> OnCloseFunctions;
 	};
 
 	Application MainApplication;
 
 	/*
-		From Yalter SPT
+		From Yalter's SPT
 	*/
 	namespace Memory
 	{
@@ -64,12 +64,12 @@ bool SDR::Setup()
 	for (auto module : MainApplication.Modules)
 	{
 		auto res = module->Create();
-		auto name = module->GetName();
+		auto name = module->DisplayName;
 
 		if (res == MH_OK)
 		{
-			auto library = module->GetLibrary();
-			auto function = module->GetTargetFunction();
+			auto library = module->Module;
+			auto function = module->TargetFunction;
 
 			MH_EnableHook(function);
 
@@ -97,15 +97,15 @@ void SDR::Close()
 
 void SDR::AddModule(HookModuleBase* module)
 {
-	MainApplication.Modules.push_back(module);
+	MainApplication.Modules.emplace_back(module);
 }
 
 void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
 {
-	MainApplication.OnCloseFunctions.push_back(function);
+	MainApplication.OnCloseFunctions.emplace_back(function);
 }
 
-void* SDR::GetAddressFromPattern(const LibraryModuleBase& library, const byte* pattern, const char* mask)
+void* SDR::GetAddressFromPattern(const ModuleInformation& library, const byte* pattern, const char* mask)
 {
 	return Memory::FindPattern(library.MemoryBase, library.MemorySize, pattern, mask);
 }

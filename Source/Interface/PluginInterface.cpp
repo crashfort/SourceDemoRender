@@ -9,65 +9,29 @@ namespace
 		virtual bool Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) override;
 		virtual void Unload() override;
 
-		virtual void Pause() override
-		{
-			
-		}
-
-		virtual void UnPause() override
-		{
-			
-		}
+		virtual void Pause() override {}
+		virtual void UnPause() override {}
 
 		virtual const char* GetPluginDescription() override
 		{
 			return "Source Demo Render";
 		}
 
-		virtual void LevelInit(char const* mapname) override
-		{
-			
-		}
+		virtual void LevelInit(char const* mapname) override {}
 
-		virtual void ServerActivate(edict_t* edictlist, int edictcount, int maxclients) override
-		{
-			
-		}
+		virtual void ServerActivate(edict_t* edictlist, int edictcount, int maxclients) override {}
 
-		virtual void GameFrame(bool simulating) override
-		{
-			
-		}
+		virtual void GameFrame(bool simulating) override {}
 
-		virtual void LevelShutdown() override
-		{
-			
-		}
+		virtual void LevelShutdown() override {}
 
-		virtual void ClientActive(edict_t* entity) override
-		{
-			
-		}
+		virtual void ClientActive(edict_t* entity) override {}
+		virtual void ClientDisconnect(edict_t* entity) override {}
+		virtual void ClientPutInServer(edict_t* entity, char const* playername) override {}
 
-		virtual void ClientDisconnect(edict_t* entity) override
-		{
-			
-		}
+		virtual void SetCommandClient(int index) override {}
 
-		virtual void ClientPutInServer(edict_t* entity, char const* playername) override
-		{
-			
-		}
-
-		virtual void SetCommandClient(int index) override
-		{
-			
-		}
-
-		virtual void ClientSettingsChanged(edict_t* entity) override
-		{
-			
-		}
+		virtual void ClientSettingsChanged(edict_t* entity) override {}
 
 		virtual PLUGIN_RESULT ClientConnect(bool* allowconnect,
 											edict_t* entity,
@@ -95,18 +59,11 @@ namespace
 											  const char *cvarname,
 											  const char *cvarvalue) override
 		{
-			
+
 		}
 
-		virtual void OnEdictAllocated(edict_t* entity) override
-		{
-			
-		}
-
-		virtual void OnEdictFreed(const edict_t* entity) override
-		{
-			
-		}
+		virtual void OnEdictAllocated(edict_t* entity) override {}
+		virtual void OnEdictFreed(const edict_t* entity) override {}
 	};
 
 	SourceDemoRenderPlugin ThisPlugin;
@@ -136,11 +93,11 @@ namespace
 	class InterfaceFactoryLocal final : public InterfaceBase
 	{
 	public:
-		InterfaceFactoryLocal(std::vector<InterfaceBase*>& container, T** targetinterface, const char* interfacename) :
+		InterfaceFactoryLocal(T** targetinterface, const char* interfacename) :
 			InterfaceBase(interfacename),
 			TargetInterface(targetinterface)
 		{
-			container.push_back(this);
+			
 		}
 
 		virtual bool Create(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) override
@@ -158,11 +115,11 @@ namespace
 	class ServerFactoryLocal final : public InterfaceBase
 	{
 	public:
-		ServerFactoryLocal(std::vector<InterfaceBase*>& container, T** targetinterface, const char* interfacename) :
+		ServerFactoryLocal(T** targetinterface, const char* interfacename) :
 			InterfaceBase(interfacename),
 			TargetInterface(targetinterface)
 		{
-			container.push_back(this);
+			
 		}
 
 		virtual bool Create(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) override
@@ -182,13 +139,18 @@ namespace
 		ConnectTier2Libraries(&interfacefactory, 1);
 		ConVar_Register();
 
-		std::vector<InterfaceBase*> added;
+		ServerFactoryLocal<IPlayerInfoManager> T1(&Interfaces.PlayerInfoManager, INTERFACEVERSION_PLAYERINFOMANAGER);
+		InterfaceFactoryLocal<IVEngineClient> T2(&Interfaces.EngineClient, VENGINE_CLIENT_INTERFACE_VERSION);
+		InterfaceFactoryLocal<IFileSystem> T3(&Interfaces.FileSystem, FILESYSTEM_INTERFACE_VERSION);
 
-		ServerFactoryLocal<IPlayerInfoManager> T1(added, &Interfaces.PlayerInfoManager, INTERFACEVERSION_PLAYERINFOMANAGER);
-		InterfaceFactoryLocal<IVEngineClient> T2(added, &Interfaces.EngineClient, VENGINE_CLIENT_INTERFACE_VERSION);
-		InterfaceFactoryLocal<IFileSystem> T3(added, &Interfaces.FileSystem, FILESYSTEM_INTERFACE_VERSION);
+		std::initializer_list<InterfaceBase*> list =
+		{
+			&T1,
+			&T2,
+			&T3
+		};
 
-		for (auto ptr : added)
+		for (auto ptr : list)
 		{
 			auto res = ptr->Create(interfacefactory, gameserverfactory);
 

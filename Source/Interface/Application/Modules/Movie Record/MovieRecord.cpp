@@ -21,11 +21,11 @@ namespace
 	{
 		bool IsStarted = false;
 
-		size_t Width;
-		size_t Height;
+		uint32_t Width;
+		uint32_t Height;
 
-		size_t CurrentFrame = 0;
-		size_t FinishedFrames = 0;
+		uint32_t CurrentFrame = 0;
+		uint32_t FinishedFrames = 0;
 
 		double SamplingTime = 0.0;
 
@@ -37,7 +37,7 @@ namespace
 			BytesPerPixel = 3
 		};
 
-		size_t GetImageSizeInBytes() const
+		auto GetImageSizeInBytes() const
 		{
 			return (Width * Height) * BytesPerPixel;
 		}
@@ -156,169 +156,192 @@ namespace
 		}
 	}
 
-	namespace Module_CL_StartMovie
+	#if 0
+	namespace Module_BaseTemplateMask
 	{
-		#define CALLING __cdecl
-		#define RETURNTYPE void
+		auto Pattern = SDR_PATTERN("");
+		auto Mask = "";
 
-		/*
-			The 7th parameter (unk) was been added in Source 2013, it's not there in Source 2007
-		*/
-		#define PARAMETERS const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk
-		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
-		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
+		template <typename T = void>
+		void __cdecl Override()
+		{
+			
+		}
 
+		using ThisFunction = decltype(Override<>)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"", "", Override<>, Pattern, Mask
+		};
+	}
+
+	namespace Module_BaseTemplateStatic
+	{
+		template <typename T = void>
+		void __cdecl Override()
+		{
+
+		}
+
+		using ThisFunction = decltype(Override<>)*;
+
+		SDR::HookModuleStaticAddress<ThisFunction> ThisHook
+		{
+			"", "", Override<>, 0x00000000
+		};
+	}
+	#endif
+
+	namespace Module_StartMovie
+	{
 		/*
 			0x100BCAC0 static IDA address May 22 2016
 		*/
 		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\xA1\x00\x00\x00\x00\xD9\x45\x18\x56\x57\xF3\x0F\x10\x40\x00");
 		auto Mask = "xxxxx????x????xxxxxxxxx?";
 
+		/*
+			The 7th parameter (unk) was been added in Source 2013, it's not there in Source 2007
+		*/
+		template <typename T = void>
+		void __cdecl Override
+		(
+			const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk
+		)
+		{
+			auto sdrpath = SDR_OutputDirectory.GetString();
+
+			auto res = SHCreateDirectoryExA(nullptr, sdrpath, nullptr);
+
+			switch (res)
+			{
+				case ERROR_SUCCESS:
+				case ERROR_ALREADY_EXISTS:
+				case ERROR_FILE_EXISTS:
+				{
+					break;
+				}
+
+				case ERROR_BAD_PATHNAME:
+				case ERROR_PATH_NOT_FOUND:
+				case ERROR_FILENAME_EXCED_RANGE:
+				{
+					Warning("SDR: Movie output path is invalid\n");
+					return;
+				}
+
+				case ERROR_CANCELLED:
+				{
+					Warning("SDR: Extra directories were created but are hidden, aborting\n");
+					return;
+				}
+
+				default:
+				{
+					Warning("SDR: Some unknown error happened when starting movie, related to sdr_outputdir\n");
+					return;
+				}
+			}
+				
+			CurrentMovie.Width = width;
+			CurrentMovie.Height = height;
+
+			ThisHook.GetOriginal()(filename, flags, width, height, framerate, jpegquality, unk);
+
+			/*
+				The original function sets host_framerate to 30 so we override it
+			*/
+			auto hostframerate = g_pCVar->FindVar("host_framerate");
+			hostframerate->SetValue(SDR_SamplesPerSecond.GetInt());
+
+			auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
+			auto movieframeratems = 1.0 / static_cast<double>(SDR_FrameRate.GetInt());
+			auto moviexposure = SDR_Exposure.GetFloat();
+			auto movieframestrength = SDR_FrameStrength.GetFloat();
+				
+			using SampleMethod = SDR::Sampler::EasySamplerSettings::Method;
+			SampleMethod moviemethod;
+				
+			switch (SDR_SampleMethod.GetInt())
+			{
+				case 0:
+				{
+					moviemethod = SampleMethod::ESM_Rectangle;
+					break;
+				}
+
+				case 1:
+				{
+					moviemethod = SampleMethod::ESM_Trapezoid;
+					break;
+				}
+			}
+
+			SDR::Sampler::EasySamplerSettings settings
+			(
+				MovieData::BytesPerPixel * width, height,
+				moviemethod,
+				movieframeratems,
+				0.0,
+				moviexposure,
+				movieframestrength
+			);
+
+			CurrentMovie.IsStarted = true;
+
+			CurrentMovie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>(settings, framepitch, &CurrentMovie);
+
+			CurrentMovie.EngineFrameHeapData = std::make_unique<MovieData::BufferType[]>(CurrentMovie.GetImageSizeInBytes());
+
+			ShouldStopBufferThread = false;
+			ShouldPauseBufferThread = false;
+			CurrentMovie.FrameBufferThread = std::thread(FrameBufferThreadHandler);
+		}
+
+		using ThisFunction = decltype(Override<>)*;
+
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "CL_StartMovie",
-			[](PARAMETERS)
-			{
-				auto sdrpath = SDR_OutputDirectory.GetString();
-
-				auto res = SHCreateDirectoryExA(nullptr, sdrpath, nullptr);
-
-				switch (res)
-				{
-					case ERROR_SUCCESS:
-					case ERROR_ALREADY_EXISTS:
-					case ERROR_FILE_EXISTS:
-					{
-						break;
-					}
-
-					case ERROR_BAD_PATHNAME:
-					case ERROR_PATH_NOT_FOUND:
-					case ERROR_FILENAME_EXCED_RANGE:
-					{
-						Warning("SDR: Movie output path is invalid\n");
-						return;
-					}
-
-					case ERROR_CANCELLED:
-					{
-						Warning("SDR: Extra directories were created but are hidden, aborting\n");
-						return;
-					}
-
-					default:
-					{
-						Warning("SDR: Some unknown error happened when starting movie, related to sdr_outputdir\n");
-						return;
-					}
-				}
-				
-				CurrentMovie.Width = width;
-				CurrentMovie.Height = height;
-
-				CALLORIGINAL(filename, flags, width, height, framerate, jpegquality, unk);
-
-				/*
-					The original function sets host_framerate to 30 so we override it
-				*/
-				auto hostframerate = g_pCVar->FindVar("host_framerate");
-				hostframerate->SetValue(SDR_SamplesPerSecond.GetInt());
-
-				auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
-				auto movieframeratems = 1.0 / static_cast<double>(SDR_FrameRate.GetInt());
-				auto moviexposure = SDR_Exposure.GetFloat();
-				auto movieframestrength = SDR_FrameStrength.GetFloat();
-				
-				using SampleMethod = SDR::Sampler::EasySamplerSettings::Method;
-				SampleMethod moviemethod;
-				
-				switch (SDR_SampleMethod.GetInt())
-				{
-					case 0:
-					{
-						moviemethod = SampleMethod::ESM_Rectangle;
-						break;
-					}
-
-					case 1:
-					{
-						moviemethod = SampleMethod::ESM_Trapezoid;
-						break;
-					}
-				}
-
-				SDR::Sampler::EasySamplerSettings settings
-				(
-					MovieData::BytesPerPixel * width, height,
-					moviemethod,
-					movieframeratems,
-					0.0,
-					moviexposure,
-					movieframestrength
-				);
-
-				CurrentMovie.IsStarted = true;
-
-				CurrentMovie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>(settings, framepitch, &CurrentMovie);
-
-				CurrentMovie.EngineFrameHeapData = std::make_unique<MovieData::BufferType[]>(CurrentMovie.GetImageSizeInBytes());
-
-				ShouldStopBufferThread = false;
-				ShouldPauseBufferThread = false;
-				CurrentMovie.FrameBufferThread = std::thread(FrameBufferThreadHandler);
-
-			}, Pattern, Mask
+			"engine.dll", "CL_StartMovie", Override<>, Pattern, Mask
 		};
 	}
 
 	namespace Module_CL_EndMovie
 	{
-		#define CALLING __cdecl
-		#define RETURNTYPE void
-		#define PARAMETERS
-		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
-		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
-
 		/*
 			0x100BAE40 static IDA address May 22 2016
 		*/
 		auto Pattern = SDR_PATTERN("\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00\x00\xD9\x05\x00\x00\x00\x00\x51\xB9\x00\x00\x00\x00");
 		auto Mask = "xx?????xx????xx????xx????";
 
+		template <typename T = void>
+		void __cdecl Override()
+		{
+			MovieShutdown();
+
+			ThisHook.GetOriginal()();
+
+			auto hostframerate = g_pCVar->FindVar("host_framerate");
+			hostframerate->SetValue(0);
+
+			if (SDR_FlashWindow.GetBool())
+			{
+				auto& interfaces = SDR::GetEngineInterfaces();
+				interfaces.EngineClient->FlashWindow();
+			}
+		}
+
+		using ThisFunction = decltype(Override<>)*;
+
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "CL_EndMovie",
-			[](PARAMETERS)
-			{
-				MovieShutdown();
-
-				CALLORIGINAL();
-
-				auto hostframerate = g_pCVar->FindVar("host_framerate");
-				hostframerate->SetValue(0);
-
-				if (SDR_FlashWindow.GetBool())
-				{
-					auto& interfaces = SDR::GetEngineInterfaces();
-					interfaces.EngineClient->FlashWindow();
-				}
-
-			}, Pattern, Mask
+			"engine.dll", "CL_EndMovie", Override<>, Pattern, Mask
 		};
 	}
 
 	namespace Module_VID_ProcessMovieFrame
 	{
-		#define CALLING __cdecl
-		#define RETURNTYPE void
-
-		/*
-			First parameter (info) is a MovieInfo_t structure, but we don't need it
-		*/
-		#define PARAMETERS void* info, bool jpeg, const char* filename, int width, int height, unsigned char* data
-		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
-		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
-
 		/*
 			0x10201030 static IDA address May 22 2016
 		*/
@@ -326,102 +349,104 @@ namespace
 		auto Mask = "xxxxxxxxxxxxxxxx????";
 
 		/*
+			First parameter (info) is a MovieInfo_t structure, but we don't need it
+
 			Data passed to this is in BGR888 format
 		*/
-		SDR::HookModuleMask<ThisFunction> ThisHook
+		template <typename T = void>
+		void __cdecl Override
+		(
+			void* info, bool jpeg, const char* filename, int width, int height, unsigned char* data
+		)
 		{
-			"engine.dll", "VID_ProcessMovieFrame",
-			[](PARAMETERS)
+			auto& movie = CurrentMovie;
+
+			SDR_DebugMsg("SDR: Frame %d (%d)\n", movie.CurrentFrame, movie.FinishedFrames);
+
+			auto sampleframerate = 1.0 / static_cast<double>(SDR_SamplesPerSecond.GetInt());
+			auto& time = movie.SamplingTime;
+
+			if (movie.Sampler->CanSkipConstant(time, sampleframerate))
 			{
-				auto& movie = CurrentMovie;
+				movie.Sampler->Sample(nullptr, time);
+			}
 
-				SDR_DebugMsg("SDR: Frame %d (%d)\n", movie.CurrentFrame, movie.FinishedFrames);
+			else
+			{
+				movie.Sampler->Sample(data, time);
+			}
 
-				auto sampleframerate = 1.0 / static_cast<double>(SDR_SamplesPerSecond.GetInt());
-				auto& time = movie.SamplingTime;
+			/*
+				The reason we override the default VID_ProcessMovieFrame is
+				because that one creates a local CUtlBuffer for every frame and then destroys it.
+				Better that we store them ourselves and iterate over the buffered frames to
+				write them out in another thread.
+			*/
+			if (movie.HasFrameDone)
+			{
+				movie.HasFrameDone = false;
 
-				if (movie.Sampler->CanSkipConstant(time, sampleframerate))
-				{
-					movie.Sampler->Sample(nullptr, time);
-				}
-
-				else
-				{
-					movie.Sampler->Sample(data, time);
-				}
+				ShouldPauseBufferThread = true;
 
 				/*
-					The reason we override the default VID_ProcessMovieFrame is
-					because that one creates a local CUtlBuffer for every frame and then destroys it.
-					Better that we store them ourselves and iterate over the buffered frames to
-					write them out in another thread.
+					A new empty buffer
 				*/
-				if (movie.HasFrameDone)
+				CurrentMovie.FramesToWriteBuffer.emplace_back();
+				auto& newbuf = CurrentMovie.FramesToWriteBuffer.back();
+
+				/*
+					0x1022AD50 static IDA address June 4 2016
+				*/
+				static auto tgawriteraddr = SDR::GetAddressFromPattern
+				(
+					"engine.dll",
+					SDR_PATTERN("\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"),
+					"xxxxxxxxxxxxxxxxxxxxxxxxxx????"
+				);
+
+				using TGAWriterType = bool(__cdecl*)
+				(
+					unsigned char* data,
+					CUtlBuffer& buffer,
+					int width,
+					int height,
+					int srcformat,
+					int dstformat
+				);
+
+				static auto tgawriterfunc = static_cast<TGAWriterType>(tgawriteraddr);
+
+				/*
+					3 = IMAGE_FORMAT_BGR888
+					2 = IMAGE_FORMAT_RGB888
+				*/
+				auto res = tgawriterfunc(movie.ActiveFrame, newbuf, width, height, 3, 2);
+
+				/*
+					Should probably handle this or something
+				*/
+				if (!res)
 				{
-					movie.HasFrameDone = false;
-
-					ShouldPauseBufferThread = true;
-
-					/*
-						A new empty buffer
-					*/
-					CurrentMovie.FramesToWriteBuffer.emplace_back();
-					auto& newbuf = CurrentMovie.FramesToWriteBuffer.back();
-
-					/*
-						0x1022AD50 static IDA address June 4 2016
-					*/
-					static auto tgawriteraddr = SDR::GetAddressFromPattern
-					(
-						"engine.dll",
-						SDR_PATTERN("\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"),
-						"xxxxxxxxxxxxxxxxxxxxxxxxxx????"
-					);
-
-					using TGAWriterType = bool(__cdecl*)
-					(
-						unsigned char* data,
-						CUtlBuffer& buffer,
-						int width,
-						int height,
-						int srcformat,
-						int dstformat
-					);
-
-					static auto tgawriterfunc = static_cast<TGAWriterType>(tgawriteraddr);
-
-					/*
-						3 = IMAGE_FORMAT_BGR888
-						2 = IMAGE_FORMAT_RGB888
-					*/
-					auto res = tgawriterfunc(movie.ActiveFrame, newbuf, width, height, 3, 2);
-
-					/*
-						Should probably handle this or something
-					*/
-					if (!res)
-					{
-						Warning("SDR: Could not create TGA image\n");
-					}
-					
-					ShouldPauseBufferThread = false;
+					Warning("SDR: Could not create TGA image\n");
 				}
+					
+				ShouldPauseBufferThread = false;
+			}
 
-				time += sampleframerate;
-				movie.CurrentFrame++;
+			time += sampleframerate;
+			movie.CurrentFrame++;
+		}
 
-			}, Pattern, Mask
+		using ThisFunction = decltype(Override<>)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "VID_ProcessMovieFrame", Override<>, Pattern, Mask
 		};
 	}
 
 	namespace Module_CVideoMode_WriteMovieFrame
 	{
-		#define CALLING __fastcall
-		#define RETURNTYPE void
-		#define PARAMETERS void* thisptr, void* edx, void* info	
-		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
-		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
-
 		/*
 			0x102011B0 static IDA address June 3 2016
 		*/
@@ -444,51 +469,61 @@ namespace
 			The purpose of overriding this function completely is to prevent the constant image buffer
 			allocation that Valve does every movie frame. We just provide one buffer that gets reused.
 		*/
+		template <typename T = void>
+		void __fastcall Override
+		(
+			void* thisptr, void* edx, void* info
+		)
+		{
+			namespace ProcessModule = Module_VID_ProcessMovieFrame;
+			using ProcessFrameType = ProcessModule::ThisFunction;
+
+			static auto processframeaddr = ProcessModule::ThisHook.NewFunction;
+			static auto processframefunc = static_cast<ProcessFrameType>(processframeaddr);
+
+			/*
+				0x101FFF80 static IDA address June 3 2016
+			*/
+			static auto readscreenpxaddr = SDR::GetAddressFromPattern
+			(
+				"engine.dll",
+				SDR_PATTERN("\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"),
+				"xxxxxxxx?????xx????xx????"
+			);
+
+			using ReadScreenPxType = void(__fastcall*)
+			(
+				void*,
+				void*,
+				int x,
+				int y,
+				int w,
+				int h,
+				void* buffer,
+				int format
+			);
+
+			static auto readscreenpxfunc = static_cast<ReadScreenPxType>(readscreenpxaddr);
+
+			auto buffer = CurrentMovie.EngineFrameHeapData.get();
+
+			auto width = CurrentMovie.Width;
+			auto height = CurrentMovie.Height;
+
+			/*
+				3 = IMAGE_FORMAT_BGR888
+				2 = IMAGE_FORMAT_RGB888
+			*/
+			readscreenpxfunc(thisptr, edx, 0, 0, width, height, buffer, 3);
+
+			processframefunc(info, false, nullptr, width, height, buffer);
+		}
+
+		using ThisFunction = decltype(Override<>)*;
+
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "CVideoMode_WriteMovieFrame",
-			[](PARAMETERS)
-			{
-				namespace ProcessModule = Module_VID_ProcessMovieFrame;
-				using ProcessFrameType = ProcessModule::ThisFunction;
-
-				static auto processframeaddr = ProcessModule::ThisHook.GetNewFunction();
-				static auto processframefunc = static_cast<ProcessFrameType>(processframeaddr);
-
-				/*
-					0x101FFF80 static IDA address June 3 2016
-				*/
-				static auto readscreenpxaddr = SDR::GetAddressFromPattern
-				(
-					"engine.dll",
-					SDR_PATTERN("\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"),
-					"xxxxxxxx?????xx????xx????"
-				);
-
-				using ReadScreenPxType = void(__fastcall*)
-				(
-					void*,
-					void*,
-					int x,
-					int y,
-					int w,
-					int h,
-					void* buffer,
-					int format
-				);
-
-				static auto readscreenpxfunc = static_cast<ReadScreenPxType>(readscreenpxaddr);
-
-				auto buffer = CurrentMovie.EngineFrameHeapData.get();
-
-				auto width = CurrentMovie.Width;
-				auto height = CurrentMovie.Height;
-
-				readscreenpxfunc(thisptr, edx, 0, 0, width, height, buffer, 3);
-
-				processframefunc(info, false, nullptr, width, height, buffer);
-
-			}, Pattern, Mask
+			"engine.dll", "CVideoMode_WriteMovieFrame", Override<>, Pattern, Mask
 		};
 	}
 }

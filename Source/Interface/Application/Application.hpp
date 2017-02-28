@@ -5,10 +5,9 @@ namespace SDR
 	bool Setup();
 	void Close();
 
-	struct LibraryModuleBase
+	struct ModuleInformation
 	{
-		LibraryModuleBase(const char* name) :
-			Name(name)
+		ModuleInformation(const char* name) : Name(name)
 		{
 			MODULEINFO info;
 			K32GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(name), &info, sizeof(MODULEINFO));
@@ -18,55 +17,29 @@ namespace SDR
 		}
 
 		const char* Name;
+
 		void* MemoryBase;
 		size_t MemorySize;
 	};
 
-	class HookModuleBase
+	struct HookModuleBase
 	{
-	public:
-		HookModuleBase(const char* library, const char* name, void* newfunction) :
-			Library(library),
-			Name(name),
-			NewFunction(newfunction)
+		HookModuleBase(const char* module, const char* name, void* newfunc) :
+			DisplayName(name),
+			Module(module),
+			NewFunction(newfunc)
 		{
 
 		}
 
-		virtual MH_STATUS Create() = 0;
-
-		void* GetTargetFunction() const
-		{
-			return TargetFunction;
-		}
-
-		void* GetOriginalFunction() const
-		{
-			return OriginalFunction;
-		}
-
-		void* GetNewFunction() const
-		{
-			return NewFunction;
-		}
-
-		const char* GetLibrary() const
-		{
-			return Library;
-		}
-
-		const char* GetName() const
-		{
-			return Name;
-		}
-
-	protected:
-		const char* Library;
-		const char* Name;
+		const char* DisplayName;
+		const char* Module;
 
 		void* TargetFunction;
-		void* OriginalFunction;
 		void* NewFunction;
+		void* OriginalFunction;
+
+		virtual MH_STATUS Create() = 0;
 	};
 
 	void AddModule(HookModuleBase* module);
@@ -83,23 +56,28 @@ namespace SDR
 		}
 	};
 
-	void* GetAddressFromPattern(const LibraryModuleBase& library, const byte* pattern, const char* mask);
+	void* GetAddressFromPattern(const ModuleInformation& library, const byte* pattern, const char* mask);
 
 	template <typename FuncSignature>
 	class HookModuleMask final : public HookModuleBase
 	{
 	public:
-		HookModuleMask(const char* library, const char* name, FuncSignature newfunction, const byte* pattern, const char* mask) :
-			HookModuleBase(library, name, newfunction),
+		HookModuleMask(const char* module, const char* name, FuncSignature newfunction, const byte* pattern, const char* mask) :
+			HookModuleBase(module, name, newfunction),
 			Pattern(pattern),
 			Mask(mask)
 		{
 			AddModule(this);
 		}
 
+		inline auto GetOriginal() const
+		{
+			return static_cast<FuncSignature>(OriginalFunction);
+		}
+
 		virtual MH_STATUS Create() override
 		{
-			LibraryModuleBase info(Library);
+			ModuleInformation info(Module);
 			TargetFunction = GetAddressFromPattern(info, Pattern, Mask);
 
 			return MH_CreateHookEx(TargetFunction, NewFunction, &OriginalFunction);
@@ -114,11 +92,16 @@ namespace SDR
 	class HookModuleStaticAddress final : public HookModuleBase
 	{
 	public:
-		HookModuleStaticAddress(const char* library, const char* name, FuncSignature newfunction, uintptr_t address) :
-			HookModuleBase(library, name, newfunction),
+		HookModuleStaticAddress(const char* module, const char* name, FuncSignature newfunction, uintptr_t address) :
+			HookModuleBase(module, name, newfunction),
 			Address(address)
 		{
 			AddModule(this);
+		}
+
+		inline auto GetOriginal() const
+		{
+			return static_cast<FuncSignature>(OriginalFunction);
 		}
 
 		virtual MH_STATUS Create() override
@@ -128,8 +111,8 @@ namespace SDR
 			*/
 			Address -= 0x10000000;
 			
-			LibraryModuleBase library(Library);
-			Address += (size_t)library.MemoryBase;
+			ModuleInformation info(Module);
+			Address += (uintptr_t)info.MemoryBase;
 
 			TargetFunction = (void*)Address;
 

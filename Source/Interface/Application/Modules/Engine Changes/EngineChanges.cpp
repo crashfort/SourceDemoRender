@@ -12,12 +12,6 @@ namespace
 
 	namespace Module_VGUI_ActivateMouse
 	{
-		#define CALLING __cdecl
-		#define RETURNTYPE void
-		#define PARAMETERS
-		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
-		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
-
 		/*
 			0x10216D80 static IDA address June 3 2016
 		*/
@@ -27,17 +21,20 @@ namespace
 		/*
 			This is needed because it's responsible for locking the mouse inside the window
 		*/
+		template <typename T = void>
+		void __cdecl Override()
+		{
+			if (!EngineFocusData.IsUnfocused)
+			{
+				ThisHook.GetOriginal()();
+			}
+		}
+
+		using ThisFunction = decltype(Override<>)*;
+
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "VGUI_ActivateMouse",
-			[](PARAMETERS)
-			{
-				if (!EngineFocusData.IsUnfocused)
-				{
-					CALLORIGINAL();
-				}
-
-			}, Pattern, Mask
+			"engine.dll", "VGUI_ActivateMouse", Override<>, Pattern, Mask
 		};
 	}
 
@@ -55,53 +52,53 @@ namespace
 			int m_nData3; // Generic 32-bit data, what it contains depends on the event
 		};
 
-		#define CALLING __fastcall
-		#define RETURNTYPE void
-		#define PARAMETERS void* thisptr, void* edx, const InputEvent_t& event
-		using ThisFunction = RETURNTYPE(CALLING*)(PARAMETERS);
-		#define CALLORIGINAL static_cast<ThisFunction>(ThisHook.GetOriginalFunction())
-
 		/*
 			0x102013C0 static IDA address June 3 2016
 		*/
 		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x8B\x45\x08\x83\x78\x08\x00\x0F\x95\xC0\x0F\xB6\xC0\x89\x45\x08\x5D\xE9\x00\x00\x00\x00");
 		auto Mask = "xxxxxxxxxxxxxxxxxxxxx????";
 
+		template <typename T = void>
+		void __fastcall Override
+		(
+			void* thisptr, void* edx, const InputEvent_t& event
+		)
+		{
+			auto& interfaces = SDR::GetEngineInterfaces();
+
+			if (interfaces.EngineClient->IsPlayingDemo())
+			{
+				EngineFocusData.IsUnfocused = event.m_nData == 0;
+
+				/*
+					52 is the offset of m_bActiveApp in CGame
+				*/
+				auto& isactiveapp = *(bool*)((char*)(thisptr) + 52);
+
+				ThisHook.GetOriginal()(thisptr, edx, event);
+
+				/*
+					Deep in the engine somewhere in CEngine::Frame, the logical
+					FPS is lowered when the window is unfocused to save performance.
+					That also makes the processing slower if you are alt tabbed.
+				*/
+				if (EngineFocusData.IsUnfocused)
+				{
+					isactiveapp = true;
+				}
+			}
+
+			else
+			{
+				ThisHook.GetOriginal()(thisptr, edx, event);
+			}
+		}
+
+		using ThisFunction = decltype(Override<>)*;
+
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "CGame_AppActivate",
-			[](PARAMETERS)
-			{
-				auto& interfaces = SDR::GetEngineInterfaces();
-
-				if (interfaces.EngineClient->IsPlayingDemo())
-				{
-					EngineFocusData.IsUnfocused = event.m_nData == 0;
-
-					/*
-						52 is the offset of m_bActiveApp in CGame
-					*/
-					auto& isactiveapp = *(bool*)((char*)(thisptr) + 52);
-
-					CALLORIGINAL(thisptr, edx, event);
-
-					/*
-						Deep in the engine somewhere in CEngine::Frame, the logical
-						FPS is lowered when the window is unfocused to save performance.
-						That also makes the processing slower if you are alt tabbed.
-					*/
-					if (EngineFocusData.IsUnfocused)
-					{
-						isactiveapp = true;
-					}
-				}
-
-				else
-				{
-					CALLORIGINAL(thisptr, edx, event);
-				}
-
-			}, Pattern, Mask
+			"engine.dll", "CGame_AppActivate", Override<>, Pattern, Mask
 		};
 	}
 }
