@@ -98,6 +98,9 @@
     <ClCompile Include="Interface\Application\Modules\Latency Remove\LatencyRemove.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Player Hide\PlayerHide.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Interface\Application\Modules\Movie Record\HLAE\Readme.txt" />

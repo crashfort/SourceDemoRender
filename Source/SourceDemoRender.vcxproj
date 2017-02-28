@@ -196,6 +196,7 @@
     <ClCompile Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\HLAE\Sampler.cpp" />
+    <ClCompile Include="Interface\Application\Modules\Player Hide\PlayerHide.cpp" />
     <ClCompile Include="Interface\PluginInterface.cpp" />
     <ClCompile Include="Main\Precompiled Header\PrecompiledHeader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
