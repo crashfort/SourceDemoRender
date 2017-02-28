@@ -8,8 +8,7 @@ To build this yourself you need to change the property sheet value named $(SDK20
 
 ### Commands
 
-- **sdr_outputdir** - Path where to save the finished frames. UTF8 names are not supported in Source. 
-- **sdr_outputname** - Prefix name of frames. UTF8 names are not supported in Source.
+- **sdr_outputdir** - Path where to save the finished frames. UTF8 names are not supported in Source.
 - **sdr_render_framerate** *(30 to 1000)* - Movie output framerate.
 - **sdr_render_exposure** *(0.0 to 1.0)* - 0 to 1 fraction of a frame that is exposed for blending. [Read more](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3Amirv_sample_exposure)
 - **sdr_render_samplespersecond** - Game framerate in samples. [Read more](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3Amirv_sample_sps)
