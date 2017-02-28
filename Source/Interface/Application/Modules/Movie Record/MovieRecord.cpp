@@ -108,7 +108,7 @@ namespace
 	(
 		"sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING, "Game framerate in samples"
 	);
-	
+
 	ConVar SDR_FrameStrength
 	(
 		"sdr_render_framestrength", "1.0", FCVAR_NEVER_AS_STRING,
@@ -116,7 +116,7 @@ namespace
 		"The lower the value the more cross-frame motion blur",
 		true, 0, true, 1
 	);
-	
+
 	ConVar SDR_SampleMethod
 	(
 		"sdr_render_samplemethod", "1", FCVAR_NEVER_AS_STRING,
@@ -398,7 +398,6 @@ namespace
 
 			Data passed to this is in BGR888 format
 		*/
-		template <typename T = void>
 		void __cdecl Override
 		(
 			void* info, bool jpeg, const char* filename, int width, int height, unsigned char* data
@@ -486,11 +485,11 @@ namespace
 			movie.CurrentFrame++;
 		}
 
-		using ThisFunction = decltype(Override<>)*;
+		using ThisFunction = decltype(Override)*;
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "VID_ProcessMovieFrame", Override<>, Pattern, Mask
+			"engine.dll", "VID_ProcessMovieFrame", Override, Pattern, Mask
 		};
 	}
 
@@ -525,7 +524,6 @@ namespace
 			The purpose of overriding this function completely is to prevent the constant image buffer
 			allocation that Valve does every movie frame. We just provide one buffer that gets reused.
 		*/
-		template <typename T = void>
 		void __fastcall Override
 		(
 			void* thisptr, void* edx, void* info
@@ -579,11 +577,11 @@ namespace
 			processframefunc(info, false, nullptr, width, height, buffer);
 		}
 
-		using ThisFunction = decltype(Override<>)*;
+		using ThisFunction = decltype(Override)*;
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "CVideoMode_WriteMovieFrame", Override<>, Pattern, Mask
+			"engine.dll", "CVideoMode_WriteMovieFrame", Override, Pattern, Mask
 		};
 	}
 }
