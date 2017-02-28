@@ -92,24 +92,49 @@ namespace
 
 namespace
 {
-	ConVar SDR_FrameRate("sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING, "Movie output framerate", true, 30, true, 1000);	
+	ConVar SDR_FrameRate
+	(
+		"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING, "Movie output framerate",
+		true, 30, true, 1000
+	);
 
-	ConVar SDR_Exposure("sdr_render_exposure", "1.0", FCVAR_NEVER_AS_STRING, "Frame exposure fraction", true, 0, true, 1);
-	ConVar SDR_SamplesPerSecond("sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING, "Game framerate in samples");
+	ConVar SDR_Exposure
+	(
+		"sdr_render_exposure", "1.0", FCVAR_NEVER_AS_STRING, "Frame exposure fraction",
+		true, 0, true, 1
+	);
+
+	ConVar SDR_SamplesPerSecond
+	(
+		"sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING, "Game framerate in samples"
+	);
 	
-	ConVar SDR_FrameStrength("sdr_render_framestrength", "1.0", FCVAR_NEVER_AS_STRING,
-									"Controls clearing of the sampling buffer upon framing. "
-									"The lower the value the more cross-frame motion blur",
-									true, 0, true, 1);
+	ConVar SDR_FrameStrength
+	(
+		"sdr_render_framestrength", "1.0", FCVAR_NEVER_AS_STRING,
+		"Controls clearing of the sampling buffer upon framing. "
+		"The lower the value the more cross-frame motion blur",
+		true, 0, true, 1
+	);
 	
-	ConVar SDR_SampleMethod("sdr_render_samplemethod", "1", FCVAR_NEVER_AS_STRING,
-								   "Selects the integral approximation method: "
-								   "0: 1 point, rectangle method, 1: 2 point, trapezoidal rule",
-								   true, 0, true, 1);
+	ConVar SDR_SampleMethod
+	(
+		"sdr_render_samplemethod", "1", FCVAR_NEVER_AS_STRING,
+		"Selects the integral approximation method: "
+		"0: 1 point, rectangle method, 1: 2 point, trapezoidal rule",
+		true, 0, true, 1
+	);
 
-	ConVar SDR_OutputDirectory("sdr_outputdir", "", 0, "Where to save the output frames. UTF8 names are not supported in Source");
+	ConVar SDR_OutputDirectory
+	(
+		"sdr_outputdir", "", 0, "Where to save the output frames. UTF8 names are not supported in Source"
+	);
 
-	ConVar SDR_FlashWindow("sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "Flash window when endmovie is called", true, 0, true, 1);
+	ConVar SDR_FlashWindow
+	(
+		"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "Flash window when endmovie is called",
+		true, 0, true, 1
+	);
 
 	void FrameBufferThreadHandler()
 	{
@@ -199,7 +224,12 @@ namespace
 		/*
 			0x100BCAC0 static IDA address May 22 2016
 		*/
-		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\xA1\x00\x00\x00\x00\xD9\x45\x18\x56\x57\xF3\x0F\x10\x40\x00");
+		auto Pattern = SDR_PATTERN
+		(
+			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\xA1\x00\x00"
+			"\x00\x00\xD9\x45\x18\x56\x57\xF3\x0F\x10\x40\x00"
+		);
+
 		auto Mask = "xxxxx????x????xxxxxxxxx?";
 
 		/*
@@ -244,10 +274,12 @@ namespace
 					return;
 				}
 			}
+
+			auto& movie = CurrentMovie;
 				
-			CurrentMovie.Width = width;
-			CurrentMovie.Height = height;
-			CurrentMovie.Name = filename;
+			movie.Width = width;
+			movie.Height = height;
+			movie.Name = filename;
 
 			ThisHook.GetOriginal()(filename, flags, width, height, framerate, jpegquality, unk);
 
@@ -290,15 +322,17 @@ namespace
 				movieframestrength
 			);
 
-			CurrentMovie.IsStarted = true;
+			using SDR::Sampler::EasyByteSampler;
+			auto size = movie.GetImageSizeInBytes();
 
-			CurrentMovie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>(settings, framepitch, &CurrentMovie);
+			movie.IsStarted = true;
 
-			CurrentMovie.EngineFrameHeapData = std::make_unique<MovieData::BufferType[]>(CurrentMovie.GetImageSizeInBytes());
+			movie.Sampler = std::make_unique<EasyByteSampler>(settings, framepitch, &movie);
+			movie.EngineFrameHeapData = std::make_unique<MovieData::BufferType[]>(size);
 
 			ShouldStopBufferThread = false;
 			ShouldPauseBufferThread = false;
-			CurrentMovie.FrameBufferThread = std::thread(FrameBufferThreadHandler);
+			movie.FrameBufferThread = std::thread(FrameBufferThreadHandler);
 		}
 
 		using ThisFunction = decltype(Override<>)*;
@@ -314,7 +348,12 @@ namespace
 		/*
 			0x100BAE40 static IDA address May 22 2016
 		*/
-		auto Pattern = SDR_PATTERN("\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00\x00\xD9\x05\x00\x00\x00\x00\x51\xB9\x00\x00\x00\x00");
+		auto Pattern = SDR_PATTERN
+		(
+			"\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00\x00"
+			"\xD9\x05\x00\x00\x00\x00\x51\xB9\x00\x00\x00\x00"
+		);
+
 		auto Mask = "xx?????xx????xx????xx????";
 
 		template <typename T = void>
@@ -347,7 +386,11 @@ namespace
 		/*
 			0x10201030 static IDA address May 22 2016
 		*/
-		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x83\xEC\x30\x8D\x4D\xD0\x6A\x00\x6A\x00\x6A\x00\xE8\x00\x00\x00\x00");
+		auto Pattern = SDR_PATTERN
+		(
+			"\x55\x8B\xEC\x83\xEC\x30\x8D\x4D\xD0\x6A\x00\x6A\x00\x6A\x00\xE8\x00\x00\x00\x00"
+		);
+
 		auto Mask = "xxxxxxxxxxxxxxxx????";
 
 		/*
@@ -402,7 +445,11 @@ namespace
 				static auto tgawriteraddr = SDR::GetAddressFromPattern
 				(
 					"engine.dll",
-					SDR_PATTERN("\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"),
+					SDR_PATTERN
+					(
+						"\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A"
+						"\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"
+					),
 					"xxxxxxxxxxxxxxxxxxxxxxxxxx????"
 				);
 
@@ -452,7 +499,12 @@ namespace
 		/*
 			0x102011B0 static IDA address June 3 2016
 		*/
-		auto Pattern = SDR_PATTERN("\x55\x8B\xEC\x51\x80\x3D\x00\x00\x00\x00\x00\x53\x8B\x5D\x08\x57\x8B\xF9\x8B\x83\x00\x00\x00\x00");
+		auto Pattern = SDR_PATTERN
+		(
+			"\x55\x8B\xEC\x51\x80\x3D\x00\x00\x00\x00\x00\x53"
+			"\x8B\x5D\x08\x57\x8B\xF9\x8B\x83\x00\x00\x00\x00"
+		);
+
 		auto Mask = "xxxxxx?????xxxxxxxxx????";
 
 		/*
@@ -462,8 +514,10 @@ namespace
 				CVideoMode_Common
 					IVideoMode
 
-			WriteMovieFrame belongs to CVideoMode_Common and ReadScreenPixels overriden by CVideoMode_MaterialSystem.
-			The global engine variable "videomode" is of type CVideoMode_MaterialSystem which is what called WriteMovieFrame.
+			WriteMovieFrame belongs to CVideoMode_Common and ReadScreenPixels overriden
+			by CVideoMode_MaterialSystem.
+			The global engine variable "videomode" is of type CVideoMode_MaterialSystem
+			which is what called WriteMovieFrame.
 			
 			For more usage see: VideoMode_Create (0x10201130) and VideoMode_Destroy (0x10201190)
 			Static IDA addresses June 3 2016
@@ -489,7 +543,11 @@ namespace
 			static auto readscreenpxaddr = SDR::GetAddressFromPattern
 			(
 				"engine.dll",
-				SDR_PATTERN("\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"),
+				SDR_PATTERN
+				(
+					"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
+					"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
+				),
 				"xxxxxxxx?????xx????xx????"
 			);
 

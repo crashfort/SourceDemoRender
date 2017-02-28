@@ -56,13 +56,25 @@ namespace SDR
 		}
 	};
 
-	void* GetAddressFromPattern(const ModuleInformation& library, const byte* pattern, const char* mask);
+	void* GetAddressFromPattern
+	(
+		const ModuleInformation& library,
+		const byte* pattern,
+		const char* mask
+	);
 
 	template <typename FuncSignature>
 	class HookModuleMask final : public HookModuleBase
 	{
 	public:
-		HookModuleMask(const char* module, const char* name, FuncSignature newfunction, const byte* pattern, const char* mask) :
+		HookModuleMask
+		(
+			const char* module,
+			const char* name,
+			FuncSignature newfunction,
+			const byte* pattern,
+			const char* mask
+		) :
 			HookModuleBase(module, name, newfunction),
 			Pattern(pattern),
 			Mask(mask)
@@ -92,7 +104,13 @@ namespace SDR
 	class HookModuleStaticAddress final : public HookModuleBase
 	{
 	public:
-		HookModuleStaticAddress(const char* module, const char* name, FuncSignature newfunction, uintptr_t address) :
+		HookModuleStaticAddress
+		(
+			const char* module,
+			const char* name,
+			FuncSignature newfunction,
+			uintptr_t address
+		) :
 			HookModuleBase(module, name, newfunction),
 			Address(address)
 		{

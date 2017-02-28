@@ -6,7 +6,12 @@ namespace
 	class SourceDemoRenderPlugin final : public IServerPluginCallbacks
 	{
 	public:
-		virtual bool Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) override;
+		virtual bool Load
+		(
+			CreateInterfaceFn interfacefactory,
+			CreateInterfaceFn gameserverfactory
+		) override;
+
 		virtual void Unload() override;
 
 		virtual void Pause() override {}
@@ -19,7 +24,10 @@ namespace
 
 		virtual void LevelInit(char const* mapname) override {}
 
-		virtual void ServerActivate(edict_t* edictlist, int edictcount, int maxclients) override {}
+		virtual void ServerActivate
+		(
+			edict_t* edictlist, int edictcount, int maxclients
+		) override {}
 
 		virtual void GameFrame(bool simulating) override {}
 
@@ -27,37 +35,56 @@ namespace
 
 		virtual void ClientActive(edict_t* entity) override {}
 		virtual void ClientDisconnect(edict_t* entity) override {}
-		virtual void ClientPutInServer(edict_t* entity, char const* playername) override {}
+		
+		virtual void ClientPutInServer
+		(
+			edict_t* entity,
+			char const* playername
+		) override {}
 
 		virtual void SetCommandClient(int index) override {}
 
 		virtual void ClientSettingsChanged(edict_t* entity) override {}
 
-		virtual PLUGIN_RESULT ClientConnect(bool* allowconnect,
-											edict_t* entity,
-											const char* name,
-											const char* address,
-											char* rejectreason,
-											int maxrejectlen) override
+		virtual PLUGIN_RESULT ClientConnect
+		(
+			bool* allowconnect,
+			edict_t* entity,
+			const char* name,
+			const char* address,
+			char* rejectreason,
+			int maxrejectlen
+		) override
 		{
 			return PLUGIN_CONTINUE;
 		}
 
-		virtual PLUGIN_RESULT ClientCommand(edict_t* entity, const CCommand& args) override
+		virtual PLUGIN_RESULT ClientCommand
+		(
+			edict_t* entity,
+			const CCommand& args
+		) override
 		{
 			return PLUGIN_CONTINUE;
 		}
 
-		virtual PLUGIN_RESULT NetworkIDValidated(const char* username, const char* networkid) override
+		virtual PLUGIN_RESULT NetworkIDValidated
+		(
+			const char* username,
+			const char* networkid
+		) override
 		{
 			return PLUGIN_CONTINUE;
 		}
 
-		virtual void OnQueryCvarValueFinished(QueryCvarCookie_t cookie,
-											  edict_t* playerentity,
-											  EQueryCvarValueStatus status,
-											  const char *cvarname,
-											  const char *cvarvalue) override
+		virtual void OnQueryCvarValueFinished
+		(
+			QueryCvarCookie_t cookie,
+			edict_t* playerentity,
+			EQueryCvarValueStatus status,
+			const char *cvarname,
+			const char *cvarvalue
+		) override
 		{
 
 		}
@@ -78,7 +105,11 @@ namespace
 			
 		}
 
-		virtual bool Create(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) = 0;
+		virtual bool Create
+		(
+			CreateInterfaceFn interfacefactory,
+			CreateInterfaceFn gameserverfactory
+		) = 0;
 
 		const char* GetInterfaceName() const
 		{
@@ -100,7 +131,11 @@ namespace
 			
 		}
 
-		virtual bool Create(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) override
+		virtual bool Create
+		(
+			CreateInterfaceFn interfacefactory,
+			CreateInterfaceFn gameserverfactory
+		) override
 		{
 			*TargetInterface = static_cast<T*>(interfacefactory(InterfaceName, nullptr));
 
@@ -122,7 +157,11 @@ namespace
 			
 		}
 
-		virtual bool Create(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) override
+		virtual bool Create
+		(
+			CreateInterfaceFn interfacefactory,
+			CreateInterfaceFn gameserverfactory
+		) override
 		{
 			*TargetInterface = static_cast<T*>(gameserverfactory(InterfaceName, nullptr));
 
@@ -133,15 +172,33 @@ namespace
 		T** TargetInterface;
 	};
 
-	bool SourceDemoRenderPlugin::Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory)
+	bool SourceDemoRenderPlugin::Load
+	(
+		CreateInterfaceFn interfacefactory,
+		CreateInterfaceFn gameserverfactory
+	)
 	{
 		ConnectTier1Libraries(&interfacefactory, 1);
 		ConnectTier2Libraries(&interfacefactory, 1);
 		ConVar_Register();
 
-		ServerFactoryLocal<IPlayerInfoManager> T1(&Interfaces.PlayerInfoManager, INTERFACEVERSION_PLAYERINFOMANAGER);
-		InterfaceFactoryLocal<IVEngineClient> T2(&Interfaces.EngineClient, VENGINE_CLIENT_INTERFACE_VERSION);
-		InterfaceFactoryLocal<IFileSystem> T3(&Interfaces.FileSystem, FILESYSTEM_INTERFACE_VERSION);
+		ServerFactoryLocal<IPlayerInfoManager> T1
+		(
+			&Interfaces.PlayerInfoManager,
+			INTERFACEVERSION_PLAYERINFOMANAGER
+		);
+
+		InterfaceFactoryLocal<IVEngineClient> T2
+		(
+			&Interfaces.EngineClient,
+			VENGINE_CLIENT_INTERFACE_VERSION
+		);
+
+		InterfaceFactoryLocal<IFileSystem> T3
+		(
+			&Interfaces.FileSystem,
+			FILESYSTEM_INTERFACE_VERSION
+		);
 
 		std::initializer_list<InterfaceBase*> list =
 		{
