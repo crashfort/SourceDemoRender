@@ -21,6 +21,8 @@ namespace
 	{
 		bool IsStarted = false;
 
+		std::string Name;
+
 		uint32_t Width;
 		uint32_t Height;
 
@@ -106,7 +108,6 @@ namespace
 								   true, 0, true, 1);
 
 	ConVar SDR_OutputDirectory("sdr_outputdir", "", 0, "Where to save the output frames. UTF8 names are not supported in Source");
-	ConVar SDR_OutputName("sdr_outputname", "", 0, "Prefix name of frames. UTF8 names are not supported in Source");
 
 	ConVar SDR_FlashWindow("sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "Flash window when endmovie is called", true, 0, true, 1);
 
@@ -127,7 +128,7 @@ namespace
 				auto& cur = buffer.front();
 
 				CUtlString frameformat;
-				frameformat.Format("%s_%05d.tga", SDR_OutputName.GetString(), CurrentMovie.FinishedFrames);
+				frameformat.Format("%s_%05d.tga", CurrentMovie.Name.c_str(), CurrentMovie.FinishedFrames);
 
 				auto targetpath = SDR_OutputDirectory.GetString();
 				auto filenameformat = CUtlString::PathJoin(targetpath, frameformat.Get());
@@ -246,6 +247,7 @@ namespace
 				
 			CurrentMovie.Width = width;
 			CurrentMovie.Height = height;
+			CurrentMovie.Name = filename;
 
 			ThisHook.GetOriginal()(filename, flags, width, height, framerate, jpegquality, unk);
 
