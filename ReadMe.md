@@ -4,7 +4,7 @@ Tool to create movies for Source 2013 games. To install you place SourceDemoRend
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
-To build this yourself you need to change the property sheet value named $(SDK2013Root) to where Source SDK 2013 is located.
+To build this yourself you need to change the property sheet value named $(SDR_2013SDK_ROOT) to where Source SDK 2013 is located.
 
 ### Commands
 
