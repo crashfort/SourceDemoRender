@@ -227,6 +227,8 @@ namespace
 			return false;
 		}
 
+		avcodec_register_all();
+
 		Msg("SDR: Source Demo Render loaded\n");
 
 		return true;

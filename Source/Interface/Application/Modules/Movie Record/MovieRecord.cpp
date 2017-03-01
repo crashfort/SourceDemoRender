@@ -17,8 +17,45 @@
 
 namespace
 {
+	namespace AVC
+	{
+		struct CodecContext
+		{
+			void Assign(AVCodec* codec)
+			{
+				Free();
+				Context = avcodec_alloc_context3(codec);
+			}
+
+			void Free()
+			{
+				if (Context)
+				{
+					avcodec_free_context(&Context);
+				}
+			}
+
+			~CodecContext()
+			{
+				Free();
+			}
+
+			AVCodecContext* Context = nullptr;
+		};
+	}
+
 	struct MovieData : public SDR::Sampler::IFramePrinter
 	{
+		enum class MovieRenderType
+		{
+			ImageSequence,
+			VideoStream,
+		};
+
+		MovieRenderType RenderType;
+
+		AVC::CodecContext VideoEncoderContext;
+
 		bool IsStarted = false;
 
 		std::string Name;
@@ -137,6 +174,45 @@ namespace
 			"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "Flash window when endmovie is called",
 			true, 0, true, 1
 		);
+
+		ConVar RenderType
+		(
+			"sdr_rendertype", "video", 0, "Whether to use image sequence (sequence) or video stream (video)"
+		);
+
+		namespace Video
+		{
+			ConVar Encoder
+			(
+				"sdr_video_encoder", "rawvideo", 0, "Video encoder to use, see sdr_video_listencoders"
+			);
+		}
+	}
+
+	namespace Commands
+	{
+		CON_COMMAND_EXTERN(sdr_video_listencoders, SDR_ListEncoders, "List available video encoders")
+		{
+			Msg("-----------------\n");
+
+			auto ptr = av_codec_next(nullptr);
+
+			uint32_t count = 0;
+
+			while (ptr)
+			{
+				if (av_codec_is_encoder(ptr) && ptr->type == AVMEDIA_TYPE_VIDEO)
+				{
+					++count;
+					Msg("[%u] %s (%s)\n", count, ptr->name, ptr->long_name);
+				}
+
+				ptr = av_codec_next(ptr);
+			}
+
+			Msg("-----------------\n%u encoders found\n", count);
+			Msg("First part is the encoder name to use. Text in parentheses is only a description.");
+		}
 	}
 
 	void FrameBufferThreadHandler()
@@ -144,6 +220,8 @@ namespace
 		auto& interfaces = SDR::GetEngineInterfaces();
 		auto& movie = CurrentMovie;
 		auto& buffer = movie.FramesToWriteBuffer;
+
+		auto rendertype = movie.RenderType;
 
 		while (!ShouldStopBufferThread)
 		{
@@ -155,16 +233,31 @@ namespace
 				}
 
 				auto& cur = buffer.front();
+				bool res = false;
 
-				CUtlString frameformat;
-				frameformat.Format("%s_%05d.tga", movie.Name.c_str(), movie.FinishedFrames);
+				switch (rendertype)
+				{
+					case MovieData::MovieRenderType::ImageSequence:
+					{
+						CUtlString frameformat;
+						frameformat.Format("%s_%05d.tga", movie.Name.c_str(), movie.FinishedFrames);
 
-				auto targetpath = Variables::OutputDirectory.GetString();
-				auto filenameformat = CUtlString::PathJoin(targetpath, frameformat.Get());
+						auto targetpath = Variables::OutputDirectory.GetString();
+						auto filenameformat = CUtlString::PathJoin(targetpath, frameformat.Get());
 
-				auto finalname = filenameformat.Get();
+						auto finalname = filenameformat.Get();
 
-				auto res = interfaces.FileSystem->WriteFile(finalname, targetpath, cur);
+						res = interfaces.FileSystem->WriteFile(finalname, targetpath, cur);
+
+						break;
+					}
+
+					case MovieData::MovieRenderType::VideoStream:
+					{
+
+						break;
+					}
+				}
 
 				/*
 					Should probably handle this or something
@@ -284,6 +377,45 @@ namespace
 			movie.Width = width;
 			movie.Height = height;
 			movie.Name = filename;
+
+			{
+				auto& type = movie.RenderType;
+				auto typestr = Variables::RenderType.GetString();
+
+				if (strcmp(typestr, "video") == 0)
+				{
+					type = MovieData::MovieRenderType::VideoStream;
+				}
+
+				else if (strcmp(typestr, "sequence") == 0)
+				{
+					type = MovieData::MovieRenderType::ImageSequence;
+				}
+
+				else
+				{
+					Warning
+					(
+						R"(SDR: Unknown render type specified, use "video" or "sequence" - using video)"
+						"\n"
+					);
+					
+					type = MovieData::MovieRenderType::VideoStream;
+				}
+
+				if (type == MovieData::MovieRenderType::VideoStream)
+				{
+					auto encoder = avcodec_find_encoder_by_name(typestr);
+
+					if (!encoder)
+					{
+						Warning(R"(SDR: Encoder "%s" not found, using rawvideo)" "\n", typestr);
+						encoder = avcodec_find_encoder(AVCodecID::AV_CODEC_ID_RAWVIDEO);
+					}
+
+					movie.VideoEncoderContext.Assign(encoder);
+				}
+			}
 
 			ThisHook.GetOriginal()(filename, flags, width, height, framerate, jpegquality, unk);
 
