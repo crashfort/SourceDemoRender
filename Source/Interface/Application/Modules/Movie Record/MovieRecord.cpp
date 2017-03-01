@@ -285,34 +285,36 @@ namespace
 		auto Pattern = SDR_PATTERN("");
 		auto Mask = "";
 
-		template <typename T = void>
-		void __cdecl Override()
-		{
-			
-		}
+		void __cdecl Override();
 
-		using ThisFunction = decltype(Override<>)*;
+		using ThisFunction = decltype(Override)*;
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"", "", Override<>, Pattern, Mask
+			"", "", Override, Pattern, Mask
 		};
+
+		void __cdecl Override()
+		{
+
+		}
 	}
 
 	namespace Module_BaseTemplateStatic
 	{
-		template <typename T = void>
+		void __cdecl Override();
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleStaticAddress<ThisFunction> ThisHook
+		{
+			"", "", Override, 0x00000000
+		};
+
 		void __cdecl Override()
 		{
 
 		}
-
-		using ThisFunction = decltype(Override<>)*;
-
-		SDR::HookModuleStaticAddress<ThisFunction> ThisHook
-		{
-			"", "", Override<>, 0x00000000
-		};
 	}
 	#endif
 
@@ -329,10 +331,21 @@ namespace
 
 		auto Mask = "xxxxx????x????xxxxxxxxx?";
 
+		void __cdecl Override
+		(
+			const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "CL_StartMovie", Override, Pattern, Mask
+		};
+
 		/*
 			The 7th parameter (unk) was been added in Source 2013, it's not there in Source 2007
 		*/
-		template <typename T = void>
 		void __cdecl Override
 		(
 			const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk
@@ -470,13 +483,6 @@ namespace
 			ShouldPauseBufferThread = false;
 			movie.FrameBufferThread = std::thread(FrameBufferThreadHandler);
 		}
-
-		using ThisFunction = decltype(Override<>)*;
-
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "CL_StartMovie", Override<>, Pattern, Mask
-		};
 	}
 
 	namespace Module_CL_EndMovie
@@ -492,7 +498,15 @@ namespace
 
 		auto Mask = "xx?????xx????xx????xx????";
 
-		template <typename T = void>
+		void __cdecl Override();
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "CL_EndMovie", Override, Pattern, Mask
+		};
+
 		void __cdecl Override()
 		{
 			SDR_MovieShutdown();
@@ -508,13 +522,6 @@ namespace
 				interfaces.EngineClient->FlashWindow();
 			}
 		}
-
-		using ThisFunction = decltype(Override<>)*;
-
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "CL_EndMovie", Override<>, Pattern, Mask
-		};
 	}
 
 	namespace Module_VID_ProcessMovieFrame

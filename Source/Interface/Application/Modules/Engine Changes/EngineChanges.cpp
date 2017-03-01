@@ -22,10 +22,18 @@ namespace
 
 		auto Mask = "xx?????xxxx????xxxxxxx";
 
+		void __cdecl Override();
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "VGUI_ActivateMouse", Override, Pattern, Mask
+		};
+
 		/*
 			This is needed because it's responsible for locking the mouse inside the window
 		*/
-		template <typename T = void>
 		void __cdecl Override()
 		{
 			if (!EngineFocusData.IsUnfocused)
@@ -33,13 +41,6 @@ namespace
 				ThisHook.GetOriginal()();
 			}
 		}
-
-		using ThisFunction = decltype(Override<>)*;
-
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "VGUI_ActivateMouse", Override<>, Pattern, Mask
-		};
 	}
 
 	namespace Module_AppActivate
@@ -64,9 +65,21 @@ namespace
 			"\x55\x8B\xEC\x8B\x45\x08\x83\x78\x08\x00\x0F\x95\xC0"
 			"\x0F\xB6\xC0\x89\x45\x08\x5D\xE9\x00\x00\x00\x00"
 		);
+
 		auto Mask = "xxxxxxxxxxxxxxxxxxxxx????";
 
-		template <typename T = void>
+		void __fastcall Override
+		(
+			void* thisptr, void* edx, const InputEvent_t& event
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "CGame_AppActivate", Override, Pattern, Mask
+		};
+
 		void __fastcall Override
 		(
 			void* thisptr, void* edx, const InputEvent_t& event
@@ -101,12 +114,5 @@ namespace
 				ThisHook.GetOriginal()(thisptr, edx, event);
 			}
 		}
-
-		using ThisFunction = decltype(Override<>)*;
-
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "CGame_AppActivate", Override<>, Pattern, Mask
-		};
 	}
 }
