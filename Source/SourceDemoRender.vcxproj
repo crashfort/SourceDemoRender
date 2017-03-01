@@ -97,6 +97,7 @@
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -127,6 +128,7 @@
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
