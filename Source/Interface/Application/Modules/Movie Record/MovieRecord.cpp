@@ -9,14 +9,14 @@
 #undef min
 #undef max
 
+#ifdef _DEBUG
+#define SDR_DebugMsg Msg
+#else
+#define SDR_DebugMsg
+#endif
+
 namespace
 {
-	#ifdef _DEBUG
-	#define SDR_DebugMsg Msg
-	#else
-	#define SDR_DebugMsg
-	#endif
-
 	struct MovieData : public SDR::Sampler::IFramePrinter
 	{
 		bool IsStarted = false;
@@ -94,24 +94,24 @@ namespace
 {
 	namespace Variables
 	{
-		ConVar SDR_FrameRate
+		ConVar FrameRate
 		(
 			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING, "Movie output framerate",
 			true, 30, true, 1000
 		);
 
-		ConVar SDR_Exposure
+		ConVar Exposure
 		(
 			"sdr_render_exposure", "1.0", FCVAR_NEVER_AS_STRING, "Frame exposure fraction",
 			true, 0, true, 1
 		);
 
-		ConVar SDR_SamplesPerSecond
+		ConVar SamplesPerSecond
 		(
 			"sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING, "Game framerate in samples"
 		);
 
-		ConVar SDR_FrameStrength
+		ConVar FrameStrength
 		(
 			"sdr_render_framestrength", "1.0", FCVAR_NEVER_AS_STRING,
 			"Controls clearing of the sampling buffer upon framing. "
@@ -119,7 +119,7 @@ namespace
 			true, 0, true, 1
 		);
 
-		ConVar SDR_SampleMethod
+		ConVar SampleMethod
 		(
 			"sdr_render_samplemethod", "1", FCVAR_NEVER_AS_STRING,
 			"Selects the integral approximation method: "
@@ -127,27 +127,23 @@ namespace
 			true, 0, true, 1
 		);
 
-		ConVar SDR_OutputDirectory
+		ConVar OutputDirectory
 		(
 			"sdr_outputdir", "", 0, "Where to save the output frames. UTF8 names are not supported in Source"
 		);
 
-		ConVar SDR_FlashWindow
+		ConVar FlashWindow
 		(
 			"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "Flash window when endmovie is called",
 			true, 0, true, 1
-		);
-
-		ConVar SDR_RenderType
-		(
-			"sdr_rendertype", "avi", 0, "Whether to use image sequence (sequence) or avi stream (avi)"
 		);
 	}
 
 	void FrameBufferThreadHandler()
 	{
 		auto& interfaces = SDR::GetEngineInterfaces();
-		auto& buffer = CurrentMovie.FramesToWriteBuffer;
+		auto& movie = CurrentMovie;
+		auto& buffer = movie.FramesToWriteBuffer;
 
 		while (!ShouldStopBufferThread)
 		{
@@ -161,9 +157,9 @@ namespace
 				auto& cur = buffer.front();
 
 				CUtlString frameformat;
-				frameformat.Format("%s_%05d.tga", CurrentMovie.Name.c_str(), CurrentMovie.FinishedFrames);
+				frameformat.Format("%s_%05d.tga", movie.Name.c_str(), movie.FinishedFrames);
 
-				auto targetpath = Variables::SDR_OutputDirectory.GetString();
+				auto targetpath = Variables::OutputDirectory.GetString();
 				auto filenameformat = CUtlString::PathJoin(targetpath, frameformat.Get());
 
 				auto finalname = filenameformat.Get();
@@ -180,7 +176,7 @@ namespace
 
 				else
 				{
-					CurrentMovie.FinishedFrames++;
+					movie.FinishedFrames++;
 				}
 
 				buffer.pop_front();
@@ -249,7 +245,7 @@ namespace
 			const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk
 		)
 		{
-			auto sdrpath = Variables::SDR_OutputDirectory.GetString();
+			auto sdrpath = Variables::OutputDirectory.GetString();
 
 			auto res = SHCreateDirectoryExA(nullptr, sdrpath, nullptr);
 
@@ -295,17 +291,17 @@ namespace
 				The original function sets host_framerate to 30 so we override it
 			*/
 			auto hostframerate = g_pCVar->FindVar("host_framerate");
-			hostframerate->SetValue(Variables::SDR_SamplesPerSecond.GetInt());
+			hostframerate->SetValue(Variables::SamplesPerSecond.GetInt());
 
 			auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
-			auto movieframeratems = 1.0 / static_cast<double>(Variables::SDR_FrameRate.GetInt());
-			auto moviexposure = Variables::SDR_Exposure.GetFloat();
-			auto movieframestrength = Variables::SDR_FrameStrength.GetFloat();
+			auto movieframeratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
+			auto moviexposure = Variables::Exposure.GetFloat();
+			auto movieframestrength = Variables::FrameStrength.GetFloat();
 				
 			using SampleMethod = SDR::Sampler::EasySamplerSettings::Method;
 			SampleMethod moviemethod;
 				
-			switch (Variables::SDR_SampleMethod.GetInt())
+			switch (Variables::SampleMethod.GetInt())
 			{
 				case 0:
 				{
@@ -374,7 +370,7 @@ namespace
 			auto hostframerate = g_pCVar->FindVar("host_framerate");
 			hostframerate->SetValue(0);
 
-			if (Variables::SDR_FlashWindow.GetBool())
+			if (Variables::FlashWindow.GetBool())
 			{
 				auto& interfaces = SDR::GetEngineInterfaces();
 				interfaces.EngineClient->FlashWindow();
@@ -415,7 +411,7 @@ namespace
 
 			SDR_DebugMsg("SDR: Frame %d (%d)\n", movie.CurrentFrame, movie.FinishedFrames);
 
-			auto sampleframerate = 1.0 / static_cast<double>(Variables::SDR_SamplesPerSecond.GetInt());
+			auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
 			auto& time = movie.SamplingTime;
 
 			if (movie.Sampler->CanSkipConstant(time, sampleframerate))
