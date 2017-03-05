@@ -3,16 +3,12 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
     <SDR_2013SDK_ROOT>C:\VS\Source SDK 2013\Source\</SDR_2013SDK_ROOT>
-    <SDR_FFMPEG_ROOT>C:\VS\3rd Party Libs\FFmpeg\</SDR_FFMPEG_ROOT>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
   <ItemGroup>
     <BuildMacro Include="SDR_2013SDK_ROOT">
       <Value>$(SDR_2013SDK_ROOT)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_FFMPEG_ROOT">
-      <Value>$(SDR_FFMPEG_ROOT)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

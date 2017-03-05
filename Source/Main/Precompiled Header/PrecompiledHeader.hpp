@@ -30,11 +30,6 @@ using namespace std::chrono_literals;
 #include "utlbuffer.h"
 #include "filesystem.h"
 
-extern "C"
-{
-	#include "libavcodec\avcodec.h"
-}
-
 namespace SDR
 {
 	struct EngineInterfaces

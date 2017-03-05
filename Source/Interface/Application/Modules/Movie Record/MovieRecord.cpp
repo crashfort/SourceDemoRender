@@ -17,32 +17,21 @@
 
 namespace
 {
-	namespace AVC
+	struct ImageSequenceData
 	{
-		struct CodecContext
+		enum class ImageFormatType
 		{
-			void Assign(AVCodec* codec)
-			{
-				Free();
-				Context = avcodec_alloc_context3(codec);
-			}
-
-			void Free()
-			{
-				if (Context)
-				{
-					avcodec_free_context(&Context);
-				}
-			}
-
-			~CodecContext()
-			{
-				Free();
-			}
-
-			AVCodecContext* Context = nullptr;
+			TGA,
+			PNG,
 		};
-	}
+
+		ImageFormatType FormatType = ImageFormatType::TGA;
+	};
+
+	struct VideoStreamData
+	{
+		
+	};
 
 	struct MovieData : public SDR::Sampler::IFramePrinter
 	{
@@ -54,7 +43,8 @@ namespace
 
 		MovieRenderType RenderType;
 
-		AVC::CodecContext VideoEncoderContext;
+		std::unique_ptr<ImageSequenceData> ImageSequence;
+		std::unique_ptr<VideoStreamData> VideoStream;
 
 		bool IsStarted = false;
 
@@ -189,32 +179,6 @@ namespace
 		}
 	}
 
-	namespace Commands
-	{
-		CON_COMMAND_EXTERN(sdr_video_listencoders, SDR_ListEncoders, "List available video encoders")
-		{
-			Msg("-----------------\n");
-
-			auto ptr = av_codec_next(nullptr);
-
-			uint32_t count = 0;
-
-			while (ptr)
-			{
-				if (av_codec_is_encoder(ptr) && ptr->type == AVMEDIA_TYPE_VIDEO)
-				{
-					++count;
-					Msg("[%u] %s (%s)\n", count, ptr->name, ptr->long_name);
-				}
-
-				ptr = av_codec_next(ptr);
-			}
-
-			Msg("-----------------\n%u encoders found\n", count);
-			Msg("First part is the encoder name to use. Text in parentheses is only a description.");
-		}
-	}
-
 	void FrameBufferThreadHandler()
 	{
 		auto& interfaces = SDR::GetEngineInterfaces();
@@ -254,6 +218,7 @@ namespace
 
 					case MovieData::MovieRenderType::VideoStream:
 					{
+						
 
 						break;
 					}
@@ -398,11 +363,15 @@ namespace
 				if (strcmp(typestr, "video") == 0)
 				{
 					type = MovieData::MovieRenderType::VideoStream;
+
+					movie.VideoStream = std::make_unique<VideoStreamData>();
 				}
 
 				else if (strcmp(typestr, "sequence") == 0)
 				{
 					type = MovieData::MovieRenderType::ImageSequence;
+
+					movie.ImageSequence = std::make_unique<ImageSequenceData>();
 				}
 
 				else
@@ -418,15 +387,10 @@ namespace
 
 				if (type == MovieData::MovieRenderType::VideoStream)
 				{
-					auto encoder = avcodec_find_encoder_by_name(typestr);
+					
 
-					if (!encoder)
-					{
-						Warning(R"(SDR: Encoder "%s" not found, using rawvideo)" "\n", typestr);
-						encoder = avcodec_find_encoder(AVCodecID::AV_CODEC_ID_RAWVIDEO);
-					}
-
-					movie.VideoEncoderContext.Assign(encoder);
+					int a = 5;
+					a = a;
 				}
 			}
 
@@ -509,6 +473,12 @@ namespace
 
 		void __cdecl Override()
 		{
+			if (CurrentMovie.RenderType == MovieData::MovieRenderType::VideoStream)
+			{
+				int a = 5;
+				a = a;
+			}
+
 			SDR_MovieShutdown();
 
 			ThisHook.GetOriginal()();
@@ -578,47 +548,63 @@ namespace
 				/*
 					A new empty buffer
 				*/
-				CurrentMovie.FramesToWriteBuffer.emplace_back();
-				auto& newbuf = CurrentMovie.FramesToWriteBuffer.back();
+				movie.FramesToWriteBuffer.emplace_back();
+				auto& newbuf = movie.FramesToWriteBuffer.back();
 
-				/*
-					0x1022AD50 static IDA address June 4 2016
-				*/
-				static auto tgawriteraddr = SDR::GetAddressFromPattern
-				(
-					"engine.dll",
-					SDR_PATTERN
-					(
-						"\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A"
-						"\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"
-					),
-					"xxxxxxxxxxxxxxxxxxxxxxxxxx????"
-				);
+				auto type = movie.RenderType;
 
-				using TGAWriterType = bool(__cdecl*)
-				(
-					unsigned char* data,
-					CUtlBuffer& buffer,
-					int width,
-					int height,
-					int srcformat,
-					int dstformat
-				);
-
-				static auto tgawriterfunc = static_cast<TGAWriterType>(tgawriteraddr);
-
-				/*
-					3 = IMAGE_FORMAT_BGR888
-					2 = IMAGE_FORMAT_RGB888
-				*/
-				auto res = tgawriterfunc(movie.ActiveFrame, newbuf, width, height, 3, 2);
-
-				/*
-					Should probably handle this or something
-				*/
-				if (!res)
+				switch (type)
 				{
-					Warning("SDR: Could not create TGA image\n");
+					case MovieData::MovieRenderType::ImageSequence:
+					{
+						/*
+							0x1022AD50 static IDA address June 4 2016
+						*/
+						static auto tgawriteraddr = SDR::GetAddressFromPattern
+						(
+							"engine.dll",
+							SDR_PATTERN
+							(
+								"\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A"
+								"\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"
+							),
+							"xxxxxxxxxxxxxxxxxxxxxxxxxx????"
+						);
+
+						using TGAWriterType = bool(__cdecl*)
+						(
+							unsigned char* data,
+							CUtlBuffer& buffer,
+							int width,
+							int height,
+							int srcformat,
+							int dstformat
+						);
+
+						static auto tgawriterfunc = static_cast<TGAWriterType>(tgawriteraddr);
+
+						/*
+							3 = IMAGE_FORMAT_BGR888
+							2 = IMAGE_FORMAT_RGB888
+						*/
+						auto res = tgawriterfunc(movie.ActiveFrame, newbuf, width, height, 3, 2);
+
+						/*
+							Should probably handle this or something
+						*/
+						if (!res)
+						{
+							Warning("SDR: Could not create TGA image\n");
+						}
+
+						break;
+					}
+
+					case MovieData::MovieRenderType::VideoStream:
+					{
+						newbuf.CopyBuffer(data, movie.GetImageSizeInBytes());
+						break;
+					}
 				}
 					
 				ShouldPauseBufferThread = false;
