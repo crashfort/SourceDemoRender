@@ -14,12 +14,6 @@ extern "C"
 	#include "libswscale\swscale.h"
 }
 
-#ifdef _DEBUG
-#define SDR_DebugMsg Msg
-#else
-#define SDR_DebugMsg
-#endif
-
 namespace
 {
 	namespace LAV
@@ -1000,7 +994,9 @@ namespace
 		{
 			auto& movie = CurrentMovie;
 
-			SDR_DebugMsg("SDR: Frame %d (%d)\n", movie.CurrentFrame, movie.FinishedFrames);
+			#ifdef _DEBUG
+			Msg("SDR: Frame %d (%d)\n", movie.CurrentFrame, movie.FinishedFrames);
+			#endif
 
 			auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
 			auto& time = movie.SamplingTime;
