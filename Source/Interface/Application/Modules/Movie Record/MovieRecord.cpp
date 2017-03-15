@@ -14,6 +14,8 @@ extern "C"
 	#include "libswscale\swscale.h"
 }
 
+#include "readerwriterqueue.h"
+
 namespace
 {
 	namespace LAV
@@ -443,18 +445,20 @@ namespace
 
 		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
 
-		std::unique_ptr<BufferType[]> EngineFrameHeapData;
+		struct FutureSampleData
+		{
+			double Time;
+			std::vector<BufferType> Data;
+		};
 
-		std::deque<CUtlBuffer> FramesToWriteBuffer;
+		std::unique_ptr<moodycamel::ReaderWriterQueue<FutureSampleData>> FramesToSampleBuffer;
 		std::thread FrameBufferThread;
 
 		virtual void Print(BufferType* data) override;
 	};
 
 	MovieData CurrentMovie;
-
 	std::atomic_bool ShouldStopBufferThread = false;
-	std::atomic_bool ShouldPauseBufferThread = false;
 
 	void SDR_MovieShutdown()
 	{
@@ -467,8 +471,9 @@ namespace
 		{
 			ShouldStopBufferThread = true;
 			CurrentMovie.FrameBufferThread.join();
-			CurrentMovie = MovieData();
 		}
+
+		CurrentMovie = MovieData();
 	}
 
 	/*
@@ -486,17 +491,9 @@ namespace
 			write them out in another thread.
 		*/
 
-		ShouldPauseBufferThread = true;
-
-		/*
-			A new empty buffer
-		*/
-		FramesToWriteBuffer.emplace_back();
-		auto& newbuf = FramesToWriteBuffer.back();
-
-		newbuf.CopyBuffer(data, GetImageSizeInBytes());
-
-		ShouldPauseBufferThread = false;
+		Video->SetRGB24Input(data, Width, Height);
+		Video->SendRawFrame();
+		FinishedFrames++;
 	}
 }
 
@@ -579,47 +576,30 @@ namespace
 	{
 		auto& interfaces = SDR::GetEngineInterfaces();
 		auto& movie = CurrentMovie;
-		auto& buffer = movie.FramesToWriteBuffer;
+		auto& nonreadyframes = movie.FramesToSampleBuffer;
+
+		auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
+
+		MovieData::FutureSampleData sample;
+		sample.Data.reserve(movie.GetImageSizeInBytes());
 
 		while (!ShouldStopBufferThread)
 		{
-			while (!buffer.empty())
+			while (nonreadyframes->try_dequeue(sample))
 			{
-				while (ShouldPauseBufferThread)
+				auto time = sample.Time;
+
+				if (movie.Sampler->CanSkipConstant(time, sampleframerate))
 				{
-					std::this_thread::sleep_for(1ms);
-				}
-
-				auto& front = buffer.front();
-				int res = false;
-
-				{
-					auto vidwriter = movie.Video.get();
-					auto start = static_cast<uint8_t*>(front.Base());
-
-					vidwriter->SetRGB24Input(start, movie.Width, movie.Height);
-					vidwriter->SendRawFrame();
-
-					res = true;
-				}
-
-				/*
-					Should probably handle this or something
-				*/
-				if (!res)
-				{
-					Warning("SDR: Could not write movie frame\n");
+					movie.Sampler->Sample(nullptr, time);
 				}
 
 				else
 				{
-					movie.FinishedFrames++;
+					auto data = sample.Data.data();
+					movie.Sampler->Sample(data, time);
 				}
-
-				buffer.pop_front();
 			}
-
-			std::this_thread::sleep_for(500ms);
 		}
 	}
 
@@ -906,10 +886,10 @@ namespace
 			movie.IsStarted = true;
 
 			movie.Sampler = std::make_unique<EasyByteSampler>(settings, framepitch, &movie);
-			movie.EngineFrameHeapData = std::make_unique<MovieData::BufferType[]>(size);
+
+			movie.FramesToSampleBuffer = std::make_unique<moodycamel::ReaderWriterQueue<MovieData::FutureSampleData>>();
 
 			ShouldStopBufferThread = false;
-			ShouldPauseBufferThread = false;
 			movie.FrameBufferThread = std::thread(FrameBufferThreadHandler);
 		}
 	}
@@ -938,6 +918,12 @@ namespace
 
 		void __cdecl Override()
 		{
+			if (!ShouldStopBufferThread)
+			{
+				ShouldStopBufferThread = true;
+				CurrentMovie.FrameBufferThread.join();
+			}
+
 			/*
 				Process all the delayed frames
 			*/
@@ -981,27 +967,7 @@ namespace
 			void* info, bool jpeg, const char* filename, int width, int height, unsigned char* data
 		)
 		{
-			auto& movie = CurrentMovie;
-
-			#ifdef _DEBUG
-			Msg("SDR: Frame %d (%d)\n", movie.CurrentFrame, movie.FinishedFrames);
-			#endif
-
-			auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
-			auto& time = movie.SamplingTime;
-
-			if (movie.Sampler->CanSkipConstant(time, sampleframerate))
-			{
-				movie.Sampler->Sample(nullptr, time);
-			}
-
-			else
-			{
-				movie.Sampler->Sample(data, time);
-			}
-
-			time += sampleframerate;
-			movie.CurrentFrame++;
+			
 		}
 
 		using ThisFunction = decltype(Override)*;
@@ -1048,12 +1014,6 @@ namespace
 			void* thisptr, void* edx, void* info
 		)
 		{
-			namespace ProcessModule = Module_VID_ProcessMovieFrame;
-			using ProcessFrameType = ProcessModule::ThisFunction;
-
-			static auto processframeaddr = ProcessModule::ThisHook.NewFunction;
-			static auto processframefunc = static_cast<ProcessFrameType>(processframeaddr);
-
 			/*
 				0x101FFF80 static IDA address June 3 2016
 			*/
@@ -1082,18 +1042,34 @@ namespace
 
 			static auto readscreenpxfunc = static_cast<ReadScreenPxType>(readscreenpxaddr);
 
-			auto buffer = CurrentMovie.EngineFrameHeapData.get();
-
 			auto width = CurrentMovie.Width;
 			auto height = CurrentMovie.Height;
+
+			auto& movie = CurrentMovie;
+
+			#ifdef _DEBUG
+			Msg("SDR: Frame %d (%d)\n", movie.CurrentFrame, movie.FinishedFrames);
+			#endif
+
+			auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
+			auto& time = movie.SamplingTime;
+
+			MovieData::FutureSampleData newsample;
+			newsample.Time = time;
+			newsample.Data.resize(movie.GetImageSizeInBytes());
 
 			/*
 				3 = IMAGE_FORMAT_BGR888
 				2 = IMAGE_FORMAT_RGB888
 			*/
-			readscreenpxfunc(thisptr, edx, 0, 0, width, height, buffer, 2);
+			readscreenpxfunc(thisptr, edx, 0, 0, width, height, newsample.Data.data(), 2);
 
-			processframefunc(info, false, nullptr, width, height, buffer);
+			movie.FramesToSampleBuffer->enqueue(std::move(newsample));
+
+			time += sampleframerate;
+			movie.CurrentFrame++;
+
+			//Module_VID_ProcessMovieFrame::Override(info, false, nullptr, width, height, buffer);
 		}
 
 		using ThisFunction = decltype(Override)*;

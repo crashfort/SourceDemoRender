@@ -4,6 +4,7 @@
   <PropertyGroup Label="UserMacros">
     <SDR_2013SDK_ROOT>C:\VS\Source SDK 2013\Source\</SDR_2013SDK_ROOT>
     <SDR_FFMPEG_ROOT>C:\msys64\home\CF\ffmpegbuild\</SDR_FFMPEG_ROOT>
+    <SDR_RWQUEUE_INCLUDE>C:\VS\3rd Party Libs\readerwriterqueue\include\</SDR_RWQUEUE_INCLUDE>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
@@ -13,6 +14,9 @@
     </BuildMacro>
     <BuildMacro Include="SDR_FFMPEG_ROOT">
       <Value>$(SDR_FFMPEG_ROOT)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SDR_RWQUEUE_INCLUDE">
+      <Value>$(SDR_RWQUEUE_INCLUDE)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
