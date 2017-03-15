@@ -566,32 +566,6 @@ namespace
 		auto& movie = CurrentMovie;
 		auto& buffer = movie.FramesToWriteBuffer;
 
-		/*
-			0x1022AD50 static IDA address June 4 2016
-		*/
-		static auto tgawriteraddr = SDR::GetAddressFromPattern
-		(
-			"engine.dll",
-			SDR_PATTERN
-			(
-				"\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A"
-				"\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"
-			),
-			"xxxxxxxxxxxxxxxxxxxxxxxxxx????"
-		);
-
-		using TGAWriterType = bool(__cdecl*)
-		(
-			unsigned char* data,
-			CUtlBuffer& buffer,
-			int width,
-			int height,
-			int srcformat,
-			int dstformat
-		);
-
-		static auto tgawriterfunc = static_cast<TGAWriterType>(tgawriteraddr);
-
 		while (!ShouldStopBufferThread)
 		{
 			while (!buffer.empty())
