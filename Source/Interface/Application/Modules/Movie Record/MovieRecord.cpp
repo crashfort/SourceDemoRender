@@ -16,6 +16,20 @@ extern "C"
 
 #include "readerwriterqueue.h"
 
+namespace LAV
+{
+	void LogFunction
+	(
+		void* avcl,
+		int level,
+		const char* fmt,
+		va_list vl
+	)
+	{
+		MsgV(fmt, vl);
+	}
+}
+
 namespace
 {
 	namespace LAV

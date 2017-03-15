@@ -7,22 +7,19 @@ extern "C"
 	#include "libavformat\avformat.h"
 }
 
+namespace LAV
+{
+	void LogFunction
+	(
+		void* avcl,
+		int level,
+		const char* fmt,
+		va_list vl
+	);
+}
+
 namespace
 {
-	namespace LAV
-	{
-		void LogFunction
-		(
-			void* avcl,
-			int level,
-			const char* fmt,
-			va_list vl
-		)
-		{
-			MsgV(fmt, vl);
-		}
-	}
-
 	class SourceDemoRenderPlugin final : public IServerPluginCallbacks
 	{
 	public:
