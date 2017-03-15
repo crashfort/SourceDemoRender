@@ -95,7 +95,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -103,8 +103,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;$(SDR_X264_ROOT)lib\;$(SDR_FFMPEG_ROOT)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -127,7 +127,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -137,8 +137,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;$(SDR_X264_ROOT)lib\;$(SDR_FFMPEG_ROOT)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

@@ -1,8 +1,28 @@
 #include "PrecompiledHeader.hpp"
 #include "Application\Application.hpp"
 
+extern "C"
+{
+	#include "libavcodec\avcodec.h"
+	#include "libavformat\avformat.h"
+}
+
 namespace
 {
+	namespace LAV
+	{
+		void LogFunction
+		(
+			void* avcl,
+			int level,
+			const char* fmt,
+			va_list vl
+		)
+		{
+			MsgV(fmt, vl);
+		}
+	}
+
 	class SourceDemoRenderPlugin final : public IServerPluginCallbacks
 	{
 	public:
@@ -178,6 +198,11 @@ namespace
 		CreateInterfaceFn gameserverfactory
 	)
 	{
+		avcodec_register_all();
+		av_register_all();
+
+		av_log_set_callback(LAV::LogFunction);
+
 		ConnectTier1Libraries(&interfacefactory, 1);
 		ConnectTier2Libraries(&interfacefactory, 1);
 		ConVar_Register();

@@ -6,8 +6,13 @@
 #include "HLAE\HLAE.hpp"
 #include "HLAE\Sampler.hpp"
 
-#undef min
-#undef max
+extern "C"
+{
+	#include "libavutil\avutil.h"
+	#include "libavcodec\avcodec.h"
+	#include "libavformat\avformat.h"
+	#include "libswscale\swscale.h"
+}
 
 #ifdef _DEBUG
 #define SDR_DebugMsg Msg
@@ -17,34 +22,403 @@
 
 namespace
 {
-	struct ImageSequenceData
+	namespace LAV
 	{
-		enum class ImageFormatType
+		enum class ExceptionType
 		{
-			TGA,
-			PNG,
+			AllocSWSContext,
+			AllocCodecContext,
+			AllocAVFrame,
+			AllocAVStream,
+			EncoderNotFound,
 		};
 
-		ImageFormatType FormatType = ImageFormatType::TGA;
-	};
+		const char* ExceptionTypeToString(ExceptionType code)
+		{
+			auto index = static_cast<int>(code);
 
-	struct VideoStreamData
+			static const char* names[] =
+			{
+				"Could not allocate pixel format conversion context",
+				"Could not allocate codec context",
+				"Could not allocate video frame",
+				"Could not allocate video stream",
+				"Encoder not found"
+			};
+
+			auto retstr = names[index];
+
+			return retstr;
+		}
+
+		struct ExceptionNullPtr
+		{
+			ExceptionType Code;
+			const char* Description;
+		};
+
+		struct Exception
+		{
+			int Code;
+		};
+
+		inline void ThrowIfNull(void* ptr, ExceptionType code)
+		{
+			if (!ptr)
+			{
+				auto desc = ExceptionTypeToString(code);
+
+				Warning("SDR LAV: %s\n", desc);
+
+				ExceptionNullPtr info;
+				info.Code = code;
+				info.Description = desc;
+
+				throw info;
+			}
+		}
+
+		inline void ThrowIfFailed(int code)
+		{
+			if (code < 0)
+			{
+				Warning("SDR LAV: %d\n", code);
+				
+				Exception info;
+				info.Code = code;
+
+				throw info;
+			}
+		}
+
+		struct ScopedSWSContext
+		{
+			~ScopedSWSContext()
+			{
+				sws_freeContext(Context);
+			}
+
+			void Assign
+			(
+				int width,
+				int height,
+				AVPixelFormat sourceformat,
+				AVPixelFormat destformat
+			)
+			{
+				Context = sws_getContext
+				(
+					width,
+					height,
+					sourceformat,
+					width,
+					height,
+					destformat,
+					0,
+					nullptr,
+					nullptr,
+					nullptr
+				);
+
+				ThrowIfNull(Context, LAV::ExceptionType::AllocSWSContext);
+			}
+
+			SwsContext* Get()
+			{
+				return Context;
+			}
+
+			SwsContext* Context = nullptr;
+		};
+
+		struct ScopedAVFContext
+		{
+			~ScopedAVFContext()
+			{
+				if (Context)
+				{
+					if (!(Context->oformat->flags & AVFMT_NOFILE))
+					{
+						avio_close(Context->pb);
+					}
+
+					avformat_free_context(Context);
+				}
+			}
+
+			void Assign(const char* filename)
+			{
+				ThrowIfFailed
+				(
+					avformat_alloc_output_context2(&Context, nullptr, nullptr, filename)
+				);
+			}
+
+			AVFormatContext* Get() const
+			{
+				return Context;
+			}
+
+			AVFormatContext* Context = nullptr;
+		};
+
+		struct ScopedCodecContext
+		{
+			~ScopedCodecContext()
+			{
+				if (Context)
+				{
+					avcodec_free_context(&Context);
+				}
+			}
+
+			void Assign(AVCodec* codec)
+			{
+				Context = avcodec_alloc_context3(codec);
+
+				ThrowIfNull(Context, LAV::ExceptionType::AllocCodecContext);
+			}
+
+			AVCodecContext* Get() const
+			{
+				return Context;
+			}
+
+			AVCodecContext* Context = nullptr;
+		};
+
+		struct ScopedAVCFrame
+		{
+			~ScopedAVCFrame()
+			{
+				if (Frame)
+				{
+					av_frame_free(&Frame);
+				}
+			}
+
+			void Assign(AVPixelFormat format, int width, int height)
+			{
+				Frame = av_frame_alloc();
+
+				ThrowIfNull(Frame, LAV::ExceptionType::AllocAVFrame);
+
+				Frame->format = format;
+				Frame->width = width;
+				Frame->height = height;
+
+				av_frame_get_buffer(Frame, 32);
+
+				Frame->pts = 0;
+			}
+
+			AVFrame* Get() const
+			{
+				return Frame;
+			}
+
+			AVFrame* Frame = nullptr;
+		};
+	}
+}
+
+namespace
+{
+	struct SDRVideoWriter
 	{
+		void OpenFileForWrite(const char* path)
+		{
+			FormatContext.Assign(path);
+
+			if (!(FormatContext.Context->oformat->flags & AVFMT_NOFILE))
+			{
+				LAV::ThrowIfFailed
+				(
+					avio_open(&FormatContext.Context->pb, path, AVIO_FLAG_WRITE)
+				);
+			}
+		}
+
+		void SetEncoder(const char* name)
+		{
+			Encoder = avcodec_find_encoder_by_name(name);
+
+			LAV::ThrowIfNull(Encoder, LAV::ExceptionType::EncoderNotFound);
+
+			CodecContext.Assign(Encoder);
+		}
+
+		AVStream* AddStream()
+		{
+			auto retptr = avformat_new_stream(FormatContext.Get(), Encoder);
+
+			LAV::ThrowIfNull(retptr, LAV::ExceptionType::AllocAVStream);
+
+			return retptr;
+		}
+
+		void SetCodecParametersToStream()
+		{
+			LAV::ThrowIfFailed
+			(
+				avcodec_parameters_from_context
+				(
+					VideoStream->codecpar,
+					CodecContext.Get()
+				)
+			);
+		}
+
+		void OpenEncoder(AVDictionary** options)
+		{
+			SetCodecParametersToStream();
+
+			LAV::ThrowIfFailed
+			(
+				avcodec_open2(CodecContext.Get(), Encoder, options)
+			);
+		}
+
+		void WriteHeader()
+		{
+			LAV::ThrowIfFailed
+			(
+				avformat_write_header(FormatContext.Get(), nullptr)
+			);
+		}
+
+		void WriteTrailer()
+		{
+			LAV::ThrowIfFailed
+			(
+				av_write_trailer(FormatContext.Get())
+			);
+		}
+
+		void SetRGB24Input(uint8_t* buffer, int width, int height)
+		{
+			uint8_t* sourceplanes[] =
+			{
+				buffer
+			};
+
+			int sourcestrides[] =
+			{
+				width * 3
+			};
+
+			if (CodecContext.Context->pix_fmt == AV_PIX_FMT_RGB24)
+			{
+				MainFrame.Frame->data[0] = sourceplanes[0];
+				MainFrame.Frame->linesize[0] = sourcestrides[0];
+			}
+
+			else
+			{
+				sws_scale
+				(
+					FormatConverter.Get(),
+					sourceplanes,
+					sourcestrides,
+					0,
+					height,
+					MainFrame.Frame->data,
+					MainFrame.Frame->linesize
+				);
+			}
+		}
+
+		void SendRawFrame()
+		{
+			MainFrame.Frame->pts = CurrentPresentation++;
+
+			auto ret = avcodec_send_frame
+			(
+				CodecContext.Get(),
+				MainFrame.Get()
+			);
+
+			ReceivePacketFrame();
+		}
+
+		void SendFlushFrame()
+		{
+			auto ret = avcodec_send_frame
+			(
+				CodecContext.Get(),
+				nullptr
+			);
+
+			ReceivePacketFrame();
+		}
+
+		void ReceivePacketFrame()
+		{
+			int status = 0;
+
+			AVPacket packet;
+			av_init_packet(&packet);
+
+			while (status == 0)
+			{
+				status = avcodec_receive_packet
+				(
+					CodecContext.Get(),
+					&packet
+				);
+
+				if (status != 0)
+				{
+					return;
+				}
+
+				WriteEncodedPacket(packet);
+			}
+		}
+
+		void WriteEncodedPacket(AVPacket& packet)
+		{
+			packet.stream_index = VideoStream->index;
+			packet.duration = 1;
+
+			av_packet_rescale_ts
+			(
+				&packet,
+				CodecContext.Context->time_base,
+				VideoStream->time_base
+			);
+
+			LAV::ThrowIfFailed
+			(
+				av_interleaved_write_frame
+				(
+					FormatContext.Get(),
+					&packet
+				)
+			);
+		}
+
+		LAV::ScopedAVFContext FormatContext;
 		
+		AVCodec* Encoder = nullptr;
+		LAV::ScopedCodecContext CodecContext;
+
+		/*
+			Conversion from RGB24 to whatever specified
+		*/
+		LAV::ScopedSWSContext FormatConverter;
+
+		/*
+			Incremented and written to for every sent frame
+		*/
+		int64_t CurrentPresentation = 0;
+		AVStream* VideoStream = nullptr;
+		LAV::ScopedAVCFrame MainFrame;
 	};
 
 	struct MovieData : public SDR::Sampler::IFramePrinter
 	{
-		enum class MovieRenderType
-		{
-			ImageSequence,
-			VideoStream,
-		};
-
-		MovieRenderType RenderType;
-
-		std::unique_ptr<ImageSequenceData> ImageSequence;
-		std::unique_ptr<VideoStreamData> VideoStream;
+		std::unique_ptr<SDRVideoWriter> Video;
 
 		bool IsStarted = false;
 
@@ -71,7 +445,7 @@ namespace
 			return (Width * Height) * BytesPerPixel;
 		}
 
-		using BufferType = unsigned char;
+		using BufferType = uint8_t;
 
 		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
 
@@ -112,7 +486,7 @@ namespace
 
 	/*
 		In case endmovie never gets called,
-		this hanldes the plugin_unload
+		this handles the plugin_unload
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
 }
@@ -123,19 +497,22 @@ namespace
 	{
 		ConVar FrameRate
 		(
-			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING, "Movie output framerate",
+			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING,
+			"Movie output framerate",
 			true, 30, true, 1000
 		);
 
 		ConVar Exposure
 		(
-			"sdr_render_exposure", "1.0", FCVAR_NEVER_AS_STRING, "Frame exposure fraction",
+			"sdr_render_exposure", "1.0", FCVAR_NEVER_AS_STRING,
+			"Frame exposure fraction",
 			true, 0, true, 1
 		);
 
 		ConVar SamplesPerSecond
 		(
-			"sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING, "Game framerate in samples"
+			"sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING,
+			"Game framerate in samples"
 		);
 
 		ConVar FrameStrength
@@ -156,25 +533,35 @@ namespace
 
 		ConVar OutputDirectory
 		(
-			"sdr_outputdir", "", 0, "Where to save the output frames. UTF8 names are not supported in Source"
+			"sdr_outputdir", "", 0,
+			"Where to save the output frames. UTF8 names are not supported in Source"
 		);
 
 		ConVar FlashWindow
 		(
-			"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "Flash window when endmovie is called",
+			"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING,
+			"Flash window when endmovie is called",
 			true, 0, true, 1
-		);
-
-		ConVar RenderType
-		(
-			"sdr_rendertype", "video", 0, "Whether to use image sequence (sequence) or video stream (video)"
 		);
 
 		namespace Video
 		{
-			ConVar Encoder
+			ConVar CRF
 			(
-				"sdr_video_encoder", "rawvideo", 0, "Video encoder to use, see sdr_video_listencoders"
+				"sdr_movie_encoder_crf", "10", 0,
+				"Constant rate factor value. Values: 0 (best) - 51 (worst). See https://trac.ffmpeg.org/wiki/Encode/H.264"
+			);
+
+			ConVar Preset
+			(
+				"sdr_movie_encoder_preset", "medium", 0,
+				"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264"
+			);
+
+			ConVar Tune
+			(
+				"sdr_movie_encoder_tune", "", 0,
+				"X264 encoder tune. See https://trac.ffmpeg.org/wiki/Encode/H.264"
 			);
 		}
 	}
@@ -185,7 +572,31 @@ namespace
 		auto& movie = CurrentMovie;
 		auto& buffer = movie.FramesToWriteBuffer;
 
-		auto rendertype = movie.RenderType;
+		/*
+			0x1022AD50 static IDA address June 4 2016
+		*/
+		static auto tgawriteraddr = SDR::GetAddressFromPattern
+		(
+			"engine.dll",
+			SDR_PATTERN
+			(
+				"\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A"
+				"\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"
+			),
+			"xxxxxxxxxxxxxxxxxxxxxxxxxx????"
+		);
+
+		using TGAWriterType = bool(__cdecl*)
+		(
+			unsigned char* data,
+			CUtlBuffer& buffer,
+			int width,
+			int height,
+			int srcformat,
+			int dstformat
+		);
+
+		static auto tgawriterfunc = static_cast<TGAWriterType>(tgawriteraddr);
 
 		while (!ShouldStopBufferThread)
 		{
@@ -196,32 +607,17 @@ namespace
 					std::this_thread::sleep_for(1ms);
 				}
 
-				auto& cur = buffer.front();
-				bool res = false;
+				auto& front = buffer.front();
+				int res = false;
 
-				switch (rendertype)
 				{
-					case MovieData::MovieRenderType::ImageSequence:
-					{
-						CUtlString frameformat;
-						frameformat.Format("%s_%05d.tga", movie.Name.c_str(), movie.FinishedFrames);
+					auto vidwriter = movie.Video.get();
+					auto start = static_cast<uint8_t*>(front.Base());
 
-						auto targetpath = Variables::OutputDirectory.GetString();
-						auto filenameformat = CUtlString::PathJoin(targetpath, frameformat.Get());
+					vidwriter->SetRGB24Input(start, movie.Width, movie.Height);
+					vidwriter->SendRawFrame();
 
-						auto finalname = filenameformat.Get();
-
-						res = interfaces.FileSystem->WriteFile(finalname, targetpath, cur);
-
-						break;
-					}
-
-					case MovieData::MovieRenderType::VideoStream:
-					{
-						
-
-						break;
-					}
+					res = true;
 				}
 
 				/*
@@ -357,40 +753,126 @@ namespace
 			movie.Name = filename;
 
 			{
-				auto& type = movie.RenderType;
-				auto typestr = Variables::RenderType.GetString();
-
-				if (strcmp(typestr, "video") == 0)
+				try
 				{
-					type = MovieData::MovieRenderType::VideoStream;
+					movie.Video = std::make_unique<SDRVideoWriter>();
 
-					movie.VideoStream = std::make_unique<VideoStreamData>();
-				}
+					auto vidwriter = movie.Video.get();
 
-				else if (strcmp(typestr, "sequence") == 0)
-				{
-					type = MovieData::MovieRenderType::ImageSequence;
-
-					movie.ImageSequence = std::make_unique<ImageSequenceData>();
-				}
-
-				else
-				{
-					Warning
+					vidwriter->FormatConverter.Assign
 					(
-						R"(SDR: Unknown render type specified, use "video" or "sequence" - using video)"
-						"\n"
+						width,
+						height,
+						AV_PIX_FMT_RGB24,
+						AV_PIX_FMT_YUV420P
 					);
+
+					AVRational timebase;
+					timebase.num = 1;
+					timebase.den = Variables::FrameRate.GetInt();
+
+					bool isx264;
+
+					{
+						auto targetpath = Variables::OutputDirectory.GetString();
+						auto finalname = CUtlString::PathJoin(targetpath, filename);
+
+						vidwriter->OpenFileForWrite(finalname);
+
+						auto formatcontext = vidwriter->FormatContext.Get();
+						auto oformat = formatcontext->oformat;
+
+						if (strcmp(oformat->name, "image2") == 0)
+						{
+							isx264 = false;
+							vidwriter->SetEncoder("png");
+						}
+
+						else
+						{
+							isx264 = true;
+							vidwriter->SetEncoder("libx264");
+						}
+					}
+
+					AVPixelFormat pxformat;
+
+					vidwriter->VideoStream = vidwriter->AddStream();
+					vidwriter->VideoStream->time_base = timebase;
+
+					auto codeccontext = vidwriter->CodecContext.Get();
+					codeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
+					codeccontext->width = width;
+					codeccontext->height = height;
+					codeccontext->time_base = timebase;
+
+					if (isx264)
+					{
+						pxformat = AV_PIX_FMT_YUV420P;
+						codeccontext->codec_id = AV_CODEC_ID_H264;
+					}
+
+					else
+					{
+						pxformat = AV_PIX_FMT_RGB24;
+						codeccontext->codec_id = AV_CODEC_ID_PNG;
+					}
+
+					codeccontext->pix_fmt = pxformat;
+		
+					/*
+						Not setting this will leave different colors across
+						multiple programs
+					*/
+					codeccontext->colorspace = AVCOL_SPC_BT470BG;
+					codeccontext->color_range = AVCOL_RANGE_MPEG;
+
+					{
+						if (isx264)
+						{
+							auto preset = Variables::Video::Preset.GetString();
+							auto tune = Variables::Video::Tune.GetString();
+							auto crf = Variables::Video::CRF.GetString();
+
+							AVDictionary* options = nullptr;
+							av_dict_set(&options, "preset", preset, 0);
+
+							if (strlen(tune) > 0)
+							{
+								av_dict_set(&options, "tune", tune, 0);
+							}
+
+							av_dict_set(&options, "crf", crf, 0);
+
+							vidwriter->OpenEncoder(&options);
+
+							av_dict_free(&options);
+						}
+
+						else
+						{
+							vidwriter->OpenEncoder(nullptr);
+						}
+					}
+
+					vidwriter->MainFrame.Assign
+					(
+						pxformat,
+						width,
+						height
+					);
+
+					vidwriter->WriteHeader();
+				}
 					
-					type = MovieData::MovieRenderType::VideoStream;
+				catch (const LAV::Exception& error)
+				{
+					return;
 				}
 
-				if (type == MovieData::MovieRenderType::VideoStream)
+				catch (const LAV::ExceptionNullPtr& error)
 				{
-					
-
-					int a = 5;
-					a = a;
+					return;
 				}
 			}
 
@@ -473,11 +955,11 @@ namespace
 
 		void __cdecl Override()
 		{
-			if (CurrentMovie.RenderType == MovieData::MovieRenderType::VideoStream)
-			{
-				int a = 5;
-				a = a;
-			}
+			/*
+				Process all the delayed frames
+			*/
+			CurrentMovie.Video->SendFlushFrame();
+			CurrentMovie.Video->WriteTrailer();
 
 			SDR_MovieShutdown();
 
@@ -551,61 +1033,7 @@ namespace
 				movie.FramesToWriteBuffer.emplace_back();
 				auto& newbuf = movie.FramesToWriteBuffer.back();
 
-				auto type = movie.RenderType;
-
-				switch (type)
-				{
-					case MovieData::MovieRenderType::ImageSequence:
-					{
-						/*
-							0x1022AD50 static IDA address June 4 2016
-						*/
-						static auto tgawriteraddr = SDR::GetAddressFromPattern
-						(
-							"engine.dll",
-							SDR_PATTERN
-							(
-								"\x55\x8B\xEC\x53\x57\x8B\x7D\x1C\x8B\xC7\x83\xE8\x00\x74\x0A"
-								"\x83\xE8\x02\x75\x0A\x8D\x78\x03\xEB\x05\xBF\x00\x00\x00\x00"
-							),
-							"xxxxxxxxxxxxxxxxxxxxxxxxxx????"
-						);
-
-						using TGAWriterType = bool(__cdecl*)
-						(
-							unsigned char* data,
-							CUtlBuffer& buffer,
-							int width,
-							int height,
-							int srcformat,
-							int dstformat
-						);
-
-						static auto tgawriterfunc = static_cast<TGAWriterType>(tgawriteraddr);
-
-						/*
-							3 = IMAGE_FORMAT_BGR888
-							2 = IMAGE_FORMAT_RGB888
-						*/
-						auto res = tgawriterfunc(movie.ActiveFrame, newbuf, width, height, 3, 2);
-
-						/*
-							Should probably handle this or something
-						*/
-						if (!res)
-						{
-							Warning("SDR: Could not create TGA image\n");
-						}
-
-						break;
-					}
-
-					case MovieData::MovieRenderType::VideoStream:
-					{
-						newbuf.CopyBuffer(data, movie.GetImageSizeInBytes());
-						break;
-					}
-				}
+				newbuf.CopyBuffer(movie.ActiveFrame, movie.GetImageSizeInBytes());
 					
 				ShouldPauseBufferThread = false;
 			}
@@ -701,7 +1129,7 @@ namespace
 				3 = IMAGE_FORMAT_BGR888
 				2 = IMAGE_FORMAT_RGB888
 			*/
-			readscreenpxfunc(thisptr, edx, 0, 0, width, height, buffer, 3);
+			readscreenpxfunc(thisptr, edx, 0, 0, width, height, buffer, 2);
 
 			processframefunc(info, false, nullptr, width, height, buffer);
 		}
