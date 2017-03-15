@@ -4,8 +4,6 @@ Tool to create movies for Source 2013 games. To install you place SourceDemoRend
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
-To build this yourself you need to change the property sheet value named $(SDR_2013SDK_ROOT) to where Source SDK 2013 is located.
-
 ### Variables
 
 - **sdr_outputdir** - Path where to save the finished frames. UTF8 names are not supported in Source.
@@ -18,5 +16,18 @@ To build this yourself you need to change the property sheet value named $(SDR_2
 
 More details about sampling can be [read here](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3ASampling-System).
 
+#### Video variables
+- **sdr_movie_encoder_crf** *(0 to 51)* - Constant rate factor value. [Read more]( https://trac.ffmpeg.org/wiki/Encode/H.264)
+- **sdr_movie_encoder_preset** - X264 encoder preset. [Read more]( https://trac.ffmpeg.org/wiki/Encode/H.264)
+- **sdr_movie_encoder_tune** - X264 encoder tune. [Read more]( https://trac.ffmpeg.org/wiki/Encode/H.264)
+
 ### Instructions
 When you are ready to create your movie you just type **startmovie name** and then **endmovie** as usual. There's no need to change **host_framerate** as that is done automatically.
+
+You can create avi, mp4 videos and png image sequences. The format is decided from the extension you choose in startmovie. Examples:
+
+- startmovie test.avi
+- startmovie test.mp4
+- startmovie test%05d.png
+
+The last instance will create a png image sequence with 5 padded digits.
