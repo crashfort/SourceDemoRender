@@ -1,0 +1,32 @@
+CC=cl ./configure \
+--prefix=$HOME/ffmpegbuild \
+--toolchain=msvc \
+--enable-static \
+--enable-gpl \
+--disable-shared \
+--disable-programs \
+--disable-doc \
+--disable-avdevice \
+--disable-swresample \
+--disable-postproc \
+--disable-avfilter \
+--disable-network \
+--disable-everything \
+--disable-bzlib \
+--disable-iconv \
+--disable-lzma \
+--disable-schannel \
+--disable-sdl2 \
+--disable-securetransport \
+--disable-xlib \
+--enable-zlib \
+--enable-muxer=mp4 \
+--enable-muxer=avi \
+--enable-muxer=image2 \
+--enable-protocol=file \
+--enable-libx264 \
+--enable-encoder=libx264 \
+--enable-encoder=png \
+--enable-parser=png \
+--extra-ldflags="-LIBPATH:$HOME/ffmpegbuild/lib -lz" \
+--extra-cflags="-I$HOME/ffmpegbuild/include" \
