@@ -945,39 +945,6 @@ namespace
 		}
 	}
 
-	namespace Module_VID_ProcessMovieFrame
-	{
-		/*
-			0x10201030 static IDA address May 22 2016
-		*/
-		auto Pattern = SDR_PATTERN
-		(
-			"\x55\x8B\xEC\x83\xEC\x30\x8D\x4D\xD0\x6A\x00\x6A\x00\x6A\x00\xE8\x00\x00\x00\x00"
-		);
-
-		auto Mask = "xxxxxxxxxxxxxxxx????";
-
-		/*
-			First parameter (info) is a MovieInfo_t structure, but we don't need it
-
-			Data passed to this is in RGB24 format
-		*/
-		void __cdecl Override
-		(
-			void* info, bool jpeg, const char* filename, int width, int height, unsigned char* data
-		)
-		{
-			
-		}
-
-		using ThisFunction = decltype(Override)*;
-
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "VID_ProcessMovieFrame", Override, Pattern, Mask
-		};
-	}
-
 	namespace Module_CVideoMode_WriteMovieFrame
 	{
 		/*
@@ -1068,8 +1035,6 @@ namespace
 
 			time += sampleframerate;
 			movie.CurrentFrame++;
-
-			//Module_VID_ProcessMovieFrame::Override(info, false, nullptr, width, height, buffer);
 		}
 
 		using ThisFunction = decltype(Override)*;
