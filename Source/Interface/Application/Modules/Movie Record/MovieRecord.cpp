@@ -991,7 +991,7 @@ namespace
 		/*
 			First parameter (info) is a MovieInfo_t structure, but we don't need it
 
-			Data passed to this is in BGR888 format
+			Data passed to this is in RGB24 format
 		*/
 		void __cdecl Override
 		(
