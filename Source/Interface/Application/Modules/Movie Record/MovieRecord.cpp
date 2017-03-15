@@ -443,19 +443,12 @@ namespace
 
 		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
 
-		BufferType* ActiveFrame;
-		bool HasFrameDone = false;
-
 		std::unique_ptr<BufferType[]> EngineFrameHeapData;
 
 		std::deque<CUtlBuffer> FramesToWriteBuffer;
 		std::thread FrameBufferThread;
 
-		virtual void Print(BufferType* data) override
-		{
-			ActiveFrame = data;
-			HasFrameDone = true;
-		}
+		virtual void Print(BufferType* data) override;
 	};
 
 	MovieData CurrentMovie;
@@ -483,6 +476,28 @@ namespace
 		this handles the plugin_unload
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
+
+	void MovieData::Print(BufferType* data)
+	{
+		/*
+			The reason we override the default VID_ProcessMovieFrame is
+			because that one creates a local CUtlBuffer for every frame and then destroys it.
+			Better that we store them ourselves and iterate over the buffered frames to
+			write them out in another thread.
+		*/
+
+		ShouldPauseBufferThread = true;
+
+		/*
+			A new empty buffer
+		*/
+		FramesToWriteBuffer.emplace_back();
+		auto& newbuf = FramesToWriteBuffer.back();
+
+		newbuf.CopyBuffer(data, GetImageSizeInBytes());
+
+		ShouldPauseBufferThread = false;
+	}
 }
 
 namespace
@@ -983,29 +998,6 @@ namespace
 			else
 			{
 				movie.Sampler->Sample(data, time);
-			}
-
-			/*
-				The reason we override the default VID_ProcessMovieFrame is
-				because that one creates a local CUtlBuffer for every frame and then destroys it.
-				Better that we store them ourselves and iterate over the buffered frames to
-				write them out in another thread.
-			*/
-			if (movie.HasFrameDone)
-			{
-				movie.HasFrameDone = false;
-
-				ShouldPauseBufferThread = true;
-
-				/*
-					A new empty buffer
-				*/
-				movie.FramesToWriteBuffer.emplace_back();
-				auto& newbuf = movie.FramesToWriteBuffer.back();
-
-				newbuf.CopyBuffer(movie.ActiveFrame, movie.GetImageSizeInBytes());
-					
-				ShouldPauseBufferThread = false;
 			}
 
 			time += sampleframerate;
