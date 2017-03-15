@@ -6,7 +6,7 @@ Tool to create movies for Source 2013 games. To install you place SourceDemoRend
 
 To build this yourself you need to change the property sheet value named $(SDR_2013SDK_ROOT) to where Source SDK 2013 is located.
 
-### Commands
+### Variables
 
 - **sdr_outputdir** - Path where to save the finished frames. UTF8 names are not supported in Source.
 - **sdr_render_framerate** *(30 to 1000)* - Movie output framerate.
