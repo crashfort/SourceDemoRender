@@ -16,20 +16,6 @@ extern "C"
 
 #include "readerwriterqueue.h"
 
-namespace LAV
-{
-	void LogFunction
-	(
-		void* avcl,
-		int level,
-		const char* fmt,
-		va_list vl
-	)
-	{
-		MsgV(fmt, vl);
-	}
-}
-
 namespace
 {
 	namespace LAV
@@ -232,6 +218,36 @@ namespace
 	}
 }
 
+namespace LAV
+{
+	namespace
+	{
+		namespace Variables
+		{
+			ConVar SuppressLog
+			(
+				"sdr_movie_suppresslog", "0", FCVAR_NEVER_AS_STRING,
+				"Disable logging output from LAV",
+				true, 0, true, 1
+			);
+		}
+	}
+
+	void LogFunction
+	(
+		void* avcl,
+		int level,
+		const char* fmt,
+		va_list vl
+	)
+	{
+		if (!Variables::SuppressLog.GetBool())
+		{
+			MsgV(fmt, vl);
+		}
+	}
+}
+
 namespace
 {
 	struct SDRVideoWriter
@@ -362,6 +378,12 @@ namespace
 			ReceivePacketFrame();
 		}
 
+		void Finish()
+		{
+			SendFlushFrame();
+			WriteTrailer();
+		}
+
 		void ReceivePacketFrame()
 		{
 			int status = 0;
@@ -436,9 +458,8 @@ namespace
 
 		uint32_t Width;
 		uint32_t Height;
-
-		uint32_t CurrentFrame = 0;
-		uint32_t FinishedFrames = 0;
+		
+		int32_t BufferedFrames = 0;
 
 		double SamplingTime = 0.0;
 
@@ -466,13 +487,13 @@ namespace
 		};
 
 		std::unique_ptr<moodycamel::ReaderWriterQueue<FutureSampleData>> FramesToSampleBuffer;
-		std::thread FrameBufferThread;
+		std::thread FrameHandlerThread;
 
 		virtual void Print(BufferType* data) override;
 	};
 
 	MovieData CurrentMovie;
-	std::atomic_bool ShouldStopBufferThread = false;
+	std::atomic_bool ShouldStopFrameThread = false;
 
 	void SDR_MovieShutdown()
 	{
@@ -481,10 +502,10 @@ namespace
 			return;
 		}
 
-		if (!ShouldStopBufferThread)
+		if (!ShouldStopFrameThread)
 		{
-			ShouldStopBufferThread = true;
-			CurrentMovie.FrameBufferThread.join();
+			ShouldStopFrameThread = true;
+			CurrentMovie.FrameHandlerThread.join();
 		}
 
 		CurrentMovie = MovieData();
@@ -507,7 +528,6 @@ namespace
 
 		Video->SetRGB24Input(data, Width, Height);
 		Video->SendRawFrame();
-		FinishedFrames++;
 	}
 }
 
@@ -515,6 +535,25 @@ namespace
 {
 	namespace Variables
 	{
+		ConVar FrameBufferSize
+		(
+			"sdr_frame_buffersize", "256", FCVAR_NEVER_AS_STRING,
+			"How many frames that are allowed to be buffered up for encoding. "
+			"This value can be lowered or increased depending your available RAM. "
+			"Keep in mind the sizes of an uncompressed RGB24 frame: \n"
+			"1280x720    : 2.7 MB\n"
+			"1920x1080   : 5.9 MB\n"
+			"Calculation : (((x * y) * 3) / 1024) / 1024"
+			"\n"
+			"Multiply the frame size with the buffer size to one that fits you.\n"
+			"*** Using too high of a buffer size might eventually crash the application "
+			"if there no longer is any available memory ***\n"
+			"\n"
+			"The frame buffer queue will only build up and fall behind when the encoding "
+			"is taking too long, consider not using too low of a profile.",
+			true, 8, true, 4096
+		);
+
 		ConVar FrameRate
 		(
 			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING,
@@ -532,7 +571,8 @@ namespace
 		ConVar SamplesPerSecond
 		(
 			"sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING,
-			"Game framerate in samples"
+			"Game framerate in samples",
+			true, 0, false, 0
 		);
 
 		ConVar FrameStrength
@@ -583,7 +623,9 @@ namespace
 			ConVar Preset
 			(
 				"sdr_movie_encoder_preset", "medium", 0,
-				"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264"
+				"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
+				"Important note: Optimally, do not use a too low of a profile as the streaming "
+				"needs to be somewhat realtime."
 			);
 
 			ConVar Tune
@@ -594,7 +636,7 @@ namespace
 		}
 	}
 
-	void FrameBufferThreadHandler()
+	void FrameThreadHandler()
 	{
 		auto& interfaces = SDR::GetEngineInterfaces();
 		auto& movie = CurrentMovie;
@@ -605,10 +647,12 @@ namespace
 		MovieData::FutureSampleData sample;
 		sample.Data.reserve(movie.GetImageSizeInBytes());
 
-		while (!ShouldStopBufferThread)
+		while (!ShouldStopFrameThread)
 		{
 			while (nonreadyframes->try_dequeue(sample))
 			{
+				movie.BufferedFrames--;
+
 				auto time = sample.Time;
 
 				if (movie.Sampler->CanSkipConstant(time, sampleframerate))
@@ -943,10 +987,10 @@ namespace
 
 			movie.Sampler = std::make_unique<EasyByteSampler>(settings, framepitch, &movie);
 
-			movie.FramesToSampleBuffer = std::make_unique<moodycamel::ReaderWriterQueue<MovieData::FutureSampleData>>();
+			movie.FramesToSampleBuffer = std::make_unique<moodycamel::ReaderWriterQueue<MovieData::FutureSampleData>>(128);
 
-			ShouldStopBufferThread = false;
-			movie.FrameBufferThread = std::thread(FrameBufferThreadHandler);
+			ShouldStopFrameThread = false;
+			movie.FrameHandlerThread = std::thread(FrameThreadHandler);
 		}
 	}
 
@@ -974,18 +1018,21 @@ namespace
 
 		void __cdecl Override()
 		{
-			if (!ShouldStopBufferThread)
+			/*
+				Let the worker thread complete the sampling and
+				giving the frames to the encoder
+			*/
+			if (!ShouldStopFrameThread)
 			{
-				ShouldStopBufferThread = true;
-				CurrentMovie.FrameBufferThread.join();
+				ShouldStopFrameThread = true;
+				CurrentMovie.FrameHandlerThread.join();
 			}
 
 			/*
-				Process all the delayed frames
+				Let the encoder finish all the delayed frames
 			*/
-			CurrentMovie.Video->SendFlushFrame();
-			CurrentMovie.Video->WriteTrailer();
-
+			CurrentMovie.Video->Finish();
+			
 			SDR_MovieShutdown();
 
 			ThisHook.GetOriginal()();
@@ -1070,10 +1117,6 @@ namespace
 
 			auto& movie = CurrentMovie;
 
-			#ifdef _DEBUG
-			Msg("SDR: Frame %d (%d)\n", movie.CurrentFrame, movie.FinishedFrames);
-			#endif
-
 			auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
 			auto& time = movie.SamplingTime;
 
@@ -1087,10 +1130,32 @@ namespace
 			*/
 			readscreenpxfunc(thisptr, edx, 0, 0, width, height, newsample.Data.data(), 2);
 
+			auto buffersize = Variables::FrameBufferSize.GetInt();
+
+			/*
+				Encoder is falling behind, too much input with too little output
+			*/
+			if (movie.BufferedFrames > buffersize)
+			{
+				Warning("SDR: Too many buffered frames, waiting for encoder\n");
+
+				while (movie.BufferedFrames > 1)
+				{
+					std::this_thread::sleep_for(1ms);
+				}
+
+				Warning
+				(
+					"SDR: Encoder caught up, consider using faster encoding settings or "
+					"increasing sdr_frame_buffersize.\n"
+					R"(Type "help sdr_frame_buffersize" for more information.)" "\n"
+				);
+			}
+
+			movie.BufferedFrames++;
 			movie.FramesToSampleBuffer->enqueue(std::move(newsample));
 
 			time += sampleframerate;
-			movie.CurrentFrame++;
 		}
 
 		using ThisFunction = decltype(Override)*;
