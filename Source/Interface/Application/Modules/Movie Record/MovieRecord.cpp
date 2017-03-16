@@ -563,7 +563,7 @@ namespace
 
 		ConVar Exposure
 		(
-			"sdr_render_exposure", "1.0", FCVAR_NEVER_AS_STRING,
+			"sdr_render_exposure", "0.5", FCVAR_NEVER_AS_STRING,
 			"Frame exposure fraction",
 			true, 0, true, 1
 		);
