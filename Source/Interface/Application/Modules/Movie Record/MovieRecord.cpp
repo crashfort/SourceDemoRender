@@ -621,12 +621,38 @@ namespace
 			);
 
 			ConVar Preset
-			(
+			{
 				"sdr_movie_encoder_preset", "medium", 0,
 				"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
 				"Important note: Optimally, do not use a too low of a profile as the streaming "
-				"needs to be somewhat realtime."
-			);
+				"needs to be somewhat realtime.",
+				[](IConVar* var, const char* oldstr, float oldfloat)
+				{
+					auto newstr = Preset.GetString();
+
+					auto slowpresets =
+					{
+						"slow",
+						"slower",
+						"veryslow",
+						"placebo"
+					};
+
+					for (auto preset : slowpresets)
+					{
+						if (strcmp(newstr, preset) == 0)
+						{
+							Warning
+							(
+								"SDR: Slow encoder preset chosen, "
+								"this might not work very well for realtime\n"
+							);
+
+							return;
+						}
+					}
+				}
+			};
 
 			ConVar Tune
 			(
