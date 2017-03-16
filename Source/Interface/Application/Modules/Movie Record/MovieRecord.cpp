@@ -566,10 +566,18 @@ namespace
 
 		namespace Video
 		{
+			ConVar PixelFormat
+			(
+				"sdr_movie_encoder_pxformat", "I420", 0,
+				"X264 pixel format Does nothing in png sequence. "
+				"Values: I420, I444, NV12. See https://wiki.videolan.org/YUV/"
+			);
+
 			ConVar CRF
 			(
 				"sdr_movie_encoder_crf", "10", 0,
-				"Constant rate factor value. Values: 0 (best) - 51 (worst). See https://trac.ffmpeg.org/wiki/Encode/H.264"
+				"Constant rate factor value. Values: 0 (best) - 51 (worst). "
+				"See https://trac.ffmpeg.org/wiki/Encode/H.264"
 			);
 
 			ConVar Preset
@@ -736,14 +744,6 @@ namespace
 
 					auto vidwriter = movie.Video.get();
 
-					vidwriter->FormatConverter.Assign
-					(
-						width,
-						height,
-						AV_PIX_FMT_RGB24,
-						AV_PIX_FMT_YUV420P
-					);
-
 					AVRational timebase;
 					timebase.num = 1;
 					timebase.den = Variables::FrameRate.GetInt();
@@ -772,7 +772,7 @@ namespace
 						}
 					}
 
-					AVPixelFormat pxformat;
+					auto pxformat = AV_PIX_FMT_NONE;
 
 					vidwriter->VideoStream = vidwriter->AddStream();
 					vidwriter->VideoStream->time_base = timebase;
@@ -785,8 +785,50 @@ namespace
 
 					if (isx264)
 					{
-						pxformat = AV_PIX_FMT_YUV420P;
+						auto pxformatstr = Variables::Video::PixelFormat.GetString();
+
+						auto pxformatnames =
+						{
+							"I420",
+							"I444",
+							"NV12",
+						};
+
+						auto pxformattypes =
+						{
+							AV_PIX_FMT_YUV420P,
+							AV_PIX_FMT_YUV444P,
+							AV_PIX_FMT_NV12,
+						};
+
+						int pxformatindex = 0;
+
+						for (auto name : pxformatnames)
+						{
+							if (strcmp(pxformatstr, name) == 0)
+							{
+								pxformat = *(pxformattypes.begin() + pxformatindex);
+								break;
+							}
+
+							++pxformatindex;
+						}
+
+						if (pxformat == AV_PIX_FMT_NONE)
+						{
+							Msg("SDR: No pixel format selected, using I420\n");
+							pxformat = AV_PIX_FMT_YUV420P;
+						}
+
 						codeccontext->codec_id = AV_CODEC_ID_H264;
+
+						vidwriter->FormatConverter.Assign
+						(
+							width,
+							height,
+							AV_PIX_FMT_RGB24,
+							pxformat
+						);
 					}
 
 					else
