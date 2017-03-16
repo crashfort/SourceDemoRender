@@ -17,9 +17,10 @@ Tool to create movies for Source 2013 games. To install you place SourceDemoRend
 More details about sampling can be [read here](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3ASampling-System).
 
 #### Video variables
-- **sdr_movie_encoder_crf** *(0 to 51)* - Constant rate factor value. [Read more]( https://trac.ffmpeg.org/wiki/Encode/H.264)
-- **sdr_movie_encoder_preset** - X264 encoder preset. [Read more]( https://trac.ffmpeg.org/wiki/Encode/H.264)
-- **sdr_movie_encoder_tune** - X264 encoder tune. [Read more]( https://trac.ffmpeg.org/wiki/Encode/H.264)
+- **sdr_movie_encoder_pxformat** - Pixel format to use, I420, I444 or NV12. [Read more](https://wiki.videolan.org/YUV/)
+- **sdr_movie_encoder_crf** *(0 to 51)* - Constant rate factor value. [Read more](https://trac.ffmpeg.org/wiki/Encode/H.264)
+- **sdr_movie_encoder_preset** - X264 encoder preset. [Read more](https://trac.ffmpeg.org/wiki/Encode/H.264)
+- **sdr_movie_encoder_tune** - X264 encoder tune. [Read more](https://trac.ffmpeg.org/wiki/Encode/H.264)
 
 ### Instructions
 When you are ready to create your movie you just type **startmovie name** and then **endmovie** as usual. There's no need to change **host_framerate** as that is done automatically.
