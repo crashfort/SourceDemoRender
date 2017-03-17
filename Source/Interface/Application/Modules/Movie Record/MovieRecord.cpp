@@ -466,7 +466,7 @@ namespace
 		enum
 		{
 			/*
-				Order: Blue Green Red
+				Order: Red Green Blue
 			*/
 			BytesPerPixel = 3
 		};
