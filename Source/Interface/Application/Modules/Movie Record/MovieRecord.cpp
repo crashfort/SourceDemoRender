@@ -328,6 +328,9 @@ namespace
 				buffer
 			};
 
+			/*
+				3 for 3 bytes per pixel
+			*/
 			int sourcestrides[] =
 			{
 				width * 3
@@ -450,18 +453,13 @@ namespace
 
 	struct MovieData : public SDR::Sampler::IFramePrinter
 	{
-		std::unique_ptr<SDRVideoWriter> Video;
+		struct FutureSampleData
+		{
+			double Time;
+			std::vector<uint8_t> Data;
+		};
 
-		bool IsStarted = false;
-
-		std::string Name;
-
-		uint32_t Width;
-		uint32_t Height;
-		
-		int32_t BufferedFrames = 0;
-
-		double SamplingTime = 0.0;
+		using FrameQueueType = moodycamel::ReaderWriterQueue<FutureSampleData>;
 
 		enum
 		{
@@ -471,27 +469,43 @@ namespace
 			BytesPerPixel = 3
 		};
 
-		auto GetRGB24ImageSize() const
+		/*
+			Not a threadsafe function as we only operate on
+			a single AVFrame
+		*/
+		virtual void Print(uint8_t* data) override
+		{
+			/*
+				The reason we override the default VID_ProcessMovieFrame is
+				because that one creates a local CUtlBuffer for every frame and then destroys it.
+				Better that we store them ourselves and iterate over the buffered frames to
+				write them out in another thread.
+			*/
+
+			Video->SetRGB24Input(data, Width, Height);
+			Video->SendRawFrame();
+		}
+
+		uint32_t GetRGB24ImageSize() const
 		{
 			return (Width * Height) * BytesPerPixel;
 		}
 
-		using BufferType = uint8_t;
+		bool IsStarted = false;
+
+		std::string Name;
+		uint32_t Width;
+		uint32_t Height;
+
+		double SamplingTime = 0.0;
+
+		std::unique_ptr<SDRVideoWriter> Video;
 
 		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
 
-		struct FutureSampleData
-		{
-			double Time;
-			std::vector<BufferType> Data;
-		};
-
-		using FrameQueueType = moodycamel::ReaderWriterQueue<FutureSampleData>;
-
+		int32_t BufferedFrames = 0;
 		std::unique_ptr<FrameQueueType> FramesToSampleBuffer;
 		std::thread FrameHandlerThread;
-
-		virtual void Print(BufferType* data) override;
 	};
 
 	MovieData CurrentMovie;
@@ -518,19 +532,6 @@ namespace
 		this handles the plugin_unload
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
-
-	void MovieData::Print(BufferType* data)
-	{
-		/*
-			The reason we override the default VID_ProcessMovieFrame is
-			because that one creates a local CUtlBuffer for every frame and then destroys it.
-			Better that we store them ourselves and iterate over the buffered frames to
-			write them out in another thread.
-		*/
-
-		Video->SetRGB24Input(data, Width, Height);
-		Video->SendRawFrame();
-	}
 }
 
 namespace
