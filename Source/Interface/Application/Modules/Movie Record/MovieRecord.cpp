@@ -471,7 +471,7 @@ namespace
 			BytesPerPixel = 3
 		};
 
-		auto GetImageSizeInBytes() const
+		auto GetRGB24ImageSize() const
 		{
 			return (Width * Height) * BytesPerPixel;
 		}
@@ -673,7 +673,7 @@ namespace
 		auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
 
 		MovieData::FutureSampleData sample;
-		sample.Data.reserve(movie.GetImageSizeInBytes());
+		sample.Data.reserve(movie.GetRGB24ImageSize());
 
 		while (!ShouldStopFrameThread)
 		{
@@ -1009,7 +1009,7 @@ namespace
 			);
 
 			using SDR::Sampler::EasyByteSampler;
-			auto size = movie.GetImageSizeInBytes();
+			auto size = movie.GetRGB24ImageSize();
 
 			movie.IsStarted = true;
 
@@ -1150,7 +1150,7 @@ namespace
 
 			MovieData::FutureSampleData newsample;
 			newsample.Time = time;
-			newsample.Data.resize(movie.GetImageSizeInBytes());
+			newsample.Data.resize(movie.GetRGB24ImageSize());
 
 			/*
 				3 = IMAGE_FORMAT_BGR888
