@@ -554,7 +554,7 @@ namespace
 			"\n"
 			"The frame buffer queue will only build up and fall behind when the encoding "
 			"is taking too long, consider not using too low of a profile.",
-			true, 8, true, 4096
+			true, 8, true, 384
 		);
 
 		ConVar FrameRate
