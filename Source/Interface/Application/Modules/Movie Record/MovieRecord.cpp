@@ -486,7 +486,9 @@ namespace
 			std::vector<BufferType> Data;
 		};
 
-		std::unique_ptr<moodycamel::ReaderWriterQueue<FutureSampleData>> FramesToSampleBuffer;
+		using FrameQueueType = moodycamel::ReaderWriterQueue<FutureSampleData>;
+
+		std::unique_ptr<FrameQueueType> FramesToSampleBuffer;
 		std::thread FrameHandlerThread;
 
 		virtual void Print(BufferType* data) override;
@@ -1013,7 +1015,7 @@ namespace
 
 			movie.Sampler = std::make_unique<EasyByteSampler>(settings, framepitch, &movie);
 
-			movie.FramesToSampleBuffer = std::make_unique<moodycamel::ReaderWriterQueue<MovieData::FutureSampleData>>(128);
+			movie.FramesToSampleBuffer = std::make_unique<MovieData::FrameQueueType>(128);
 
 			ShouldStopFrameThread = false;
 			movie.FrameHandlerThread = std::thread(FrameThreadHandler);
