@@ -18,6 +18,12 @@ Plugin to create movies for Source 2013 games. To install you place SourceDemoRe
 			Check to see if there is an update available. If there is a newer version, you will see a link where to get it. Nothing is downloaded.
 		</td>
 	</tr>
+	<tr>
+		<td>sdr_version</td>
+		<td>
+			Displays the current version.
+		</td>
+	</tr>
 	</tbody>
 </table>
 
