@@ -4,6 +4,23 @@ Plugin to create movies for Source 2013 games. To install you place SourceDemoRe
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
+### General commands
+
+<table>
+	<thead>
+		<th>Name</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
+	<tr>
+		<td>sdr_update</td>
+		<td>
+			Check to see if there is an update available. If there is a newer version, you will see a link where to get it. Nothing is downloaded.
+		</td>
+	</tr>
+	</tbody>
+</table>
+
 ### General variables
 
 <table>
