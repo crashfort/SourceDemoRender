@@ -105,4 +105,7 @@
   <ItemGroup>
     <Text Include="Interface\Application\Modules\Movie Record\HLAE\Readme.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

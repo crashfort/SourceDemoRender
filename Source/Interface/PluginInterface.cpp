@@ -7,6 +7,8 @@ extern "C"
 	#include "libavformat\avformat.h"
 }
 
+#include <cpprest\http_client.h>
+
 namespace LAV
 {
 	void LogFunction
