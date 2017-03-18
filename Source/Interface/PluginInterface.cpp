@@ -110,7 +110,90 @@ namespace
 
 		virtual void OnEdictAllocated(edict_t* entity) override {}
 		virtual void OnEdictFreed(const edict_t* entity) override {}
+
+		enum
+		{
+			PluginVersion = 3
+		};
 	};
+
+	namespace Commands
+	{
+		CON_COMMAND(sdr_update, "Check for any available updates")
+		{
+			Msg("SDR: Checking for any available update\n");
+
+			auto task = concurrency::create_task([]()
+			{
+				constexpr auto address = L"https://raw.githubusercontent.com/";
+				constexpr auto path = L"/CRASHFORT/SourceDemoRender/master/Version/Latest";
+
+				web::http::client::http_client_config config;
+				config.set_timeout(5s);
+
+				web::http::client::http_client webclient(address, config);
+
+				web::http::uri_builder pathbuilder(path);
+
+				return webclient.request(web::http::methods::GET, pathbuilder.to_string());
+			});
+
+			task.then([](web::http::http_response response)
+			{
+				auto status = response.status_code();
+
+				if (status != web::http::status_codes::OK)
+				{
+					Msg("SDR Update: Could not reach update repository");
+					return;
+				}
+
+				auto task = response.content_ready();
+
+				task.then([](web::http::http_response response)
+				{
+					/*
+						Content is only text containg a number, so extract it raw
+					*/
+					auto task = response.extract_string(true);
+
+					task.then([](utility::string_t string)
+					{
+						constexpr auto curversion = SourceDemoRenderPlugin::PluginVersion;
+						auto webversion = std::stoi(string);
+
+						if (curversion == webversion)
+						{
+							ConColorMsg
+							(
+								Color(88, 255, 39, 255),
+								"SDR Update: Using the latest version\n"
+							);
+						}
+
+						else if (curversion < webversion)
+						{
+							ConColorMsg
+							(
+								Color(51, 167, 255, 255),
+								"SDR Update: An update is available. New version: %d, current: %d\n"
+								"Visit https://github.com/CRASHFORT/SourceDemoRender/releases\n",
+								webversion, curversion
+							);
+						}
+
+						else if (curversion > webversion)
+						{
+							Msg
+							(
+								"SDR Update: Current version greater than update repository?\n"
+							);
+						}
+					});
+				});
+			});
+		}
+	}
 
 	SourceDemoRenderPlugin ThisPlugin;
 	SDR::EngineInterfaces Interfaces;

@@ -9,14 +9,6 @@
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4B8E5130-D408-4AD9-A9C4-009CA22E8C5E}</ProjectGuid>
@@ -38,19 +30,6 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -64,38 +43,24 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Property Sheet\PropertySheet.props" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Property Sheet\PropertySheet.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Property Sheet\PropertySheet.props" />
-  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\Output\</OutDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\Output\</OutDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RWQUEUE_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;_NO_ASYNCRTIMP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RWQUEUE_INCLUDE);$(SDR_RESTSDK_ROOT)Release\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -103,21 +68,10 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;$(SDR_X264_ROOT)lib\;$(SDR_FFMPEG_ROOT)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>cpprest140d_2_9.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -127,8 +81,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RWQUEUE_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;_NO_ASYNCRTIMP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_ROOT)common\;$(SDR_2013SDK_ROOT)public\;$(SDR_2013SDK_ROOT)public\tier0\;$(SDR_2013SDK_ROOT)public\tier1\;$(SDR_2013SDK_ROOT)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RWQUEUE_INCLUDE);$(SDR_RESTSDK_ROOT)Release\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -138,25 +92,10 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;$(SDR_X264_ROOT)lib\;$(SDR_FFMPEG_ROOT)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>cpprest140_2_9.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SDR_2013SDK_ROOT)lib\common\;$(SDR_2013SDK_ROOT)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -206,25 +145,12 @@
     <ClCompile Include="Interface\PluginInterface.cpp" />
     <ClCompile Include="Main\Precompiled Header\PrecompiledHeader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Interface\Application\Modules\Movie Record\HLAE\Readme.txt" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="packages\cpprestsdk.v140.windesktop.msvcstl.dyn.rt-dyn.2.9.1\build\native\cpprestsdk.v140.windesktop.msvcstl.dyn.rt-dyn.targets" Condition="Exists('packages\cpprestsdk.v140.windesktop.msvcstl.dyn.rt-dyn.2.9.1\build\native\cpprestsdk.v140.windesktop.msvcstl.dyn.rt-dyn.targets')" />
-  </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('packages\cpprestsdk.v140.windesktop.msvcstl.dyn.rt-dyn.2.9.1\build\native\cpprestsdk.v140.windesktop.msvcstl.dyn.rt-dyn.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\cpprestsdk.v140.windesktop.msvcstl.dyn.rt-dyn.2.9.1\build\native\cpprestsdk.v140.windesktop.msvcstl.dyn.rt-dyn.targets'))" />
-  </Target>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>
