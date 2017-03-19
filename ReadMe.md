@@ -155,7 +155,7 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 	<tr>
 		<td>sdr_movie_encoder_preset</td>
 		<td>
-			Not avaialble in PNG sequence.
+			Encoding preset. If you can, prefer not to use a slow encoding profile as the encoding may fall behind and the game will have to wait for it to catch up. Not avaialble in PNG sequence.
 			<br/><br/>
             <b>Default:</b> medium <br/>
 			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
