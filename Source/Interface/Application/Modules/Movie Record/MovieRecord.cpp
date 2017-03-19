@@ -216,6 +216,29 @@ namespace
 
 			AVFrame* Frame = nullptr;
 		};
+
+		struct ScopedAVDictionary
+		{
+			~ScopedAVDictionary()
+			{
+				av_dict_free(&Options);
+			}
+
+			AVDictionary** Get()
+			{
+				return &Options;
+			}
+
+			void Set(const char* key, const char* value, int flags = 0)
+			{
+				ThrowIfFailed
+				(
+					av_dict_set(Get(), key, value, flags)
+				);
+			}
+
+			AVDictionary* Options = nullptr;
+		};
 	}
 }
 
@@ -950,19 +973,17 @@ namespace
 							auto tune = Variables::Video::Tune.GetString();
 							auto crf = Variables::Video::CRF.GetString();
 
-							AVDictionary* options = nullptr;
-							av_dict_set(&options, "preset", preset, 0);
+							LAV::ScopedAVDictionary options;
+							options.Set("preset", preset);
 
 							if (strlen(tune) > 0)
 							{
-								av_dict_set(&options, "tune", tune, 0);
+								options.Set("tune", tune);
 							}
 
-							av_dict_set(&options, "crf", crf, 0);
+							options.Set("crf", crf);
 
-							vidwriter->OpenEncoder(&options);
-
-							av_dict_free(&options);
+							vidwriter->OpenEncoder(options.Get());
 						}
 
 						else
