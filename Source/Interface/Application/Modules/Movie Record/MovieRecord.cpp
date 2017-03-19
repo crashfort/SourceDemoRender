@@ -14,6 +14,7 @@ extern "C"
 	#include "libswscale\swscale.h"
 }
 
+#include <ppltasks.h>
 #include "readerwriterqueue.h"
 
 namespace
@@ -1070,33 +1071,43 @@ namespace
 
 		void __cdecl Override()
 		{
-			/*
-				Let the worker thread complete the sampling and
-				giving the frames to the encoder
-			*/
-			if (!ShouldStopFrameThread)
-			{
-				ShouldStopFrameThread = true;
-				CurrentMovie.FrameHandlerThread.join();
-			}
-
-			/*
-				Let the encoder finish all the delayed frames
-			*/
-			CurrentMovie.Video->Finish();
-			
-			SDR_MovieShutdown();
-
 			ThisHook.GetOriginal()();
 
 			auto hostframerate = g_pCVar->FindVar("host_framerate");
 			hostframerate->SetValue(0);
 
-			if (Variables::FlashWindow.GetBool())
+			Msg("SDR: Ending movie, if there are buffered frames this might take a moment\n");
+
+			auto task = concurrency::create_task([]()
 			{
-				auto& interfaces = SDR::GetEngineInterfaces();
-				interfaces.EngineClient->FlashWindow();
-			}
+				/*
+					Let the worker thread complete the sampling and
+					giving the frames to the encoder
+				*/
+				if (!ShouldStopFrameThread)
+				{
+					ShouldStopFrameThread = true;
+					CurrentMovie.FrameHandlerThread.join();
+				}
+
+				/*
+					Let the encoder finish all the delayed frames
+				*/
+				CurrentMovie.Video->Finish();
+			});
+
+			task.then([]()
+			{
+				SDR_MovieShutdown();
+
+				if (Variables::FlashWindow.GetBool())
+				{
+					auto& interfaces = SDR::GetEngineInterfaces();
+					interfaces.EngineClient->FlashWindow();
+				}
+
+				Msg("SDR: Movie is now complete\n");
+			});
 		}
 	}
 
