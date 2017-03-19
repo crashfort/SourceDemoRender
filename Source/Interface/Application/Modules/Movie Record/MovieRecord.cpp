@@ -827,6 +827,29 @@ namespace
 						auto targetpath = Variables::OutputDirectory.GetString();
 						auto finalname = CUtlString::PathJoin(targetpath, filename);
 
+						CUtlString filenamestr = filename;
+						auto extension = filenamestr.GetExtension();
+
+						/*
+							If the user entered png but no digit format
+							we have to add it for them
+						*/
+						if (extension == "png")
+						{
+							if (!filenamestr.MatchesPattern("*%*d.png"))
+							{
+								filenamestr = filenamestr.StripExtension();
+								filenamestr += "%05d.png";
+
+								finalname = CUtlString::PathJoin(targetpath, filenamestr);
+							}
+						}
+
+						else if (extension == "")
+						{
+							finalname += ".avi";
+						}
+
 						vidwriter->OpenFileForWrite(finalname);
 
 						auto formatcontext = vidwriter->FormatContext.Get();
