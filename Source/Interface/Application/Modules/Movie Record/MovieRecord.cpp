@@ -635,7 +635,7 @@ namespace
 		{
 			ConVar PixelFormat
 			(
-				"sdr_movie_encoder_pxformat", "I420", 0,
+				"sdr_movie_encoder_pxformat", "i420", 0,
 				"X264 pixel format Does nothing in png sequence. "
 				"Values: I420, I444, NV12. See https://wiki.videolan.org/YUV/"
 			);
@@ -667,7 +667,7 @@ namespace
 
 					for (auto preset : slowpresets)
 					{
-						if (strcmp(newstr, preset) == 0)
+						if (_strcmpi(newstr, preset) == 0)
 						{
 							Warning
 							(
@@ -909,9 +909,9 @@ namespace
 
 						auto pxformatnames =
 						{
-							"I420",
-							"I444",
-							"NV12",
+							"i420",
+							"i444",
+							"nv12",
 						};
 
 						auto pxformattypes =
@@ -925,7 +925,7 @@ namespace
 
 						for (auto name : pxformatnames)
 						{
-							if (strcmp(pxformatstr, name) == 0)
+							if (_strcmpi(pxformatstr, name) == 0)
 							{
 								pxformat = *(pxformattypes.begin() + pxformatindex);
 								break;
