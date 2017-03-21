@@ -639,6 +639,16 @@ namespace
 			true, 0, true, 1
 		);
 
+		namespace Audio
+		{
+			ConVar Enable
+			(
+				"sdr_audio_enable", "0", FCVAR_NEVER_AS_STRING,
+				"Process audio as well",
+				true, 0, true, 1
+			);
+		}
+
 		namespace Video
 		{
 			ConVar PixelFormat
@@ -1273,5 +1283,138 @@ namespace
 		{
 			"engine.dll", "CVideoMode_WriteMovieFrame", Override, Pattern, Mask
 		};
+	}
+
+	namespace Module_WaveCreateTmpFile
+	{
+		/*
+			0x1008EC90 static IDA address March 21 2017
+		*/
+		auto Pattern = SDR_PATTERN
+		(
+			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
+			"\x00\x00\x57\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
+			"\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8D\x85\x00\x00"
+			"\x00\x00\x68\x00\x00\x00\x00\x50\xE8\x00\x00\x00\x00"
+			"\x8B\x0D\x00\x00\x00\x00\x8D\x95\x00\x00\x00\x00\x83"
+			"\xC4\x18\x83\xC1\x04\x8B\x01\x6A\x00\x68\x00\x00\x00"
+			"\x00\x52\xFF\x50\x08\x8B\xF8\x85\xFF\x0F\x84\x00\x00"
+			"\x00\x00"
+		);
+		
+		auto Mask =
+		(
+			"xxxxx????xx????xx????xxxxx????x????xx????x????xx????"
+			"xx????xx????xxxxxxxxxxx????xxxxxxxxxx????"
+		);
+
+		void __cdecl Override
+		(
+			const char* filename, int rate, int bits, int channels
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "WaveCreateTmpFile", Override, Pattern, Mask
+		};
+
+		void __cdecl Override
+		(
+			const char* filename, int rate, int bits, int channels
+		)
+		{
+			if (Variables::Audio::Enable.GetBool())
+			{
+				ThisHook.GetOriginal()(filename, rate, bits, channels);
+			}
+		}
+	}
+
+	namespace Module_WaveAppendTmpFile
+	{
+		/*
+			0x1008EBE0 static IDA address March 21 2017
+		*/
+		auto Pattern = SDR_PATTERN
+		(
+			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
+			"\x00\x00\x57\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
+			"\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8D\x85\x00\x00"
+			"\x00\x00\x68\x00\x00\x00\x00\x50\xE8\x00\x00\x00\x00"
+			"\x8B\x0D\x00\x00\x00\x00\x8D\x95\x00\x00\x00\x00\x83"
+			"\xC4\x18\x83\xC1\x04\x8B\x01\x6A\x00\x68\x00\x00\x00"
+			"\x00\x52\xFF\x50\x08\x8B\xF8\x85\xFF\x74\x47"
+		);
+
+		auto Mask =
+		(
+			"xxxxx????xx????xx????xxxxx????x????xx????x????xx????"
+			"xx????xx????xxxxxxxxxxx????xxxxxxxxxx"
+		);
+
+		void __cdecl Override
+		(
+			const char* filename, void* buffer, int samplebits, int samplecount
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "WaveAppendTmpFile", Override, Pattern, Mask
+		};
+
+		void __cdecl Override
+		(
+			const char* filename, void* buffer, int samplebits, int samplecount
+		)
+		{
+			if (Variables::Audio::Enable.GetBool())
+			{
+				ThisHook.GetOriginal()(filename, buffer, samplebits, samplecount);
+			}
+		}
+	}
+
+	namespace Module_WaveFixupTmpFile
+	{
+		/*
+			0x1008EE30 static IDA address March 21 2017
+		*/
+		auto Pattern = SDR_PATTERN
+		(
+			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
+			"\x00\x00\x56\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
+			"\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8D\x85\x00\x00"
+			"\x00\x00\x68\x00\x00\x00\x00\x50\xE8\x00\x00\x00\x00"
+			"\x8B\x0D\x00\x00\x00\x00\x8D\x95\x00\x00\x00\x00\x83"
+			"\xC4\x18\x83\xC1\x04\x8B\x01\x6A\x00\x68\x00\x00\x00"
+			"\x00"
+		);
+		
+		auto Mask =
+		(
+			"xxxxx????xx????xx????xxxxx????x????xx????x????xx????x"
+			"x????xx????xxxxxxxxxxx????"
+		);
+
+		void __cdecl Override(const char* filename);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "WaveFixupTmpFile", Override, Pattern, Mask
+		};
+
+		void __cdecl Override(const char* filename)
+		{
+			if (Variables::Audio::Enable.GetBool())
+			{
+				ThisHook.GetOriginal()(filename);
+			}
+		}
 	}
 }
