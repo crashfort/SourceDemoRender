@@ -205,6 +205,17 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
             <b>Default:</b> 256 <br/>
 		</td>
 	</tr>
+	<tr>
+		<td>sdr_movie_x264_options</td>
+		<td>
+			Optional encoder options to append. Not avaialble in PNG sequence.
+			<br/><br/>
+			Format:
+			<pre>sdr_movie_x264_options key1=value key2=value key3=value ...</pre>
+			<br/>
+			See available options <a href="https://www.ffmpeg.org/ffmpeg-codecs.html#Options-25">here</a> and <a href="https://www.ffmpeg.org/ffmpeg-codecs.html#Codec-Options">here</a>
+		</td>
+	</tr>
 	</tbody>
 </table>
 
