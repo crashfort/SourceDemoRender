@@ -1285,6 +1285,42 @@ namespace
 		};
 	}
 
+	namespace Module_SNDRecordBuffer
+	{
+		/*
+			0x1007C710 static IDA address March 21 2017
+		*/
+		auto Pattern = SDR_PATTERN
+		(
+			"\x55\x8B\xEC\x8B\x0D\x00\x00\x00\x00\x53\x56\x57\x85"
+			"\xC9\x74\x0B\x8B\x01\x8B\x40\x38\xFF\xD0\x84\xC0\x75"
+			"\x0D\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00"
+			"\x00"
+		);
+		
+		auto Mask =
+		(
+			"xxxxx????xxxxxxxxxxxxxxxxxxxx?????xx????"
+		);
+
+		void __cdecl Override();
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "SNDRecordBuffer", Override, Pattern, Mask
+		};
+
+		void __cdecl Override()
+		{
+			if (Variables::Audio::Enable.GetBool())
+			{
+				ThisHook.GetOriginal()();
+			}
+		}
+	}
+
 	namespace Module_WaveCreateTmpFile
 	{
 		/*
