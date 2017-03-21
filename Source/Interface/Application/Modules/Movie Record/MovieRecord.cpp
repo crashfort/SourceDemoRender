@@ -525,7 +525,6 @@ namespace
 
 		bool IsStarted = false;
 
-		std::string Name;
 		uint32_t Width;
 		uint32_t Height;
 
@@ -861,7 +860,6 @@ namespace
 				
 			movie.Width = width;
 			movie.Height = height;
-			movie.Name = filename;
 
 			{
 				try
