@@ -236,6 +236,14 @@ namespace
 					av_dict_set(Get(), key, value, flags)
 				);
 			}
+			
+			void ParseString(const char* string)
+			{
+				ThrowIfFailed
+				(
+					av_dict_parse_string(Get(), string, "=", " ", 0)
+				);
+			}
 
 			AVDictionary* Options = nullptr;
 		};
@@ -686,6 +694,17 @@ namespace
 				"sdr_movie_encoder_tune", "", 0,
 				"X264 encoder tune. See https://trac.ffmpeg.org/wiki/Encode/H.264"
 			);
+
+			ConVar ExtraX264Options
+			(
+				"sdr_movie_x264_options", "", 0,
+				"Extra optional x264 encoder options to use. Format: key1=value key2=value key3=value ..."
+				"\n"
+				"Options that can be used:"
+				"\n"
+				"https://www.ffmpeg.org/ffmpeg-codecs.html#Options-25\n"
+				"https://www.ffmpeg.org/ffmpeg-codecs.html#Codec-Options"
+			);
 		}
 	}
 
@@ -972,6 +991,7 @@ namespace
 							auto preset = Variables::Video::Preset.GetString();
 							auto tune = Variables::Video::Tune.GetString();
 							auto crf = Variables::Video::CRF.GetString();
+							auto extraparams = Variables::Video::ExtraX264Options.GetString();
 
 							LAV::ScopedAVDictionary options;
 							options.Set("preset", preset);
@@ -982,6 +1002,11 @@ namespace
 							}
 
 							options.Set("crf", crf);
+
+							if (strlen(extraparams) > 0)
+							{
+								options.ParseString(extraparams);
+							}
 
 							vidwriter->OpenEncoder(options.Get());
 						}
