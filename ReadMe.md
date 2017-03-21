@@ -115,6 +115,26 @@ Plugin to create movies for Source 2013 games. To install you place SourceDemoRe
 
 More details about sampling can be [read here](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3ASampling-System).
 
+### Audio variables
+
+<table>
+	<thead>
+		<th>Name</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
+	<tr>
+		<td>sdr_audio_enable</td>
+		<td>
+			Enable to process audio. Currently it does not include in a video file, but is placed as a separate wave file.
+            <br/><br/>
+            <b>Values:</b> 0 or 1 <br/>
+            <b>Default:</b> 0 <br/>
+		</td>
+	</tr>
+	</tbody>
+</table>
+
 ### Video variables
 
 <table>
@@ -218,7 +238,6 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 	</tr>
 	</tbody>
 </table>
-
 
 ### Instructions
 When you are ready to create your movie you just type **startmovie name** and then **endmovie** as usual. There's no need to change **host_framerate** as that is done automatically.
