@@ -753,7 +753,7 @@ namespace
 	#if 0
 	namespace Module_BaseTemplateMask
 	{
-		auto Pattern = SDR_PATTERN("");
+		auto Pattern = SDR::MemoryPattern("");
 		auto Mask = "";
 
 		void __cdecl Override();
@@ -794,7 +794,7 @@ namespace
 		/*
 			0x100BCAC0 static IDA address May 22 2016
 		*/
-		auto Pattern = SDR_PATTERN
+		auto Pattern = SDR::MemoryPattern
 		(
 			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\xA1\x00\x00"
 			"\x00\x00\xD9\x45\x18\x56\x57\xF3\x0F\x10\x40\x00"
@@ -1106,7 +1106,7 @@ namespace
 		/*
 			0x100BAE40 static IDA address May 22 2016
 		*/
-		auto Pattern = SDR_PATTERN
+		auto Pattern = SDR::MemoryPattern
 		(
 			"\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00\x00"
 			"\xD9\x05\x00\x00\x00\x00\x51\xB9\x00\x00\x00\x00"
@@ -1170,7 +1170,7 @@ namespace
 		/*
 			0x102011B0 static IDA address June 3 2016
 		*/
-		auto Pattern = SDR_PATTERN
+		auto Pattern = SDR::MemoryPattern
 		(
 			"\x55\x8B\xEC\x51\x80\x3D\x00\x00\x00\x00\x00\x53"
 			"\x8B\x5D\x08\x57\x8B\xF9\x8B\x83\x00\x00\x00\x00"
@@ -1207,7 +1207,7 @@ namespace
 			static auto readscreenpxaddr = SDR::GetAddressFromPattern
 			(
 				"engine.dll",
-				SDR_PATTERN
+				SDR::MemoryPattern
 				(
 					"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
 					"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
@@ -1288,7 +1288,7 @@ namespace
 		/*
 			0x1007C710 static IDA address March 21 2017
 		*/
-		auto Pattern = SDR_PATTERN
+		auto Pattern = SDR::MemoryPattern
 		(
 			"\x55\x8B\xEC\x8B\x0D\x00\x00\x00\x00\x53\x56\x57\x85"
 			"\xC9\x74\x0B\x8B\x01\x8B\x40\x38\xFF\xD0\x84\xC0\x75"
@@ -1324,7 +1324,7 @@ namespace
 		/*
 			0x1008EC90 static IDA address March 21 2017
 		*/
-		auto Pattern = SDR_PATTERN
+		auto Pattern = SDR::MemoryPattern
 		(
 			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
 			"\x00\x00\x57\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
@@ -1378,7 +1378,7 @@ namespace
 		/*
 			0x1008EBE0 static IDA address March 21 2017
 		*/
-		auto Pattern = SDR_PATTERN
+		auto Pattern = SDR::MemoryPattern
 		(
 			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
 			"\x00\x00\x57\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
@@ -1429,7 +1429,7 @@ namespace
 		/*
 			0x1008EE30 static IDA address March 21 2017
 		*/
-		auto Pattern = SDR_PATTERN
+		auto Pattern = SDR::MemoryPattern
 		(
 			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
 			"\x00\x00\x56\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"

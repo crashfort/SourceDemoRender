@@ -140,9 +140,9 @@ namespace SDR
 	private:
 		uintptr_t Address;
 	};
-}
 
-/*
-	Ugly but the patterns are unsigned chars anyway
-*/
-#define SDR_PATTERN(pattern) reinterpret_cast<const byte*>(pattern)
+	constexpr auto MemoryPattern(const char* input)
+	{
+		return reinterpret_cast<const byte*>(input);
+	}
+}
