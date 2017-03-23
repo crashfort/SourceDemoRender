@@ -1354,6 +1354,13 @@ namespace
 			"engine.dll", "WaveCreateTmpFile", Override, Pattern, Mask
 		};
 
+		/*
+			"rate" will always be 44100
+			"bits" will always be 16
+			"channels" will always be 2
+
+			According to engine\audio\private\snd_mix.cpp @ 4003
+		*/
 		void __cdecl Override
 		(
 			const char* filename, int rate, int bits, int channels
@@ -1400,6 +1407,11 @@ namespace
 			"engine.dll", "WaveAppendTmpFile", Override, Pattern, Mask
 		};
 
+		/*
+			"samplebits" will always be 16
+
+			According to engine\audio\private\snd_mix.cpp @ 4074
+		*/
 		void __cdecl Override
 		(
 			const char* filename, void* buffer, int samplebits, int samplecount
@@ -1443,6 +1455,9 @@ namespace
 			"engine.dll", "WaveFixupTmpFile", Override, Pattern, Mask
 		};
 
+		/*
+			Gets called when the movie is ended
+		*/
 		void __cdecl Override(const char* filename)
 		{
 			if (Variables::Audio::Enable.GetBool())
