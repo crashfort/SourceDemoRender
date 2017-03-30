@@ -26,8 +26,9 @@ namespace
 			AllocSWSContext,
 			AllocCodecContext,
 			AllocAVFrame,
-			AllocAVStream,
-			EncoderNotFound,
+			AllocVideoStream,
+			VideoEncoderNotFound,
+			OpenAudioFile,
 		};
 
 		const char* ExceptionTypeToString(ExceptionType code)
@@ -36,11 +37,12 @@ namespace
 
 			static const char* names[] =
 			{
-				"Could not allocate pixel format conversion context",
-				"Could not allocate codec context",
-				"Could not allocate video frame",
+				"Could not allocate video conversion context",
+				"Could not allocate audio video codec context",
+				"Could not allocate audio video frame",
 				"Could not allocate video stream",
-				"Encoder not found"
+				"Video encoder not found",
+				"Could not open audio file",
 			};
 
 			auto retstr = names[index];
@@ -80,7 +82,7 @@ namespace
 			if (code < 0)
 			{
 				Warning("SDR LAV: %d\n", code);
-				
+
 				Exception info;
 				info.Code = code;
 
@@ -128,9 +130,9 @@ namespace
 			SwsContext* Context = nullptr;
 		};
 
-		struct ScopedAVFContext
+		struct ScopedFormatContext
 		{
-			~ScopedAVFContext()
+			~ScopedFormatContext()
 			{
 				if (Context)
 				{
@@ -154,6 +156,11 @@ namespace
 			AVFormatContext* Get() const
 			{
 				return Context;
+			}
+
+			auto operator->() const
+			{
+				return Get();
 			}
 
 			AVFormatContext* Context = nullptr;
@@ -181,12 +188,22 @@ namespace
 				return Context;
 			}
 
+			auto operator->() const
+			{
+				return Get();
+			}
+
+			explicit operator bool() const
+			{
+				return Get() != nullptr;
+			}
+
 			AVCodecContext* Context = nullptr;
 		};
 
-		struct ScopedAVCFrame
+		struct ScopedAVFrame
 		{
-			~ScopedAVCFrame()
+			~ScopedAVFrame()
 			{
 				if (Frame)
 				{
@@ -214,6 +231,11 @@ namespace
 				return Frame;
 			}
 
+			auto operator->() const
+			{
+				return Get();
+			}
+
 			AVFrame* Frame = nullptr;
 		};
 
@@ -236,7 +258,7 @@ namespace
 					av_dict_set(Get(), key, value, flags)
 				);
 			}
-			
+
 			void ParseString(const char* string)
 			{
 				ThrowIfFailed
@@ -246,6 +268,65 @@ namespace
 			}
 
 			AVDictionary* Options = nullptr;
+		};
+
+		struct ScopedFile
+		{
+			~ScopedFile()
+			{
+				Close();
+			}
+
+			void Close()
+			{
+				if (Handle)
+				{
+					fclose(Handle);
+					Handle = nullptr;
+				}
+			}
+
+			auto Get() const
+			{
+				return Handle;
+			}
+
+			explicit operator bool() const
+			{
+				return Get() != nullptr;
+			}
+
+			void Assign(const char* path, const char* mode)
+			{
+				Handle = fopen(path, mode);
+
+				ThrowIfNull(Handle, ExceptionType::OpenAudioFile);
+			}
+
+			template <typename... Types>
+			void WriteSimple(const Types&... args)
+			{
+				bool adder[] =
+				{
+					[&]()
+					{
+						fwrite(&args, sizeof(args), 1, Get());
+						return true;
+					}()...
+				};
+			}
+
+			auto GetStreamPosition() const
+			{
+				return ftell(Get());
+			}
+
+			void SeekAbsolute(int32_t position)
+			{
+				fseek(Get(), position, SEEK_SET);
+			}
+
+			FILE* Handle = nullptr;
 		};
 	}
 }
