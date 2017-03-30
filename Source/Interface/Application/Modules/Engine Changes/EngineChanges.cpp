@@ -3,6 +3,35 @@
 
 namespace
 {
+	namespace Variables
+	{
+		ConVar SuppressDebugLog
+		(
+			"sdr_game_suppressdebug", "0", 0,
+			"Disable slow game debug output logging"
+		);
+	}
+
+	namespace Module_OutputDebugString
+	{
+		void __stdcall Override(LPCSTR outputstring);
+
+		using ThisFunction = decltype(OutputDebugStringA)*;
+
+		SDR::HookModuleAPI<ThisFunction> ThisHook
+		{
+			"kernel32.dll", "OutputDebugString", "OutputDebugStringA", Override
+		};
+
+		void __stdcall Override(LPCSTR outputstring)
+		{
+			if (!Variables::SuppressDebugLog.GetBool())
+			{
+				ThisHook.GetOriginal()(outputstring);
+			}
+		}
+	}
+
 	struct TabData
 	{
 		bool IsUnfocused = false;

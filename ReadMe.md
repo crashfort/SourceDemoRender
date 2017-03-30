@@ -109,6 +109,15 @@ Plugin to create movies for Source 2013 games. To install you place SourceDemoRe
             <b>Default:</b> 0 <br/>
 		</td>
 	</tr>
+	<tr>
+		<td>sdr_game_suppressdebug</td>
+		<td>
+			Prevents engine output debug messages to reach the operating system.
+			<br/><br/>
+			<b>Values:</b> 0 or 1 <br/>
+            <b>Default:</b> 0 <br/>
+		</td>
+	</tr>
 	</tbody>
 </table>
 
