@@ -1144,7 +1144,11 @@ namespace
 					interfaces.EngineClient->FlashWindow();
 				}
 
-				Msg("SDR: Movie is now complete\n");
+				ConColorMsg
+				(
+					Color(88, 255, 39, 255),
+					"SDR: Movie is now complete\n"
+				);
 			});
 		}
 	}
