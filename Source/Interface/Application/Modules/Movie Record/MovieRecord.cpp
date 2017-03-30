@@ -275,7 +275,20 @@ namespace LAV
 	{
 		if (!Variables::SuppressLog.GetBool())
 		{
-			MsgV(fmt, vl);
+			/*
+				989 max limit according to
+				https://developer.valvesoftware.com/wiki/Developer_Console_Control#Printing_to_the_console
+
+				960 to keep in a 32 byte alignment
+			*/
+			char buf[960];
+			vsprintf_s(buf, fmt, vl);
+
+			/*
+				Not formatting the buffer to a string will create
+				a runtime error on any float conversion
+			*/
+			Msg("%s", buf);
 		}
 	}
 }
