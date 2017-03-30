@@ -382,11 +382,11 @@ namespace
 		{
 			FormatContext.Assign(path);
 
-			if (!(FormatContext.Context->oformat->flags & AVFMT_NOFILE))
+			if (!(FormatContext->oformat->flags & AVFMT_NOFILE))
 			{
 				LAV::ThrowIfFailed
 				(
-					avio_open(&FormatContext.Context->pb, path, AVIO_FLAG_WRITE)
+					avio_open(&FormatContext->pb, path, AVIO_FLAG_WRITE)
 				);
 			}
 		}
@@ -395,18 +395,13 @@ namespace
 		{
 			Encoder = avcodec_find_encoder_by_name(name);
 
-			LAV::ThrowIfNull(Encoder, LAV::ExceptionType::EncoderNotFound);
+			LAV::ThrowIfNull(Encoder, LAV::ExceptionType::VideoEncoderNotFound);
 
 			CodecContext.Assign(Encoder);
-		}
 
-		AVStream* AddStream()
-		{
-			auto retptr = avformat_new_stream(FormatContext.Get(), Encoder);
+			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
 
-			LAV::ThrowIfNull(retptr, LAV::ExceptionType::AllocAVStream);
-
-			return retptr;
+			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
 		}
 
 		void SetCodecParametersToStream()
@@ -415,7 +410,7 @@ namespace
 			(
 				avcodec_parameters_from_context
 				(
-					VideoStream->codecpar,
+					Stream->codecpar,
 					CodecContext.Get()
 				)
 			);
@@ -423,12 +418,12 @@ namespace
 
 		void OpenEncoder(AVDictionary** options)
 		{
-			SetCodecParametersToStream();
-
 			LAV::ThrowIfFailed
 			(
 				avcodec_open2(CodecContext.Get(), Encoder, options)
 			);
+
+			SetCodecParametersToStream();
 		}
 
 		void WriteHeader()
@@ -462,10 +457,10 @@ namespace
 				width * 3
 			};
 
-			if (CodecContext.Context->pix_fmt == AV_PIX_FMT_RGB24)
+			if (CodecContext->pix_fmt == AV_PIX_FMT_RGB24)
 			{
-				MainFrame.Frame->data[0] = sourceplanes[0];
-				MainFrame.Frame->linesize[0] = sourcestrides[0];
+				Frame->data[0] = sourceplanes[0];
+				Frame->linesize[0] = sourcestrides[0];
 			}
 
 			else
@@ -477,23 +472,25 @@ namespace
 					sourcestrides,
 					0,
 					height,
-					MainFrame.Frame->data,
-					MainFrame.Frame->linesize
+					Frame->data,
+					Frame->linesize
 				);
 			}
 		}
 
 		void SendRawFrame()
 		{
-			MainFrame.Frame->pts = CurrentPresentation++;
+			Frame->pts = PresentationIndex;
 
 			auto ret = avcodec_send_frame
 			(
 				CodecContext.Get(),
-				MainFrame.Get()
+				Frame.Get()
 			);
 
 			ReceivePacketFrame();
+
+			PresentationIndex++;
 		}
 
 		void SendFlushFrame()
@@ -539,15 +536,14 @@ namespace
 
 		void WriteEncodedPacket(AVPacket& packet)
 		{
-			packet.stream_index = VideoStream->index;
-			packet.duration = 1;
-
 			av_packet_rescale_ts
 			(
 				&packet,
-				CodecContext.Context->time_base,
-				VideoStream->time_base
+				CodecContext->time_base,
+				Stream->time_base
 			);
+
+			packet.stream_index = Stream->index;
 
 			LAV::ThrowIfFailed
 			(
@@ -557,12 +553,16 @@ namespace
 					&packet
 				)
 			);
+
+			av_packet_unref(&packet);
 		}
 
-		LAV::ScopedAVFContext FormatContext;
+		LAV::ScopedFormatContext FormatContext;
 		
-		AVCodec* Encoder = nullptr;
 		LAV::ScopedCodecContext CodecContext;
+		AVCodec* Encoder = nullptr;
+		AVStream* Stream = nullptr;
+		LAV::ScopedAVFrame Frame;
 
 		/*
 			Conversion from RGB24 to whatever specified
@@ -572,9 +572,7 @@ namespace
 		/*
 			Incremented and written to for every sent frame
 		*/
-		int64_t CurrentPresentation = 0;
-		AVStream* VideoStream = nullptr;
-		LAV::ScopedAVCFrame MainFrame;
+		int64_t PresentationIndex = 0;
 	};
 
 	struct MovieData : public SDR::Sampler::IFramePrinter
@@ -1004,8 +1002,7 @@ namespace
 
 					auto pxformat = AV_PIX_FMT_NONE;
 
-					vidwriter->VideoStream = vidwriter->AddStream();
-					vidwriter->VideoStream->time_base = timebase;
+					vidwriter->Stream->time_base = timebase;
 
 					auto codeccontext = vidwriter->CodecContext.Get();
 					codeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
@@ -1108,7 +1105,7 @@ namespace
 						}
 					}
 
-					vidwriter->MainFrame.Assign
+					vidwriter->Frame.Assign
 					(
 						pxformat,
 						width,
