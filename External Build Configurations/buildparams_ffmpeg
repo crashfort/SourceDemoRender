@@ -7,7 +7,6 @@ CC=cl ./configure \
 --disable-programs \
 --disable-doc \
 --disable-avdevice \
---disable-swresample \
 --disable-postproc \
 --disable-avfilter \
 --disable-network \
