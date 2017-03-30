@@ -1012,6 +1012,11 @@ namespace
 
 							options.Set("crf", crf);
 
+							/*
+								Setting every frame as a keyframe
+								gives the ability to use the video in a video editor with ease
+							*/
+							options.Set("x264-params", "keyint=1");
 
 							vidwriter->OpenEncoder(options.Get());
 						}
