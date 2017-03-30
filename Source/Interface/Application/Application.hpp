@@ -141,6 +141,48 @@ namespace SDR
 		uintptr_t Address;
 	};
 
+	template <typename FuncSignature>
+	class HookModuleAPI final : public HookModuleBase
+	{
+	public:
+		HookModuleAPI
+		(
+			const char* module,
+			const char* name,
+			const char* exportname,
+			FuncSignature newfunction
+		) :
+			HookModuleBase(module, name, newfunction),
+			ExportName(exportname)
+		{
+			AddModule(this);
+		}
+
+		inline auto GetOriginal() const
+		{
+			return static_cast<FuncSignature>(OriginalFunction);
+		}
+
+		virtual MH_STATUS Create() override
+		{
+			wchar_t module[64];
+			swprintf_s(module, L"%S", Module);
+
+			auto res = MH_CreateHookApi2
+			(
+				module,
+				ExportName,
+				NewFunction,
+				&OriginalFunction
+			);
+
+			return res;
+		}
+
+	private:
+		const char* ExportName;
+	};
+
 	constexpr auto MemoryPattern(const char* input)
 	{
 		return reinterpret_cast<const byte*>(input);
