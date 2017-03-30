@@ -17,6 +17,11 @@ extern "C"
 #include <ppltasks.h>
 #include "readerwriterqueue.h"
 
+/*
+	For WAVE related things
+*/
+#include <mmsystem.h>
+
 namespace
 {
 	namespace LAV
@@ -376,6 +381,85 @@ namespace LAV
 
 namespace
 {
+	struct SDRAudioWriter
+	{
+		~SDRAudioWriter()
+		{
+			Finish();
+		}
+
+		void Open(const char* name, int samplerate, int samplebits, int channels)
+		{
+			WaveFile.Assign(name, "wb");
+
+			enum : int32_t
+			{
+				RIFF = MAKEFOURCC('R', 'I', 'F', 'F'),
+				WAVE = MAKEFOURCC('W', 'A', 'V', 'E'),
+				FMT_ = MAKEFOURCC('f', 'm', 't', ' '),
+				DATA = MAKEFOURCC('d', 'a', 't', 'a')
+			};
+
+			WaveFile.WriteSimple(RIFF, 0);
+
+			HeaderPosition = WaveFile.GetStreamPosition() - sizeof(int);
+
+			WaveFile.WriteSimple(WAVE);
+
+			WAVEFORMATEX waveformat = {0};
+			std::memset(&waveformat, 0, sizeof(waveformat));
+
+			waveformat.wFormatTag = WAVE_FORMAT_PCM;
+			waveformat.nChannels = channels;
+			waveformat.nSamplesPerSec = samplerate;
+			waveformat.nAvgBytesPerSec = samplerate * samplebits * channels / 8;
+			waveformat.nBlockAlign = (channels * samplebits) / 8;
+			waveformat.wBitsPerSample = samplebits;
+
+			WaveFile.WriteSimple(FMT_, sizeof(waveformat), waveformat);
+			WaveFile.WriteSimple(DATA, 0);
+
+			FileLength = WaveFile.GetStreamPosition();
+			DataPosition = FileLength - sizeof(int);
+		}
+
+		void Finish()
+		{
+			if (!WaveFile)
+			{
+				return;
+			}
+
+			WaveFile.SeekAbsolute(HeaderPosition);
+			WaveFile.WriteSimple(FileLength - sizeof(int) * 2);
+
+			WaveFile.SeekAbsolute(DataPosition);
+			WaveFile.WriteSimple(DataLength);
+
+			WaveFile.Close();
+		}
+
+		void SetAudioPCM16Input(int16_t* buffer, int32_t length)
+		{
+			fwrite(buffer, length, 1, WaveFile.Get());
+
+			DataLength += length;
+			FileLength += DataLength;
+		}
+
+		LAV::ScopedFile WaveFile;
+		
+		/*
+			These variables are used to reference a stream position
+			that needs data from the future
+		*/
+		int32_t HeaderPosition;
+		int32_t DataPosition;
+		
+		int32_t DataLength = 0;
+		int32_t FileLength = 0;
+	};
+
 	struct SDRVideoWriter
 	{
 		void OpenFileForWrite(const char* path)
@@ -577,13 +661,19 @@ namespace
 
 	struct MovieData : public SDR::Sampler::IFramePrinter
 	{
-		struct FutureSampleData
+		struct VideoFutureSampleData
 		{
 			double Time;
 			std::vector<uint8_t> Data;
 		};
 
-		using FrameQueueType = moodycamel::ReaderWriterQueue<FutureSampleData>;
+		struct AudioFutureSampleData
+		{
+			std::vector<int16_t> Data;
+		};
+
+		using FrameQueueType = moodycamel::ReaderWriterQueue<VideoFutureSampleData>;
+		using AudioSampleQueueType = moodycamel::ReaderWriterQueue<AudioFutureSampleData>;
 
 		enum
 		{
@@ -623,11 +713,13 @@ namespace
 		double SamplingTime = 0.0;
 
 		std::unique_ptr<SDRVideoWriter> Video;
+		std::unique_ptr<SDRAudioWriter> Audio;
 
 		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
 
 		int32_t BufferedFrames = 0;
 		std::unique_ptr<FrameQueueType> FramesToSampleBuffer;
+		std::unique_ptr<AudioSampleQueueType> AudioSamplesToWrite;
 		std::thread FrameHandlerThread;
 	};
 
@@ -803,19 +895,27 @@ namespace
 		auto& interfaces = SDR::GetEngineInterfaces();
 		auto& movie = CurrentMovie;
 		auto& nonreadyframes = movie.FramesToSampleBuffer;
+		auto& audiosamples = movie.AudioSamplesToWrite;
 
 		auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
 
-		MovieData::FutureSampleData sample;
-		sample.Data.reserve(movie.GetRGB24ImageSize());
+		MovieData::VideoFutureSampleData videosample;
+		videosample.Data.reserve(movie.GetRGB24ImageSize());
+
+		MovieData::AudioFutureSampleData audiosample;
+
+		if (movie.Audio)
+		{
+			audiosample.Data.reserve(2048);
+		}
 
 		while (!ShouldStopFrameThread)
 		{
-			while (nonreadyframes->try_dequeue(sample))
+			while (nonreadyframes->try_dequeue(videosample))
 			{
 				movie.BufferedFrames--;
 
-				auto time = sample.Time;
+				auto time = videosample.Time;
 
 				if (movie.Sampler->CanSkipConstant(time, sampleframerate))
 				{
@@ -824,8 +924,17 @@ namespace
 
 				else
 				{
-					auto data = sample.Data.data();
+					auto data = videosample.Data.data();
 					movie.Sampler->Sample(data, time);
+				}
+			}
+
+			if (movie.Audio)
+			{
+				while (audiosamples->try_dequeue(audiosample))
+				{
+					auto& data = audiosample.Data;
+					movie.Audio->SetAudioPCM16Input(data.data(), data.size());
 				}
 			}
 		}
@@ -947,7 +1056,13 @@ namespace
 				{
 					movie.Video = std::make_unique<SDRVideoWriter>();
 
+					if (Variables::Audio::Enable.GetBool())
+					{
+						movie.Audio = std::make_unique<SDRAudioWriter>();
+					}
+
 					auto vidwriter = movie.Video.get();
+					auto audiowriter = movie.Audio.get();
 
 					AVRational timebase;
 					timebase.num = 1;
@@ -956,33 +1071,92 @@ namespace
 					bool isx264;
 
 					{
-						auto targetpath = Variables::OutputDirectory.GetString();
-						auto finalname = CUtlString::PathJoin(targetpath, filename);
+						char finalname[2048];
 
-						CUtlString filenamestr = filename;
-						auto extension = filenamestr.GetExtension();
+						auto targetpath = Variables::OutputDirectory.GetString();
+
+						V_ComposeFileName
+						(
+							targetpath,
+							filename,
+							finalname,
+							sizeof(finalname)
+						);
+
+						auto extension = V_GetFileExtension(filename);
 
 						/*
 							If the user entered png but no digit format
 							we have to add it for them
 						*/
-						if (extension == "png")
+						if (extension)
 						{
-							if (!filenamestr.MatchesPattern("*%*d.png"))
+							if (strcmp(extension, "png") == 0)
 							{
-								filenamestr = filenamestr.StripExtension();
-								filenamestr += "%05d.png";
+								CUtlString utlfilename = filename;
+								std::string stlfilename;
+								stlfilename.resize(1024);
 
-								finalname = CUtlString::PathJoin(targetpath, filenamestr);
+								if (!utlfilename.MatchesPattern("*%*d.png"))
+								{
+									V_StripExtension(filename, &stlfilename[0], stlfilename.size());
+
+									stlfilename += "%05d.png";
+
+									V_ComposeFileName
+									(
+										targetpath,
+										stlfilename.c_str(),
+										finalname,
+										sizeof(finalname)
+									);
+								}
 							}
 						}
 
-						else if (extension == "")
+						/*
+							Default to avi
+						*/
+						else
 						{
-							finalname += ".avi";
+							strcat_s(finalname, ".avi");
 						}
 
 						vidwriter->OpenFileForWrite(finalname);
+
+						if (audiowriter)
+						{
+							V_StripExtension(finalname, finalname, sizeof(finalname));
+							
+							/*
+								If the user wants a png sequence, it means the filename
+								has the digit formatting, don't want this in audio name
+							*/
+							if (strcmp(extension, "png") == 0)
+							{
+								auto length = strlen(finalname);
+
+								for (int i = length - 1; i >= 0; i--)
+								{
+									auto curchar = finalname[i];
+
+									if (curchar == '%')
+									{
+										finalname[i] = 0;
+										break;
+									}
+								}
+							}
+
+							strcat_s(finalname, ".wav");
+
+							/*
+								This is the only supported audio output format
+							*/
+							audiowriter->Open(finalname, 44'100, 16, 2);
+
+							movie.AudioSamplesToWrite = std::make_unique<MovieData::AudioSampleQueueType>();
+						}
 
 						auto formatcontext = vidwriter->FormatContext.Get();
 						auto oformat = formatcontext->oformat;
@@ -1224,6 +1398,11 @@ namespace
 					CurrentMovie.FrameHandlerThread.join();
 				}
 
+				if (CurrentMovie.Audio)
+				{
+					CurrentMovie.Audio->Finish();
+				}
+
 				/*
 					Let the encoder finish all the delayed frames
 				*/
@@ -1321,7 +1500,7 @@ namespace
 			auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
 			auto& time = movie.SamplingTime;
 
-			MovieData::FutureSampleData newsample;
+			MovieData::VideoFutureSampleData newsample;
 			newsample.Time = time;
 			newsample.Data.resize(movie.GetRGB24ImageSize());
 
@@ -1396,7 +1575,7 @@ namespace
 
 		void __cdecl Override()
 		{
-			if (Variables::Audio::Enable.GetBool())
+			if (CurrentMovie.Audio)
 			{
 				ThisHook.GetOriginal()();
 			}
@@ -1450,10 +1629,7 @@ namespace
 			const char* filename, int rate, int bits, int channels
 		)
 		{
-			if (Variables::Audio::Enable.GetBool())
-			{
-				ThisHook.GetOriginal()(filename, rate, bits, channels);
-			}
+			
 		}
 	}
 
@@ -1501,10 +1677,10 @@ namespace
 			const char* filename, void* buffer, int samplebits, int samplecount
 		)
 		{
-			if (Variables::Audio::Enable.GetBool())
-			{
-				ThisHook.GetOriginal()(filename, buffer, samplebits, samplecount);
-			}
+			auto bufstart = static_cast<int16_t*>(buffer);
+			auto length = samplecount * samplebits / 8;
+
+			CurrentMovie.AudioSamplesToWrite->enqueue({{bufstart, bufstart + length}});
 		}
 	}
 
@@ -1544,10 +1720,7 @@ namespace
 		*/
 		void __cdecl Override(const char* filename)
 		{
-			if (Variables::Audio::Enable.GetBool())
-			{
-				ThisHook.GetOriginal()(filename);
-			}
+			
 		}
 	}
 }
