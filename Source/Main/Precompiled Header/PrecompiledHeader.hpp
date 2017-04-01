@@ -1,6 +1,6 @@
 #pragma once
 
-#include "targetver.h"
+#include "TargetVersion.hpp"
 
 #include <Windows.h>
 #include <Psapi.h>

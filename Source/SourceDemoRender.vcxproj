@@ -199,7 +199,7 @@
     <ClInclude Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\HLAE\Sampler.hpp" />
     <ClInclude Include="Main\Precompiled Header\PrecompiledHeader.hpp" />
-    <ClInclude Include="Main\Precompiled Header\targetver.h" />
+    <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd Party Libraries\MinHook\src\buffer.c">

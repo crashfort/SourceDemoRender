@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Main\Precompiled Header\targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Main\Precompiled Header\PrecompiledHeader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -55,6 +52,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
