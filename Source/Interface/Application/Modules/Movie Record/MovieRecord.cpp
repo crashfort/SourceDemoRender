@@ -1132,18 +1132,21 @@ namespace
 								If the user wants a png sequence, it means the filename
 								has the digit formatting, don't want this in audio name
 							*/
-							if (strcmp(extension, "png") == 0)
+							if (extension)
 							{
-								auto length = strlen(finalname);
-
-								for (int i = length - 1; i >= 0; i--)
+								if (strcmp(extension, "png") == 0)
 								{
-									auto curchar = finalname[i];
+									auto length = strlen(finalname);
 
-									if (curchar == '%')
+									for (int i = length - 1; i >= 0; i--)
 									{
-										finalname[i] = 0;
-										break;
+										auto curchar = finalname[i];
+
+										if (curchar == '%')
+										{
+											finalname[i] = 0;
+											break;
+										}
 									}
 								}
 							}
