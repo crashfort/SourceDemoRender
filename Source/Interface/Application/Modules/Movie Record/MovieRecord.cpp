@@ -1084,6 +1084,9 @@ namespace
 
 					{
 						char finalname[2048];
+						char finalfilename[256];
+
+						strcpy_s(finalfilename, filename);
 
 						auto targetpath = Variables::OutputDirectory.GetString();
 
@@ -1097,6 +1100,22 @@ namespace
 
 						auto extension = V_GetFileExtension(filename);
 
+						auto removepercentage = [](char* input)
+						{
+							auto length = strlen(input);
+
+							for (int i = length - 1; i >= 0; i--)
+							{
+								auto& curchar = input[i];
+
+								if (curchar == '%')
+								{
+									curchar = 0;
+									break;
+								}
+							}
+						};
+
 						/*
 							If the user entered png but no digit format
 							we have to add it for them
@@ -1105,24 +1124,19 @@ namespace
 						{
 							if (strcmp(extension, "png") == 0)
 							{
-								CUtlString utlfilename = filename;
-								std::string stlfilename;
-								stlfilename.resize(1024);
+								V_StripExtension(finalfilename, finalfilename, sizeof(finalfilename));
 
-								if (!utlfilename.MatchesPattern("*%*d.png"))
-								{
-									V_StripExtension(filename, &stlfilename[0], stlfilename.size());
+								removepercentage(finalfilename);
 
-									stlfilename += "%05d.png";
+								strcat_s(finalfilename, "%05d.png");
 
-									V_ComposeFileName
-									(
-										targetpath,
-										stlfilename.c_str(),
-										finalname,
-										sizeof(finalname)
-									);
-								}
+								V_ComposeFileName
+								(
+									targetpath,
+									finalfilename,
+									finalname,
+									sizeof(finalname)
+								);
 							}
 						}
 
@@ -1148,18 +1162,7 @@ namespace
 							{
 								if (strcmp(extension, "png") == 0)
 								{
-									auto length = strlen(finalname);
-
-									for (int i = length - 1; i >= 0; i--)
-									{
-										auto curchar = finalname[i];
-
-										if (curchar == '%')
-										{
-											finalname[i] = 0;
-											break;
-										}
-									}
+									removepercentage(finalname);
 								}
 							}
 
