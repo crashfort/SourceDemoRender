@@ -253,5 +253,23 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
             <b>Default:</b> 256 <br/>
 		</td>
 	</tr>
+	<tr>
+		<td>sdr_movie_encoder_colorspace</td>
+		<td>
+			Media editors and players handle this value differently, try experimenting. Not avaialble in PNG sequence.
+			<br/><br/>
+            <b>Values:</b> bt470bg or bt709 <br/>
+            <b>Default:</b> bt470bg <br/>
+		</td>
+	</tr>
+	<tr>
+		<td>sdr_movie_encoder_colorrange</td>
+		<td>
+			Media editors and players handle this value differently, try experimenting. Not avaialble in PNG sequence.
+			<br/><br/>
+            <b>Values:</b> partial or full <br/>
+            <b>Default:</b> partial <br/>
+		</td>
+	</tr>
 	</tbody>
 </table>

@@ -887,6 +887,18 @@ namespace
 				"sdr_movie_encoder_tune", "", 0,
 				"X264 encoder tune. See https://trac.ffmpeg.org/wiki/Encode/H.264"
 			);
+
+			ConVar ColorSpace
+			(
+				"sdr_movie_encoder_colorspace", "bt470bg", 0,
+				"Possible values: bt470bg, bt709"
+			);
+
+			ConVar ColorRange
+			(
+				"sdr_movie_encoder_colorrange", "partial", 0,
+				"Possible values: full, partial"
+			);
 		}
 	}
 
@@ -1247,8 +1259,53 @@ namespace
 						Not setting this will leave different colors across
 						multiple programs
 					*/
-					codeccontext->colorspace = AVCOL_SPC_BT470BG;
-					codeccontext->color_range = AVCOL_RANGE_MPEG;
+
+					if (pxformat == AV_PIX_FMT_RGB24)
+					{
+						codeccontext->color_range = AVCOL_RANGE_UNSPECIFIED;
+						codeccontext->colorspace = AVCOL_SPC_RGB;
+					}
+
+					else
+					{
+						{
+							auto space = Variables::Video::ColorSpace.GetString();
+
+							auto table =
+							{
+								std::make_pair("bt470bg", AVCOL_SPC_BT470BG),
+								std::make_pair("bt709", AVCOL_SPC_BT709)
+							};
+
+							for (const auto& entry : table)
+							{
+								if (_strcmpi(space, entry.first) == 0)
+								{
+									codeccontext->colorspace = entry.second;
+									break;
+								}
+							}
+						}
+
+						{
+							auto range = Variables::Video::ColorRange.GetString();
+
+							auto table =
+							{
+								std::make_pair("full", AVCOL_RANGE_JPEG),
+								std::make_pair("partial", AVCOL_RANGE_MPEG)
+							};
+
+							for (const auto& entry : table)
+							{
+								if (_strcmpi(range, entry.first) == 0)
+								{
+									codeccontext->color_range = entry.second;
+									break;
+								}
+							}
+						}
+					}
 
 					{
 						if (isx264)
