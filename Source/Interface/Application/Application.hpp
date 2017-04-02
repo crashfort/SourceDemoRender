@@ -168,12 +168,13 @@ namespace SDR
 			wchar_t module[64];
 			swprintf_s(module, L"%S", Module);
 
-			auto res = MH_CreateHookApi2
+			auto res = MH_CreateHookApiEx
 			(
 				module,
 				ExportName,
 				NewFunction,
-				&OriginalFunction
+				&OriginalFunction,
+				&TargetFunction
 			);
 
 			return res;
