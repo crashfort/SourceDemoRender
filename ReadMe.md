@@ -1,8 +1,25 @@
 ## Source Demo Render
 
-Plugin to create movies for Source 2013 games. To install you place SourceDemoRender.dll in your mod directory and sdr_load / sdr_unload in cfg. Then type **exec sdr_load** in the console at the main menu. If you want to see all available commands you can type **cvarlist sdr_** in the console, a description is available for all variables.
+### Installing
+SDR comes in separate single player and multiplayer versions which will only work with whatever SDK the mod was built with. `SourceDemoRender.Multiplayer.dll` is for mods such as Counter-Strike: Source and `SourceDemoRender.Singleplayer.dll` targets for example Half-Life 2.
+
+The DLL of either SP or MP variant should go in the root mod directory. Examples:
+
+* steamapps\common\Counter-Strike Source\cstrike\
+* steamapps\common\Half-Life 2\hl2\
 
 **You need to launch with -insecure for Source to be able to load plugins.**
+
+### Instructions
+When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. There's no need to change host_framerate as that is done automatically. **Do not exit the game until you see a message that says the movie is completed.**
+
+You can create avi or mp4 videos or a png image sequence. The format is decided from the extension you choose in startmovie. Examples:
+
+* startmovie test.avi
+* startmovie test.mp4
+* startmovie test%05d.png
+
+The last instance will create a png image sequence with 5 padded digits.
 
 ### General commands
 
@@ -236,14 +253,3 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 	</tr>
 	</tbody>
 </table>
-
-### Instructions
-When you are ready to create your movie you just type **startmovie name** and then **endmovie** as usual. There's no need to change **host_framerate** as that is done automatically.
-
-You can create avi or mp4 videos or a png image sequence. The format is decided from the extension you choose in startmovie. Examples:
-
-- startmovie test.avi
-- startmovie test.mp4
-- startmovie test%05d.png
-
-The last instance will create a png image sequence with 5 padded digits.
