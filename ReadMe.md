@@ -8,6 +8,8 @@ The DLL of either SP or MP variant should go in the root mod directory. Examples
 * steamapps\common\Counter-Strike Source\cstrike\
 * steamapps\common\Half-Life 2\hl2\
 
+You can use the cfg files that comes with SDR as a base where to add your own preferred settings.
+
 **You need to launch with -insecure for Source to be able to load plugins.**
 
 ### Instructions
