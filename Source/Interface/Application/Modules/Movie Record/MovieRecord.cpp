@@ -812,7 +812,7 @@ namespace
 		ConVar OutputDirectory
 		(
 			"sdr_outputdir", "", 0,
-			"Where to save the output frames. UTF8 names are not supported in Source"
+			"Where to save the output frames."
 		);
 
 		ConVar FlashWindow
