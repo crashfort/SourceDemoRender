@@ -19,7 +19,7 @@ You can create avi or mp4 videos or a png image sequence. The format is decided 
 
 * startmovie test.avi
 * startmovie test.mp4
-* startmovie test%05d.png
+* startmovie test.png
 
 The last instance will create a png image sequence with 5 padded digits.
 
