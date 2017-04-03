@@ -113,7 +113,7 @@ namespace
 
 		enum
 		{
-			PluginVersion = 5
+			PluginVersion = 6
 		};
 	};
 
