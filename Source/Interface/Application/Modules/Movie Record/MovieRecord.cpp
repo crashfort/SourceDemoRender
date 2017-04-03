@@ -1147,6 +1147,23 @@ namespace
 						}
 					}
 
+					auto linktabletovariable = []
+					(
+						const char* key,
+						const auto& table,
+						auto& variable
+					)
+					{
+						for (const auto& entry : table)
+						{
+							if (_strcmpi(key, entry.first) == 0)
+							{
+								variable = entry.second;
+								break;
+							}
+						}
+					};
+
 					AVRational timebase;
 					timebase.num = 1;
 					timebase.den = Variables::FrameRate.GetInt();
@@ -1172,14 +1189,7 @@ namespace
 							std::make_pair("nv12", AV_PIX_FMT_NV12),
 						};
 
-						for (const auto& entry : pxformattable)
-						{
-							if (_strcmpi(pxformatstr, entry.first) == 0)
-							{
-								pxformat = entry.second;
-								break;
-							}
-						}
+						linktabletovariable(pxformatstr, pxformattable, pxformat);
 
 						if (pxformat == AV_PIX_FMT_NONE)
 						{
@@ -1228,14 +1238,7 @@ namespace
 								std::make_pair("bt709", AVCOL_SPC_BT709)
 							};
 
-							for (const auto& entry : table)
-							{
-								if (_strcmpi(space, entry.first) == 0)
-								{
-									codeccontext->colorspace = entry.second;
-									break;
-								}
-							}
+							linktabletovariable(space, table, codeccontext->colorspace);
 						}
 
 						{
@@ -1247,14 +1250,7 @@ namespace
 								std::make_pair("partial", AVCOL_RANGE_MPEG)
 							};
 
-							for (const auto& entry : table)
-							{
-								if (_strcmpi(range, entry.first) == 0)
-								{
-									codeccontext->color_range = entry.second;
-									break;
-								}
-							}
+							linktabletovariable(range, table, codeccontext->color_range);
 						}
 					}
 
