@@ -1390,8 +1390,8 @@ namespace
 			/*
 				The original function sets host_framerate to 30 so we override it
 			*/
-			auto hostframerate = g_pCVar->FindVar("host_framerate");
-			hostframerate->SetValue(Variables::SamplesPerSecond.GetInt());
+			ConVarRef hostframerate("host_framerate");
+			hostframerate.SetValue(Variables::SamplesPerSecond.GetInt());
 
 			auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
 			auto movieframeratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
@@ -1466,8 +1466,8 @@ namespace
 		{
 			ThisHook.GetOriginal()();
 
-			auto hostframerate = g_pCVar->FindVar("host_framerate");
-			hostframerate->SetValue(0);
+			ConVarRef hostframerate("host_framerate");
+			hostframerate.SetValue(0);
 
 			Msg("SDR: Ending movie, if there are buffered frames this might take a moment\n");
 
