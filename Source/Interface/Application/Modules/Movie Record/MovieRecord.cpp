@@ -1182,8 +1182,6 @@ namespace
 									ptr = "avi";
 									strcat_s(finalfilename, ".avi");
 								}
-
-								extension = ptr;
 							}
 						}
 
@@ -1191,7 +1189,7 @@ namespace
 						{
 							seqremovepercent(finalfilename);
 							strcat_s(finalfilename, "%05d.");
-							strcat_s(finalfilename, extension.c_str());
+							strcat_s(finalfilename, vidconfig->SequenceExtension);
 						}
 
 						char finalname[2048];
