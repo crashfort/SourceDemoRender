@@ -837,7 +837,7 @@ namespace
 			ConVar PixelFormat
 			(
 				"sdr_movie_encoder_pxformat", "i420", 0,
-				"X264 pixel format Does nothing in png sequence. "
+				"Video pixel format"
 				"Values: I420, I444, NV12. See https://wiki.videolan.org/YUV/"
 			);
 
@@ -1019,6 +1019,64 @@ namespace
 				}
 			}
 
+			struct VideoConfigurationData
+			{
+				const char* EncoderName;
+				AVCodecID EncoderType;
+
+				std::vector<std::pair<const char*, AVPixelFormat>> PixelFormats;
+
+				bool ImageSequence = false;
+			};
+
+			auto seqremovepercent = [](char* filename)
+			{
+				auto length = strlen(filename);
+
+				for (int i = length - 1; i >= 0; i--)
+				{
+					auto& curchar = filename[i];
+
+					if (curchar == '%')
+					{
+						curchar = 0;
+						break;
+					}
+				}
+			};
+
+			std::vector<VideoConfigurationData> videoconfigs;
+
+			{
+				auto i420 = std::make_pair("i420", AV_PIX_FMT_YUV420P);
+				auto i444 = std::make_pair("i444", AV_PIX_FMT_YUV444P);
+				auto rgb24 = std::make_pair("rgb24", AV_PIX_FMT_RGB24);
+				auto nv12 = std::make_pair("nv12", AV_PIX_FMT_NV12);
+
+				videoconfigs.emplace_back();
+				auto& x264 = videoconfigs.back();				
+				x264.EncoderName = "libx264";
+				x264.EncoderType = AV_CODEC_ID_H264;
+				x264.PixelFormats =
+				{
+					i420,
+					i444,
+					nv12,
+				};
+
+				videoconfigs.emplace_back();
+				auto& png = videoconfigs.back();
+				png.EncoderName = "png";
+				png.EncoderType = AV_CODEC_ID_PNG;
+				png.ImageSequence = true;
+				png.PixelFormats =
+				{
+					rgb24,
+				};
+			}
+
+			const VideoConfigurationData* vidconfig = nullptr;
+
 			auto& movie = CurrentMovie;
 				
 			movie.Width = width;
@@ -1037,71 +1095,83 @@ namespace
 					auto vidwriter = movie.Video.get();
 					auto audiowriter = movie.Audio.get();
 
-					bool isx264;
+					{						
+						char finalfilename[1024];
+						strcpy_s(finalfilename, filename);
 
-					{
+						std::string extension;
+						{
+							auto ptr = V_GetFileExtension(finalfilename);
+
+							if (ptr)
+							{
+								extension = ptr;
+							}
+						}
+
+						/*
+							Default to avi container with x264
+						*/
+						if (extension.empty())
+						{
+							extension = "libx264";
+							strcat_s(finalfilename, ".avi.libx264");
+						}
+
+						/*
+							Users can select what available encoder they want
+						*/
+						for (const auto& config : videoconfigs)
+						{
+							if (_strcmpi(extension.c_str(), config.EncoderName) == 0)
+							{
+								vidconfig = &config;
+								break;
+							}
+						}
+
+						/*
+							None selected by user, use x264
+						*/
+						if (!vidconfig)
+						{
+							vidconfig = &videoconfigs[0];
+						}
+
+						else
+						{
+							V_StripExtension(finalfilename, finalfilename, sizeof(finalfilename));
+
+							if (!vidconfig->ImageSequence)
+							{
+								auto ptr = V_GetFileExtension(finalfilename);
+
+								if (!ptr)
+								{
+									ptr = "avi";
+									strcat_s(finalfilename, ".avi");
+								}
+
+								extension = ptr;
+							}
+						}
+
+						if (vidconfig->ImageSequence)
+						{
+							seqremovepercent(finalfilename);
+							strcat_s(finalfilename, "%05d.");
+							strcat_s(finalfilename, extension.c_str());
+						}
+
 						char finalname[2048];
 
 						V_ComposeFileName
 						(
 							sdrpath,
-							filename,
+							finalfilename,
 							finalname,
 							sizeof(finalname)
 						);
-
-						auto extension = V_GetFileExtension(filename);
-
-						auto removepercentage = [](char* input)
-						{
-							auto length = strlen(input);
-
-							for (int i = length - 1; i >= 0; i--)
-							{
-								auto& curchar = input[i];
-
-								if (curchar == '%')
-								{
-									curchar = 0;
-									break;
-								}
-							}
-						};
-
-						/*
-							If the user entered png but no digit format
-							we have to add it for them
-						*/
-						if (extension)
-						{
-							if (strcmp(extension, "png") == 0)
-							{
-								char finalfilename[256];
-								strcpy_s(finalfilename, filename);
-
-								V_StripExtension(finalfilename, finalfilename, sizeof(finalfilename));
-
-								removepercentage(finalfilename);
-
-								strcat_s(finalfilename, "%05d.png");
-
-								V_ComposeFileName
-								(
-									sdrpath,
-									finalfilename,
-									finalname,
-									sizeof(finalname)
-								);
-							}
-						}
-
-						/*
-							Default to avi
-						*/
-						else
-						{
-							strcat_s(finalname, ".avi");
-						}
 
 						vidwriter->OpenFileForWrite(finalname);
 
@@ -1110,15 +1180,12 @@ namespace
 							V_StripExtension(finalname, finalname, sizeof(finalname));
 							
 							/*
-								If the user wants a png sequence, it means the filename
+								If the user wants an image sequence, it means the filename
 								has the digit formatting, don't want this in audio name
 							*/
-							if (extension)
+							if (vidconfig->ImageSequence)
 							{
-								if (strcmp(extension, "png") == 0)
-								{
-									removepercentage(finalname);
-								}
+								seqremovepercent(finalname);
 							}
 
 							strcat_s(finalname, ".wav");
@@ -1134,17 +1201,7 @@ namespace
 						auto formatcontext = vidwriter->FormatContext.Get();
 						auto oformat = formatcontext->oformat;
 
-						if (strcmp(oformat->name, "image2") == 0)
-						{
-							isx264 = false;
-							vidwriter->SetEncoder("png");
-						}
-
-						else
-						{
-							isx264 = true;
-							vidwriter->SetEncoder("libx264");
-						}
+						vidwriter->SetEncoder(vidconfig->EncoderName);
 					}
 
 					auto linktabletovariable = []
@@ -1178,27 +1235,20 @@ namespace
 
 					auto pxformat = AV_PIX_FMT_NONE;
 
-					if (isx264)
+					auto pxformatstr = Variables::Video::PixelFormat.GetString();
+
+					linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat);
+
+					if (pxformat == AV_PIX_FMT_NONE)
 					{
-						auto pxformatstr = Variables::Video::PixelFormat.GetString();
+						Msg("SDR: No compatible pixel format selected, using config default\n");
+						pxformat = vidconfig->PixelFormats[0].second;
+					}
 
-						auto pxformattable =
-						{
-							std::make_pair("i420", AV_PIX_FMT_YUV420P),
-							std::make_pair("i444", AV_PIX_FMT_YUV444P),
-							std::make_pair("nv12", AV_PIX_FMT_NV12),
-						};
+					codeccontext->codec_id = vidconfig->EncoderType;
 
-						linktabletovariable(pxformatstr, pxformattable, pxformat);
-
-						if (pxformat == AV_PIX_FMT_NONE)
-						{
-							Msg("SDR: No pixel format selected, using I420\n");
-							pxformat = AV_PIX_FMT_YUV420P;
-						}
-
-						codeccontext->codec_id = AV_CODEC_ID_H264;
-
+					if (pxformat != AV_PIX_FMT_RGB24)
+					{
 						vidwriter->FormatConverter.Assign
 						(
 							width,
@@ -1206,12 +1256,6 @@ namespace
 							AV_PIX_FMT_RGB24,
 							pxformat
 						);
-					}
-
-					else
-					{
-						pxformat = AV_PIX_FMT_RGB24;
-						codeccontext->codec_id = AV_CODEC_ID_PNG;
 					}
 
 					codeccontext->pix_fmt = pxformat;
@@ -1255,7 +1299,7 @@ namespace
 					}
 
 					{
-						if (isx264)
+						if (vidconfig->EncoderType == AV_CODEC_ID_H264)
 						{
 							auto preset = Variables::Video::Preset.GetString();
 							auto tune = Variables::Video::Tune.GetString();
