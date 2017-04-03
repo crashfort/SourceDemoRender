@@ -541,7 +541,8 @@ namespace
 				width * 3
 			};
 
-			if (CodecContext->pix_fmt == AV_PIX_FMT_RGB24)
+			if (CodecContext->pix_fmt == AV_PIX_FMT_RGB24 ||
+				CodecContext->pix_fmt == AV_PIX_FMT_BGR24)
 			{
 				Frame->data[0] = sourceplanes[0];
 				Frame->linesize[0] = sourcestrides[0];
@@ -843,14 +844,14 @@ namespace
 
 			ConVar CRF
 			(
-				"sdr_movie_encoder_crf", "10", 0,
+				"sdr_x264_crf", "10", 0,
 				"Constant rate factor value. Values: 0 (best) - 51 (worst). "
 				"See https://trac.ffmpeg.org/wiki/Encode/H.264"
 			);
 
 			ConVar Preset
 			{
-				"sdr_movie_encoder_preset", "medium", 0,
+				"sdr_x264_preset", "medium", 0,
 				"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
 				"Important note: Optimally, do not use a too low of a profile as the streaming "
 				"needs to be somewhat realtime.",
@@ -884,7 +885,7 @@ namespace
 
 			ConVar Tune
 			(
-				"sdr_movie_encoder_tune", "", 0,
+				"sdr_x264_tune", "", 0,
 				"X264 encoder tune. See https://trac.ffmpeg.org/wiki/Encode/H.264"
 			);
 
@@ -1027,6 +1028,7 @@ namespace
 				std::vector<std::pair<const char*, AVPixelFormat>> PixelFormats;
 
 				bool ImageSequence = false;
+				const char* SequenceExtension;
 			};
 
 			auto seqremovepercent = [](char* filename)
@@ -1050,8 +1052,9 @@ namespace
 			{
 				auto i420 = std::make_pair("i420", AV_PIX_FMT_YUV420P);
 				auto i444 = std::make_pair("i444", AV_PIX_FMT_YUV444P);
-				auto rgb24 = std::make_pair("rgb24", AV_PIX_FMT_RGB24);
 				auto nv12 = std::make_pair("nv12", AV_PIX_FMT_NV12);
+				auto rgb24 = std::make_pair("rgb24", AV_PIX_FMT_RGB24);
+				auto bgr24 = std::make_pair("bgr24", AV_PIX_FMT_BGR24);
 
 				videoconfigs.emplace_back();
 				auto& x264 = videoconfigs.back();				
@@ -1065,13 +1068,34 @@ namespace
 				};
 
 				videoconfigs.emplace_back();
+				auto& huffyuv = videoconfigs.back();
+				huffyuv.EncoderName = "huffyuv";
+				huffyuv.EncoderType = AV_CODEC_ID_HUFFYUV;
+				huffyuv.PixelFormats =
+				{
+					rgb24,
+				};
+
+				videoconfigs.emplace_back();
 				auto& png = videoconfigs.back();
 				png.EncoderName = "png";
 				png.EncoderType = AV_CODEC_ID_PNG;
 				png.ImageSequence = true;
+				png.SequenceExtension = "png";
 				png.PixelFormats =
 				{
 					rgb24,
+				};
+
+				videoconfigs.emplace_back();
+				auto& targa = videoconfigs.back();
+				targa.EncoderName = "targa";
+				targa.EncoderType = AV_CODEC_ID_TARGA;
+				targa.ImageSequence = true;
+				targa.SequenceExtension = "tga";
+				targa.PixelFormats =
+				{
+					bgr24,
 				};
 			}
 
@@ -1123,7 +1147,14 @@ namespace
 						*/
 						for (const auto& config : videoconfigs)
 						{
-							if (_strcmpi(extension.c_str(), config.EncoderName) == 0)
+							auto tester = config.EncoderName;
+
+							if (config.ImageSequence)
+							{
+								tester = config.SequenceExtension;
+							}
+
+							if (_strcmpi(extension.c_str(), tester) == 0)
 							{
 								vidconfig = &config;
 								break;
@@ -1247,7 +1278,7 @@ namespace
 
 					codeccontext->codec_id = vidconfig->EncoderType;
 
-					if (pxformat != AV_PIX_FMT_RGB24)
+					if (pxformat != AV_PIX_FMT_RGB24 && pxformat != AV_PIX_FMT_BGR24)
 					{
 						vidwriter->FormatConverter.Assign
 						(
@@ -1265,7 +1296,7 @@ namespace
 						multiple programs
 					*/
 
-					if (pxformat == AV_PIX_FMT_RGB24)
+					if (pxformat == AV_PIX_FMT_RGB24 || pxformat == AV_PIX_FMT_BGR24)
 					{
 						codeccontext->color_range = AVCOL_RANGE_UNSPECIFIED;
 						codeccontext->colorspace = AVCOL_SPC_RGB;
@@ -1559,7 +1590,17 @@ namespace
 				3 = IMAGE_FORMAT_BGR888
 				2 = IMAGE_FORMAT_RGB888
 			*/
-			readscreenpxfunc(thisptr, edx, 0, 0, width, height, newsample.Data.data(), 2);
+			int pxformat = 2;
+
+			/*
+				TGA wants the order as BGR24
+			*/
+			if (movie.Video->CodecContext->pix_fmt == AV_PIX_FMT_BGR24)
+			{
+				pxformat = 3;
+			}
+
+			readscreenpxfunc(thisptr, edx, 0, 0, width, height, newsample.Data.data(), pxformat);
 
 			auto buffersize = Variables::FrameBufferSize.GetInt();
 
