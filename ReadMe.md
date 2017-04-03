@@ -1,5 +1,7 @@
 ## Source Demo Render
 
+The program can be downloaded [here](https://github.com/crashfort/SourceDemoRender/releases). Visit [here](https://twitch.streamlabs.com/crashfort/) if you wish to support the development.
+
 ### Installing
 SDR comes in separate single player and multiplayer versions which will only work with whatever SDK the mod was built with. `SourceDemoRender.Multiplayer.dll` is for mods such as Counter-Strike: Source and `SourceDemoRender.Singleplayer.dll` targets for example Half-Life 2.
 
