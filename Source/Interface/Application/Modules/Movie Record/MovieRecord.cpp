@@ -828,6 +828,13 @@ namespace
 			true, 0, true, 1
 		);
 
+		ConVar ExitOnFinish
+		(
+			"sdr_endmoviequit", "0", FCVAR_NEVER_AS_STRING,
+			"Quit game when endmovie is called",
+			true, 0, true, 1
+		);
+
 		namespace Audio
 		{
 			ConVar Enable
@@ -1466,6 +1473,11 @@ namespace
 		{
 			ThisHook.GetOriginal()();
 
+			if (!CurrentMovie.IsStarted)
+			{
+				return;
+			}
+
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(0);
 
@@ -1497,6 +1509,14 @@ namespace
 			task.then([]()
 			{
 				SDR_MovieShutdown();
+
+				if (Variables::ExitOnFinish.GetBool())
+				{
+					auto& interfaces = SDR::GetEngineInterfaces();
+					interfaces.EngineClient->ClientCmd("quit\n");
+					
+					return;
+				}
 
 				if (Variables::FlashWindow.GetBool())
 				{

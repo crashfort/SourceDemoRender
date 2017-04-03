@@ -141,6 +141,15 @@ List of available video encoders:
 		</td>
 	</tr>
 	<tr>
+		<td>sdr_endmoviequit</td>
+		<td>
+			Quits the game after all endmovie processing is done.
+			<br/><br/>
+			<b>Values:</b> 0 or 1 <br/>
+            <b>Default:</b> 0 <br/>
+		</td>
+	</tr>
+	<tr>
 		<td>sdr_game_suppressdebug</td>
 		<td>
 			Prevents engine output debug messages to reach the operating system.
