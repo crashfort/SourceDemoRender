@@ -131,7 +131,7 @@ namespace
 			auto task = concurrency::create_task([]()
 			{
 				constexpr auto address = L"https://raw.githubusercontent.com/";
-				constexpr auto path = L"/CRASHFORT/SourceDemoRender/master/Version/Latest";
+				constexpr auto path = L"/crashfort/SourceDemoRender/master/Version/Latest";
 
 				web::http::client::http_client_config config;
 				config.set_timeout(5s);
@@ -149,7 +149,7 @@ namespace
 
 				if (status != web::http::status_codes::OK)
 				{
-					Msg("SDR Update: Could not reach update repository");
+					Msg("SDR Update: Could not reach update repository\n");
 					return;
 				}
 
