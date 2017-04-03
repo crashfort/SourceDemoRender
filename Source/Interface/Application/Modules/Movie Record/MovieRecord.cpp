@@ -483,6 +483,11 @@ namespace
 
 			CodecContext.Assign(Encoder);
 
+			if (FormatContext->oformat->flags & AVFMT_GLOBALHEADER)
+			{
+				CodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+			}
+
 			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
 
 			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
