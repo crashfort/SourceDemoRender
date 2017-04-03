@@ -1037,23 +1037,14 @@ namespace
 					auto vidwriter = movie.Video.get();
 					auto audiowriter = movie.Audio.get();
 
-					AVRational timebase;
-					timebase.num = 1;
-					timebase.den = Variables::FrameRate.GetInt();
-
 					bool isx264;
 
 					{
 						char finalname[2048];
-						char finalfilename[256];
-
-						strcpy_s(finalfilename, filename);
-
-						auto targetpath = Variables::OutputDirectory.GetString();
 
 						V_ComposeFileName
 						(
-							targetpath,
+							sdrpath,
 							filename,
 							finalname,
 							sizeof(finalname)
@@ -1085,6 +1076,9 @@ namespace
 						{
 							if (strcmp(extension, "png") == 0)
 							{
+								char finalfilename[256];
+								strcpy_s(finalfilename, filename);
+
 								V_StripExtension(finalfilename, finalfilename, sizeof(finalfilename));
 
 								removepercentage(finalfilename);
@@ -1093,7 +1087,7 @@ namespace
 
 								V_ComposeFileName
 								(
-									targetpath,
+									sdrpath,
 									finalfilename,
 									finalname,
 									sizeof(finalname)
@@ -1153,7 +1147,9 @@ namespace
 						}
 					}
 
-					auto pxformat = AV_PIX_FMT_NONE;
+					AVRational timebase;
+					timebase.num = 1;
+					timebase.den = Variables::FrameRate.GetInt();
 
 					vidwriter->Stream->time_base = timebase;
 
@@ -1163,35 +1159,26 @@ namespace
 					codeccontext->height = height;
 					codeccontext->time_base = timebase;
 
+					auto pxformat = AV_PIX_FMT_NONE;
+
 					if (isx264)
 					{
 						auto pxformatstr = Variables::Video::PixelFormat.GetString();
 
-						auto pxformatnames =
+						auto pxformattable =
 						{
-							"i420",
-							"i444",
-							"nv12",
+							std::make_pair("i420", AV_PIX_FMT_YUV420P),
+							std::make_pair("i444", AV_PIX_FMT_YUV444P),
+							std::make_pair("nv12", AV_PIX_FMT_NV12),
 						};
 
-						auto pxformattypes =
+						for (const auto& entry : pxformattable)
 						{
-							AV_PIX_FMT_YUV420P,
-							AV_PIX_FMT_YUV444P,
-							AV_PIX_FMT_NV12,
-						};
-
-						int pxformatindex = 0;
-
-						for (auto name : pxformatnames)
-						{
-							if (_strcmpi(pxformatstr, name) == 0)
+							if (_strcmpi(pxformatstr, entry.first) == 0)
 							{
-								pxformat = *(pxformattypes.begin() + pxformatindex);
+								pxformat = entry.second;
 								break;
 							}
-
-							++pxformatindex;
 						}
 
 						if (pxformat == AV_PIX_FMT_NONE)
