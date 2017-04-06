@@ -678,8 +678,8 @@ namespace
 			std::vector<int16_t> Data;
 		};
 
-		using FrameQueueType = moodycamel::ReaderWriterQueue<VideoFutureSampleData>;
-		using AudioSampleQueueType = moodycamel::ReaderWriterQueue<AudioFutureSampleData>;
+		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureSampleData>;
+		using AudioQueueType = moodycamel::ReaderWriterQueue<AudioFutureSampleData>;
 
 		enum
 		{
@@ -724,8 +724,8 @@ namespace
 		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
 
 		int32_t BufferedFrames = 0;
-		std::unique_ptr<FrameQueueType> FramesToSampleBuffer;
-		std::unique_ptr<AudioSampleQueueType> AudioSamplesToWrite;
+		std::unique_ptr<VideoQueueType> FramesToSampleBuffer;
+		std::unique_ptr<AudioQueueType> AudioSamplesToWrite;
 		std::thread FrameHandlerThread;
 	};
 
@@ -922,7 +922,8 @@ namespace
 		auto& nonreadyframes = movie.FramesToSampleBuffer;
 		auto& audiosamples = movie.AudioSamplesToWrite;
 
-		auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
+		auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+		auto sampleframerate = 1.0 / spsvar;
 
 		MovieData::VideoFutureSampleData videosample;
 		videosample.Data.reserve(movie.GetRGB24ImageSize());
@@ -980,7 +981,8 @@ namespace
 
 		void __cdecl Override
 		(
-			const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk
+			const char* filename, int flags, int width, int height,
+			float framerate, int jpegquality, int unk
 		);
 
 		using ThisFunction = decltype(Override)*;
@@ -991,11 +993,13 @@ namespace
 		};
 
 		/*
-			The 7th parameter (unk) was been added in Source 2013, it's not there in Source 2007
+			The 7th parameter (unk) was been added in Source 2013,
+			it's not there in Source 2007
 		*/
 		void __cdecl Override
 		(
-			const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk
+			const char* filename, int flags, int width, int height,
+			float framerate, int jpegquality, int unk
 		)
 		{
 			auto sdrpath = Variables::OutputDirectory.GetString();
@@ -1027,7 +1031,11 @@ namespace
 
 				default:
 				{
-					Warning("SDR: Some unknown error happened when starting movie, related to sdr_outputdir\n");
+					Warning
+					(
+						"SDR: Some unknown error happened when starting movie, "
+						"related to sdr_outputdir\n"
+					);
 					return;
 				}
 			}
@@ -1236,7 +1244,8 @@ namespace
 							*/
 							audiowriter->Open(finalname, 44'100, 16, 2);
 
-							movie.AudioSamplesToWrite = std::make_unique<MovieData::AudioSampleQueueType>();
+							using QueueType = MovieData::AudioQueueType;
+							movie.AudioSamplesToWrite = std::make_unique<QueueType>();
 						}
 
 						auto formatcontext = vidwriter->FormatContext.Get();
@@ -1440,7 +1449,7 @@ namespace
 
 			movie.Sampler = std::make_unique<EasyByteSampler>(settings, framepitch, &movie);
 
-			movie.FramesToSampleBuffer = std::make_unique<MovieData::FrameQueueType>(128);
+			movie.FramesToSampleBuffer = std::make_unique<MovieData::VideoQueueType>(128);
 
 			ShouldStopFrameThread = false;
 			movie.FrameHandlerThread = std::thread(FrameThreadHandler);
@@ -1602,7 +1611,9 @@ namespace
 
 			auto& movie = CurrentMovie;
 
-			auto sampleframerate = 1.0 / static_cast<double>(Variables::SamplesPerSecond.GetInt());
+			auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+			auto sampleframerate = 1.0 / spsvar;
+
 			auto& time = movie.SamplingTime;
 
 			MovieData::VideoFutureSampleData newsample;
