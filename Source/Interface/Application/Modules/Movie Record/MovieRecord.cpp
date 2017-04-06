@@ -987,7 +987,7 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "CL_StartMovie", Override, Pattern, Mask
+			"engine.dll", "StartMovie", Override, Pattern, Mask
 		};
 
 		/*
@@ -1447,7 +1447,7 @@ namespace
 		}
 	}
 
-	namespace Module_CL_EndMovie
+	namespace Module_EndMovie
 	{
 		/*
 			0x100BAE40 static IDA address May 22 2016
@@ -1466,7 +1466,7 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "CL_EndMovie", Override, Pattern, Mask
+			"engine.dll", "EndMovie", Override, Pattern, Mask
 		};
 
 		void __cdecl Override()
@@ -1533,7 +1533,7 @@ namespace
 		}
 	}
 
-	namespace Module_CVideoMode_WriteMovieFrame
+	namespace Module_WriteMovieFrame
 	{
 		/*
 			0x102011B0 static IDA address June 3 2016
@@ -1657,7 +1657,7 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "CVideoMode_WriteMovieFrame", Override, Pattern, Mask
+			"engine.dll", "WriteMovieFrame", Override, Pattern, Mask
 		};
 	}
 

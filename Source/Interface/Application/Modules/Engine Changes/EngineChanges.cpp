@@ -39,7 +39,7 @@ namespace
 
 	TabData EngineFocusData;
 
-	namespace Module_VGUI_ActivateMouse
+	namespace Module_ActivateMouse
 	{
 		/*
 			0x10216D80 static IDA address June 3 2016
@@ -57,7 +57,7 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "VGUI_ActivateMouse", Override, Pattern, Mask
+			"engine.dll", "ActivateMouse", Override, Pattern, Mask
 		};
 
 		/*
