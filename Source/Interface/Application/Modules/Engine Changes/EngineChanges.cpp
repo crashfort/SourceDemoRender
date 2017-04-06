@@ -106,7 +106,7 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "CGame_AppActivate", Override, Pattern, Mask
+			"engine.dll", "AppActivate", Override, Pattern, Mask
 		};
 
 		void __fastcall Override
