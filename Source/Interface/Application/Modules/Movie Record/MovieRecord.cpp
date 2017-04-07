@@ -968,7 +968,7 @@ namespace
 	namespace Module_StartMovie
 	{
 		/*
-			0x100BCAC0 static IDA address May 22 2016
+			0x100BCAC0 static CSS IDA address May 22 2016
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(
@@ -976,7 +976,10 @@ namespace
 			"\x00\x00\xD9\x45\x18\x56\x57\xF3\x0F\x10\x40\x00"
 		);
 
-		auto Mask = "xxxxx????x????xxxxxxxxx?";
+		auto Mask =
+		(
+			"xxxxx????x????xxxxxxxxx?"
+		);
 
 		void __cdecl Override
 		(
@@ -1465,7 +1468,7 @@ namespace
 	namespace Module_EndMovie
 	{
 		/*
-			0x100BAE40 static IDA address May 22 2016
+			0x100BAE40 static CSS IDA address May 22 2016
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(
@@ -1473,7 +1476,10 @@ namespace
 			"\xD9\x05\x00\x00\x00\x00\x51\xB9\x00\x00\x00\x00"
 		);
 
-		auto Mask = "xx?????xx????xx????xx????";
+		auto Mask =
+		(
+			"xx?????xx????xx????xx????"
+		);
 
 		void __cdecl Override();
 
@@ -1551,7 +1557,7 @@ namespace
 	namespace Module_WriteMovieFrame
 	{
 		/*
-			0x102011B0 static IDA address June 3 2016
+			0x102011B0 static CSS IDA address June 3 2016
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(
@@ -1559,7 +1565,10 @@ namespace
 			"\x8B\x5D\x08\x57\x8B\xF9\x8B\x83\x00\x00\x00\x00"
 		);
 
-		auto Mask = "xxxxxx?????xxxxxxxxx????";
+		auto Mask =
+		(
+			"xxxxxx?????xxxxxxxxx????"
+		);
 
 		/*
 			The "thisptr" in this context is a CVideoMode_MaterialSystem in this structure:
@@ -1574,7 +1583,7 @@ namespace
 			which is what called WriteMovieFrame.
 			
 			For more usage see: VideoMode_Create (0x10201130) and VideoMode_Destroy (0x10201190)
-			Static IDA addresses June 3 2016
+			Static CSS IDA addresses June 3 2016
 
 			The purpose of overriding this function completely is to prevent the constant image buffer
 			allocation that Valve does every movie frame. We just provide one buffer that gets reused.
@@ -1585,7 +1594,7 @@ namespace
 		)
 		{
 			/*
-				0x101FFF80 static IDA address June 3 2016
+				0x101FFF80 static CSS IDA address June 3 2016
 			*/
 			static auto readscreenpxaddr = SDR::GetAddressFromPattern
 			(
@@ -1681,7 +1690,7 @@ namespace
 	namespace Module_SNDRecordBuffer
 	{
 		/*
-			0x1007C710 static IDA address March 21 2017
+			0x1007C710 static CSS IDA address March 21 2017
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(
@@ -1717,7 +1726,7 @@ namespace
 	namespace Module_WaveCreateTmpFile
 	{
 		/*
-			0x1008EC90 static IDA address March 21 2017
+			0x1008EC90 static CSS IDA address March 21 2017
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(
@@ -1768,7 +1777,7 @@ namespace
 	namespace Module_WaveAppendTmpFile
 	{
 		/*
-			0x1008EBE0 static IDA address March 21 2017
+			0x1008EBE0 static CSS IDA address March 21 2017
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(
@@ -1819,7 +1828,7 @@ namespace
 	namespace Module_WaveFixupTmpFile
 	{
 		/*
-			0x1008EE30 static IDA address March 21 2017
+			0x1008EE30 static CSS IDA address March 21 2017
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(

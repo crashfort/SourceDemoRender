@@ -42,14 +42,17 @@ namespace
 	namespace Module_ActivateMouse
 	{
 		/*
-			0x10216D80 static IDA address June 3 2016
+			0x10216D80 static CSS IDA address June 3 2016
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(
 			"\x83\x3D\x00\x00\x00\x00\x00\x74\x4F\x8B\x0D\x00\x00\x00\x00\x8B\x01\x8B\x40\x40\xFF\xD0"
 		);
 
-		auto Mask = "xx?????xxxx????xxxxxxx";
+		auto Mask =
+		(
+			"xx?????xxxx????xxxxxxx"
+		);
 
 		void __cdecl Override();
 
@@ -87,7 +90,7 @@ namespace
 		};
 
 		/*
-			0x102013C0 static IDA address June 3 2016
+			0x102013C0 static CSS IDA address June 3 2016
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(
@@ -95,7 +98,10 @@ namespace
 			"\x0F\xB6\xC0\x89\x45\x08\x5D\xE9\x00\x00\x00\x00"
 		);
 
-		auto Mask = "xxxxxxxxxxxxxxxxxxxxx????";
+		auto Mask =
+		(
+			"xxxxxxxxxxxxxxxxxxxxx????"
+		);
 
 		void __fastcall Override
 		(
