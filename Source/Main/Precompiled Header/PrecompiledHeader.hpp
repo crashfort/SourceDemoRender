@@ -27,6 +27,7 @@ using namespace std::chrono_literals;
 #include "convar.h"
 #include "utlbuffer.h"
 #include "filesystem.h"
+#include "materialsystem\imaterialsystem.h"
 
 namespace SDR
 {

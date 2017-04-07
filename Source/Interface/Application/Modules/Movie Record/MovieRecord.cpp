@@ -1465,6 +1465,56 @@ namespace
 		}
 	}
 
+	namespace Module_StartMovieCommand
+	{
+		/*
+			0x100BEF40 static CSS IDA address April 7 2017
+		*/
+		auto Pattern = SDR::MemoryPattern
+		(
+			"\x55\x8B\xEC\x83\xEC\x08\x83\x3D\x00\x00\x00\x00"
+			"\x00\x0F\x85\x00\x00\x00\x00\x8B\x4D\x08\x56\x8B"
+			"\x01\x83\xF8\x02\x7D\x6B\x8B\x35\x00\x00\x00\x00"
+		);
+
+		auto Mask =
+		(
+			"xxxxxxxx?????xx????xxxxxxxxxxxxx????"
+		);
+
+		void __cdecl Override(const CCommand& args);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "StartMovieCommand", Override, Pattern, Mask
+		};
+
+		/*
+			This command is overriden to remove the incorrect description
+		*/
+		void __cdecl Override(const CCommand& args)
+		{
+			if (args.ArgC() < 2)
+			{
+				ConMsg("SDR: Name is required for startmovie, see Github page for help\n");
+				return;
+			}
+
+			int width;
+			int height;
+			g_pMaterialSystem->GetBackBufferDimensions(width, height);
+
+			auto name = args[1];
+
+			/*
+				4 = FMOVIE_WAV, needed for future audio calls
+			*/
+			Module_StartMovie::Override(name, 4, width, height, 0, 0, 0);
+		}
+	}
+
 	namespace Module_EndMovie
 	{
 		/*
