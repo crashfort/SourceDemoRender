@@ -33,7 +33,7 @@ namespace
 			AllocAVFrame,
 			AllocVideoStream,
 			VideoEncoderNotFound,
-			OpenAudioFile,
+			OpenFile,
 		};
 
 		const char* ExceptionTypeToString(ExceptionType code)
@@ -47,7 +47,7 @@ namespace
 				"Could not allocate audio video frame",
 				"Could not allocate video stream",
 				"Video encoder not found",
-				"Could not open audio file",
+				"Could not create file",
 			};
 
 			auto retstr = names[index];
@@ -305,7 +305,7 @@ namespace
 			{
 				Handle = fopen(path, mode);
 
-				ThrowIfNull(Handle, ExceptionType::OpenAudioFile);
+				ThrowIfNull(Handle, ExceptionType::OpenFile);
 			}
 
 			template <typename... Types>
@@ -430,9 +430,17 @@ namespace
 
 		void Finish()
 		{
+			/*
+				Prevent reentry from destructor
+			*/
 			if (!WaveFile)
 			{
 				return;
+			}
+
+			for (auto& samples : SamplesToWrite)
+			{
+				WritePCM16Samples(samples);
 			}
 
 			WaveFile.SeekAbsolute(HeaderPosition);
@@ -444,7 +452,12 @@ namespace
 			WaveFile.Close();
 		}
 
-		void SetAudioPCM16Input(const std::vector<int16_t>& samples)
+		void AddPCM16Samples(std::vector<int16_t>&& samples)
+		{
+			SamplesToWrite.emplace_back(std::move(samples));
+		}
+
+		void WritePCM16Samples(const std::vector<int16_t>& samples)
 		{
 			auto buffer = samples.data();
 			auto length = samples.size();
@@ -1489,11 +1502,6 @@ namespace
 
 				if (CurrentMovie.Audio)
 				{
-					for (auto& samples : CurrentMovie.Audio->SamplesToWrite)
-					{
-						CurrentMovie.Audio->SetAudioPCM16Input(samples);
-					}
-
 					CurrentMovie.Audio->Finish();
 				}
 
@@ -1794,7 +1802,7 @@ namespace
 			auto bufstart = static_cast<int16_t*>(buffer);
 			auto length = samplecount * samplebits / 8;
 
-			CurrentMovie.Audio->SamplesToWrite.emplace_back(std::vector<int16_t>(bufstart, bufstart + length));
+			CurrentMovie.Audio->AddPCM16Samples({bufstart, bufstart + length});
 		}
 	}
 
