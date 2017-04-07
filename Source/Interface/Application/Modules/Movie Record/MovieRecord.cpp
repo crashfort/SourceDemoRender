@@ -1685,18 +1685,11 @@ namespace
 			newsample.Time = time;
 			newsample.Data.resize(movie.GetRGB24ImageSize());
 
-			/*
-				3 = IMAGE_FORMAT_BGR888
-				2 = IMAGE_FORMAT_RGB888
-			*/
-			int pxformat = 2;
+			auto pxformat = IMAGE_FORMAT_RGB888;
 
-			/*
-				TGA wants the order as BGR24
-			*/
 			if (movie.Video->CodecContext->pix_fmt == AV_PIX_FMT_BGR24)
 			{
-				pxformat = 3;
+				pxformat = IMAGE_FORMAT_BGR888;
 			}
 
 			readscreenpxfunc(thisptr, edx, 0, 0, width, height, newsample.Data.data(), pxformat);
