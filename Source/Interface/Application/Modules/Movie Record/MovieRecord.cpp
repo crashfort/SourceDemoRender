@@ -1404,46 +1404,56 @@ namespace
 			*/
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(Variables::SamplesPerSecond.GetInt());
-
-			auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
-			auto movieframeratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
-			auto moviexposure = Variables::Exposure.GetFloat();
-			auto movieframestrength = Variables::FrameStrength.GetFloat();
 				
 			using SampleMethod = SDR::Sampler::EasySamplerSettings::Method;
-			SampleMethod moviemethod;
-				
-			switch (Variables::SampleMethod.GetInt())
+			SampleMethod moviemethod = SampleMethod::ESM_Trapezoid;
+			
 			{
-				case 0:
+				auto table =
 				{
-					moviemethod = SampleMethod::ESM_Rectangle;
-					break;
-				}
+					SampleMethod::ESM_Rectangle,
+					SampleMethod::ESM_Trapezoid
+				};
 
-				case 1:
+				auto key = Variables::SampleMethod.GetInt();
+				
+				for (const auto& entry : table)
 				{
-					moviemethod = SampleMethod::ESM_Trapezoid;
-					break;
+					if (key == entry)
+					{
+						moviemethod = entry;
+						break;
+					}
 				}
 			}
 
+			auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
+			auto frameratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
+			auto exposure = Variables::Exposure.GetFloat();
+			auto framestrength = Variables::FrameStrength.GetFloat();
+			auto stride = MovieData::BytesPerPixel * width;
+
 			SDR::Sampler::EasySamplerSettings settings
 			(
-				MovieData::BytesPerPixel * width, height,
+				stride,
+				height,
 				moviemethod,
-				movieframeratems,
+				frameratems,
 				0.0,
-				moviexposure,
-				movieframestrength
+				exposure,
+				framestrength
 			);
 
-			using SDR::Sampler::EasyByteSampler;
 			auto size = movie.GetRGB24ImageSize();
 
 			movie.IsStarted = true;
 
-			movie.Sampler = std::make_unique<EasyByteSampler>(settings, framepitch, &movie);
+			movie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>
+			(
+				settings,
+				framepitch,
+				&movie
+			);
 
 			movie.FramesToSampleBuffer = std::make_unique<MovieData::VideoQueueType>(128);
 
