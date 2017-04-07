@@ -383,6 +383,11 @@ namespace
 {
 	struct SDRAudioWriter
 	{
+		SDRAudioWriter()
+		{
+			SamplesToWrite.reserve(1024);
+		}
+
 		~SDRAudioWriter()
 		{
 			Finish();
@@ -439,8 +444,11 @@ namespace
 			WaveFile.Close();
 		}
 
-		void SetAudioPCM16Input(int16_t* buffer, int32_t length)
+		void SetAudioPCM16Input(const std::vector<int16_t>& samples)
 		{
+			auto buffer = samples.data();
+			auto length = samples.size();
+
 			fwrite(buffer, length, 1, WaveFile.Get());
 
 			DataLength += length;
@@ -458,6 +466,8 @@ namespace
 		
 		int32_t DataLength = 0;
 		int32_t FileLength = 0;
+
+		std::vector<std::vector<int16_t>> SamplesToWrite;
 	};
 
 	struct SDRVideoWriter
@@ -673,13 +683,7 @@ namespace
 			std::vector<uint8_t> Data;
 		};
 
-		struct AudioFutureSampleData
-		{
-			std::vector<int16_t> Data;
-		};
-
 		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureSampleData>;
-		using AudioQueueType = moodycamel::ReaderWriterQueue<AudioFutureSampleData>;
 
 		enum
 		{
@@ -725,7 +729,6 @@ namespace
 
 		int32_t BufferedFrames = 0;
 		std::unique_ptr<VideoQueueType> FramesToSampleBuffer;
-		std::unique_ptr<AudioQueueType> AudioSamplesToWrite;
 		std::thread FrameHandlerThread;
 	};
 
@@ -920,20 +923,12 @@ namespace
 		auto& interfaces = SDR::GetEngineInterfaces();
 		auto& movie = CurrentMovie;
 		auto& nonreadyframes = movie.FramesToSampleBuffer;
-		auto& audiosamples = movie.AudioSamplesToWrite;
 
 		auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
 		auto sampleframerate = 1.0 / spsvar;
 
 		MovieData::VideoFutureSampleData videosample;
 		videosample.Data.reserve(movie.GetRGB24ImageSize());
-
-		MovieData::AudioFutureSampleData audiosample;
-
-		if (movie.Audio)
-		{
-			audiosample.Data.reserve(2048);
-		}
 
 		while (!ShouldStopFrameThread)
 		{
@@ -952,15 +947,6 @@ namespace
 				{
 					auto data = videosample.Data.data();
 					movie.Sampler->Sample(data, time);
-				}
-			}
-
-			if (movie.Audio)
-			{
-				while (audiosamples->try_dequeue(audiosample))
-				{
-					auto& data = audiosample.Data;
-					movie.Audio->SetAudioPCM16Input(data.data(), data.size());
 				}
 			}
 		}
@@ -1243,9 +1229,6 @@ namespace
 								This is the only supported audio output format
 							*/
 							audiowriter->Open(finalname, 44'100, 16, 2);
-
-							using QueueType = MovieData::AudioQueueType;
-							movie.AudioSamplesToWrite = std::make_unique<QueueType>();
 						}
 
 						auto formatcontext = vidwriter->FormatContext.Get();
@@ -1506,6 +1489,11 @@ namespace
 
 				if (CurrentMovie.Audio)
 				{
+					for (auto& samples : CurrentMovie.Audio->SamplesToWrite)
+					{
+						CurrentMovie.Audio->SetAudioPCM16Input(samples);
+					}
+
 					CurrentMovie.Audio->Finish();
 				}
 
@@ -1806,7 +1794,7 @@ namespace
 			auto bufstart = static_cast<int16_t*>(buffer);
 			auto length = samplecount * samplebits / 8;
 
-			CurrentMovie.AudioSamplesToWrite->enqueue({{bufstart, bufstart + length}});
+			CurrentMovie.Audio->SamplesToWrite.emplace_back(std::vector<int16_t>(bufstart, bufstart + length));
 		}
 	}
 
