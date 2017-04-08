@@ -1643,34 +1643,6 @@ namespace
 			void* thisptr, void* edx, void* info
 		)
 		{
-			/*
-				0x101FFF80 static CSS IDA address June 3 2016
-			*/
-			static auto readscreenpxaddr = SDR::GetAddressFromPattern
-			(
-				"engine.dll",
-				SDR::MemoryPattern
-				(
-					"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
-					"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
-				),
-				"xxxxxxxx?????xx????xx????"
-			);
-
-			using ReadScreenPxType = void(__fastcall*)
-			(
-				void*,
-				void*,
-				int x,
-				int y,
-				int w,
-				int h,
-				void* buffer,
-				int format
-			);
-
-			static auto readscreenpxfunc = static_cast<ReadScreenPxType>(readscreenpxaddr);
-
 			auto width = CurrentMovie.Width;
 			auto height = CurrentMovie.Height;
 
@@ -1692,7 +1664,8 @@ namespace
 				pxformat = IMAGE_FORMAT_BGR888;
 			}
 
-			readscreenpxfunc(thisptr, edx, 0, 0, width, height, newsample.Data.data(), pxformat);
+			auto rendercontext = g_pMaterialSystem->GetRenderContext();
+			rendercontext->ReadPixels(0, 0, width, height, newsample.Data.data(), pxformat);
 
 			auto buffersize = Variables::FrameBufferSize.GetInt();
 
