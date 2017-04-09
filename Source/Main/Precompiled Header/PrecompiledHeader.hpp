@@ -4,7 +4,6 @@
 
 #include <Windows.h>
 #include <Psapi.h>
-
 #include <ShlObj.h>
 
 #include <vector>
@@ -15,28 +14,22 @@
 #include <thread>
 #include <atomic>
 
-#include "MinHookCPP.hpp"
-
 using namespace std::chrono_literals;
 
-#include "eiface.h"
-#include "cdll_int.h"
+#include "MinHookCPP.hpp"
+
 #include "engine\iserverplugin.h"
+#include "cdll_int.h"
+#include "tier1\tier1.h"
 #include "tier2\tier2.h"
-#include "game\server\iplayerinfo.h"
 #include "convar.h"
-#include "utlbuffer.h"
-#include "filesystem.h"
 #include "materialsystem\imaterialsystem.h"
 
 namespace SDR
 {
 	struct EngineInterfaces
 	{
-		IPlayerInfoManager* PlayerInfoManager;
-		CGlobalVars* Globals;
 		IVEngineClient* EngineClient;
-		IFileSystem* FileSystem;
 	};
 
 	const EngineInterfaces& GetEngineInterfaces();

@@ -203,81 +203,41 @@ namespace
 	SourceDemoRenderPlugin ThisPlugin;
 	SDR::EngineInterfaces Interfaces;
 
-	class InterfaceBase
+	template <typename T>
+	void CreateInterface
+	(
+		CreateInterfaceFn interfacefactory,
+		const char* name,
+		T*& outptr
+	)
 	{
-	public:
-		InterfaceBase(const char* interfacename) :
-			InterfaceName(interfacename)
+		auto ptr = static_cast<T*>(interfacefactory(name, nullptr));
+
+		if (!ptr)
 		{
-			
+			throw name;
 		}
 
-		virtual bool Create
-		(
-			CreateInterfaceFn interfacefactory,
-			CreateInterfaceFn gameserverfactory
-		) = 0;
-
-		const char* GetInterfaceName() const
-		{
-			return InterfaceName;
-		}
-
-	protected:
-		const char* InterfaceName;
-	};
+		outptr = ptr;
+	}
 
 	template <typename T>
-	class InterfaceFactoryLocal final : public InterfaceBase
+	void CreateServerInterface
+	(
+		CreateInterfaceFn gameserverfactory,
+		const char* name,
+		T*& outptr
+	)
 	{
-	public:
-		InterfaceFactoryLocal(T** targetinterface, const char* interfacename) :
-			InterfaceBase(interfacename),
-			TargetInterface(targetinterface)
+		auto ptr = static_cast<T*>(gameserverfactory(name, nullptr));
+
+		if (!ptr)
 		{
-			
+			throw name;
 		}
 
-		virtual bool Create
-		(
-			CreateInterfaceFn interfacefactory,
-			CreateInterfaceFn gameserverfactory
-		) override
-		{
-			*TargetInterface = static_cast<T*>(interfacefactory(InterfaceName, nullptr));
-
-			return TargetInterface != nullptr;
-		}
-
-	private:
-		T** TargetInterface;
-	};
-
-	template <typename T>
-	class ServerFactoryLocal final : public InterfaceBase
-	{
-	public:
-		ServerFactoryLocal(T** targetinterface, const char* interfacename) :
-			InterfaceBase(interfacename),
-			TargetInterface(targetinterface)
-		{
-			
-		}
-
-		virtual bool Create
-		(
-			CreateInterfaceFn interfacefactory,
-			CreateInterfaceFn gameserverfactory
-		) override
-		{
-			*TargetInterface = static_cast<T*>(gameserverfactory(InterfaceName, nullptr));
-
-			return TargetInterface != nullptr;
-		}
-
-	private:
-		T** TargetInterface;
-	};
+		outptr = ptr;
+	}
 
 	bool SourceDemoRenderPlugin::Load
 	(
@@ -294,47 +254,28 @@ namespace
 		ConnectTier2Libraries(&interfacefactory, 1);
 		ConVar_Register();
 
-		ServerFactoryLocal<IPlayerInfoManager> T1
-		(
-			&Interfaces.PlayerInfoManager,
-			INTERFACEVERSION_PLAYERINFOMANAGER
-		);
-
-		InterfaceFactoryLocal<IVEngineClient> T2
-		(
-			&Interfaces.EngineClient,
-			VENGINE_CLIENT_INTERFACE_VERSION
-		);
-
-		InterfaceFactoryLocal<IFileSystem> T3
-		(
-			&Interfaces.FileSystem,
-			FILESYSTEM_INTERFACE_VERSION
-		);
-
-		std::initializer_list<InterfaceBase*> list =
+		try
 		{
-			&T1,
-			&T2,
-			&T3
-		};
-
-		for (auto ptr : list)
-		{
-			auto res = ptr->Create(interfacefactory, gameserverfactory);
-
-			if (!res)
-			{
-				Warning("SDR: Failed to get the \"%s\" interface\n", ptr->GetInterfaceName());
-				return false;
-			}
+			CreateInterface
+			(
+				interfacefactory,
+				VENGINE_CLIENT_INTERFACE_VERSION,
+				Interfaces.EngineClient
+			);
 		}
 
-		Interfaces.Globals = Interfaces.PlayerInfoManager->GetGlobalVars();
+		catch (const char* name)
+		{
+			Warning("SDR: Failed to get the \"%s\" interface\n", name);
+			return false;
+		}
 
-		auto res = SDR::Setup();
+		try
+		{
+			SDR::Setup();
+		}
 
-		if (!res)
+		catch (MH_STATUS status)
 		{
 			return false;
 		}

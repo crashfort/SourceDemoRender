@@ -49,14 +49,14 @@ namespace
 	}
 }
 
-bool SDR::Setup()
+void SDR::Setup()
 {
 	auto res = MH_Initialize();
 
 	if (res != MH_OK)
 	{
 		Warning("SDR: Failed to initialize hooks\n");
-		return false;
+		throw res;
 	}
 
 	Msg("SDR: Creating %d modules\n", MainApplication.Modules.size());
@@ -73,16 +73,15 @@ bool SDR::Setup()
 
 			MH_EnableHook(function);
 
-			Msg("SDR: Enabled module \"%s\" -> %s @ 0x%08x\n", name, library, function);
+			Msg("SDR: Enabled module \"%s\" -> %s @ %p\n", name, library, function);
 		}
 
 		else
 		{
 			Warning("SDR: Could not enable module \"%s\" - \"%s\"\n", name, MH_StatusToString(res));
+			throw res;
 		}
 	}
-
-	return true;
 }
 
 void SDR::Close()

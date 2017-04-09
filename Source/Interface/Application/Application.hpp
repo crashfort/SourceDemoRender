@@ -2,7 +2,7 @@
 
 namespace SDR
 {
-	bool Setup();
+	void Setup();
 	void Close();
 
 	struct ModuleInformation
