@@ -66,21 +66,18 @@ void SDR::Setup()
 		auto res = module->Create();
 		auto name = module->DisplayName;
 
-		if (res == MH_OK)
-		{
-			auto library = module->Module;
-			auto function = module->TargetFunction;
-
-			MH_EnableHook(function);
-
-			Msg("SDR: Enabled module \"%s\" -> %s @ %p\n", name, library, function);
-		}
-
-		else
+		if (res != MH_OK)
 		{
 			Warning("SDR: Could not enable module \"%s\" - \"%s\"\n", name, MH_StatusToString(res));
 			throw res;
 		}
+
+		auto library = module->Module;
+		auto function = module->TargetFunction;
+
+		MH_EnableHook(function);
+
+		Msg("SDR: Enabled module \"%s\" -> %s @ 0x%p\n", name, library, function);
 	}
 }
 
