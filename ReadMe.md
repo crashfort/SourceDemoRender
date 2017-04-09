@@ -300,8 +300,8 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 		<td>
 			Media editors and players handle this value differently, try experimenting. Not avaialble in image sequence.
 			<br/><br/>
-            <b>Values:</b> bt470bg or bt709 <br/>
-            <b>Default:</b> bt470bg <br/>
+            <b>Values:</b> 601 or 709 <br/>
+            <b>Default:</b> 601 <br/>
 		</td>
 	</tr>
 	<tr>

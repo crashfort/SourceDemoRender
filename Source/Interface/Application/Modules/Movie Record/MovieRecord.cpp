@@ -919,8 +919,8 @@ namespace
 
 			ConVar ColorSpace
 			(
-				"sdr_movie_encoder_colorspace", "bt470bg", 0,
-				"Possible values: bt470bg, bt709"
+				"sdr_movie_encoder_colorspace", "601", 0,
+				"Possible values: 601, 709"
 			);
 
 			ConVar ColorRange
@@ -1327,8 +1327,8 @@ namespace
 
 							auto table =
 							{
-								std::make_pair("bt470bg", AVCOL_SPC_BT470BG),
-								std::make_pair("bt709", AVCOL_SPC_BT709)
+								std::make_pair("601", AVCOL_SPC_BT470BG),
+								std::make_pair("709", AVCOL_SPC_BT709)
 							};
 
 							linktabletovariable(space, table, codeccontext->colorspace);
