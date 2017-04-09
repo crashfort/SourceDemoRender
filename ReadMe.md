@@ -245,7 +245,7 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 	<tr>
 		<td>sdr_x264_preset</td>
 		<td>
-			Encoding preset. If you can, prefer not to use a slow encoding profile as the encoding may fall behind and the game will have to wait for it to catch up. Only available for x264.
+			Encoding preset. If you can, prefer not to use a slow encoding preset as the encoding may fall behind and the game will have to wait for it to catch up. Only available for x264.
 			<br/><br/>
             <b>Default:</b> medium <br/>
 			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
@@ -285,7 +285,7 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 			Multiply the frame size with the buffer size to one that fits you.
 			<br/><br/>
 			The frame buffer queue will only build up and fall behind when the encoding
-			is taking too long, consider not using too low of a profile. Under normal circumstances this should not be an issue.            
+			is taking too long, consider not using too low of a preset. Under normal circumstances this should not be an issue.            
             <br/><br/>
             Source is a 32 bit process which limits the available RAM between 2 - 4 GB. In worst case scenario, a full buffer of 384 at 1280x720 would use 1 GB while 1920x1080 would use 2.2 GB.
             <br/><br/>

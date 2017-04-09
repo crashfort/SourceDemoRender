@@ -790,7 +790,7 @@ namespace
 			"if there no longer is any available memory ***\n"
 			"\n"
 			"The frame buffer queue will only build up and fall behind when the encoding "
-			"is taking too long, consider not using too low of a profile.",
+			"is taking too long, consider not using too low of a preset.",
 			true, 8, true, 384
 		);
 
@@ -867,7 +867,7 @@ namespace
 			(
 				"sdr_movie_encoder_pxformat", "i420", 0,
 				"Video pixel format"
-				"Values: I420, I444, NV12. See https://wiki.videolan.org/YUV/"
+				"Values: Depends on encoder, view Github page"
 			);
 
 			ConVar CRF
@@ -881,7 +881,7 @@ namespace
 			{
 				"sdr_x264_preset", "medium", 0,
 				"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
-				"Important note: Optimally, do not use a too low of a profile as the streaming "
+				"Important note: Optimally, do not use a too low of a preset as the streaming "
 				"needs to be somewhat realtime.",
 				[](IConVar* var, const char* oldstr, float oldfloat)
 				{
