@@ -1291,9 +1291,11 @@ namespace
 
 					linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat);
 
+					/*
+						User selected pixel format does not match any in config
+					*/
 					if (pxformat == AV_PIX_FMT_NONE)
 					{
-						Msg("SDR: No compatible pixel format selected, using config default\n");
 						pxformat = vidconfig->PixelFormats[0].second;
 					}
 
