@@ -298,7 +298,7 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 	<tr>
 		<td>sdr_movie_encoder_colorspace</td>
 		<td>
-			Media editors and players handle this value differently, try experimenting. Not avaialble in image sequence.
+			Media editors and players handle this value differently, try experimenting. Not available in image sequence.
 			<br/><br/>
             <b>Values:</b> 601 or 709 <br/>
             <b>Default:</b> 601 <br/>
@@ -307,7 +307,7 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 	<tr>
 		<td>sdr_movie_encoder_colorrange</td>
 		<td>
-			Media editors and players handle this value differently, try experimenting. Not avaialble in image sequence.
+			Media editors and players handle this value differently, try experimenting. Not available in image sequence.
 			<br/><br/>
             <b>Values:</b> partial or full <br/>
             <b>Default:</b> partial <br/>
