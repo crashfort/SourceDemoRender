@@ -12,8 +12,8 @@ The DLL of either SP or MP variant should go in the root mod directory. Examples
 
 You can use the cfg files that comes with SDR as a base where to add your own preferred settings. The loader cfg's are the preferred way to load SDR. It is executed as follows:
 
-* ```exec sdr_load_mp.cfg``` - For multiplayer games
-* ```exec sdr_load_sp.cfg``` - For singleplayer games
+* `exec sdr_load_mp.cfg` - For multiplayer games
+* `exec sdr_load_sp.cfg` - For singleplayer games
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
@@ -22,16 +22,16 @@ You can use the cfg files that comes with SDR as a base where to add your own pr
 
 For video you can output AVI or MP4, for image sequences there is PNG or TGA. The format is decided from the extension you choose in startmovie. Examples:
 
-* startmovie test.avi
-* startmovie test.mp4
-* startmovie test.png
-* startmovie test.tga
+* `startmovie test.avi`
+* `startmovie test.mp4`
+* `startmovie test.png`
+* `startmovie test.tga`
 
 Image sequences should not have a digit specifier, it is added automatically as 5 padded digits. Note that PNG may be slow, but significantly smaller size than TGA.
 
 If not specified, the default video encoder is x264. You can choose which video encoder you'd like to use as a second extension:
 
-* startmovie test.avi.huffyuv
+* `startmovie test.avi.huffyuv`
 
 Above will create a huge AVI file with the huffyuv encoder.
 
