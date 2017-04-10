@@ -870,52 +870,55 @@ namespace
 				"Values: Depends on encoder, view Github page"
 			);
 
-			ConVar CRF
-			(
-				"sdr_x264_crf", "10", 0,
-				"Constant rate factor value. Values: 0 (best) - 51 (worst). "
-				"See https://trac.ffmpeg.org/wiki/Encode/H.264"
-			);
-
-			ConVar Preset
+			namespace X264
 			{
-				"sdr_x264_preset", "medium", 0,
-				"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
-				"Important note: Optimally, do not use a too low of a preset as the streaming "
-				"needs to be somewhat realtime.",
-				[](IConVar* var, const char* oldstr, float oldfloat)
+				ConVar CRF
+				(
+					"sdr_x264_crf", "10", 0,
+					"Constant rate factor value. Values: 0 (best) - 51 (worst). "
+					"See https://trac.ffmpeg.org/wiki/Encode/H.264"
+				);
+
+				ConVar Preset
 				{
-					auto newstr = Preset.GetString();
-
-					auto slowpresets =
+					"sdr_x264_preset", "medium", 0,
+					"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
+					"Important note: Optimally, do not use a too low of a preset as the streaming "
+					"needs to be somewhat realtime.",
+					[](IConVar* var, const char* oldstr, float oldfloat)
 					{
-						"slow",
-						"slower",
-						"veryslow",
-						"placebo"
-					};
+						auto newstr = Preset.GetString();
 
-					for (auto preset : slowpresets)
-					{
-						if (_strcmpi(newstr, preset) == 0)
+						auto slowpresets =
 						{
-							Warning
-							(
-								"SDR: Slow encoder preset chosen, "
-								"this might not work very well for realtime\n"
-							);
+							"slow",
+							"slower",
+							"veryslow",
+							"placebo"
+						};
 
-							return;
+						for (auto preset : slowpresets)
+						{
+							if (_strcmpi(newstr, preset) == 0)
+							{
+								Warning
+								(
+									"SDR: Slow encoder preset chosen, "
+									"this might not work very well for realtime\n"
+								);
+
+								return;
+							}
 						}
 					}
-				}
-			};
+				};
 
-			ConVar Tune
-			(
-				"sdr_x264_tune", "", 0,
-				"X264 encoder tune. See https://trac.ffmpeg.org/wiki/Encode/H.264"
-			);
+				ConVar Tune
+				(
+					"sdr_x264_tune", "", 0,
+					"X264 encoder tune. See https://trac.ffmpeg.org/wiki/Encode/H.264"
+				);
+			}
 
 			ConVar ColorSpace
 			(
@@ -1350,9 +1353,9 @@ namespace
 					{
 						if (vidconfig->EncoderType == AV_CODEC_ID_H264)
 						{
-							auto preset = Variables::Video::Preset.GetString();
-							auto tune = Variables::Video::Tune.GetString();
-							auto crf = Variables::Video::CRF.GetString();
+							auto preset = Variables::Video::X264::Preset.GetString();
+							auto tune = Variables::Video::X264::Tune.GetString();
+							auto crf = Variables::Video::X264::CRF.GetString();
 
 							LAV::ScopedAVDictionary options;
 							options.Set("preset", preset);
