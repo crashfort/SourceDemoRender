@@ -865,7 +865,7 @@ namespace
 		{
 			ConVar PixelFormat
 			(
-				"sdr_movie_encoder_pxformat", "i420", 0,
+				"sdr_movie_encoder_pxformat", "", 0,
 				"Video pixel format"
 				"Values: Depends on encoder, view Github page"
 			);
