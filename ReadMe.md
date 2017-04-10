@@ -12,8 +12,8 @@ The DLL of either SP or MP variant should go in the root mod directory. Examples
 
 You can use the cfg files that comes with SDR as a base where to add your own preferred settings. The loader cfg's are the preferred way to load SDR. It is executed as follows:
 
-* `exec sdr_load_mp.cfg` - For multiplayer games
-* `exec sdr_load_sp.cfg` - For singleplayer games
+* `exec sdr_load_mp` - For multiplayer games
+* `exec sdr_load_sp` - For singleplayer games
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
