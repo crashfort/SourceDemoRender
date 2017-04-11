@@ -876,7 +876,8 @@ namespace
 				(
 					"sdr_x264_crf", "0", 0,
 					"Constant rate factor value. Values: 0 (best) - 51 (worst). "
-					"See https://trac.ffmpeg.org/wiki/Encode/H.264"
+					"See https://trac.ffmpeg.org/wiki/Encode/H.264",
+					true, 0, true, 51
 				);
 
 				ConVar Preset
