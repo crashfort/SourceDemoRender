@@ -243,7 +243,7 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 			Constant rate factor quality value. Only available for x264.
 			<br/><br/>
             <b>Values:</b> 0 to 51 <br/>
-            <b>Default:</b> 10 <br/>
+            <b>Default:</b> 0 <br/>
 			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
 		</td>
 	</tr>
@@ -252,7 +252,7 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 		<td>
 			Encoding preset. If you can, prefer not to use a slow encoding preset as the encoding may fall behind and the game will have to wait for it to catch up. Only available for x264.
 			<br/><br/>
-            <b>Default:</b> medium <br/>
+            <b>Default:</b> ultrafast <br/>
 			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
 		</td>
 	</tr>

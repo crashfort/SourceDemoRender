@@ -874,14 +874,14 @@ namespace
 			{
 				ConVar CRF
 				(
-					"sdr_x264_crf", "10", 0,
+					"sdr_x264_crf", "0", 0,
 					"Constant rate factor value. Values: 0 (best) - 51 (worst). "
 					"See https://trac.ffmpeg.org/wiki/Encode/H.264"
 				);
 
 				ConVar Preset
 				{
-					"sdr_x264_preset", "medium", 0,
+					"sdr_x264_preset", "ultrafast", 0,
 					"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
 					"Important note: Optimally, do not use a too low of a preset as the streaming "
 					"needs to be somewhat realtime.",
