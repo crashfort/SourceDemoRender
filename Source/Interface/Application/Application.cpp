@@ -17,7 +17,12 @@ namespace
 	*/
 	namespace Memory
 	{
-		inline bool DataCompare(const uint8_t* data, const uint8_t* pattern, const char* mask)
+		inline bool DataCompare
+		(
+			const uint8_t* data,
+			const uint8_t* pattern,
+			const char* mask
+		)
 		{
 			for (; *mask != 0; ++data, ++pattern, ++mask)
 			{
@@ -30,7 +35,13 @@ namespace
 			return (*mask == 0);
 		}
 
-		void* FindPattern(const void* start, size_t length, const uint8_t* pattern, const char* mask)
+		void* FindPattern
+		(
+			const void* start,
+			size_t length,
+			const uint8_t* pattern,
+			const char* mask
+		)
 		{
 			auto masklength = strlen(mask);
 			
@@ -40,7 +51,10 @@ namespace
 				
 				if (DataCompare(addr, pattern, mask))
 				{
-					return const_cast<void*>(reinterpret_cast<const void*>(addr));
+					return const_cast<void*>
+					(
+						reinterpret_cast<const void*>(addr)
+					);
 				}
 			}
 
@@ -68,7 +82,13 @@ void SDR::Setup()
 
 		if (res != MH_OK)
 		{
-			Warning("SDR: Could not enable module \"%s\" - \"%s\"\n", name, MH_StatusToString(res));
+			Warning
+			(
+				"SDR: Could not enable module \"%s\" - \"%s\"\n",
+				name,
+				MH_StatusToString(res)
+			);
+
 			throw res;
 		}
 
@@ -77,7 +97,13 @@ void SDR::Setup()
 
 		MH_EnableHook(function);
 
-		Msg("SDR: Enabled module \"%s\" -> %s @ 0x%p\n", name, library, function);
+		Msg
+		(
+			"SDR: Enabled module \"%s\" -> %s @ 0x%p\n",
+			name,
+			library,
+			function
+		);
 	}
 }
 
@@ -101,7 +127,18 @@ void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
 	MainApplication.OnCloseFunctions.emplace_back(function);
 }
 
-void* SDR::GetAddressFromPattern(const ModuleInformation& library, const uint8_t* pattern, const char* mask)
+void* SDR::GetAddressFromPattern
+(
+	const ModuleInformation& library,
+	const uint8_t* pattern,
+	const char* mask
+)
 {
-	return Memory::FindPattern(library.MemoryBase, library.MemorySize, pattern, mask);
+	return Memory::FindPattern
+	(
+		library.MemoryBase,
+		library.MemorySize,
+		pattern,
+		mask
+	);
 }
