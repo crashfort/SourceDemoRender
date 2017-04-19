@@ -17,7 +17,7 @@ namespace
 	*/
 	namespace Memory
 	{
-		inline bool DataCompare(const byte* data, const byte* pattern, const char* mask)
+		inline bool DataCompare(const uint8_t* data, const uint8_t* pattern, const char* mask)
 		{
 			for (; *mask != 0; ++data, ++pattern, ++mask)
 			{
@@ -30,13 +30,13 @@ namespace
 			return (*mask == 0);
 		}
 
-		void* FindPattern(const void* start, size_t length, const byte* pattern, const char* mask)
+		void* FindPattern(const void* start, size_t length, const uint8_t* pattern, const char* mask)
 		{
 			auto masklength = strlen(mask);
 			
 			for (size_t i = 0; i <= length - masklength; ++i)
 			{
-				auto addr = reinterpret_cast<const byte*>(start) + i;
+				auto addr = reinterpret_cast<const uint8_t*>(start) + i;
 				
 				if (DataCompare(addr, pattern, mask))
 				{
@@ -101,7 +101,7 @@ void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
 	MainApplication.OnCloseFunctions.emplace_back(function);
 }
 
-void* SDR::GetAddressFromPattern(const ModuleInformation& library, const byte* pattern, const char* mask)
+void* SDR::GetAddressFromPattern(const ModuleInformation& library, const uint8_t* pattern, const char* mask)
 {
 	return Memory::FindPattern(library.MemoryBase, library.MemorySize, pattern, mask);
 }
