@@ -333,13 +333,7 @@ namespace
 
 			FILE* Handle = nullptr;
 		};
-	}
-}
 
-namespace LAV
-{
-	namespace
-	{
 		namespace Variables
 		{
 			ConVar SuppressLog
@@ -349,32 +343,32 @@ namespace LAV
 				true, 0, true, 1
 			);
 		}
-	}
 
-	void LogFunction
-	(
-		void* avcl,
-		int level,
-		const char* fmt,
-		va_list vl
-	)
-	{
-		if (!Variables::SuppressLog.GetBool())
+		void LogFunction
+		(
+			void* avcl,
+			int level,
+			const char* fmt,
+			va_list vl
+		)
 		{
-			/*
-				989 max limit according to
-				https://developer.valvesoftware.com/wiki/Developer_Console_Control#Printing_to_the_console
+			if (!Variables::SuppressLog.GetBool())
+			{
+				/*
+					989 max limit according to
+					https://developer.valvesoftware.com/wiki/Developer_Console_Control#Printing_to_the_console
 
-				960 to keep in a 32 byte alignment
-			*/
-			char buf[960];
-			vsprintf_s(buf, fmt, vl);
+					960 to keep in a 32 byte alignment
+				*/
+				char buf[960];
+				vsprintf_s(buf, fmt, vl);
 
-			/*
-				Not formatting the buffer to a string will create
-				a runtime error on any float conversion
-			*/
-			Msg("%s", buf);
+				/*
+					Not formatting the buffer to a string will create
+					a runtime error on any float conversion
+				*/
+				Msg("%s", buf);
+			}
 		}
 	}
 }
@@ -1135,6 +1129,8 @@ namespace
 			{
 				try
 				{
+					av_log_set_callback(LAV::LogFunction);
+
 					movie.Video = std::make_unique<SDRVideoWriter>();
 
 					if (Variables::Audio::Enable.GetBool())

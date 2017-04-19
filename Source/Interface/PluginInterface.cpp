@@ -9,17 +9,6 @@ extern "C"
 
 #include <cpprest\http_client.h>
 
-namespace LAV
-{
-	void LogFunction
-	(
-		void* avcl,
-		int level,
-		const char* fmt,
-		va_list vl
-	);
-}
-
 namespace
 {
 	class SourceDemoRenderPlugin final : public IServerPluginCallbacks
@@ -247,8 +236,6 @@ namespace
 	{
 		avcodec_register_all();
 		av_register_all();
-
-		av_log_set_callback(LAV::LogFunction);
 
 		ConnectTier1Libraries(&interfacefactory, 1);
 		ConnectTier2Libraries(&interfacefactory, 1);
