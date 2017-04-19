@@ -124,7 +124,11 @@ namespace
 					nullptr
 				);
 
-				ThrowIfNull(Context, LAV::ExceptionType::AllocSWSContext);
+				ThrowIfNull
+				(
+					Context,
+					ExceptionType::AllocSWSContext
+				);
 			}
 
 			SwsContext* Get()
@@ -154,7 +158,13 @@ namespace
 			{
 				ThrowIfFailed
 				(
-					avformat_alloc_output_context2(&Context, nullptr, nullptr, filename)
+					avformat_alloc_output_context2
+					(
+						&Context,
+						nullptr,
+						nullptr,
+						filename
+					)
 				);
 			}
 
@@ -185,7 +195,11 @@ namespace
 			{
 				Context = avcodec_alloc_context3(codec);
 
-				ThrowIfNull(Context, LAV::ExceptionType::AllocCodecContext);
+				ThrowIfNull
+				(
+					Context,
+					ExceptionType::AllocCodecContext
+				);
 			}
 
 			AVCodecContext* Get() const
@@ -220,7 +234,7 @@ namespace
 			{
 				Frame = av_frame_alloc();
 
-				ThrowIfNull(Frame, LAV::ExceptionType::AllocAVFrame);
+				ThrowIfNull(Frame, ExceptionType::AllocAVFrame);
 
 				Frame->format = format;
 				Frame->width = width;
@@ -1193,7 +1207,12 @@ namespace
 
 						else
 						{
-							V_StripExtension(finalfilename, finalfilename, sizeof(finalfilename));
+							V_StripExtension
+							(
+								finalfilename,
+								finalfilename,
+								sizeof(finalfilename)
+							);
 
 							if (!vidconfig->ImageSequence)
 							{

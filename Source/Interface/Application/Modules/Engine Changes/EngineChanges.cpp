@@ -46,7 +46,8 @@ namespace
 		*/
 		auto Pattern = SDR::MemoryPattern
 		(
-			"\x83\x3D\x00\x00\x00\x00\x00\x74\x4F\x8B\x0D\x00\x00\x00\x00\x8B\x01\x8B\x40\x40\xFF\xD0"
+			"\x83\x3D\x00\x00\x00\x00\x00\x74\x4F\x8B\x0D\x00"
+			"\x00\x00\x00\x8B\x01\x8B\x40\x40\xFF\xD0"
 		);
 
 		auto Mask =
@@ -64,7 +65,8 @@ namespace
 		};
 
 		/*
-			This is needed because it's responsible for locking the mouse inside the window
+			This is needed because it's responsible
+			for locking the mouse inside the window
 		*/
 		void __cdecl Override()
 		{
