@@ -7,7 +7,14 @@ namespace SDR
 		ModuleInformation(const char* name) : Name(name)
 		{
 			MODULEINFO info;
-			K32GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(name), &info, sizeof(MODULEINFO));
+			
+			K32GetModuleInformation
+			(
+				GetCurrentProcess(),
+				GetModuleHandleA(name),
+				&info,
+				sizeof(info)
+			);
 
 			MemoryBase = info.lpBaseOfDll;
 			MemorySize = info.SizeOfImage;
@@ -21,7 +28,12 @@ namespace SDR
 
 	struct HookModuleBase
 	{
-		HookModuleBase(const char* module, const char* name, void* newfunc) :
+		HookModuleBase
+		(
+			const char* module,
+			const char* name,
+			void* newfunc
+		) :
 			DisplayName(name),
 			Module(module),
 			NewFunction(newfunc)
@@ -96,7 +108,14 @@ namespace SDR
 			ModuleInformation info(Module);
 			TargetFunction = GetAddressFromPattern(info, Pattern, Mask);
 
-			return MH_CreateHookEx(TargetFunction, NewFunction, &OriginalFunction);
+			auto res = MH_CreateHookEx
+			(
+				TargetFunction,
+				NewFunction,
+				&OriginalFunction
+			);
+
+			return res;
 		}
 
 	private:
@@ -138,7 +157,14 @@ namespace SDR
 
 			TargetFunction = (void*)Address;
 
-			return MH_CreateHookEx(TargetFunction, NewFunction, &OriginalFunction);
+			auto res = MH_CreateHookEx
+			(
+				TargetFunction,
+				NewFunction,
+				&OriginalFunction
+			);
+
+			return res;
 		}
 
 	private:
