@@ -79,7 +79,7 @@ namespace SDR
 		}
 	};
 
-	template <typename FuncSignature>
+	template <typename FuncSignature, bool Runtime = false>
 	class HookModuleMask final : public HookModuleBase
 	{
 	public:
@@ -95,7 +95,10 @@ namespace SDR
 			Pattern(pattern),
 			Mask(mask)
 		{
-			AddModule(this);
+			if (!Runtime)
+			{
+				AddModule(this);
+			}
 		}
 
 		inline auto GetOriginal() const
@@ -123,7 +126,7 @@ namespace SDR
 		const char* Mask;
 	};
 
-	template <typename FuncSignature>
+	template <typename FuncSignature, bool Runtime = false>
 	class HookModuleStaticAddress final : public HookModuleBase
 	{
 	public:
@@ -137,7 +140,10 @@ namespace SDR
 			HookModuleBase(module, name, newfunction),
 			Address(address)
 		{
-			AddModule(this);
+			if (!Runtime)
+			{
+				AddModule(this);
+			}
 		}
 
 		inline auto GetOriginal() const
@@ -148,12 +154,19 @@ namespace SDR
 		virtual MH_STATUS Create() override
 		{
 			/*
-				IDA starts addresses at this value
+				A module that is configured at runtime
+				is assumed to have found the right address
 			*/
-			Address -= 0x10000000;
+			if (!Runtime)
+			{
+				/*
+					IDA starts addresses at this value
+				*/
+				Address -= 0x10000000;
 			
-			ModuleInformation info(Module);
-			Address += (uintptr_t)info.MemoryBase;
+				ModuleInformation info(Module);
+				Address += (uintptr_t)info.MemoryBase;
+			}
 
 			TargetFunction = (void*)Address;
 
@@ -171,7 +184,7 @@ namespace SDR
 		uintptr_t Address;
 	};
 
-	template <typename FuncSignature>
+	template <typename FuncSignature, bool Runtime = false>
 	class HookModuleAPI final : public HookModuleBase
 	{
 	public:
@@ -185,7 +198,10 @@ namespace SDR
 			HookModuleBase(module, name, newfunction),
 			ExportName(exportname)
 		{
-			AddModule(this);
+			if (!Runtime)
+			{
+				AddModule(this);
+			}
 		}
 
 		inline auto GetOriginal() const
@@ -212,5 +228,40 @@ namespace SDR
 
 	private:
 		const char* ExportName;
+	};
+
+	struct AddressFinder
+	{
+		AddressFinder
+		(
+			const char* module,
+			const uint8_t* pattern,
+			const char* mask,
+			int offset = 0
+		)
+		{
+			auto addr = GetAddressFromPattern
+			(
+				module,
+				pattern,
+				mask
+			);
+
+			auto addrmod = static_cast<uint8_t*>(addr);
+
+			/*
+				Increment for any extra instruction
+			*/
+			addrmod += offset;
+
+			Address = addrmod;
+		}
+
+		void* Get() const
+		{
+			return Address;
+		}
+
+		void* Address;
 	};
 }

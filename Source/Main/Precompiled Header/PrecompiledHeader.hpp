@@ -6,6 +6,8 @@
 #include <Psapi.h>
 #include <ShlObj.h>
 
+#include <wrl.h>
+
 #include <vector>
 #include <string>
 #include <chrono>
@@ -33,4 +35,16 @@ namespace SDR
 	};
 
 	const EngineInterfaces& GetEngineInterfaces();
+}
+
+namespace MS
+{
+    inline void ThrowIfFailed(HRESULT hr)
+    {
+        if (FAILED(hr))
+        {
+			Warning("SDR: ThrowIfFailed: %08X\n", hr);            
+			throw hr;
+        }
+    }
 }

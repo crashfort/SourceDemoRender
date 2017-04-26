@@ -1,0 +1,26 @@
+auto address = SDR::GetAddressFromPattern
+(
+	"shaderapidx9.dll",
+	SDR::MemoryPattern
+	(
+		"\xA1\x00\x00\x00\x00\x53\x56\x8B\xD9\x83\x78\x30"
+		"\x00\x74\x0E\x68\x00\x00\x00\x00"
+	),
+	"x????xxxxxxxxxxx????"
+);
+
+auto addrmod = static_cast<uint8_t*>(address);
+
+/*
+	Function offset
+*/
+addrmod += 0x39;
+
+/*
+	Increment for MOV EAX instruction
+*/
+addrmod += 1;
+
+HRESULT hr;
+
+device = **reinterpret_cast<IDirect3DDevice9***>(addrmod);

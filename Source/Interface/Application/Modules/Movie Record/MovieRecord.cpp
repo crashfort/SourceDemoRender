@@ -22,6 +22,19 @@ extern "C"
 */
 #include <mmsystem.h>
 
+#include <d3d9.h>
+#include <d3dx9.h>
+
+#include "Shaders\Compiled\MotionBlur_PS.hpp"
+#include "Shaders\Compiled\MotionBlur_VS.hpp"
+
+#include "materialsystem\itexture.h"
+#include "shaderapi\ishaderapi.h"
+#include "utlsymbol.h"
+
+#include "view_shared.h"
+#include "ivrenderview.h"
+
 namespace
 {
 	namespace LAV
@@ -743,6 +756,14 @@ namespace
 
 		double SamplingTime = 0.0;
 
+		struct DirectX9Data
+		{
+			IDirect3DDevice9* Device;
+
+			Microsoft::WRL::ComPtr<IDirect3DPixelShader9> MotionBlurPS;
+			Microsoft::WRL::ComPtr<IDirect3DVertexShader9> MotionBlurVS;
+		} DirectX9;
+
 		std::unique_ptr<SDRVideoWriter> Video;
 		std::unique_ptr<SDRAudioWriter> Audio;
 
@@ -820,6 +841,13 @@ namespace
 		(
 			"sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING,
 			"Game framerate in samples",
+			true, 0, false, 0
+		);
+
+		ConVar ShaderSamples
+		(
+			"sdr_shader_samples", "64", FCVAR_NEVER_AS_STRING,
+			"Motion blur samples",
 			true, 0, false, 0
 		);
 
@@ -977,6 +1005,490 @@ namespace
 		}
 	}
 
+	namespace Module_SourceGlobals
+	{
+		/*
+			Structure from Source 2007
+		*/
+		struct Texture_t
+		{
+			enum Flags_t
+			{
+				IS_ALLOCATED = 0x0001,
+				IS_DEPTH_STENCIL = 0x0002,
+				IS_DEPTH_STENCIL_TEXTURE = 0x0004,	// depth stencil texture, not surface
+				IS_RENDERABLE = (IS_DEPTH_STENCIL | IS_ALLOCATED),
+				IS_FINALIZED = 0x0010,	// 360: completed async hi-res load
+				IS_FAILED = 0x0020,	// 360: failed during load
+				CAN_CONVERT_FORMAT = 0x0040,	// 360: allow format conversion
+				IS_LINEAR = 0x0080,	// 360: unswizzled linear format
+				IS_RENDER_TARGET = 0x0100,	// 360: marks a render target texture source
+				IS_RENDER_TARGET_SURFACE = 0x0200,	// 360: marks a render target surface target
+				IS_VERTEX_TEXTURE = 0x0800,
+			};
+
+			D3DTEXTUREADDRESS m_UTexWrap;
+			D3DTEXTUREADDRESS m_VTexWrap;
+			D3DTEXTUREADDRESS m_WTexWrap;
+			D3DTEXTUREFILTERTYPE m_MagFilter;
+			D3DTEXTUREFILTERTYPE m_MinFilter;
+			D3DTEXTUREFILTERTYPE m_MipFilter;
+
+			unsigned char m_NumLevels;
+			unsigned char m_SwitchNeeded; // Do we need to advance the current copy?
+			unsigned char m_NumCopies; // copies are used to optimize procedural textures
+			unsigned char m_CurrentCopy; // the current copy we're using...
+
+			int m_CreationFlags;
+
+			CUtlSymbol m_DebugName;
+			CUtlSymbol m_TextureGroupName;
+			int* m_pTextureGroupCounterGlobal; // Global counter for this texture's group.
+			int* m_pTextureGroupCounterFrame; // Per-frame global counter for this texture's group.
+
+			int m_SizeBytes;
+			int m_SizeTexels;
+			int m_LastBoundFrame;
+			int m_nTimesBoundMax;
+			int m_nTimesBoundThisFrame;
+
+			short m_Width;
+			short m_Height;
+			short m_Depth;
+			unsigned short m_Flags;
+
+			union
+			{
+				IDirect3DBaseTexture9* m_pTexture; // used when there's one copy
+				IDirect3DBaseTexture9** m_ppTexture; // used when there are more than one copies
+				IDirect3DSurface9* m_pDepthStencilSurface; // used when there's one depth stencil surface
+				IDirect3DSurface9* m_pRenderTargetSurface[2];
+			};
+
+			ImageFormat m_ImageFormat;
+
+			short m_Count;
+			short m_CountIndex;
+		};
+		
+		using GetTextureHandleType = Texture_t*(__fastcall*)
+		(
+			ITexture* thisptr,
+			void* edx,
+			int frame,
+			int texturechannel
+		);
+
+		using GetFullscreenTextureType = ITexture*(__cdecl*)();
+		using GetFullFrameFrameBufferTextureType = ITexture*(__cdecl*)();
+
+		bool* DrawLoading = nullptr;
+		GetTextureHandleType GetTextureHandle = nullptr;
+		void* ShaderAPI = nullptr;
+		GetFullscreenTextureType GetFullScreenTexture = nullptr;
+		GetFullFrameFrameBufferTextureType GetFullFrameFrameBufferTexture = nullptr;
+		int* CurrentViewID = nullptr;
+
+		void Set()
+		{
+			{
+				SDR::AddressFinder address
+				(
+					/*
+						0x10105EA0 static CSS IDA address April 22 2017
+
+						In the function "SCR_BeginLoadingPlaque" the global variable
+						"scr_drawloading" is used.
+					*/
+					"engine.dll",
+					SDR::MemoryPattern
+					(
+						"\x80\x3D\x00\x00\x00\x00\x00\x0F\x85\x00\x00\x00"
+						"\x00\xE8\x00\x00\x00\x00\x6A\x00\x8B\xC8\x8B\x10"
+						"\xFF\x92\x00\x00\x00\x00"
+					),
+					"xx?????xx????x????xxxxxxxx????",
+
+					/*
+						Increment for CMP instruction
+					*/
+					2
+				);
+
+				DrawLoading = *reinterpret_cast<bool**>(address.Get());
+			}
+
+			{
+				/*
+					CTexture::GetTextureHandle, \materialsystem\ctexture.cpp @ 3466
+
+					Return value "int" changed to "Texture_t*" from heavy inlining.
+					This function actually belongs to "ITextureInternal" but it's not
+					a public header.
+				*/
+
+				SDR::AddressFinder address
+				(
+					/*
+						0x10065620 static HL2 IDA address April 25 2017
+					*/
+					"materialsystem.dll",
+					SDR::MemoryPattern
+					(
+						"\x55\x8B\xEC\x8B\x55\x08\x56\x8B\xF1\x85\xD2\x79"
+						"\x1D\x57\x68\x00\x00\x00\x00"
+					),
+					"xxxxxxxxxxxxxxx????"
+				);
+
+				GetTextureHandle = static_cast<GetTextureHandleType>(address.Get());
+			}
+
+			{
+				SDR::AddressFinder address
+				(
+					/*
+						0x100D08C6 static HL2 IDA address April 25 2017
+
+						In the function "CShaderDeviceMgrDx8::SetMode" the global variable
+						"g_pShaderAPIDX8" is used.
+					*/
+					"shaderapidx9.dll",
+					SDR::MemoryPattern
+					(
+						"\x8B\x0D\x00\x00\x00\x00\x89\x45\xEC\x52\xFF\x75"
+						"\x0C\x8B\x01\xFF\x75\x08\x8B\x80\x00\x00\x00\x00"
+					),
+					"xx????xxxxxxxxxxxxxx????",
+
+					/*
+						Increment for MOV ECX instruction
+					*/
+					2
+				);
+
+				ShaderAPI = address.Get();
+			}
+
+			{
+				/*
+					GetFullscreenTexture, \game\client\rendertexture.cpp @ 55
+				*/
+				SDR::AddressFinder address
+				(
+					/*
+						0x101BE79C static CSS IDA address April 25 2017
+					*/
+					"client.dll",
+					SDR::MemoryPattern
+					(
+						"\xE8\x00\x00\x00\x00\x8B\x4D\x0C\x50\xFF\x96\x00"
+						"\x00\x00\x00\x8B\x75\x0C\x8B\xCE\x8B\x06\xFF\x50"
+						"\x0C\x8B\x06\x8B\xCE\xFF\x50\x04\x8B\x43\x1C\xC6"
+						"\x84\x38\x00\x00\x00\x00\x00"
+					),
+					"x????xxxxxx????xxxxxxxxxxxxxxxxxxxxxxx?????"
+				);
+
+				auto addrmod = static_cast<uint8_t*>(address.Get());
+
+				/*
+					Increment to the next 4 bytes which is the jump distance
+				*/
+				addrmod += 1;
+
+				auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
+
+				addrmod += 4;
+				addrmod += offset;
+
+				GetFullScreenTexture = reinterpret_cast<GetFullscreenTextureType>(addrmod);
+			}
+
+			{
+				/*
+					GetFullFrameFrameBufferTexture, \game\client\rendertexture.cpp @ 103
+				*/
+				SDR::AddressFinder address
+				(
+					/*
+						0x101885A0 static CSS IDA address April 25 2017
+					*/
+					"client.dll",
+					SDR::MemoryPattern
+					(
+						"\x55\x8B\xEC\x8B\x45\x08\x81\xEC\x00\x00\x00\x00"
+						"\x83\x3C\x85\x00\x00\x00\x00\x00\x56\x8D\x34\x85"
+						"\x00\x00\x00\x00"
+					),
+					"xxxxxxxx????xxx?????xxxx????"
+				);
+
+				auto addrmod = static_cast<uint8_t*>(address.Get());
+
+				/*
+					Increment to the next 4 bytes which is the jump distance
+				*/
+				addrmod += 1;
+
+				auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
+
+				addrmod += 4;
+				addrmod += offset;
+
+				GetFullFrameFrameBufferTexture = reinterpret_cast
+				<
+					GetFullFrameFrameBufferTextureType
+				>(addrmod);
+			}
+
+			{
+				SDR::AddressFinder address
+				(
+					/*
+						0x101BA0FA static CSS IDA address April 26 2017
+
+						In the function "CBaseWorldView::DrawSetup" the global variable
+						"g_CurrentViewID" is used.
+					*/
+					"client.dll",
+					SDR::MemoryPattern
+					(
+						"\x8B\x35\x00\x00\x00\x00\x57\x8B\xF9\x89\x75\xF8"
+						"\x51\xD9\x1C\x24\xC7\x05\x00\x00\x00\x00\x00\x00"
+						"\x00\x00\x8B\x07\x8B\x40\x10"
+					),
+					"xx????xxxxxxxxxxxx????????xxxxx",
+
+					/*
+						Increment for MOV ESI instruction
+					*/
+					2
+				);
+
+				CurrentViewID = *reinterpret_cast<int**>(address.Get());
+			}
+		}
+	}
+
+	namespace Module_DrawSetup
+	{
+		/*
+			CBaseWorldView::DrawSetup in Source 2013
+			\game\client\viewrender.cpp @ 5276
+
+			0x101BA0F0 static CSS IDA address April 26 2017
+		*/
+		auto Pattern = SDR::MemoryPattern
+		(
+			"\x55\x8B\xEC\x83\xEC\x08\xD9\x45\x08\x56\x8B\x35"
+			"\x00\x00\x00\x00\x57\x8B\xF9\x89\x75\xF8\x51\xD9"
+			"\x1C\x24"
+		);
+
+		auto Mask =
+		(
+			"xxxxxxxxxxxx????xxxxxxxxxx"
+		);
+
+		void __fastcall Override
+		(
+			void*,
+			void*,
+			float waterheight,
+			int setupflags,
+			float waterzadjust,
+			int forceviewleaf
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"client.dll", "DrawSetup", Override, Pattern, Mask
+		};
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			float waterheight,
+			int setupflags,
+			float waterzadjust,
+			int forceviewleaf
+		)
+		{
+			auto& globalviewid = *Module_SourceGlobals::CurrentViewID;
+			
+			auto savedview = globalviewid;
+
+			ThisHook.GetOriginal()
+			(
+				thisptr,
+				edx,
+				waterheight,
+				setupflags,
+				waterzadjust,
+				forceviewleaf
+			);
+
+			/*
+				VIEW_ILLEGAL = -2, \game\client\viewrender.h
+			*/
+			globalviewid = -2;
+
+			/*
+				VIEW_MAIN = 0, \game\client\viewrender.h
+			*/
+			if (globalviewid == 0)
+			{
+				globalviewid = 1000;
+
+				auto rendercontext = g_pMaterialSystem->GetRenderContext();
+
+				auto depth = g_pMaterialSystem->FindTexture
+				(
+					"_rt_FullFrameDepth_SDR",
+					TEXTURE_GROUP_RENDER_TARGET
+				);
+
+				rendercontext->ClearColor4ub(255, 255, 255, 255);
+
+				render->Push3DView(thisptr, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, depth, GetFrustum());
+			}
+
+			globalviewid = savedview;
+		}
+	}
+
+	namespace Module_PerformScreenSpaceEffects
+	{
+		/*
+			0x101BD810 static CSS IDA address April 22 2017
+		*/
+		auto Pattern = SDR::MemoryPattern
+		(
+			"\x55\x8B\xEC\x83\xEC\x08\x8B\x0D\x00\x00\x00\x00"
+			"\x53\x56\x57\x33\xF6\x33\xFF\x89\x75\xF8\x89\x7D"
+			"\xFC\x8B\x01\x85\xC0\x74\x36\x68\x00\x00\x00\x00"
+			"\x68\x00\x00\x00\x00\x68\x00\x00\x00\x00\x68\x00"
+			"\x00\x00\x00\x68\x00\x00\x00\x00\x57\x57\x57\x57"
+			"\x8D\x4D\xF8\x51\x50\x8B\x40\x50\xFF\xD0\x8B\x7D"
+			"\xFC\x83\xC4\x2C\x8B\x75\xF8\x8B\x0D\x00\x00\x00"
+			"\x00\x8B\x19\x8B\x0D\x00\x00\x00\x00\x8B\x01\x8B"
+			"\x80\x00\x00\x00\x00\xFF\xD0"
+		);
+
+		auto Mask =
+		(
+			"xxxxxxxx????xxxxxxxxxxxxxxxxxxxx????x????x????x?"
+			"???x????xxxxxxxxxxxxxxxxxxxxxxxxx????xxxx????xxx"
+			"x????xx"
+		);
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			int x,
+			int y,
+			int w,
+			int h
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"client.dll", "PerformScreenSpaceEffects", Override, Pattern, Mask
+		};
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			int x,
+			int y,
+			int w,
+			int h
+		)
+		{
+			ThisHook.GetOriginal()(thisptr, edx, x, y, w, h);
+
+			/*auto shaderapimod = static_cast<uint8_t*>(shaderapi.GetAddress());
+			shaderapimod += sizeof(void**) * 2;
+			shaderapimod += 0x00001B50 + sizeof(bool);
+
+			auto& destalphadepthrange = *reinterpret_cast<float*>(shaderapimod);*/
+
+			auto& interfaces = SDR::GetEngineInterfaces();
+			auto client = interfaces.EngineClient;
+
+			if (!CurrentMovie.IsStarted)
+			{
+				return;
+			}
+
+			if (*Module_SourceGlobals::DrawLoading)
+			{
+				return;
+			}
+
+			if (client->Con_IsVisible())
+			{
+				return;
+			}
+
+			auto& movie = CurrentMovie;
+			auto& dx9 = movie.DirectX9;
+			auto& device = dx9.Device;
+
+			auto rendercontext = g_pMaterialSystem->GetRenderContext();
+
+			/*auto pSSAO = materials->FindTexture
+			(
+				"_rt_ResolvedFullFrameDepth",
+				TEXTURE_GROUP_RENDER_TARGET
+			);*/
+
+			//rendercontext->CopyRenderTargetToTextureEx(itexbackbuf, 0, nullptr, nullptr);
+
+			/*auto textureptr = gettexturehandlefunc2.GetValue()
+			(
+				dx9.DepthBuffer,
+				nullptr,
+				0,
+				0
+			);*/
+
+			#if 0
+			static int counter = 0;
+
+			wchar_t namebuf[1024];
+
+			swprintf_s
+			(
+				namebuf,
+				LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image%d.png)",
+				counter
+			);
+
+			auto hr = D3DXSaveTextureToFileW
+			(
+				namebuf,
+				D3DXIFF_PNG,
+				textureptr->m_pTexture,
+				nullptr
+			);
+
+			++counter;
+			#endif
+
+			int a = 5;
+			a = a;
+		}
+	}
+
 	namespace Module_StartMovie
 	{
 		/*
@@ -1016,6 +1528,8 @@ namespace
 			float framerate, int jpegquality, int unk
 		)
 		{
+			auto& movie = CurrentMovie;
+
 			auto sdrpath = Variables::OutputDirectory.GetString();
 
 			auto res = SHCreateDirectoryExA(nullptr, sdrpath, nullptr);
@@ -1050,8 +1564,140 @@ namespace
 						"SDR: Some unknown error happened when starting movie, "
 						"related to sdr_outputdir\n"
 					);
+
 					return;
 				}
+			}
+
+			{
+				auto& dx9 = movie.DirectX9;
+				auto& device = dx9.Device;
+
+				auto address = SDR::GetAddressFromPattern
+				(
+					"shaderapidx9.dll",
+					SDR::MemoryPattern
+					(
+						"\xA1\x00\x00\x00\x00\x53\x56\x8B\xD9\x83\x78\x30"
+						"\x00\x74\x0E\x68\x00\x00\x00\x00"
+					),
+					"x????xxxxxxxxxxx????"
+				);
+
+				auto addrmod = static_cast<uint8_t*>(address);
+
+				/*
+					Function offset
+				*/
+				addrmod += 0x39;
+
+				/*
+					Increment for MOV EAX instruction
+				*/
+				addrmod += 1;
+				
+				device = **reinterpret_cast<IDirect3DDevice9***>(addrmod);
+
+				try
+				{
+					MS::ThrowIfFailed
+					(
+						device->CreatePixelShader
+						(
+							(DWORD*)MotionBlur_PS_Blob,
+							dx9.MotionBlurPS.GetAddressOf()
+						)
+					);
+
+					MS::ThrowIfFailed
+					(
+						device->CreateVertexShader
+						(
+							(DWORD*)MotionBlur_VS_Blob,
+							dx9.MotionBlurVS.GetAddressOf()
+						)
+					);
+				}
+
+				catch (HRESULT code)
+				{
+
+				}
+
+				Module_SourceGlobals::Set();
+
+
+
+				auto olddepth = g_pMaterialSystem->FindTexture
+				(
+					"_rt_FullFrameDepth",
+					TEXTURE_GROUP_RENDER_TARGET
+				);
+
+				auto flags = TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_RENDERTARGET;
+				
+				if (olddepth)
+				{
+					flags = olddepth->GetFlags();
+				}
+
+				g_pMaterialSystem->BeginRenderTargetAllocation();
+
+				g_pMaterialSystem->CreateNamedRenderTargetTextureEx
+				(
+					"_rt_FullFrameDepth_SDR",
+					width,
+					height,
+					RT_SIZE_NO_CHANGE,
+					IMAGE_FORMAT_RGBA16161616F,
+					MATERIAL_RT_DEPTH_NONE,
+					flags,
+					0
+				);
+
+				g_pMaterialSystem->EndRenderTargetAllocation();
+
+				{
+					/*
+						GetFullFrameDepthTexture, \game\client\rendertexture.cpp @ 55
+
+						0x101ADD0E static CSS IDA address April 25 2017
+					*/
+					/*SDR::FreeMultiFunctionFinderE8 getfullframedepth2
+					(
+						"client.dll",
+						SDR::MemoryPattern
+						(
+							"\xE8\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00\x8B"
+							"\xD8\x89\x5D\xFC\x8B\x11\xFF\x92\x00\x00\x00\x00"
+							"\x8B\xF0\x85\xF6\x74\x07\x8B\x06\x8B\xCE\xFF\x50"
+							"\x08"
+						),
+						"x????xx????xxxxxxxxx????xxxxxxxxxxxxx"
+					);*/
+
+					/*SDR::HookModuleStaticAddress<ITexture*(__cdecl*)(), true> hook
+					(
+						"client.dll",
+						"GetFullFrameDepthTexture",
+						[]()
+						{
+							return CurrentMovie.DirectX9.DepthBuffer;
+						},
+						(uintptr_t)addrmod
+					);
+
+					auto res = hook.Create();
+
+					if (res != MH_OK)
+					{
+						int a = 5;
+						a = a;
+					}*/
+				}
+
+				int a = 5;
+				a = a;
 			}
 
 			struct VideoConfigurationData
@@ -1134,8 +1780,6 @@ namespace
 			}
 
 			const VideoConfigurationData* vidconfig = nullptr;
-
-			auto& movie = CurrentMovie;
 				
 			movie.Width = width;
 			movie.Height = height;
@@ -1664,6 +2308,8 @@ namespace
 			void* thisptr, void* edx, void* info
 		)
 		{
+			return;
+
 			auto width = CurrentMovie.Width;
 			auto height = CurrentMovie.Height;
 
