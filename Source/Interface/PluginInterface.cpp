@@ -234,6 +234,12 @@ namespace
 		CreateInterfaceFn gameserverfactory
 	)
 	{
+		Msg
+		(
+			"SDR: Version is %d\n",
+			SourceDemoRenderPlugin::PluginVersion
+		);
+
 		avcodec_register_all();
 		av_register_all();
 
