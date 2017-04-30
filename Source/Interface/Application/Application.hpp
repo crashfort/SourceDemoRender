@@ -79,7 +79,7 @@ namespace SDR
 		}
 	};
 
-	template <typename FuncSignature, bool Runtime = false>
+	template <typename FuncSignature>
 	class HookModuleMask final : public HookModuleBase
 	{
 	public:
@@ -95,10 +95,7 @@ namespace SDR
 			Pattern(pattern),
 			Mask(mask)
 		{
-			if (!Runtime)
-			{
-				AddModule(this);
-			}
+			AddModule(this);
 		}
 
 		inline auto GetOriginal() const
@@ -126,11 +123,14 @@ namespace SDR
 		const char* Mask;
 	};
 
-	template <typename FuncSignature, bool Runtime = false>
-	class HookModuleStaticAddress final : public HookModuleBase
+	/*
+		For use with unmodified addresses straight from IDA
+	*/
+	template <typename FuncSignature>
+	class HookModuleStaticAddressTest final : public HookModuleBase
 	{
 	public:
-		HookModuleStaticAddress
+		HookModuleStaticAddressTest
 		(
 			const char* module,
 			const char* name,
@@ -140,10 +140,7 @@ namespace SDR
 			HookModuleBase(module, name, newfunction),
 			Address(address)
 		{
-			if (!Runtime)
-			{
-				AddModule(this);
-			}
+			AddModule(this);
 		}
 
 		inline auto GetOriginal() const
@@ -154,19 +151,12 @@ namespace SDR
 		virtual MH_STATUS Create() override
 		{
 			/*
-				A module that is configured at runtime
-				is assumed to have found the right address
+				IDA starts addresses at this value
 			*/
-			if (!Runtime)
-			{
-				/*
-					IDA starts addresses at this value
-				*/
-				Address -= 0x10000000;
+			Address -= 0x10000000;
 			
-				ModuleInformation info(Module);
-				Address += (uintptr_t)info.MemoryBase;
-			}
+			ModuleInformation info(Module);
+			Address += (uintptr_t)info.MemoryBase;
 
 			TargetFunction = (void*)Address;
 
@@ -184,7 +174,51 @@ namespace SDR
 		uintptr_t Address;
 	};
 
-	template <typename FuncSignature, bool Runtime = false>
+	/*
+		For use where the correct address is found
+		through another method
+	*/
+	template <typename FuncSignature>
+	class HookModuleStaticAddress final : public HookModuleBase
+	{
+	public:
+		HookModuleStaticAddress
+		(
+			const char* module,
+			const char* name,
+			FuncSignature newfunction,
+			void* address
+		) :
+			HookModuleBase(module, name, newfunction),
+			Address(address)
+		{
+			AddModule(this);
+		}
+
+		inline auto GetOriginal() const
+		{
+			return static_cast<FuncSignature>(OriginalFunction);
+		}
+
+		virtual MH_STATUS Create() override
+		{
+			TargetFunction = Address;
+
+			auto res = MH_CreateHookEx
+			(
+				TargetFunction,
+				NewFunction,
+				&OriginalFunction
+			);
+
+			return res;
+		}
+
+	private:
+		void* Address;
+	};
+
+	template <typename FuncSignature>
 	class HookModuleAPI final : public HookModuleBase
 	{
 	public:
@@ -198,10 +232,7 @@ namespace SDR
 			HookModuleBase(module, name, newfunction),
 			ExportName(exportname)
 		{
-			if (!Runtime)
-			{
-				AddModule(this);
-			}
+			AddModule(this);
 		}
 
 		inline auto GetOriginal() const
@@ -250,7 +281,48 @@ namespace SDR
 			auto addrmod = static_cast<uint8_t*>(addr);
 
 			/*
-				Increment for any extra instruction
+				Increment for any extra instructions
+			*/
+			addrmod += offset;
+
+			Address = addrmod;
+		}
+
+		void* Get() const
+		{
+			return Address;
+		}
+
+		void* Address;
+	};
+
+	/*
+		First byte at target address should be E8
+	*/
+	struct RelativeJumpFunctionFinder
+	{
+		RelativeJumpFunctionFinder
+		(
+			AddressFinder address
+		)
+		{
+			auto addrmod = static_cast<uint8_t*>(address.Get());
+
+			/*
+				Skip the E8 byte
+			*/
+			addrmod += 1;
+
+			auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
+
+			/*
+				E8 jumps count relative distance from the next instruction,
+				in 32 bit the distance will be measued in 4 bytes.
+			*/
+			addrmod += 4;
+
+			/*
+				Do the jump, address will now be the target function
 			*/
 			addrmod += offset;
 

@@ -1491,19 +1491,31 @@ namespace
 
 	namespace Module_StartMovie
 	{
-		/*
-			0x100BCAC0 static CSS IDA address May 22 2016
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\xA1\x00\x00"
-			"\x00\x00\xD9\x45\x18\x56\x57\xF3\x0F\x10\x40\x00"
-		);
+		SDR::RelativeJumpFunctionFinder StartMovieAddress
+		{
+			SDR::AddressFinder
+			(
+				/*
+					0x100BF270 static CSS IDA address April 26 2017
 
-		auto Mask =
-		(
-			"xxxxx????x????xxxxxxxxx?"
-		);
+					This is inside the console command handler for "startmovie",
+					where it calls CL_StartMovie.
+				*/
+				"engine.dll",
+				SDR::MemoryPattern
+				(
+					"\xFF\x50\x44\x50\x53\x56\xE8\x00\x00\x00\x00\x68"
+					"\x00\x00\x00\x00\xFF\x15\x00\x00\x00\x00\x83\xC4"
+					"\x20\x5F\x5B\x5E\x8B\xE5\x5D\xC3"
+				),
+				"xxxxxxx????x????xx????xxxxxxxxxx",
+			
+				/*
+					Skip \xFF\x50\x44\x50\x53\x56 to where E8 is next
+				*/
+				6
+			)
+		};
 
 		void __cdecl Override
 		(
@@ -1513,9 +1525,9 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
+		SDR::HookModuleStaticAddress<ThisFunction> ThisHook
 		{
-			"engine.dll", "StartMovie", Override, Pattern, Mask
+			"engine.dll", "StartMovie", Override, StartMovieAddress.Get()
 		};
 
 		/*
