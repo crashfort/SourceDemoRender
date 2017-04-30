@@ -7,7 +7,7 @@ namespace
 	struct Application
 	{
 		std::vector<SDR::HookModuleBase*> Modules;
-		std::vector<SDR::StartupFuncType> StartupFunctions;
+		std::vector<SDR::StartupFuncData> StartupFunctions;
 		std::vector<SDR::ShutdownFuncType> ShutdownFunctions;
 	};
 
@@ -106,11 +106,6 @@ void SDR::Setup()
 			function
 		);
 	}
-
-	for (auto func : MainApplication.StartupFunctions)
-	{
-		func();
-	}
 }
 
 void SDR::Close()
@@ -133,9 +128,22 @@ void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
 	MainApplication.ShutdownFunctions.emplace_back(function);
 }
 
-void SDR::AddPluginStartupFunction(StartupFuncType function)
+void SDR::AddPluginStartupFunction(const StartupFuncData& data)
 {
-	MainApplication.StartupFunctions.emplace_back(function);
+	MainApplication.StartupFunctions.emplace_back(data);
+}
+
+void SDR::CallPluginStartupFunctions()
+{
+	for (auto entry : MainApplication.StartupFunctions)
+	{
+		auto res = entry.Function();
+
+		if (!res)
+		{
+			throw entry.Name;
+		}
+	}
 }
 
 void* SDR::GetAddressFromPattern

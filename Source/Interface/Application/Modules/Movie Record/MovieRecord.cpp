@@ -758,8 +758,6 @@ namespace
 
 		struct DirectX9Data
 		{
-			IDirect3DDevice9* Device;
-
 			ITexture* DepthTexture;
 
 			Microsoft::WRL::ComPtr<IDirect3DPixelShader9> MotionBlurPS;
@@ -795,38 +793,339 @@ namespace
 		CurrentMovie = MovieData();
 	}
 
+	namespace Module_SourceGlobals
+	{
+		/*
+			Structure from Source 2007
+		*/
+		struct Texture_t
+		{
+			enum Flags_t
+			{
+				IS_ALLOCATED = 0x0001,
+				IS_DEPTH_STENCIL = 0x0002,
+				IS_DEPTH_STENCIL_TEXTURE = 0x0004,	// depth stencil texture, not surface
+				IS_RENDERABLE = (IS_DEPTH_STENCIL | IS_ALLOCATED),
+				IS_FINALIZED = 0x0010,	// 360: completed async hi-res load
+				IS_FAILED = 0x0020,	// 360: failed during load
+				CAN_CONVERT_FORMAT = 0x0040,	// 360: allow format conversion
+				IS_LINEAR = 0x0080,	// 360: unswizzled linear format
+				IS_RENDER_TARGET = 0x0100,	// 360: marks a render target texture source
+				IS_RENDER_TARGET_SURFACE = 0x0200,	// 360: marks a render target surface target
+				IS_VERTEX_TEXTURE = 0x0800,
+			};
+
+			D3DTEXTUREADDRESS m_UTexWrap;
+			D3DTEXTUREADDRESS m_VTexWrap;
+			D3DTEXTUREADDRESS m_WTexWrap;
+			D3DTEXTUREFILTERTYPE m_MagFilter;
+			D3DTEXTUREFILTERTYPE m_MinFilter;
+			D3DTEXTUREFILTERTYPE m_MipFilter;
+
+			unsigned char m_NumLevels;
+			unsigned char m_SwitchNeeded; // Do we need to advance the current copy?
+			unsigned char m_NumCopies; // copies are used to optimize procedural textures
+			unsigned char m_CurrentCopy; // the current copy we're using...
+
+			int m_CreationFlags;
+
+			CUtlSymbol m_DebugName;
+			CUtlSymbol m_TextureGroupName;
+			int* m_pTextureGroupCounterGlobal; // Global counter for this texture's group.
+			int* m_pTextureGroupCounterFrame; // Per-frame global counter for this texture's group.
+
+			int m_SizeBytes;
+			int m_SizeTexels;
+			int m_LastBoundFrame;
+			int m_nTimesBoundMax;
+			int m_nTimesBoundThisFrame;
+
+			short m_Width;
+			short m_Height;
+			short m_Depth;
+			unsigned short m_Flags;
+
+			union
+			{
+				IDirect3DBaseTexture9* m_pTexture; // used when there's one copy
+				IDirect3DBaseTexture9** m_ppTexture; // used when there are more than one copies
+				IDirect3DSurface9* m_pDepthStencilSurface; // used when there's one depth stencil surface
+				IDirect3DSurface9* m_pRenderTargetSurface[2];
+			};
+
+			ImageFormat m_ImageFormat;
+
+			short m_Count;
+			short m_CountIndex;
+		};
+		
+		using GetTextureHandleType = Texture_t*(__fastcall*)
+		(
+			ITexture* thisptr,
+			void* edx,
+			int frame,
+			int texturechannel
+		);
+
+		using GetFullscreenTextureType = ITexture*(__cdecl*)();
+		using GetFullFrameFrameBufferTextureType = ITexture*(__cdecl*)();
+
+		IDirect3DDevice9* Device;
+		bool* DrawLoading = nullptr;
+		GetTextureHandleType GetTextureHandle = nullptr;
+		void* ShaderAPI = nullptr;
+		GetFullscreenTextureType GetFullScreenTexture = nullptr;
+		GetFullFrameFrameBufferTextureType GetFullFrameFrameBufferTexture = nullptr;
+		int* CurrentViewID = nullptr;
+
+		void Set()
+		{
+			{
+				SDR::AddressFinder address
+				(
+					"shaderapidx9.dll",
+					SDR::MemoryPattern
+					(
+						"\xA1\x00\x00\x00\x00\x53\x56\x8B\xD9\x83\x78\x30"
+						"\x00\x74\x0E\x68\x00\x00\x00\x00"
+					),
+					"x????xxxxxxxxxxx????",
+					/*
+						Function offset and increment for MOV EAX instruction
+					*/
+					0x39 + 1
+				);
+
+				Device = **reinterpret_cast<IDirect3DDevice9***>(address.Get());
+			}
+
+			{
+				SDR::AddressFinder address
+				(
+					/*
+						0x10105EA0 static CSS IDA address April 22 2017
+
+						In the function "SCR_BeginLoadingPlaque" the global variable
+						"scr_drawloading" is used.
+					*/
+					"engine.dll",
+					SDR::MemoryPattern
+					(
+						"\x80\x3D\x00\x00\x00\x00\x00\x0F\x85\x00\x00\x00"
+						"\x00\xE8\x00\x00\x00\x00\x6A\x00\x8B\xC8\x8B\x10"
+						"\xFF\x92\x00\x00\x00\x00"
+					),
+					"xx?????xx????x????xxxxxxxx????",
+
+					/*
+						Increment for CMP instruction
+					*/
+					2
+				);
+
+				DrawLoading = *reinterpret_cast<bool**>(address.Get());
+			}
+
+			{
+				/*
+					CTexture::GetTextureHandle, \materialsystem\ctexture.cpp @ 3466
+
+					Return value "int" changed to "Texture_t*" from heavy inlining.
+					This function actually belongs to "ITextureInternal" but it's not
+					a public header.
+				*/
+
+				SDR::AddressFinder address
+				(
+					/*
+						0x10065620 static HL2 IDA address April 25 2017
+					*/
+					"materialsystem.dll",
+					SDR::MemoryPattern
+					(
+						"\x55\x8B\xEC\x8B\x55\x08\x56\x8B\xF1\x85\xD2\x79"
+						"\x1D\x57\x68\x00\x00\x00\x00"
+					),
+					"xxxxxxxxxxxxxxx????"
+				);
+
+				GetTextureHandle = static_cast<GetTextureHandleType>(address.Get());
+			}
+
+			{
+				SDR::AddressFinder address
+				(
+					/*
+						0x100D08C6 static HL2 IDA address April 25 2017
+
+						In the function "CShaderDeviceMgrDx8::SetMode" the global variable
+						"g_pShaderAPIDX8" is used.
+					*/
+					"shaderapidx9.dll",
+					SDR::MemoryPattern
+					(
+						"\x8B\x0D\x00\x00\x00\x00\x89\x45\xEC\x52\xFF\x75"
+						"\x0C\x8B\x01\xFF\x75\x08\x8B\x80\x00\x00\x00\x00"
+					),
+					"xx????xxxxxxxxxxxxxx????",
+
+					/*
+						Increment for MOV ECX instruction
+					*/
+					2
+				);
+
+				ShaderAPI = address.Get();
+			}
+
+			{
+				/*
+					GetFullscreenTexture, \game\client\rendertexture.cpp @ 55
+				*/
+				SDR::AddressFinder address
+				(
+					/*
+						0x101BE79C static CSS IDA address April 25 2017
+					*/
+					"client.dll",
+					SDR::MemoryPattern
+					(
+						"\xE8\x00\x00\x00\x00\x8B\x4D\x0C\x50\xFF\x96\x00"
+						"\x00\x00\x00\x8B\x75\x0C\x8B\xCE\x8B\x06\xFF\x50"
+						"\x0C\x8B\x06\x8B\xCE\xFF\x50\x04\x8B\x43\x1C\xC6"
+						"\x84\x38\x00\x00\x00\x00\x00"
+					),
+					"x????xxxxxx????xxxxxxxxxxxxxxxxxxxxxxx?????"
+				);
+
+				auto addrmod = static_cast<uint8_t*>(address.Get());
+
+				/*
+					Increment to the next 4 bytes which is the jump distance
+				*/
+				addrmod += 1;
+
+				auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
+
+				addrmod += 4;
+				addrmod += offset;
+
+				GetFullScreenTexture = reinterpret_cast<GetFullscreenTextureType>(addrmod);
+			}
+
+			{
+				/*
+					GetFullFrameFrameBufferTexture, \game\client\rendertexture.cpp @ 103
+				*/
+				SDR::AddressFinder address
+				(
+					/*
+						0x101885A0 static CSS IDA address April 25 2017
+					*/
+					"client.dll",
+					SDR::MemoryPattern
+					(
+						"\x55\x8B\xEC\x8B\x45\x08\x81\xEC\x00\x00\x00\x00"
+						"\x83\x3C\x85\x00\x00\x00\x00\x00\x56\x8D\x34\x85"
+						"\x00\x00\x00\x00"
+					),
+					"xxxxxxxx????xxx?????xxxx????"
+				);
+
+				auto addrmod = static_cast<uint8_t*>(address.Get());
+
+				/*
+					Increment to the next 4 bytes which is the jump distance
+				*/
+				addrmod += 1;
+
+				auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
+
+				addrmod += 4;
+				addrmod += offset;
+
+				GetFullFrameFrameBufferTexture = reinterpret_cast
+				<
+					GetFullFrameFrameBufferTextureType
+				>(addrmod);
+			}
+
+			{
+				SDR::AddressFinder address
+				(
+					/*
+						0x101BA0FA static CSS IDA address April 26 2017
+
+						In the function "CBaseWorldView::DrawSetup" the global variable
+						"g_CurrentViewID" is used.
+					*/
+					"client.dll",
+					SDR::MemoryPattern
+					(
+						"\x8B\x35\x00\x00\x00\x00\x57\x8B\xF9\x89\x75\xF8"
+						"\x51\xD9\x1C\x24\xC7\x05\x00\x00\x00\x00\x00\x00"
+						"\x00\x00\x8B\x07\x8B\x40\x10"
+					),
+					"xx????xxxxxxxxxxxx????????xxxxx",
+
+					/*
+						Increment for MOV ESI instruction
+					*/
+					2
+				);
+
+				CurrentViewID = *reinterpret_cast<int**>(address.Get());
+			}
+		}
+	}
+
 	/*
 		In case endmovie never gets called,
 		this handles the plugin_unload
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
 
-	SDR::PluginStartupFunctionAdder A2([]()
+	SDR::PluginStartupFunctionAdder A2("MovieRecordSetup1", []()
 	{
+		Module_SourceGlobals::Set();
+
 		int width;
 		int height;
 		materials->GetBackBufferDimensions(width, height);
 
-		auto flags = TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_RENDERTARGET;
+		auto device = Module_SourceGlobals::Device;
+		auto& dx9 = CurrentMovie.DirectX9;
 
-		materials->BeginRenderTargetAllocation();
+		try
+		{
+			MS::ThrowIfFailed
+			(
+				device->CreatePixelShader
+				(
+					(DWORD*)MotionBlur_PS_Blob,
+					dx9.MotionBlurPS.GetAddressOf()
+				)
+			);
 
-		CurrentMovie.DirectX9.DepthTexture = materials->CreateNamedRenderTargetTextureEx
-		(
-			"_rt_FullFrameDepth_SDR",
-			width,
-			height,
-			RT_SIZE_NO_CHANGE,
-			IMAGE_FORMAT_R32F,
-			MATERIAL_RT_DEPTH_NONE,
-			flags,
-			0
-		);
+			MS::ThrowIfFailed
+			(
+				device->CreateVertexShader
+				(
+					(DWORD*)MotionBlur_VS_Blob,
+					dx9.MotionBlurVS.GetAddressOf()
+				)
+			);
+		}
 
-		materials->EndRenderTargetAllocation();
+		catch (HRESULT code)
+		{
+			return false;
+		}
 
 		int a = 5;
 		a = a;
+
+		return true;
 	});
 }
 
@@ -1035,272 +1334,6 @@ namespace
 		}
 	}
 
-	namespace Module_SourceGlobals
-	{
-		/*
-			Structure from Source 2007
-		*/
-		struct Texture_t
-		{
-			enum Flags_t
-			{
-				IS_ALLOCATED = 0x0001,
-				IS_DEPTH_STENCIL = 0x0002,
-				IS_DEPTH_STENCIL_TEXTURE = 0x0004,	// depth stencil texture, not surface
-				IS_RENDERABLE = (IS_DEPTH_STENCIL | IS_ALLOCATED),
-				IS_FINALIZED = 0x0010,	// 360: completed async hi-res load
-				IS_FAILED = 0x0020,	// 360: failed during load
-				CAN_CONVERT_FORMAT = 0x0040,	// 360: allow format conversion
-				IS_LINEAR = 0x0080,	// 360: unswizzled linear format
-				IS_RENDER_TARGET = 0x0100,	// 360: marks a render target texture source
-				IS_RENDER_TARGET_SURFACE = 0x0200,	// 360: marks a render target surface target
-				IS_VERTEX_TEXTURE = 0x0800,
-			};
-
-			D3DTEXTUREADDRESS m_UTexWrap;
-			D3DTEXTUREADDRESS m_VTexWrap;
-			D3DTEXTUREADDRESS m_WTexWrap;
-			D3DTEXTUREFILTERTYPE m_MagFilter;
-			D3DTEXTUREFILTERTYPE m_MinFilter;
-			D3DTEXTUREFILTERTYPE m_MipFilter;
-
-			unsigned char m_NumLevels;
-			unsigned char m_SwitchNeeded; // Do we need to advance the current copy?
-			unsigned char m_NumCopies; // copies are used to optimize procedural textures
-			unsigned char m_CurrentCopy; // the current copy we're using...
-
-			int m_CreationFlags;
-
-			CUtlSymbol m_DebugName;
-			CUtlSymbol m_TextureGroupName;
-			int* m_pTextureGroupCounterGlobal; // Global counter for this texture's group.
-			int* m_pTextureGroupCounterFrame; // Per-frame global counter for this texture's group.
-
-			int m_SizeBytes;
-			int m_SizeTexels;
-			int m_LastBoundFrame;
-			int m_nTimesBoundMax;
-			int m_nTimesBoundThisFrame;
-
-			short m_Width;
-			short m_Height;
-			short m_Depth;
-			unsigned short m_Flags;
-
-			union
-			{
-				IDirect3DBaseTexture9* m_pTexture; // used when there's one copy
-				IDirect3DBaseTexture9** m_ppTexture; // used when there are more than one copies
-				IDirect3DSurface9* m_pDepthStencilSurface; // used when there's one depth stencil surface
-				IDirect3DSurface9* m_pRenderTargetSurface[2];
-			};
-
-			ImageFormat m_ImageFormat;
-
-			short m_Count;
-			short m_CountIndex;
-		};
-		
-		using GetTextureHandleType = Texture_t*(__fastcall*)
-		(
-			ITexture* thisptr,
-			void* edx,
-			int frame,
-			int texturechannel
-		);
-
-		using GetFullscreenTextureType = ITexture*(__cdecl*)();
-		using GetFullFrameFrameBufferTextureType = ITexture*(__cdecl*)();
-
-		bool* DrawLoading = nullptr;
-		GetTextureHandleType GetTextureHandle = nullptr;
-		void* ShaderAPI = nullptr;
-		GetFullscreenTextureType GetFullScreenTexture = nullptr;
-		GetFullFrameFrameBufferTextureType GetFullFrameFrameBufferTexture = nullptr;
-		int* CurrentViewID = nullptr;
-
-		void Set()
-		{
-			{
-				SDR::AddressFinder address
-				(
-					/*
-						0x10105EA0 static CSS IDA address April 22 2017
-
-						In the function "SCR_BeginLoadingPlaque" the global variable
-						"scr_drawloading" is used.
-					*/
-					"engine.dll",
-					SDR::MemoryPattern
-					(
-						"\x80\x3D\x00\x00\x00\x00\x00\x0F\x85\x00\x00\x00"
-						"\x00\xE8\x00\x00\x00\x00\x6A\x00\x8B\xC8\x8B\x10"
-						"\xFF\x92\x00\x00\x00\x00"
-					),
-					"xx?????xx????x????xxxxxxxx????",
-
-					/*
-						Increment for CMP instruction
-					*/
-					2
-				);
-
-				DrawLoading = *reinterpret_cast<bool**>(address.Get());
-			}
-
-			{
-				/*
-					CTexture::GetTextureHandle, \materialsystem\ctexture.cpp @ 3466
-
-					Return value "int" changed to "Texture_t*" from heavy inlining.
-					This function actually belongs to "ITextureInternal" but it's not
-					a public header.
-				*/
-
-				SDR::AddressFinder address
-				(
-					/*
-						0x10065620 static HL2 IDA address April 25 2017
-					*/
-					"materialsystem.dll",
-					SDR::MemoryPattern
-					(
-						"\x55\x8B\xEC\x8B\x55\x08\x56\x8B\xF1\x85\xD2\x79"
-						"\x1D\x57\x68\x00\x00\x00\x00"
-					),
-					"xxxxxxxxxxxxxxx????"
-				);
-
-				GetTextureHandle = static_cast<GetTextureHandleType>(address.Get());
-			}
-
-			{
-				SDR::AddressFinder address
-				(
-					/*
-						0x100D08C6 static HL2 IDA address April 25 2017
-
-						In the function "CShaderDeviceMgrDx8::SetMode" the global variable
-						"g_pShaderAPIDX8" is used.
-					*/
-					"shaderapidx9.dll",
-					SDR::MemoryPattern
-					(
-						"\x8B\x0D\x00\x00\x00\x00\x89\x45\xEC\x52\xFF\x75"
-						"\x0C\x8B\x01\xFF\x75\x08\x8B\x80\x00\x00\x00\x00"
-					),
-					"xx????xxxxxxxxxxxxxx????",
-
-					/*
-						Increment for MOV ECX instruction
-					*/
-					2
-				);
-
-				ShaderAPI = address.Get();
-			}
-
-			{
-				/*
-					GetFullscreenTexture, \game\client\rendertexture.cpp @ 55
-				*/
-				SDR::AddressFinder address
-				(
-					/*
-						0x101BE79C static CSS IDA address April 25 2017
-					*/
-					"client.dll",
-					SDR::MemoryPattern
-					(
-						"\xE8\x00\x00\x00\x00\x8B\x4D\x0C\x50\xFF\x96\x00"
-						"\x00\x00\x00\x8B\x75\x0C\x8B\xCE\x8B\x06\xFF\x50"
-						"\x0C\x8B\x06\x8B\xCE\xFF\x50\x04\x8B\x43\x1C\xC6"
-						"\x84\x38\x00\x00\x00\x00\x00"
-					),
-					"x????xxxxxx????xxxxxxxxxxxxxxxxxxxxxxx?????"
-				);
-
-				auto addrmod = static_cast<uint8_t*>(address.Get());
-
-				/*
-					Increment to the next 4 bytes which is the jump distance
-				*/
-				addrmod += 1;
-
-				auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
-
-				addrmod += 4;
-				addrmod += offset;
-
-				GetFullScreenTexture = reinterpret_cast<GetFullscreenTextureType>(addrmod);
-			}
-
-			{
-				/*
-					GetFullFrameFrameBufferTexture, \game\client\rendertexture.cpp @ 103
-				*/
-				SDR::AddressFinder address
-				(
-					/*
-						0x101885A0 static CSS IDA address April 25 2017
-					*/
-					"client.dll",
-					SDR::MemoryPattern
-					(
-						"\x55\x8B\xEC\x8B\x45\x08\x81\xEC\x00\x00\x00\x00"
-						"\x83\x3C\x85\x00\x00\x00\x00\x00\x56\x8D\x34\x85"
-						"\x00\x00\x00\x00"
-					),
-					"xxxxxxxx????xxx?????xxxx????"
-				);
-
-				auto addrmod = static_cast<uint8_t*>(address.Get());
-
-				/*
-					Increment to the next 4 bytes which is the jump distance
-				*/
-				addrmod += 1;
-
-				auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
-
-				addrmod += 4;
-				addrmod += offset;
-
-				GetFullFrameFrameBufferTexture = reinterpret_cast
-				<
-					GetFullFrameFrameBufferTextureType
-				>(addrmod);
-			}
-
-			{
-				SDR::AddressFinder address
-				(
-					/*
-						0x101BA0FA static CSS IDA address April 26 2017
-
-						In the function "CBaseWorldView::DrawSetup" the global variable
-						"g_CurrentViewID" is used.
-					*/
-					"client.dll",
-					SDR::MemoryPattern
-					(
-						"\x8B\x35\x00\x00\x00\x00\x57\x8B\xF9\x89\x75\xF8"
-						"\x51\xD9\x1C\x24\xC7\x05\x00\x00\x00\x00\x00\x00"
-						"\x00\x00\x8B\x07\x8B\x40\x10"
-					),
-					"xx????xxxxxxxxxxxx????????xxxxx",
-
-					/*
-						Increment for MOV ESI instruction
-					*/
-					2
-				);
-
-				CurrentViewID = *reinterpret_cast<int**>(address.Get());
-			}
-		}
-	}
-
 	namespace Module_DrawSetup
 	{
 		/*
@@ -1463,7 +1496,6 @@ namespace
 
 			auto& movie = CurrentMovie;
 			auto& dx9 = movie.DirectX9;
-			auto& device = dx9.Device;
 
 			auto rendercontext = materials->GetRenderContext();
 
@@ -1639,64 +1671,6 @@ namespace
 
 					return;
 				}
-			}
-
-			{
-				auto& dx9 = movie.DirectX9;
-				auto& device = dx9.Device;
-
-				auto address = SDR::GetAddressFromPattern
-				(
-					"shaderapidx9.dll",
-					SDR::MemoryPattern
-					(
-						"\xA1\x00\x00\x00\x00\x53\x56\x8B\xD9\x83\x78\x30"
-						"\x00\x74\x0E\x68\x00\x00\x00\x00"
-					),
-					"x????xxxxxxxxxxx????"
-				);
-
-				auto addrmod = static_cast<uint8_t*>(address);
-
-				/*
-					Function offset
-				*/
-				addrmod += 0x39;
-
-				/*
-					Increment for MOV EAX instruction
-				*/
-				addrmod += 1;
-				
-				device = **reinterpret_cast<IDirect3DDevice9***>(addrmod);
-
-				try
-				{
-					MS::ThrowIfFailed
-					(
-						device->CreatePixelShader
-						(
-							(DWORD*)MotionBlur_PS_Blob,
-							dx9.MotionBlurPS.GetAddressOf()
-						)
-					);
-
-					MS::ThrowIfFailed
-					(
-						device->CreateVertexShader
-						(
-							(DWORD*)MotionBlur_VS_Blob,
-							dx9.MotionBlurVS.GetAddressOf()
-						)
-					);
-				}
-
-				catch (HRESULT code)
-				{
-
-				}
-
-				Module_SourceGlobals::Set();
 			}
 
 			struct VideoConfigurationData

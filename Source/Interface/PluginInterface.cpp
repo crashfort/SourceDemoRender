@@ -273,6 +273,17 @@ namespace
 			return false;
 		}
 
+		try
+		{
+			SDR::CallPluginStartupFunctions();
+		}
+
+		catch (const char* name)
+		{
+			Warning("SDR: Setup procedure \"%s\" failed\n", name);
+			return false;
+		}
+
 		Msg("SDR: Source Demo Render loaded\n");
 
 		return true;

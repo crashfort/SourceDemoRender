@@ -79,16 +79,29 @@ namespace SDR
 		}
 	};
 
-	using StartupFuncType = void(*)();
-	void AddPluginStartupFunction(StartupFuncType function);
+	struct StartupFuncData
+	{
+		using FuncType = bool(*)();
+
+		const char* Name;
+		FuncType Function;
+	};
+
+	void AddPluginStartupFunction(const StartupFuncData& data);
 
 	struct PluginStartupFunctionAdder
 	{
-		PluginStartupFunctionAdder(StartupFuncType function)
+		PluginStartupFunctionAdder(const char* name, StartupFuncData::FuncType function)
 		{
-			AddPluginStartupFunction(function);
+			StartupFuncData data;
+			data.Name = name;
+			data.Function = function;
+
+			AddPluginStartupFunction(data);
 		}
 	};
+
+	void CallPluginStartupFunctions();
 
 	template <typename FuncSignature>
 	class HookModuleMask final : public HookModuleBase
