@@ -61,9 +61,6 @@ namespace SDR
 
 	void AddModule(HookModuleBase* module);
 
-	using ShutdownFuncType = void(*)();
-	void AddPluginShutdownFunction(ShutdownFuncType function);
-
 	void* GetAddressFromPattern
 	(
 		const ModuleInformation& library,
@@ -71,11 +68,25 @@ namespace SDR
 		const char* mask
 	);
 
+	using ShutdownFuncType = void(*)();
+	void AddPluginShutdownFunction(ShutdownFuncType function);
+
 	struct PluginShutdownFunctionAdder
 	{
 		PluginShutdownFunctionAdder(ShutdownFuncType function)
 		{
 			AddPluginShutdownFunction(function);
+		}
+	};
+
+	using StartupFuncType = void(*)();
+	void AddPluginStartupFunction(StartupFuncType function);
+
+	struct PluginStartupFunctionAdder
+	{
+		PluginStartupFunctionAdder(StartupFuncType function)
+		{
+			AddPluginStartupFunction(function);
 		}
 	};
 

@@ -760,6 +760,8 @@ namespace
 		{
 			IDirect3DDevice9* Device;
 
+			ITexture* DepthTexture;
+
 			Microsoft::WRL::ComPtr<IDirect3DPixelShader9> MotionBlurPS;
 			Microsoft::WRL::ComPtr<IDirect3DVertexShader9> MotionBlurVS;
 		} DirectX9;
@@ -798,6 +800,34 @@ namespace
 		this handles the plugin_unload
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
+
+	SDR::PluginStartupFunctionAdder A2([]()
+	{
+		int width;
+		int height;
+		materials->GetBackBufferDimensions(width, height);
+
+		auto flags = TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_RENDERTARGET;
+
+		materials->BeginRenderTargetAllocation();
+
+		CurrentMovie.DirectX9.DepthTexture = materials->CreateNamedRenderTargetTextureEx
+		(
+			"_rt_FullFrameDepth_SDR",
+			width,
+			height,
+			RT_SIZE_NO_CHANGE,
+			IMAGE_FORMAT_R32F,
+			MATERIAL_RT_DEPTH_NONE,
+			flags,
+			0
+		);
+
+		materials->EndRenderTargetAllocation();
+
+		int a = 5;
+		a = a;
+	});
 }
 
 namespace
@@ -1344,17 +1374,9 @@ namespace
 			{
 				globalviewid = 1000;
 
-				auto rendercontext = g_pMaterialSystem->GetRenderContext();
-
-				auto depth = g_pMaterialSystem->FindTexture
-				(
-					"_rt_FullFrameDepth_SDR",
-					TEXTURE_GROUP_RENDER_TARGET
-				);
+				auto rendercontext = materials->GetRenderContext();
 
 				rendercontext->ClearColor4ub(255, 255, 255, 255);
-
-				render->Push3DView(thisptr, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, depth, GetFrustum());
 			}
 
 			globalviewid = savedview;
@@ -1443,7 +1465,7 @@ namespace
 			auto& dx9 = movie.DirectX9;
 			auto& device = dx9.Device;
 
-			auto rendercontext = g_pMaterialSystem->GetRenderContext();
+			auto rendercontext = materials->GetRenderContext();
 
 			/*auto pSSAO = materials->FindTexture
 			(
@@ -1486,6 +1508,44 @@ namespace
 
 			int a = 5;
 			a = a;
+		}
+	}
+
+	namespace Module_GetFullFrameDepthTexture
+	{
+		/*
+			GetFullFrameDepthTexture, \game\client\rendertexture.cpp @ 55
+
+			0x101ADD0E static CSS IDA address April 25 2017
+		*/
+		SDR::RelativeJumpFunctionFinder Address
+		{
+			SDR::AddressFinder
+			(
+				"client.dll",
+				SDR::MemoryPattern
+				(
+					"\xE8\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00\x8B"
+					"\xD8\x89\x5D\xFC\x8B\x11\xFF\x92\x00\x00\x00\x00"
+					"\x8B\xF0\x85\xF6\x74\x07\x8B\x06\x8B\xCE\xFF\x50"
+					"\x08"
+				),
+				"x????xx????xxxxxxxxx????xxxxxxxxxxxxx"
+			)
+		};
+
+		ITexture* __cdecl Override();
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleStaticAddress<ThisFunction> ThisHook
+		{
+			"client.dll", "GetFullFrameDepthTexture", Override, Address.Get()
+		};
+
+		ITexture* __cdecl Override()
+		{
+			return CurrentMovie.DirectX9.DepthTexture;
 		}
 	}
 
@@ -1637,79 +1697,6 @@ namespace
 				}
 
 				Module_SourceGlobals::Set();
-
-
-
-				auto olddepth = g_pMaterialSystem->FindTexture
-				(
-					"_rt_FullFrameDepth",
-					TEXTURE_GROUP_RENDER_TARGET
-				);
-
-				auto flags = TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_RENDERTARGET;
-				
-				if (olddepth)
-				{
-					flags = olddepth->GetFlags();
-				}
-
-				g_pMaterialSystem->BeginRenderTargetAllocation();
-
-				g_pMaterialSystem->CreateNamedRenderTargetTextureEx
-				(
-					"_rt_FullFrameDepth_SDR",
-					width,
-					height,
-					RT_SIZE_NO_CHANGE,
-					IMAGE_FORMAT_RGBA16161616F,
-					MATERIAL_RT_DEPTH_NONE,
-					flags,
-					0
-				);
-
-				g_pMaterialSystem->EndRenderTargetAllocation();
-
-				{
-					/*
-						GetFullFrameDepthTexture, \game\client\rendertexture.cpp @ 55
-
-						0x101ADD0E static CSS IDA address April 25 2017
-					*/
-					/*SDR::FreeMultiFunctionFinderE8 getfullframedepth2
-					(
-						"client.dll",
-						SDR::MemoryPattern
-						(
-							"\xE8\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00\x8B"
-							"\xD8\x89\x5D\xFC\x8B\x11\xFF\x92\x00\x00\x00\x00"
-							"\x8B\xF0\x85\xF6\x74\x07\x8B\x06\x8B\xCE\xFF\x50"
-							"\x08"
-						),
-						"x????xx????xxxxxxxxx????xxxxxxxxxxxxx"
-					);*/
-
-					/*SDR::HookModuleStaticAddress<ITexture*(__cdecl*)(), true> hook
-					(
-						"client.dll",
-						"GetFullFrameDepthTexture",
-						[]()
-						{
-							return CurrentMovie.DirectX9.DepthBuffer;
-						},
-						(uintptr_t)addrmod
-					);
-
-					auto res = hook.Create();
-
-					if (res != MH_OK)
-					{
-						int a = 5;
-						a = a;
-					}*/
-				}
-
-				int a = 5;
-				a = a;
 			}
 
 			struct VideoConfigurationData
@@ -2181,7 +2168,7 @@ namespace
 
 			int width;
 			int height;
-			g_pMaterialSystem->GetBackBufferDimensions(width, height);
+			materials->GetBackBufferDimensions(width, height);
 
 			auto name = args[1];
 
@@ -2343,7 +2330,7 @@ namespace
 				pxformat = IMAGE_FORMAT_BGR888;
 			}
 
-			auto rendercontext = g_pMaterialSystem->GetRenderContext();
+			auto rendercontext = materials->GetRenderContext();
 			rendercontext->ReadPixels(0, 0, width, height, newsample.Data.data(), pxformat);
 
 			auto buffersize = Variables::FrameBufferSize.GetInt();
