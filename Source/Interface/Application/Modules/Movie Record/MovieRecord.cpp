@@ -1537,7 +1537,7 @@ namespace
 
 			int width;
 			int height;
-			g_pMaterialSystem->GetBackBufferDimensions(width, height);
+			materials->GetBackBufferDimensions(width, height);
 
 			auto name = args[1];
 
@@ -1697,7 +1697,7 @@ namespace
 				pxformat = IMAGE_FORMAT_BGR888;
 			}
 
-			auto rendercontext = g_pMaterialSystem->GetRenderContext();
+			auto rendercontext = materials->GetRenderContext();
 			rendercontext->ReadPixels(0, 0, width, height, newsample.Data.data(), pxformat);
 
 			auto buffersize = Variables::FrameBufferSize.GetInt();
