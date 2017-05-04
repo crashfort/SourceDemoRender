@@ -32,6 +32,23 @@ namespace Module_BaseTemplateMask
 	}
 }
 
+namespace Module_BaseTemplateStaticTest
+{
+	void __cdecl Override();
+
+	using ThisFunction = decltype(Override)*;
+
+	SDR::HookModuleStaticAddressTest<ThisFunction> ThisHook
+	{
+		"", "", Override, 0x00000000
+	};
+
+	void __cdecl Override()
+	{
+
+	}
+}
+
 namespace Module_BaseTemplateStatic
 {
 	void __cdecl Override();
@@ -40,7 +57,7 @@ namespace Module_BaseTemplateStatic
 
 	SDR::HookModuleStaticAddress<ThisFunction> ThisHook
 	{
-		"", "", Override, 0x00000000
+		"", "", Override, nullptr
 	};
 
 	void __cdecl Override()
