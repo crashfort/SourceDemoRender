@@ -758,7 +758,8 @@ namespace
 
 		struct DirectX9Data
 		{
-			ITexture* DepthTexture;
+			Microsoft::WRL::ComPtr<IDirect3DTexture9> DepthTexture;
+			Microsoft::WRL::ComPtr<IDirect3DSurface9> DepthSurface;
 
 			Microsoft::WRL::ComPtr<IDirect3DPixelShader9> MotionBlurPS;
 			Microsoft::WRL::ComPtr<IDirect3DVertexShader9> MotionBlurVS;
@@ -1085,7 +1086,7 @@ namespace
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
 
-	SDR::PluginStartupFunctionAdder A2("MovieRecordSetup1", []()
+	SDR::PluginStartupFunctionAdder A2("MovieRecordSetup", []()
 	{
 		Module_SourceGlobals::Set();
 
@@ -1098,6 +1099,30 @@ namespace
 
 		try
 		{
+			MS::ThrowIfFailed
+			(
+				device->CreateTexture
+				(
+					width,
+					height,
+					1,
+					D3DUSAGE_RENDERTARGET,
+					D3DFMT_R32F,
+					D3DPOOL_DEFAULT,
+					dx9.DepthTexture.GetAddressOf(),
+					nullptr
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx9.DepthTexture->GetSurfaceLevel
+				(
+					0,
+					dx9.DepthSurface.GetAddressOf()
+				)
+			);
+
 			MS::ThrowIfFailed
 			(
 				device->CreatePixelShader
@@ -1115,10 +1140,23 @@ namespace
 					dx9.MotionBlurVS.GetAddressOf()
 				)
 			);
+
+			MS::ThrowIfFailed
+			(
+				device->SetDepthStencilSurface
+				(
+					dx9.DepthSurface.Get()
+				)
+			);
 		}
 
 		catch (HRESULT code)
 		{
+			auto dxerror = MAKE_D3DHRESULT(code);
+
+			int a = 5;
+			a = a;
+
 			return false;
 		}
 
@@ -1334,6 +1372,7 @@ namespace
 		}
 	}
 
+	#if 0
 	namespace Module_DrawSetup
 	{
 		/*
@@ -1415,6 +1454,7 @@ namespace
 			globalviewid = savedview;
 		}
 	}
+	#endif
 
 	namespace Module_PerformScreenSpaceEffects
 	{
@@ -1470,12 +1510,6 @@ namespace
 		{
 			ThisHook.GetOriginal()(thisptr, edx, x, y, w, h);
 
-			/*auto shaderapimod = static_cast<uint8_t*>(shaderapi.GetAddress());
-			shaderapimod += sizeof(void**) * 2;
-			shaderapimod += 0x00001B50 + sizeof(bool);
-
-			auto& destalphadepthrange = *reinterpret_cast<float*>(shaderapimod);*/
-
 			auto& interfaces = SDR::GetEngineInterfaces();
 			auto client = interfaces.EngineClient;
 
@@ -1496,24 +1530,30 @@ namespace
 
 			auto& movie = CurrentMovie;
 			auto& dx9 = movie.DirectX9;
+			auto device = Module_SourceGlobals::Device;
 
 			auto rendercontext = materials->GetRenderContext();
 
-			/*auto pSSAO = materials->FindTexture
-			(
-				"_rt_ResolvedFullFrameDepth",
-				TEXTURE_GROUP_RENDER_TARGET
-			);*/
+			try
+			{
+				MS::ThrowIfFailed
+				(
+					device->SetRenderTarget(0, nullptr)
+				);
 
-			//rendercontext->CopyRenderTargetToTextureEx(itexbackbuf, 0, nullptr, nullptr);
+				MS::ThrowIfFailed
+				(
+					device->SetDepthStencilSurface
+					(
+						dx9.DepthSurface.Get()
+					)
+				);
+			}
 
-			/*auto textureptr = gettexturehandlefunc2.GetValue()
-			(
-				dx9.DepthBuffer,
-				nullptr,
-				0,
-				0
-			);*/
+			catch (HRESULT code)
+			{
+				return;
+			}
 
 			#if 0
 			static int counter = 0;
@@ -1543,6 +1583,7 @@ namespace
 		}
 	}
 
+	#if 0
 	namespace Module_GetFullFrameDepthTexture
 	{
 		/*
@@ -1580,6 +1621,7 @@ namespace
 			return CurrentMovie.DirectX9.DepthTexture;
 		}
 	}
+	#endif
 
 	namespace Module_StartMovie
 	{
