@@ -1,3 +1,7 @@
+# Build configurations used for external projects
+
+## ffmpeg
+```
 CC=cl ./configure \
 --prefix=$HOME/ffmpegbuild \
 --toolchain=msvc \
@@ -31,3 +35,31 @@ CC=cl ./configure \
 --enable-parser=png \
 --extra-ldflags="-LIBPATH:$HOME/ffmpegbuild/lib -lz" \
 --extra-cflags="-I$HOME/ffmpegbuild/include" \
+
+```
+
+## x264
+```
+CC=cl ./configure \
+--prefix=$HOME/ffmpegbuild \
+--disable-cli \
+--enable-static \
+--enable-strip \
+--disable-opencl \
+
+```
+
+## zlib
+```
+CC=cl ./configure \
+--prefix=$HOME/ffmpegbuild \
+--static \
+
+```
+
+## cpprestsdk
+```
+Static library with project casablanca140.static.vcxproj, with preprocessor definitions: 
+_NO_ASYNCRTIMP
+_NO_PPLXIMP
+```
