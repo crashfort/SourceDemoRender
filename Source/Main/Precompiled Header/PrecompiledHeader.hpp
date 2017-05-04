@@ -39,12 +39,12 @@ namespace SDR
 
 namespace MS
 {
-    inline void ThrowIfFailed(HRESULT hr)
-    {
-        if (FAILED(hr))
-        {
-			Warning("SDR: ThrowIfFailed: %08X\n", hr);            
+	inline void ThrowIfFailed(HRESULT hr)
+	{
+		if (FAILED(hr))
+		{
+			Warning("SDR: ThrowIfFailed: %08X\n", hr);
 			throw hr;
-        }
-    }
+		}
+	}
 }
