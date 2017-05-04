@@ -419,9 +419,7 @@ namespace
 
 			WaveFile.WriteSimple(WAVE);
 
-			WAVEFORMATEX waveformat;
-			std::memset(&waveformat, 0, sizeof(waveformat));
-
+			WAVEFORMATEX waveformat = {};
 			waveformat.wFormatTag = WAVE_FORMAT_PCM;
 			waveformat.nChannels = channels;
 			waveformat.nSamplesPerSec = samplerate;
