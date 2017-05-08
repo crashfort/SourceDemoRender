@@ -41,6 +41,8 @@ namespace
 
 	namespace Module_ActivateMouse
 	{
+		#pragma region Init
+
 		/*
 			0x10216D80 static CSS IDA address June 3 2016
 		*/
@@ -63,6 +65,8 @@ namespace
 		{
 			"engine.dll", "ActivateMouse", Override, Pattern, Mask
 		};
+
+		#pragma endregion
 
 		/*
 			This is needed because it's responsible
@@ -91,6 +95,8 @@ namespace
 			int m_nData3; // Generic 32-bit data, what it contains depends on the event
 		};
 
+		#pragma region Init
+
 		/*
 			0x102013C0 static CSS IDA address June 3 2016
 		*/
@@ -107,7 +113,9 @@ namespace
 
 		void __fastcall Override
 		(
-			void* thisptr, void* edx, const InputEvent_t& event
+			void* thisptr,
+			void* edx,
+			const InputEvent_t& event
 		);
 
 		using ThisFunction = decltype(Override)*;
@@ -117,9 +125,13 @@ namespace
 			"engine.dll", "AppActivate", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		void __fastcall Override
 		(
-			void* thisptr, void* edx, const InputEvent_t& event
+			void* thisptr,
+			void* edx,
+			const InputEvent_t& event
 		)
 		{
 			auto& interfaces = SDR::GetEngineInterfaces();
