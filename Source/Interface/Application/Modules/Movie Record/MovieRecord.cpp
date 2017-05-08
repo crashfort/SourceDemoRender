@@ -977,6 +977,8 @@ namespace
 
 	namespace Module_StartMovie
 	{
+		#pragma region Init
+
 		SDR::RelativeJumpFunctionFinder StartMovieAddress
 		{
 			SDR::AddressFinder
@@ -1015,6 +1017,8 @@ namespace
 		{
 			"engine.dll", "StartMovie", Override, StartMovieAddress.Get()
 		};
+
+		#pragma endregion
 
 		/*
 			The 7th parameter (unk) was been added in Source 2013,
@@ -1498,6 +1502,8 @@ namespace
 
 	namespace Module_StartMovieCommand
 	{
+		#pragma region Init
+
 		/*
 			0x100BEF40 static CSS IDA address April 7 2017
 		*/
@@ -1521,6 +1527,8 @@ namespace
 		{
 			"engine.dll", "StartMovieCommand", Override, Pattern, Mask
 		};
+
+		#pragma endregion
 
 		/*
 			This command is overriden to remove the incorrect description
@@ -1548,6 +1556,8 @@ namespace
 
 	namespace Module_EndMovie
 	{
+		#pragma region Init
+
 		/*
 			0x100BAE40 static CSS IDA address May 22 2016
 		*/
@@ -1570,6 +1580,8 @@ namespace
 		{
 			"engine.dll", "EndMovie", Override, Pattern, Mask
 		};
+
+		#pragma endregion
 
 		void __cdecl Override()
 		{
@@ -1637,6 +1649,8 @@ namespace
 
 	namespace Module_WriteMovieFrame
 	{
+		#pragma region Init
+
 		/*
 			0x102011B0 static CSS IDA address June 3 2016
 		*/
@@ -1650,6 +1664,22 @@ namespace
 		(
 			"xxxxxx?????xxxxxxxxx????"
 		);
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			void* info
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "WriteMovieFrame", Override, Pattern, Mask
+		};
+
+		#pragma endregion
 
 		/*
 			The "thisptr" in this context is a CVideoMode_MaterialSystem in this structure:
@@ -1671,7 +1701,9 @@ namespace
 		*/
 		void __fastcall Override
 		(
-			void* thisptr, void* edx, void* info
+			void* thisptr,
+			void* edx,
+			void* info
 		)
 		{
 			auto width = CurrentMovie.Width;
@@ -1725,17 +1757,12 @@ namespace
 
 			time += sampleframerate;
 		}
-
-		using ThisFunction = decltype(Override)*;
-
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "WriteMovieFrame", Override, Pattern, Mask
-		};
 	}
 
 	namespace Module_SNDRecordBuffer
 	{
+		#pragma region Init
+
 		/*
 			0x1007C710 static CSS IDA address March 21 2017
 		*/
@@ -1761,6 +1788,8 @@ namespace
 			"engine.dll", "SNDRecordBuffer", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		void __cdecl Override()
 		{
 			if (CurrentMovie.Audio)
@@ -1772,6 +1801,8 @@ namespace
 
 	namespace Module_WaveCreateTmpFile
 	{
+		#pragma region Init
+
 		/*
 			0x1008EC90 static CSS IDA address March 21 2017
 		*/
@@ -1805,6 +1836,8 @@ namespace
 			"engine.dll", "WaveCreateTmpFile", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		/*
 			"rate" will always be 44100
 			"bits" will always be 16
@@ -1823,6 +1856,8 @@ namespace
 
 	namespace Module_WaveAppendTmpFile
 	{
+		#pragma region Init
+
 		/*
 			0x1008EBE0 static CSS IDA address March 21 2017
 		*/
@@ -1855,6 +1890,8 @@ namespace
 			"engine.dll", "WaveAppendTmpFile", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		/*
 			"samplebits" will always be 16
 
@@ -1874,6 +1911,8 @@ namespace
 
 	namespace Module_WaveFixupTmpFile
 	{
+		#pragma region Init
+
 		/*
 			0x1008EE30 static CSS IDA address March 21 2017
 		*/
@@ -1902,6 +1941,8 @@ namespace
 		{
 			"engine.dll", "WaveFixupTmpFile", Override, Pattern, Mask
 		};
+
+		#pragma endregion
 
 		/*
 			Gets called when the movie is ended
