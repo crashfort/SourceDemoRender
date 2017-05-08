@@ -1007,8 +1007,13 @@ namespace
 
 		void __cdecl Override
 		(
-			const char* filename, int flags, int width, int height,
-			float framerate, int jpegquality, int unk
+			const char* filename,
+			int flags,
+			int width,
+			int height,
+			float framerate,
+			int jpegquality,
+			int unk
 		);
 
 		using ThisFunction = decltype(Override)*;
@@ -1026,8 +1031,13 @@ namespace
 		*/
 		void __cdecl Override
 		(
-			const char* filename, int flags, int width, int height,
-			float framerate, int jpegquality, int unk
+			const char* filename,
+			int flags,
+			int width,
+			int height,
+			float framerate,
+			int jpegquality,
+			int unk
 		)
 		{
 			auto sdrpath = Variables::OutputDirectory.GetString();
@@ -1519,7 +1529,10 @@ namespace
 			"xxxxxxxx?????xx????xxxxxxxxxxxxx????"
 		);
 
-		void __cdecl Override(const CCommand& args);
+		void __cdecl Override
+		(
+			const CCommand& args
+		);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -1533,7 +1546,10 @@ namespace
 		/*
 			This command is overriden to remove the incorrect description
 		*/
-		void __cdecl Override(const CCommand& args)
+		void __cdecl Override
+		(
+			const CCommand& args
+		)
 		{
 			if (args.ArgC() < 2)
 			{
@@ -1826,7 +1842,10 @@ namespace
 
 		void __cdecl Override
 		(
-			const char* filename, int rate, int bits, int channels
+			const char* filename,
+			int rate,
+			int bits,
+			int channels
 		);
 
 		using ThisFunction = decltype(Override)*;
@@ -1847,7 +1866,10 @@ namespace
 		*/
 		void __cdecl Override
 		(
-			const char* filename, int rate, int bits, int channels
+			const char* filename,
+			int rate,
+			int bits,
+			int channels
 		)
 		{
 			
@@ -1880,7 +1902,10 @@ namespace
 
 		void __cdecl Override
 		(
-			const char* filename, void* buffer, int samplebits, int samplecount
+			const char* filename,
+			void* buffer,
+			int samplebits,
+			int samplecount
 		);
 
 		using ThisFunction = decltype(Override)*;
@@ -1899,7 +1924,10 @@ namespace
 		*/
 		void __cdecl Override
 		(
-			const char* filename, void* buffer, int samplebits, int samplecount
+			const char* filename,
+			void* buffer,
+			int samplebits,
+			int samplecount
 		)
 		{
 			auto bufstart = static_cast<int16_t*>(buffer);
@@ -1933,7 +1961,10 @@ namespace
 			"x????xx????xxxxxxxxxxx????"
 		);
 
-		void __cdecl Override(const char* filename);
+		void __cdecl Override
+		(
+			const char* filename
+		);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -1947,7 +1978,10 @@ namespace
 		/*
 			Gets called when the movie is ended
 		*/
-		void __cdecl Override(const char* filename)
+		void __cdecl Override
+		(
+			const char* filename
+		)
 		{
 			
 		}
