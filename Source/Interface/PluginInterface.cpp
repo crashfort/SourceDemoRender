@@ -110,7 +110,11 @@ namespace
 	{
 		CON_COMMAND(sdr_version, "Show the current version")
 		{
-			Msg("SDR: Current version: %d\n", SourceDemoRenderPlugin::PluginVersion);
+			Msg
+			(
+				"SDR: Current version: %d\n",
+				SourceDemoRenderPlugin::PluginVersion
+			);
 		}
 
 		CON_COMMAND(sdr_update, "Check for any available updates")
@@ -236,7 +240,7 @@ namespace
 	{
 		Msg
 		(
-			"SDR: Version is %d\n",
+			"SDR: Current version: %d\n",
 			SourceDemoRenderPlugin::PluginVersion
 		);
 
