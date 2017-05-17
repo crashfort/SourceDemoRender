@@ -1057,13 +1057,21 @@ namespace
 				case ERROR_PATH_NOT_FOUND:
 				case ERROR_FILENAME_EXCED_RANGE:
 				{
-					Warning("SDR: Movie output path is invalid\n");
+					Warning
+					(
+						"SDR: Movie output path is invalid\n"
+					);
+
 					return;
 				}
 
 				case ERROR_CANCELLED:
 				{
-					Warning("SDR: Extra directories were created but are hidden, aborting\n");
+					Warning
+					(
+						"SDR: Extra directories were created but are hidden, aborting\n"
+					);
+
 					return;
 				}
 
@@ -1074,6 +1082,7 @@ namespace
 						"SDR: Some unknown error happened when starting movie, "
 						"related to sdr_outputdir\n"
 					);
+
 					return;
 				}
 			}
@@ -1553,7 +1562,12 @@ namespace
 		{
 			if (args.ArgC() < 2)
 			{
-				ConMsg("SDR: Name is required for startmovie, see Github page for help\n");
+				ConMsg
+				(
+					"SDR: Name is required for startmovie, "
+					"see Github page for help\n"
+				);
+
 				return;
 			}
 
@@ -1611,7 +1625,11 @@ namespace
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(0);
 
-			Msg("SDR: Ending movie, if there are buffered frames this might take a moment\n");
+			Msg
+			(
+				"SDR: Ending movie, "
+				"if there are buffered frames this might take a moment\n"
+			);
 
 			auto task = concurrency::create_task([]()
 			{
@@ -1753,7 +1771,10 @@ namespace
 			*/
 			if (movie.BufferedFrames > buffersize)
 			{
-				Warning("SDR: Too many buffered frames, waiting for encoder\n");
+				Warning
+				(
+					"SDR: Too many buffered frames, waiting for encoder\n"
+				);
 
 				while (movie.BufferedFrames > 1)
 				{
