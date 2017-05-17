@@ -14,14 +14,21 @@ namespace
 
 	namespace Module_OutputDebugString
 	{
+		#pragma region Init
+
 		void __stdcall Override(LPCSTR outputstring);
 
 		using ThisFunction = decltype(OutputDebugStringA)*;
 
 		SDR::HookModuleAPI<ThisFunction> ThisHook
 		{
-			"kernel32.dll", "OutputDebugString", "OutputDebugStringA", Override
+			"kernel32.dll",
+			"OutputDebugString",
+			"OutputDebugStringA",
+			Override
 		};
+
+		#pragma endregion
 
 		void __stdcall Override(LPCSTR outputstring)
 		{
@@ -63,7 +70,11 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "ActivateMouse", Override, Pattern, Mask
+			"engine.dll",
+			"ActivateMouse",
+			Override,
+			Pattern,
+			Mask
 		};
 
 		#pragma endregion
@@ -122,7 +133,11 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "AppActivate", Override, Pattern, Mask
+			"engine.dll",
+			"AppActivate",
+			Override,
+			Pattern,
+			Mask
 		};
 
 		#pragma endregion
