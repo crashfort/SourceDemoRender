@@ -263,7 +263,12 @@ namespace
 
 		catch (const char* name)
 		{
-			Warning("SDR: Failed to get the \"%s\" interface\n", name);
+			Warning
+			(
+				"SDR: Failed to get the \"%s\" interface\n",
+				name
+			);
+
 			return false;
 		}
 
