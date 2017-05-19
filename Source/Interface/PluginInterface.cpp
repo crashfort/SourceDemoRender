@@ -102,7 +102,7 @@ namespace
 
 		enum
 		{
-			PluginVersion = 8
+			PluginVersion = 9
 		};
 	};
 
