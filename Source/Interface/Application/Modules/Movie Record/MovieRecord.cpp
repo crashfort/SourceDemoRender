@@ -968,7 +968,7 @@ namespace
 
 				auto time = videosample.Time;
 
-				if (Variables::UseSample.GetBool())
+				if (movie.Sampler)
 				{
 					if (movie.Sampler->CanSkipConstant(time, sampleframerate))
 					{
