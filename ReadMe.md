@@ -80,11 +80,20 @@ List of available video encoders:
 		</td>
 	</tr>
 	<tr>
+		<td>sdr_render_usesample</td>
+		<td>
+			Use the built in frame blending method. If this is disabled, all sampling related variables are disabled and only <b>sdr_render_framerate</b> will work.
+            <br/><br/>
+            <b>Values:</b> 0 or 1 <br/>
+            <b>Default:</b> 1 <br/>
+		</td>
+	</tr>
+	<tr>
 		<td>sdr_render_framerate</td>
 		<td>
 			Movie output framerate.
             <br/><br/>
-            <b>Values:</b> Between 30 and 1000 <br/>
+            <b>Values:</b> Minimum 30 <br/>
             <b>Default:</b> 60 <br/>
 		</td>
 	</tr>

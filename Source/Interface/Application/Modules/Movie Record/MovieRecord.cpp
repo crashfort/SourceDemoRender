@@ -781,6 +781,13 @@ namespace
 {
 	namespace Variables
 	{
+		ConVar UseSample
+		(
+			"sdr_render_usesample", "1", FCVAR_NEVER_AS_STRING,
+			"Use frame blending",
+			true, 0, true, 1
+		);
+
 		ConVar FrameBufferSize
 		(
 			"sdr_frame_buffersize", "256", FCVAR_NEVER_AS_STRING,
@@ -804,7 +811,7 @@ namespace
 		(
 			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING,
 			"Movie output framerate",
-			true, 30, true, 1000
+			true, 30, false, 1000
 		);
 
 		ConVar Exposure
@@ -961,15 +968,23 @@ namespace
 
 				auto time = videosample.Time;
 
-				if (movie.Sampler->CanSkipConstant(time, sampleframerate))
+				if (Variables::UseSample.GetBool())
 				{
-					movie.Sampler->Sample(nullptr, time);
+					if (movie.Sampler->CanSkipConstant(time, sampleframerate))
+					{
+						movie.Sampler->Sample(nullptr, time);
+					}
+
+					else
+					{
+						auto data = videosample.Data.data();
+						movie.Sampler->Sample(data, time);
+					}
 				}
 
 				else
 				{
-					auto data = videosample.Data.data();
-					movie.Sampler->Sample(data, time);
+					movie.Print(videosample.Data.data());
 				}
 			}
 		}
@@ -1456,61 +1471,69 @@ namespace
 
 			ThisHook.GetOriginal()(filename, flags, width, height, framerate, jpegquality, unk);
 
+			auto enginerate = Variables::SamplesPerSecond.GetInt();
+
+			if (!Variables::UseSample.GetBool())
+			{
+				enginerate = Variables::FrameRate.GetInt();
+			}
+
 			/*
 				The original function sets host_framerate to 30 so we override it
 			*/
 			ConVarRef hostframerate("host_framerate");
-			hostframerate.SetValue(Variables::SamplesPerSecond.GetInt());
-				
-			using SampleMethod = SDR::Sampler::EasySamplerSettings::Method;
-			SampleMethod moviemethod = SampleMethod::ESM_Trapezoid;
-			
-			{
-				auto table =
-				{
-					SampleMethod::ESM_Rectangle,
-					SampleMethod::ESM_Trapezoid
-				};
+			hostframerate.SetValue(enginerate);
 
-				auto key = Variables::SampleMethod.GetInt();
-				
-				for (const auto& entry : table)
+			if (Variables::UseSample.GetBool())
+			{
+				using SampleMethod = SDR::Sampler::EasySamplerSettings::Method;
+				SampleMethod moviemethod = SampleMethod::ESM_Trapezoid;
+			
 				{
-					if (key == entry)
+					auto table =
 					{
-						moviemethod = entry;
-						break;
+						SampleMethod::ESM_Rectangle,
+						SampleMethod::ESM_Trapezoid
+					};
+
+					auto key = Variables::SampleMethod.GetInt();
+				
+					for (const auto& entry : table)
+					{
+						if (key == entry)
+						{
+							moviemethod = entry;
+							break;
+						}
 					}
 				}
+
+				auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
+				auto frameratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
+				auto exposure = Variables::Exposure.GetFloat();
+				auto framestrength = Variables::FrameStrength.GetFloat();
+				auto stride = MovieData::BytesPerPixel * width;
+
+				SDR::Sampler::EasySamplerSettings settings
+				(
+					stride,
+					height,
+					moviemethod,
+					frameratems,
+					0.0,
+					exposure,
+					framestrength
+				);
+
+				movie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>
+				(
+					settings,
+					framepitch,
+					&movie
+				);
 			}
 
-			auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
-			auto frameratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
-			auto exposure = Variables::Exposure.GetFloat();
-			auto framestrength = Variables::FrameStrength.GetFloat();
-			auto stride = MovieData::BytesPerPixel * width;
-
-			SDR::Sampler::EasySamplerSettings settings
-			(
-				stride,
-				height,
-				moviemethod,
-				frameratems,
-				0.0,
-				exposure,
-				framestrength
-			);
-
-			auto size = movie.GetRGB24ImageSize();
-
 			movie.IsStarted = true;
-
-			movie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>
-			(
-				settings,
-				framepitch,
-				&movie
-			);
 
 			movie.FramesToSampleBuffer = std::make_unique<MovieData::VideoQueueType>(128);
 
@@ -1745,9 +1768,6 @@ namespace
 
 			auto& movie = CurrentMovie;
 
-			auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
-			auto sampleframerate = 1.0 / spsvar;
-
 			auto& time = movie.SamplingTime;
 
 			MovieData::VideoFutureSampleData newsample;
@@ -1834,7 +1854,13 @@ namespace
 			movie.BufferedFrames++;
 			movie.FramesToSampleBuffer->enqueue(std::move(newsample));
 
-			time += sampleframerate;
+			if (movie.Sampler)
+			{
+				auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+				auto sampleframerate = 1.0 / spsvar;
+
+				time += sampleframerate;
+			}
 		}
 	}
 
