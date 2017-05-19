@@ -214,24 +214,6 @@ namespace
 		outptr = ptr;
 	}
 
-	template <typename T>
-	void CreateServerInterface
-	(
-		CreateInterfaceFn gameserverfactory,
-		const char* name,
-		T*& outptr
-	)
-	{
-		auto ptr = static_cast<T*>(gameserverfactory(name, nullptr));
-
-		if (!ptr)
-		{
-			throw name;
-		}
-
-		outptr = ptr;
-	}
-
 	bool SourceDemoRenderPlugin::Load
 	(
 		CreateInterfaceFn interfacefactory,
