@@ -76,7 +76,7 @@ List of available video encoders:
 	<tr>
 		<td>sdr_outputdir</td>
 		<td>
-			Path where to save the video or image sequence. The directory structure will be created if it doesn't already exist.
+			Path where to save the video or image sequence. The directory structure will be created if it doesn't already exist. This cannot be the root of a drive, it must be a in at least one directory.
 		</td>
 	</tr>
 	<tr>
