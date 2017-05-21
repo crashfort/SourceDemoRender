@@ -756,8 +756,10 @@ namespace
 
 		struct DirectX9Data
 		{
-			Microsoft::WRL::ComPtr<IDirect3DTexture9> DepthTexture;
-			Microsoft::WRL::ComPtr<IDirect3DSurface9> DepthSurface;
+			ITexture* ValveTexture = nullptr;
+
+			Microsoft::WRL::ComPtr<IDirect3DTexture9> RenderTarget;
+			Microsoft::WRL::ComPtr<IDirect3DSurface9> RenderTargetSurface;
 
 			Microsoft::WRL::ComPtr<IDirect3DPixelShader9> MotionBlurPS;
 			Microsoft::WRL::ComPtr<IDirect3DVertexShader9> MotionBlurVS;
@@ -1101,6 +1103,34 @@ namespace
 		auto device = Module_SourceGlobals::Device;
 		auto& dx9 = CurrentMovie.DirectX9;
 
+		materials->BeginRenderTargetAllocation();
+		
+		dx9.ValveTexture = materials->CreateRenderTargetTexture
+		(
+			0,
+			0,
+			RT_SIZE_FULL_FRAME_BUFFER,
+			IMAGE_FORMAT_R32F,
+			MATERIAL_RT_DEPTH_SHARED
+		);
+
+		if (dx9.ValveTexture)
+		{
+			dx9.ValveTexture->IncrementReferenceCount();
+		}
+
+		materials->EndRenderTargetAllocation();
+
+		if (!dx9.ValveTexture)
+		{
+			Warning
+			(
+				"SDR: Could not create depth texture\n"
+			);
+
+			return false;
+		}
+
 		try
 		{
 			MS::ThrowIfFailed
@@ -1111,19 +1141,19 @@ namespace
 					height,
 					1,
 					D3DUSAGE_RENDERTARGET,
-					D3DFMT_R32F,
+					D3DFMT_R8G8B8,
 					D3DPOOL_DEFAULT,
-					dx9.DepthTexture.GetAddressOf(),
+					dx9.RenderTarget.GetAddressOf(),
 					nullptr
 				)
 			);
 
 			MS::ThrowIfFailed
 			(
-				dx9.DepthTexture->GetSurfaceLevel
+				dx9.RenderTarget->GetSurfaceLevel
 				(
 					0,
-					dx9.DepthSurface.GetAddressOf()
+					dx9.RenderTargetSurface.GetAddressOf()
 				)
 			);
 
@@ -1142,14 +1172,6 @@ namespace
 				(
 					(DWORD*)MotionBlur_VS_Blob,
 					dx9.MotionBlurVS.GetAddressOf()
-				)
-			);
-
-			MS::ThrowIfFailed
-			(
-				device->SetDepthStencilSurface
-				(
-					dx9.DepthSurface.Get()
 				)
 			);
 		}
@@ -1553,26 +1575,7 @@ namespace
 
 			auto rendercontext = materials->GetRenderContext();
 
-			try
-			{
-				MS::ThrowIfFailed
-				(
-					device->SetRenderTarget(0, nullptr)
-				);
 
-				MS::ThrowIfFailed
-				(
-					device->SetDepthStencilSurface
-					(
-						dx9.DepthSurface.Get()
-					)
-				);
-			}
-
-			catch (HRESULT code)
-			{
-				return;
-			}
 
 			#if 0
 			static int counter = 0;
