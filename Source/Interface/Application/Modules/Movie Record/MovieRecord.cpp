@@ -770,11 +770,63 @@ namespace
 		CurrentMovie = MovieData();
 	}
 
+	namespace Module_RenderContext
+	{
+		namespace Types
+		{
+			using ReadScreenPixels = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				int x,
+				int y,
+				int w,
+				int h,
+				void* buffer,
+				int format
+			);
+		}
+
+		Types::ReadScreenPixels ReadScreenPixels;
+
+		template <typename T>
+		void SetFromAddress(T& type, void* address)
+		{
+			type = (T)(address);
+		}
+
+		void Set()
+		{
+			/*
+				0x101FFF80 static CSS IDA address June 3 2016
+			*/
+			SDR::AddressFinder address
+			(
+				"engine.dll",
+				SDR::MemoryPattern
+				(
+					"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
+					"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
+				),
+				"xxxxxxxx?????xx????xx????"
+			);
+
+			SetFromAddress(ReadScreenPixels, address.Get());
+		}
+	}
+
 	/*
 		In case endmovie never gets called,
 		this handles the plugin_unload
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
+
+	SDR::PluginStartupFunctionAdder A2("MovieRecordSetup", []()
+	{
+		Module_RenderContext::Set();
+
+		return true;
+	});
 }
 
 namespace
@@ -987,51 +1039,6 @@ namespace
 					movie.Print(videosample.Data.data());
 				}
 			}
-		}
-	}
-
-	namespace Module_RenderContext
-	{
-		namespace Types
-		{
-			using ReadScreenPixels = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx,
-				int x,
-				int y,
-				int w,
-				int h,
-				void* buffer,
-				int format
-			);
-		}
-
-		Types::ReadScreenPixels ReadScreenPixels;
-
-		template <typename T>
-		void SetFromAddress(T& type, void* address)
-		{
-			type = (T)(address);
-		}
-
-		void Set()
-		{
-			/*
-				0x101FFF80 static CSS IDA address June 3 2016
-			*/
-			SDR::AddressFinder address
-			(
-				"engine.dll",
-				SDR::MemoryPattern
-				(
-					"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
-					"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
-				),
-				"xxxxxxxx?????xx????xx????"
-			);
-
-			SetFromAddress(ReadScreenPixels, address.Get());
 		}
 	}
 
