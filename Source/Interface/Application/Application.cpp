@@ -85,7 +85,7 @@ void SDR::Setup()
 		{
 			Warning
 			(
-				"SDR: Could not enable module \"%s\" - \"%s\"\n",
+				"SDR: Could not enable module \"%s\": \"%s\"\n",
 				name,
 				MH_StatusToString(res)
 			);

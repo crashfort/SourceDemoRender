@@ -432,9 +432,7 @@ namespace
 
 			WaveFile.WriteSimple(WAVE);
 
-			WAVEFORMATEX waveformat;
-			std::memset(&waveformat, 0, sizeof(waveformat));
-
+			WAVEFORMATEX waveformat = {};
 			waveformat.wFormatTag = WAVE_FORMAT_PCM;
 			waveformat.nChannels = channels;
 			waveformat.nSamplesPerSec = samplerate;
@@ -1171,6 +1169,13 @@ namespace
 {
 	namespace Variables
 	{
+		ConVar UseSample
+		(
+			"sdr_render_usesample", "1", FCVAR_NEVER_AS_STRING,
+			"Use frame blending",
+			true, 0, true, 1
+		);
+
 		ConVar FrameBufferSize
 		(
 			"sdr_frame_buffersize", "256", FCVAR_NEVER_AS_STRING,
@@ -1194,7 +1199,7 @@ namespace
 		(
 			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING,
 			"Movie output framerate",
-			true, 30, true, 1000
+			true, 30, false, 1000
 		);
 
 		ConVar Exposure
@@ -1358,15 +1363,23 @@ namespace
 
 				auto time = videosample.Time;
 
-				if (movie.Sampler->CanSkipConstant(time, sampleframerate))
+				if (movie.Sampler)
 				{
-					movie.Sampler->Sample(nullptr, time);
+					if (movie.Sampler->CanSkipConstant(time, sampleframerate))
+					{
+						movie.Sampler->Sample(nullptr, time);
+					}
+
+					else
+					{
+						auto data = videosample.Data.data();
+						movie.Sampler->Sample(data, time);
+					}
 				}
 
 				else
 				{
-					auto data = videosample.Data.data();
-					movie.Sampler->Sample(data, time);
+					movie.Print(videosample.Data.data());
 				}
 			}
 		}
@@ -1625,6 +1638,8 @@ namespace
 
 	namespace Module_StartMovie
 	{
+		#pragma region Init
+
 		SDR::RelativeJumpFunctionFinder StartMovieAddress
 		{
 			SDR::AddressFinder
@@ -1653,8 +1668,13 @@ namespace
 
 		void __cdecl Override
 		(
-			const char* filename, int flags, int width, int height,
-			float framerate, int jpegquality, int unk
+			const char* filename,
+			int flags,
+			int width,
+			int height,
+			float framerate,
+			int jpegquality,
+			int unk
 		);
 
 		using ThisFunction = decltype(Override)*;
@@ -1664,14 +1684,21 @@ namespace
 			"engine.dll", "StartMovie", Override, StartMovieAddress.Get()
 		};
 
+		#pragma endregion
+
 		/*
 			The 7th parameter (unk) was been added in Source 2013,
 			it's not there in Source 2007
 		*/
 		void __cdecl Override
 		(
-			const char* filename, int flags, int width, int height,
-			float framerate, int jpegquality, int unk
+			const char* filename,
+			int flags,
+			int width,
+			int height,
+			float framerate,
+			int jpegquality,
+			int unk
 		)
 		{
 			auto& movie = CurrentMovie;
@@ -1693,13 +1720,21 @@ namespace
 				case ERROR_PATH_NOT_FOUND:
 				case ERROR_FILENAME_EXCED_RANGE:
 				{
-					Warning("SDR: Movie output path is invalid\n");
+					Warning
+					(
+						"SDR: Movie output path is invalid\n"
+					);
+
 					return;
 				}
 
 				case ERROR_CANCELLED:
 				{
-					Warning("SDR: Extra directories were created but are hidden, aborting\n");
+					Warning
+					(
+						"SDR: Extra directories were created but are hidden, aborting\n"
+					);
+
 					return;
 				}
 
@@ -2082,61 +2117,69 @@ namespace
 
 			ThisHook.GetOriginal()(filename, flags, width, height, framerate, jpegquality, unk);
 
+			auto enginerate = Variables::SamplesPerSecond.GetInt();
+
+			if (!Variables::UseSample.GetBool())
+			{
+				enginerate = Variables::FrameRate.GetInt();
+			}
+
 			/*
 				The original function sets host_framerate to 30 so we override it
 			*/
 			ConVarRef hostframerate("host_framerate");
-			hostframerate.SetValue(Variables::SamplesPerSecond.GetInt());
-				
-			using SampleMethod = SDR::Sampler::EasySamplerSettings::Method;
-			SampleMethod moviemethod = SampleMethod::ESM_Trapezoid;
-			
-			{
-				auto table =
-				{
-					SampleMethod::ESM_Rectangle,
-					SampleMethod::ESM_Trapezoid
-				};
+			hostframerate.SetValue(enginerate);
 
-				auto key = Variables::SampleMethod.GetInt();
-				
-				for (const auto& entry : table)
+			if (Variables::UseSample.GetBool())
+			{
+				using SampleMethod = SDR::Sampler::EasySamplerSettings::Method;
+				SampleMethod moviemethod = SampleMethod::ESM_Trapezoid;
+			
 				{
-					if (key == entry)
+					auto table =
 					{
-						moviemethod = entry;
-						break;
+						SampleMethod::ESM_Rectangle,
+						SampleMethod::ESM_Trapezoid
+					};
+
+					auto key = Variables::SampleMethod.GetInt();
+				
+					for (const auto& entry : table)
+					{
+						if (key == entry)
+						{
+							moviemethod = entry;
+							break;
+						}
 					}
 				}
+
+				auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
+				auto frameratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
+				auto exposure = Variables::Exposure.GetFloat();
+				auto framestrength = Variables::FrameStrength.GetFloat();
+				auto stride = MovieData::BytesPerPixel * width;
+
+				SDR::Sampler::EasySamplerSettings settings
+				(
+					stride,
+					height,
+					moviemethod,
+					frameratems,
+					0.0,
+					exposure,
+					framestrength
+				);
+
+				movie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>
+				(
+					settings,
+					framepitch,
+					&movie
+				);
 			}
 
-			auto framepitch = HLAE::CalcPitch(width, MovieData::BytesPerPixel, 1);
-			auto frameratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
-			auto exposure = Variables::Exposure.GetFloat();
-			auto framestrength = Variables::FrameStrength.GetFloat();
-			auto stride = MovieData::BytesPerPixel * width;
-
-			SDR::Sampler::EasySamplerSettings settings
-			(
-				stride,
-				height,
-				moviemethod,
-				frameratems,
-				0.0,
-				exposure,
-				framestrength
-			);
-
-			auto size = movie.GetRGB24ImageSize();
-
 			movie.IsStarted = true;
-
-			movie.Sampler = std::make_unique<SDR::Sampler::EasyByteSampler>
-			(
-				settings,
-				framepitch,
-				&movie
-			);
 
 			movie.FramesToSampleBuffer = std::make_unique<MovieData::VideoQueueType>(128);
 
@@ -2147,6 +2190,8 @@ namespace
 
 	namespace Module_StartMovieCommand
 	{
+		#pragma region Init
+
 		/*
 			0x100BEF40 static CSS IDA address April 7 2017
 		*/
@@ -2162,7 +2207,10 @@ namespace
 			"xxxxxxxx?????xx????xxxxxxxxxxxxx????"
 		);
 
-		void __cdecl Override(const CCommand& args);
+		void __cdecl Override
+		(
+			const CCommand& args
+		);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -2171,14 +2219,24 @@ namespace
 			"engine.dll", "StartMovieCommand", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		/*
 			This command is overriden to remove the incorrect description
 		*/
-		void __cdecl Override(const CCommand& args)
+		void __cdecl Override
+		(
+			const CCommand& args
+		)
 		{
 			if (args.ArgC() < 2)
 			{
-				ConMsg("SDR: Name is required for startmovie, see Github page for help\n");
+				ConMsg
+				(
+					"SDR: Name is required for startmovie, "
+					"see Github page for help\n"
+				);
+
 				return;
 			}
 
@@ -2197,6 +2255,8 @@ namespace
 
 	namespace Module_EndMovie
 	{
+		#pragma region Init
+
 		/*
 			0x100BAE40 static CSS IDA address May 22 2016
 		*/
@@ -2220,6 +2280,8 @@ namespace
 			"engine.dll", "EndMovie", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		void __cdecl Override()
 		{
 			ThisHook.GetOriginal()();
@@ -2232,7 +2294,11 @@ namespace
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(0);
 
-			Msg("SDR: Ending movie, if there are buffered frames this might take a moment\n");
+			Msg
+			(
+				"SDR: Ending movie, "
+				"if there are buffered frames this might take a moment\n"
+			);
 
 			auto task = concurrency::create_task([]()
 			{
@@ -2286,6 +2352,8 @@ namespace
 
 	namespace Module_WriteMovieFrame
 	{
+		#pragma region Init
+
 		/*
 			0x102011B0 static CSS IDA address June 3 2016
 		*/
@@ -2299,6 +2367,22 @@ namespace
 		(
 			"xxxxxx?????xxxxxxxxx????"
 		);
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			void* info
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"engine.dll", "WriteMovieFrame", Override, Pattern, Mask
+		};
+
+		#pragma endregion
 
 		/*
 			The "thisptr" in this context is a CVideoMode_MaterialSystem in this structure:
@@ -2320,7 +2404,9 @@ namespace
 		*/
 		void __fastcall Override
 		(
-			void* thisptr, void* edx, void* info
+			void* thisptr,
+			void* edx,
+			void* info
 		)
 		{
 			return;
@@ -2329,9 +2415,6 @@ namespace
 			auto height = CurrentMovie.Height;
 
 			auto& movie = CurrentMovie;
-
-			auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
-			auto sampleframerate = 1.0 / spsvar;
 
 			auto& time = movie.SamplingTime;
 
@@ -2346,8 +2429,50 @@ namespace
 				pxformat = IMAGE_FORMAT_BGR888;
 			}
 
-			auto rendercontext = materials->GetRenderContext();
-			rendercontext->ReadPixels(0, 0, width, height, newsample.Data.data(), pxformat);
+			/*
+				0x101FFF80 static CSS IDA address June 3 2016
+			*/
+			static auto readscreenpxaddr = SDR::GetAddressFromPattern
+			(
+				"engine.dll",
+				SDR::MemoryPattern
+				(
+					"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
+					"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
+				),
+				"xxxxxxxx?????xx????xx????"
+			);
+
+			using ReadScreenPxType = void(__fastcall*)
+			(
+				void*,
+				void*,
+				int x,
+				int y,
+				int w,
+				int h,
+				void* buffer,
+				int format
+			);
+
+			static auto readscreenpxfunc = static_cast<ReadScreenPxType>(readscreenpxaddr);
+
+			/*
+				This has been reverted to again,
+				in newer games like TF2 the materials are handled much differently
+				but this endpoint function remains the same. Less elegant but what you gonna do.
+			*/
+			readscreenpxfunc
+			(
+				thisptr,
+				edx,
+				0,
+				0,
+				width,
+				height,
+				newsample.Data.data(),
+				pxformat
+			);
 
 			auto buffersize = Variables::FrameBufferSize.GetInt();
 
@@ -2356,7 +2481,10 @@ namespace
 			*/
 			if (movie.BufferedFrames > buffersize)
 			{
-				Warning("SDR: Too many buffered frames, waiting for encoder\n");
+				Warning
+				(
+					"SDR: Too many buffered frames, waiting for encoder\n"
+				);
 
 				while (movie.BufferedFrames > 1)
 				{
@@ -2374,19 +2502,20 @@ namespace
 			movie.BufferedFrames++;
 			movie.FramesToSampleBuffer->enqueue(std::move(newsample));
 
-			time += sampleframerate;
+			if (movie.Sampler)
+			{
+				auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+				auto sampleframerate = 1.0 / spsvar;
+
+				time += sampleframerate;
+			}
 		}
-
-		using ThisFunction = decltype(Override)*;
-
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "WriteMovieFrame", Override, Pattern, Mask
-		};
 	}
 
 	namespace Module_SNDRecordBuffer
 	{
+		#pragma region Init
+
 		/*
 			0x1007C710 static CSS IDA address March 21 2017
 		*/
@@ -2412,6 +2541,8 @@ namespace
 			"engine.dll", "SNDRecordBuffer", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		void __cdecl Override()
 		{
 			if (CurrentMovie.Audio)
@@ -2423,6 +2554,8 @@ namespace
 
 	namespace Module_WaveCreateTmpFile
 	{
+		#pragma region Init
+
 		/*
 			0x1008EC90 static CSS IDA address March 21 2017
 		*/
@@ -2446,7 +2579,10 @@ namespace
 
 		void __cdecl Override
 		(
-			const char* filename, int rate, int bits, int channels
+			const char* filename,
+			int rate,
+			int bits,
+			int channels
 		);
 
 		using ThisFunction = decltype(Override)*;
@@ -2455,6 +2591,8 @@ namespace
 		{
 			"engine.dll", "WaveCreateTmpFile", Override, Pattern, Mask
 		};
+
+		#pragma endregion
 
 		/*
 			"rate" will always be 44100
@@ -2465,7 +2603,10 @@ namespace
 		*/
 		void __cdecl Override
 		(
-			const char* filename, int rate, int bits, int channels
+			const char* filename,
+			int rate,
+			int bits,
+			int channels
 		)
 		{
 			
@@ -2474,6 +2615,8 @@ namespace
 
 	namespace Module_WaveAppendTmpFile
 	{
+		#pragma region Init
+
 		/*
 			0x1008EBE0 static CSS IDA address March 21 2017
 		*/
@@ -2496,7 +2639,10 @@ namespace
 
 		void __cdecl Override
 		(
-			const char* filename, void* buffer, int samplebits, int samplecount
+			const char* filename,
+			void* buffer,
+			int samplebits,
+			int samplecount
 		);
 
 		using ThisFunction = decltype(Override)*;
@@ -2506,6 +2652,8 @@ namespace
 			"engine.dll", "WaveAppendTmpFile", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		/*
 			"samplebits" will always be 16
 
@@ -2513,7 +2661,10 @@ namespace
 		*/
 		void __cdecl Override
 		(
-			const char* filename, void* buffer, int samplebits, int samplecount
+			const char* filename,
+			void* buffer,
+			int samplebits,
+			int samplecount
 		)
 		{
 			auto bufstart = static_cast<int16_t*>(buffer);
@@ -2525,6 +2676,8 @@ namespace
 
 	namespace Module_WaveFixupTmpFile
 	{
+		#pragma region Init
+
 		/*
 			0x1008EE30 static CSS IDA address March 21 2017
 		*/
@@ -2545,7 +2698,10 @@ namespace
 			"x????xx????xxxxxxxxxxx????"
 		);
 
-		void __cdecl Override(const char* filename);
+		void __cdecl Override
+		(
+			const char* filename
+		);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -2554,10 +2710,15 @@ namespace
 			"engine.dll", "WaveFixupTmpFile", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		/*
 			Gets called when the movie is ended
 		*/
-		void __cdecl Override(const char* filename)
+		void __cdecl Override
+		(
+			const char* filename
+		)
 		{
 			
 		}

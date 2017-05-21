@@ -1,6 +1,0 @@
-CC=cl ./configure \
---prefix=$HOME/ffmpegbuild \
---disable-cli \
---enable-static \
---enable-strip \
---disable-opencl \

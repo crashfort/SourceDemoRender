@@ -102,7 +102,7 @@ namespace
 
 		enum
 		{
-			PluginVersion = 8
+			PluginVersion = 10
 		};
 	};
 
@@ -110,7 +110,11 @@ namespace
 	{
 		CON_COMMAND(sdr_version, "Show the current version")
 		{
-			Msg("SDR: Current version: %d\n", SourceDemoRenderPlugin::PluginVersion);
+			Msg
+			(
+				"SDR: Current version: %d\n",
+				SourceDemoRenderPlugin::PluginVersion
+			);
 		}
 
 		CON_COMMAND(sdr_update, "Check for any available updates")
@@ -210,24 +214,6 @@ namespace
 		outptr = ptr;
 	}
 
-	template <typename T>
-	void CreateServerInterface
-	(
-		CreateInterfaceFn gameserverfactory,
-		const char* name,
-		T*& outptr
-	)
-	{
-		auto ptr = static_cast<T*>(gameserverfactory(name, nullptr));
-
-		if (!ptr)
-		{
-			throw name;
-		}
-
-		outptr = ptr;
-	}
-
 	bool SourceDemoRenderPlugin::Load
 	(
 		CreateInterfaceFn interfacefactory,
@@ -236,7 +222,7 @@ namespace
 	{
 		Msg
 		(
-			"SDR: Version is %d\n",
+			"SDR: Current version: %d\n",
 			SourceDemoRenderPlugin::PluginVersion
 		);
 
@@ -246,6 +232,67 @@ namespace
 		ConnectTier1Libraries(&interfacefactory, 1);
 		ConnectTier2Libraries(&interfacefactory, 1);
 		ConVar_Register();
+
+		/*
+			This is not accessible in newer games like TF2
+		*/
+		if (!materials)
+		{
+			Msg
+			(
+				"SDR: Materials were not found at %s\n",
+				MATERIAL_SYSTEM_INTERFACE_VERSION
+			);
+
+			/*
+				As of May 19 2017, the TF2 material version is 081,
+				it might inrease in the future but this works for the time being I guess.
+
+				Perhaps a more elegant version would be to grab the string address
+				that a related function reads from.
+			*/
+
+			for (size_t i = 80; i < 180; i++)
+			{
+				char format[256];
+				sprintf_s(format, "VMaterialSystem%03d", i);
+
+				try
+				{
+					CreateInterface
+					(
+						interfacefactory,
+						format,
+						materials
+					);
+				}
+
+				catch (const char* name)
+				{
+					continue;
+				}
+
+				g_pMaterialSystem = materials;
+
+				Msg
+				(
+					"SDR: Materials found at %s\n",
+					format
+				);
+
+				break;
+			}
+
+			if (!materials)
+			{
+				Warning
+				(
+					"SDR: Materials were not found\n"
+				);
+
+				return false;
+			}
+		}
 
 		try
 		{
@@ -259,7 +306,12 @@ namespace
 
 		catch (const char* name)
 		{
-			Warning("SDR: Failed to get the \"%s\" interface\n", name);
+			Warning
+			(
+				"SDR: Failed to get the \"%s\" interface\n",
+				name
+			);
+
 			return false;
 		}
 

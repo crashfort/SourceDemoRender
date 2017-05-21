@@ -335,7 +335,7 @@ namespace SDR
 			/*
 				Skip the E8 byte
 			*/
-			addrmod += 1;
+			addrmod += sizeof(uint8_t);
 
 			auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
 
@@ -343,7 +343,7 @@ namespace SDR
 				E8 jumps count relative distance from the next instruction,
 				in 32 bit the distance will be measued in 4 bytes.
 			*/
-			addrmod += 4;
+			addrmod += sizeof(uintptr_t);
 
 			/*
 				Do the jump, address will now be the target function

@@ -76,7 +76,16 @@ List of available video encoders:
 	<tr>
 		<td>sdr_outputdir</td>
 		<td>
-			Path where to save the video or image sequence. The directory structure will be created if it doesn't already exist.
+			Path where to save the video or image sequence. The directory structure will be created if it doesn't already exist. This cannot be the root of a drive, it must be a in at least one directory.
+		</td>
+	</tr>
+	<tr>
+		<td>sdr_render_usesample</td>
+		<td>
+			Use the built in frame blending method. If this is disabled, all sampling related variables are disabled and only <b>sdr_render_framerate</b> will work.
+            <br/><br/>
+            <b>Values:</b> 0 or 1 <br/>
+            <b>Default:</b> 1 <br/>
 		</td>
 	</tr>
 	<tr>
@@ -84,7 +93,7 @@ List of available video encoders:
 		<td>
 			Movie output framerate.
             <br/><br/>
-            <b>Values:</b> Between 30 and 1000 <br/>
+            <b>Values:</b> Minimum 30 <br/>
             <b>Default:</b> 60 <br/>
 		</td>
 	</tr>

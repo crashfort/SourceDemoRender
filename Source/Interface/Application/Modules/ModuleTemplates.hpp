@@ -79,7 +79,7 @@ namespace Module_BaseTemplateAPI
 
 	void __cdecl Override()
 	{
-			
+
 	}
 }
 #endif

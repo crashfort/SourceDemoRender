@@ -1,3 +1,0 @@
-CC=cl ./configure \
---prefix=$HOME/ffmpegbuild \
---static
