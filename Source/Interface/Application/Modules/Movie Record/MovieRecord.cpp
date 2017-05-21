@@ -797,21 +797,23 @@ namespace
 
 		void Set()
 		{
-			/*
-				0x101FFF80 static CSS IDA address June 3 2016
-			*/
-			SDR::AddressFinder address
-			(
-				"engine.dll",
-				SDR::MemoryPattern
+			{
+				/*
+					0x101FFF80 static CSS IDA address June 3 2016
+				*/
+				SDR::AddressFinder address
 				(
-					"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
-					"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
-				),
-				"xxxxxxxx?????xx????xx????"
-			);
+					"engine.dll",
+					SDR::MemoryPattern
+					(
+						"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
+						"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
+					),
+					"xxxxxxxx?????xx????xx????"
+				);
 
-			SetFromAddress(ReadScreenPixels, address.Get());
+				SetFromAddress(ReadScreenPixels, address.Get());
+			}
 		}
 	}
 
