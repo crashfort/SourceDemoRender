@@ -332,7 +332,12 @@ namespace
 
 		catch (const char* name)
 		{
-			Warning("SDR: Setup procedure \"%s\" failed\n", name);
+			Warning
+			(
+				"SDR: Setup procedure \"%s\" failed\n",
+				name
+			);
+
 			return false;
 		}
 

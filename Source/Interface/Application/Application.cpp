@@ -118,16 +118,6 @@ void SDR::Close()
 	MH_Uninitialize();
 }
 
-void SDR::AddModule(HookModuleBase* module)
-{
-	MainApplication.Modules.emplace_back(module);
-}
-
-void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
-{
-	MainApplication.ShutdownFunctions.emplace_back(function);
-}
-
 void SDR::AddPluginStartupFunction(const StartupFuncData& data)
 {
 	MainApplication.StartupFunctions.emplace_back(data);
@@ -144,6 +134,16 @@ void SDR::CallPluginStartupFunctions()
 			throw entry.Name;
 		}
 	}
+}
+
+void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
+{
+	MainApplication.ShutdownFunctions.emplace_back(function);
+}
+
+void SDR::AddModule(HookModuleBase* module)
+{
+	MainApplication.Modules.emplace_back(module);
 }
 
 void* SDR::GetAddressFromPattern

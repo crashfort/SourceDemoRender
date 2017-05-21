@@ -794,6 +794,53 @@ namespace
 		CurrentMovie = MovieData();
 	}
 
+	namespace Module_RenderContext
+	{
+		namespace Types
+		{
+			using ReadScreenPixels = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				int x,
+				int y,
+				int w,
+				int h,
+				void* buffer,
+				int format
+			);
+		}
+
+		Types::ReadScreenPixels ReadScreenPixels;
+
+		template <typename T>
+		void SetFromAddress(T& type, void* address)
+		{
+			type = (T)(address);
+		}
+
+		void Set()
+		{
+			{
+				/*
+					0x101FFF80 static CSS IDA address June 3 2016
+				*/
+				SDR::AddressFinder address
+				(
+					"engine.dll",
+					SDR::MemoryPattern
+					(
+						"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
+						"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
+					),
+					"xxxxxxxx?????xx????xx????"
+				);
+
+				SetFromAddress(ReadScreenPixels, address.Get());
+			}
+		}
+	}
+
 	namespace Module_SourceGlobals
 	{
 		namespace Types
@@ -1095,6 +1142,7 @@ namespace
 	SDR::PluginStartupFunctionAdder A2("MovieRecordSetup", []()
 	{
 		Module_SourceGlobals::Set();
+		Module_RenderContext::Set();
 
 		int width;
 		int height;
@@ -1185,9 +1233,6 @@ namespace
 
 			return false;
 		}
-
-		int a = 5;
-		a = a;
 
 		return true;
 	});
@@ -2439,39 +2484,11 @@ namespace
 			}
 
 			/*
-				0x101FFF80 static CSS IDA address June 3 2016
-			*/
-			static auto readscreenpxaddr = SDR::GetAddressFromPattern
-			(
-				"engine.dll",
-				SDR::MemoryPattern
-				(
-					"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
-					"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
-				),
-				"xxxxxxxx?????xx????xx????"
-			);
-
-			using ReadScreenPxType = void(__fastcall*)
-			(
-				void*,
-				void*,
-				int x,
-				int y,
-				int w,
-				int h,
-				void* buffer,
-				int format
-			);
-
-			static auto readscreenpxfunc = static_cast<ReadScreenPxType>(readscreenpxaddr);
-
-			/*
 				This has been reverted to again,
 				in newer games like TF2 the materials are handled much differently
 				but this endpoint function remains the same. Less elegant but what you gonna do.
 			*/
-			readscreenpxfunc
+			Module_RenderContext::ReadScreenPixels
 			(
 				thisptr,
 				edx,
