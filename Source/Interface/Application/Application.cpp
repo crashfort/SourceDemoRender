@@ -8,6 +8,7 @@ namespace
 	{
 		std::vector<SDR::HookModuleBase*> Modules;
 		std::vector<SDR::ShutdownFuncType> OnCloseFunctions;
+		std::vector<SDR::StartupFuncData> StartupFunctions;
 	};
 
 	Application MainApplication;
@@ -117,14 +118,32 @@ void SDR::Close()
 	MH_Uninitialize();
 }
 
-void SDR::AddModule(HookModuleBase* module)
+void SDR::AddPluginStartupFunction(const StartupFuncData& data)
 {
-	MainApplication.Modules.emplace_back(module);
+	MainApplication.StartupFunctions.emplace_back(data);
+}
+
+void SDR::CallPluginStartupFunctions()
+{
+	for (auto entry : MainApplication.StartupFunctions)
+	{
+		auto res = entry.Function();
+
+		if (!res)
+		{
+			throw entry.Name;
+		}
+	}
 }
 
 void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
 {
 	MainApplication.OnCloseFunctions.emplace_back(function);
+}
+
+void SDR::AddModule(HookModuleBase* module)
+{
+	MainApplication.Modules.emplace_back(module);
 }
 
 void* SDR::GetAddressFromPattern

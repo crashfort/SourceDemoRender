@@ -2,6 +2,44 @@
 
 namespace SDR
 {
+	void Setup();
+	void Close();
+
+	struct StartupFuncData
+	{
+		using FuncType = bool(*)();
+
+		const char* Name;
+		FuncType Function;
+	};
+
+	void AddPluginStartupFunction(const StartupFuncData& data);
+
+	struct PluginStartupFunctionAdder
+	{
+		PluginStartupFunctionAdder(const char* name, StartupFuncData::FuncType function)
+		{
+			StartupFuncData data;
+			data.Name = name;
+			data.Function = function;
+
+			AddPluginStartupFunction(data);
+		}
+	};
+
+	void CallPluginStartupFunctions();
+
+	using ShutdownFuncType = void(*)();
+	void AddPluginShutdownFunction(ShutdownFuncType function);
+
+	struct PluginShutdownFunctionAdder
+	{
+		PluginShutdownFunctionAdder(ShutdownFuncType function)
+		{
+			AddPluginShutdownFunction(function);
+		}
+	};
+
 	struct ModuleInformation
 	{
 		ModuleInformation(const char* name) : Name(name)
@@ -51,9 +89,6 @@ namespace SDR
 		virtual MH_STATUS Create() = 0;
 	};
 
-	void Setup();
-	void Close();
-
 	constexpr auto MemoryPattern(const char* input)
 	{
 		return reinterpret_cast<const uint8_t*>(input);
@@ -61,23 +96,12 @@ namespace SDR
 
 	void AddModule(HookModuleBase* module);
 
-	using ShutdownFuncType = void(*)();
-	void AddPluginShutdownFunction(ShutdownFuncType function);
-
 	void* GetAddressFromPattern
 	(
 		const ModuleInformation& library,
 		const uint8_t* pattern,
 		const char* mask
 	);
-
-	struct PluginShutdownFunctionAdder
-	{
-		PluginShutdownFunctionAdder(ShutdownFuncType function)
-		{
-			AddPluginShutdownFunction(function);
-		}
-	};
 
 	template <typename FuncSignature>
 	class HookModuleMask final : public HookModuleBase
