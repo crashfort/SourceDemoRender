@@ -7,7 +7,7 @@ namespace
 	struct Application
 	{
 		std::vector<SDR::HookModuleBase*> Modules;
-		std::vector<SDR::ShutdownFuncType> OnCloseFunctions;
+		std::vector<SDR::ShutdownFuncType> ShutdownFunctions;
 		std::vector<SDR::StartupFuncData> StartupFunctions;
 	};
 
@@ -110,7 +110,7 @@ void SDR::Setup()
 
 void SDR::Close()
 {
-	for (auto&& func : MainApplication.OnCloseFunctions)
+	for (auto&& func : MainApplication.ShutdownFunctions)
 	{
 		func();
 	}
@@ -138,7 +138,7 @@ void SDR::CallPluginStartupFunctions()
 
 void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
 {
-	MainApplication.OnCloseFunctions.emplace_back(function);
+	MainApplication.ShutdownFunctions.emplace_back(function);
 }
 
 void SDR::AddModule(HookModuleBase* module)
