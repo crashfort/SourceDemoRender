@@ -70,11 +70,19 @@ void SDR::Setup()
 
 	if (res != MH_OK)
 	{
-		Warning("SDR: Failed to initialize hooks\n");
+		Warning
+		(
+			"SDR: Failed to initialize hooks\n"
+		);
+
 		throw res;
 	}
 
-	Msg("SDR: Creating %d modules\n", MainApplication.Modules.size());
+	Msg
+	(
+		"SDR: Creating %d modules\n",
+		MainApplication.Modules.size()
+	);
 
 	for (auto module : MainApplication.Modules)
 	{
