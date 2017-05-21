@@ -763,7 +763,7 @@ namespace
 
 			Microsoft::WRL::ComPtr<IDirect3DPixelShader9> MotionBlurPS;
 			Microsoft::WRL::ComPtr<IDirect3DVertexShader9> MotionBlurVS;
-		} DirectX9;
+		} DirectX;
 
 		std::unique_ptr<SDRVideoWriter> Video;
 		std::unique_ptr<SDRAudioWriter> Audio;
@@ -1149,7 +1149,7 @@ namespace
 		materials->GetBackBufferDimensions(width, height);
 
 		auto device = Module_SourceGlobals::Device;
-		auto& dx9 = CurrentMovie.DirectX9;
+		auto& dx9 = CurrentMovie.DirectX;
 
 		materials->BeginRenderTargetAllocation();
 		
@@ -1615,7 +1615,7 @@ namespace
 			}
 
 			auto& movie = CurrentMovie;
-			auto& dx9 = movie.DirectX9;
+			auto& dx9 = movie.DirectX;
 			auto device = Module_SourceGlobals::Device;
 
 			auto rendercontext = materials->GetRenderContext();
