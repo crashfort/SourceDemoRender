@@ -794,87 +794,90 @@ namespace
 
 	namespace Module_SourceGlobals
 	{
-		/*
-			Structure from Source 2007
-		*/
-		struct Texture_t
+		namespace Types
 		{
-			enum Flags_t
+			/*
+				Structure from Source 2007
+			*/
+			struct Texture_t
 			{
-				IS_ALLOCATED = 0x0001,
-				IS_DEPTH_STENCIL = 0x0002,
-				IS_DEPTH_STENCIL_TEXTURE = 0x0004,	// depth stencil texture, not surface
-				IS_RENDERABLE = (IS_DEPTH_STENCIL | IS_ALLOCATED),
-				IS_FINALIZED = 0x0010,	// 360: completed async hi-res load
-				IS_FAILED = 0x0020,	// 360: failed during load
-				CAN_CONVERT_FORMAT = 0x0040,	// 360: allow format conversion
-				IS_LINEAR = 0x0080,	// 360: unswizzled linear format
-				IS_RENDER_TARGET = 0x0100,	// 360: marks a render target texture source
-				IS_RENDER_TARGET_SURFACE = 0x0200,	// 360: marks a render target surface target
-				IS_VERTEX_TEXTURE = 0x0800,
+				enum Flags_t
+				{
+					IS_ALLOCATED = 0x0001,
+					IS_DEPTH_STENCIL = 0x0002,
+					IS_DEPTH_STENCIL_TEXTURE = 0x0004,	// depth stencil texture, not surface
+					IS_RENDERABLE = (IS_DEPTH_STENCIL | IS_ALLOCATED),
+					IS_FINALIZED = 0x0010,	// 360: completed async hi-res load
+					IS_FAILED = 0x0020,	// 360: failed during load
+					CAN_CONVERT_FORMAT = 0x0040,	// 360: allow format conversion
+					IS_LINEAR = 0x0080,	// 360: unswizzled linear format
+					IS_RENDER_TARGET = 0x0100,	// 360: marks a render target texture source
+					IS_RENDER_TARGET_SURFACE = 0x0200,	// 360: marks a render target surface target
+					IS_VERTEX_TEXTURE = 0x0800,
+				};
+
+				D3DTEXTUREADDRESS m_UTexWrap;
+				D3DTEXTUREADDRESS m_VTexWrap;
+				D3DTEXTUREADDRESS m_WTexWrap;
+				D3DTEXTUREFILTERTYPE m_MagFilter;
+				D3DTEXTUREFILTERTYPE m_MinFilter;
+				D3DTEXTUREFILTERTYPE m_MipFilter;
+
+				unsigned char m_NumLevels;
+				unsigned char m_SwitchNeeded; // Do we need to advance the current copy?
+				unsigned char m_NumCopies; // copies are used to optimize procedural textures
+				unsigned char m_CurrentCopy; // the current copy we're using...
+
+				int m_CreationFlags;
+
+				CUtlSymbol m_DebugName;
+				CUtlSymbol m_TextureGroupName;
+				int* m_pTextureGroupCounterGlobal; // Global counter for this texture's group.
+				int* m_pTextureGroupCounterFrame; // Per-frame global counter for this texture's group.
+
+				int m_SizeBytes;
+				int m_SizeTexels;
+				int m_LastBoundFrame;
+				int m_nTimesBoundMax;
+				int m_nTimesBoundThisFrame;
+
+				short m_Width;
+				short m_Height;
+				short m_Depth;
+				unsigned short m_Flags;
+
+				union
+				{
+					IDirect3DBaseTexture9* m_pTexture; // used when there's one copy
+					IDirect3DBaseTexture9** m_ppTexture; // used when there are more than one copies
+					IDirect3DSurface9* m_pDepthStencilSurface; // used when there's one depth stencil surface
+					IDirect3DSurface9* m_pRenderTargetSurface[2];
+				};
+
+				ImageFormat m_ImageFormat;
+
+				short m_Count;
+				short m_CountIndex;
 			};
-
-			D3DTEXTUREADDRESS m_UTexWrap;
-			D3DTEXTUREADDRESS m_VTexWrap;
-			D3DTEXTUREADDRESS m_WTexWrap;
-			D3DTEXTUREFILTERTYPE m_MagFilter;
-			D3DTEXTUREFILTERTYPE m_MinFilter;
-			D3DTEXTUREFILTERTYPE m_MipFilter;
-
-			unsigned char m_NumLevels;
-			unsigned char m_SwitchNeeded; // Do we need to advance the current copy?
-			unsigned char m_NumCopies; // copies are used to optimize procedural textures
-			unsigned char m_CurrentCopy; // the current copy we're using...
-
-			int m_CreationFlags;
-
-			CUtlSymbol m_DebugName;
-			CUtlSymbol m_TextureGroupName;
-			int* m_pTextureGroupCounterGlobal; // Global counter for this texture's group.
-			int* m_pTextureGroupCounterFrame; // Per-frame global counter for this texture's group.
-
-			int m_SizeBytes;
-			int m_SizeTexels;
-			int m_LastBoundFrame;
-			int m_nTimesBoundMax;
-			int m_nTimesBoundThisFrame;
-
-			short m_Width;
-			short m_Height;
-			short m_Depth;
-			unsigned short m_Flags;
-
-			union
-			{
-				IDirect3DBaseTexture9* m_pTexture; // used when there's one copy
-				IDirect3DBaseTexture9** m_ppTexture; // used when there are more than one copies
-				IDirect3DSurface9* m_pDepthStencilSurface; // used when there's one depth stencil surface
-				IDirect3DSurface9* m_pRenderTargetSurface[2];
-			};
-
-			ImageFormat m_ImageFormat;
-
-			short m_Count;
-			short m_CountIndex;
-		};
 		
-		using GetTextureHandleType = Texture_t*(__fastcall*)
-		(
-			ITexture* thisptr,
-			void* edx,
-			int frame,
-			int texturechannel
-		);
+			using GetTextureHandle = Texture_t*(__fastcall*)
+			(
+				ITexture* thisptr,
+				void* edx,
+				int frame,
+				int texturechannel
+			);
 
-		using GetFullscreenTextureType = ITexture*(__cdecl*)();
-		using GetFullFrameFrameBufferTextureType = ITexture*(__cdecl*)();
+			using GetFullScreenTexture = ITexture*(__cdecl*)();
+			using GetFullFrameFrameBufferTexture = ITexture*(__cdecl*)();
+		}
 
 		IDirect3DDevice9* Device;
 		bool* DrawLoading = nullptr;
-		GetTextureHandleType GetTextureHandle = nullptr;
+		Types::GetTextureHandle GetTextureHandle = nullptr;
 		void* ShaderAPI = nullptr;
-		GetFullscreenTextureType GetFullScreenTexture = nullptr;
-		GetFullFrameFrameBufferTextureType GetFullFrameFrameBufferTexture = nullptr;
+		Types::GetFullScreenTexture GetFullScreenTexture = nullptr;
+		Types::GetFullFrameFrameBufferTexture GetFullFrameFrameBufferTexture = nullptr;
 		int* CurrentViewID = nullptr;
 
 		template <typename T>
