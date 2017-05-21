@@ -1189,7 +1189,7 @@ namespace
 					height,
 					1,
 					D3DUSAGE_RENDERTARGET,
-					D3DFMT_R8G8B8,
+					D3DFMT_A8R8G8B8,
 					D3DPOOL_DEFAULT,
 					dx9.RenderTarget.GetAddressOf(),
 					nullptr
