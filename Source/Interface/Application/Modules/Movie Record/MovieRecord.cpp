@@ -877,6 +877,12 @@ namespace
 		GetFullFrameFrameBufferTextureType GetFullFrameFrameBufferTexture = nullptr;
 		int* CurrentViewID = nullptr;
 
+		template <typename T>
+		void SetFromAddress(T& type, void* address)
+		{
+			type = (T)(address);
+		}
+
 		void Set()
 		{
 			{
@@ -948,7 +954,7 @@ namespace
 					"xxxxxxxxxxxxxxx????"
 				);
 
-				GetTextureHandle = static_cast<GetTextureHandleType>(address.Get());
+				SetFromAddress(GetTextureHandle, address.Get());
 			}
 
 			{
@@ -1009,7 +1015,7 @@ namespace
 				addrmod += 4;
 				addrmod += offset;
 
-				GetFullScreenTexture = reinterpret_cast<GetFullscreenTextureType>(addrmod);
+				SetFromAddress(GetFullScreenTexture, addrmod);
 			}
 
 			{
@@ -1043,10 +1049,7 @@ namespace
 				addrmod += 4;
 				addrmod += offset;
 
-				GetFullFrameFrameBufferTexture = reinterpret_cast
-				<
-					GetFullFrameFrameBufferTextureType
-				>(addrmod);
+				SetFromAddress(GetFullFrameFrameBufferTexture, addrmod);
 			}
 
 			{
