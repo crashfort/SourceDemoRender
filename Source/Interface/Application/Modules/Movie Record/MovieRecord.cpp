@@ -1613,6 +1613,85 @@ namespace
 				edx,
 				rect
 			);
+
+			auto& interfaces = SDR::GetEngineInterfaces();
+			auto client = interfaces.EngineClient;
+
+			if (!CurrentMovie.IsStarted)
+			{
+				return;
+			}
+
+			if (*Module_SourceGlobals::DrawLoading)
+			{
+				return;
+			}
+
+			if (client->Con_IsVisible())
+			{
+				return;
+			}
+
+			materials->EndFrame();
+			materials->BeginFrame(0);
+
+			auto& movie = CurrentMovie;
+			auto rendercontext = materials->GetRenderContext();
+
+			rendercontext->PushRenderTargetAndViewport
+			(
+				movie.DirectX.ValveTexture,
+				0,
+				0,
+				movie.Width,
+				movie.Height
+			);
+
+			rendercontext->ClearColor4ub(0, 0, 0, 0);
+			rendercontext->ClearBuffers(true, false, false);
+
+			auto viewptr = Module_SourceGlobals::ViewPtr;
+			auto viewsetup = viewptr->GetViewSetup();
+			
+			viewptr->RenderView
+			(
+				*viewsetup,
+				VIEW_CLEAR_STENCIL | VIEW_CLEAR_DEPTH,
+				RENDERVIEW_UNSPECIFIED
+			);
+
+			rendercontext->PopRenderTargetAndViewport();
+
+			{
+				static int counter = 0;
+
+				wchar_t namebuf[1024];
+
+				swprintf_s
+				(
+					namebuf,
+					LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image%d.png)",
+					counter
+				);
+
+				auto handle = Module_SourceGlobals::GetTextureHandle
+				(
+					movie.DirectX.ValveTexture,
+					nullptr,
+					0,
+					0
+				);
+
+				auto hr = D3DXSaveTextureToFileW
+				(
+					namebuf,
+					D3DXIFF_PNG,
+					handle->m_pTexture,
+					nullptr
+				);
+
+				++counter;
+			}
 		}
 	}
 
