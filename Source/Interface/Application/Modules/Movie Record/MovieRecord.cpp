@@ -1458,6 +1458,55 @@ namespace
 		}
 	}
 
+	namespace Module_View_Render
+	{
+		auto Pattern = SDR::MemoryPattern
+		(
+			"\x55\x8B\xEC\x8B\x55\x08\x83\x7A\x08\x00\x74\x17"
+			"\x83\x7A\x0C\x00\x74\x11\x8B\x0D\x00\x00\x00\x00"
+			"\x52\x8B\x01\xFF\x50\x14\xE8\x00\x00\x00\x00\x5D"
+			"\xC2\x04\x00"
+		);
+
+		auto Mask =
+		(
+			"xxxxxxxxxxxxxxxxxxxx????xxxxxxx????xxxx"
+		);
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			void* rect
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModuleMask<ThisFunction> ThisHook
+		{
+			"client.dll",
+			"View_Render",
+			Override,
+			Pattern,
+			Mask
+		};
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			void* rect
+		)
+		{
+			ThisHook.GetOriginal()
+			(
+				thisptr,
+				edx,
+				rect
+			);
+		}
+	}
+
 	#if 0
 	namespace Module_DrawSetup
 	{
