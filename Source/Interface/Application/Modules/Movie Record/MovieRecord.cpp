@@ -34,6 +34,7 @@ extern "C"
 
 #include "view_shared.h"
 #include "ivrenderview.h"
+#include "iviewrender.h"
 
 namespace
 {
@@ -934,6 +935,14 @@ namespace
 
 			);
 
+			using RenderView = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				void* view,
+				int clearflags,
+				int drawflags
+			);
 		}
 
 		IDirect3DDevice9* Device;
@@ -943,6 +952,21 @@ namespace
 		Types::GetFullScreenTexture GetFullScreenTexture = nullptr;
 		Types::GetFullFrameFrameBufferTexture GetFullFrameFrameBufferTexture = nullptr;
 		int* CurrentViewID = nullptr;
+		Types::RenderView RenderView = nullptr;
+		IViewRender* ViewPtr = nullptr;
+
+		#if 0
+		void* View_GetViewSetup(void* thisptr)
+		{
+			/*
+				Static structure offset May 22 2017
+			*/
+			SDR::StructureWalker walker(thisptr);
+			auto ret = walker.Advance(636);
+
+			return ret;
+		}
+		#endif
 
 		template <typename T>
 		void SetFromAddress(T& type, void* address)
@@ -1144,6 +1168,69 @@ namespace
 				);
 
 				CurrentViewID = *reinterpret_cast<int**>(address.Get());
+			}
+
+			{
+				/*
+					Source 2013
+					\client\viewrender.cpp @ 1912
+					CViewRender::RenderView
+				*/
+				SDR::AddressFinder address
+				(
+					/*
+						0x101BE0E0 static CSS IDA address May 22 2017
+					*/
+					"client.dll",
+					SDR::MemoryPattern
+					(
+						"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x53\x56\x57"
+						"\x8B\xF9\x89\x7D\xFC\x8D\x8F\x00\x00\x00\x00\xE8"
+						"\x00\x00\x00\x00\x8B\x5D\x08\x8D\x8F\x00\x00\x00"
+						"\x00\x53\xE8\x00\x00\x00\x00\x6A\x01\x6A\x01\x8D"
+						"\x4D\xE2\xE8\x00\x00\x00\x00\x8B\x0D\x00\x00\x00"
+						"\x00\x33\xC0\x89\x45\xB4"
+					),
+					"xxxxx????xxxxxxxxxx????x????xxxxx????xx????xxxxxxxx?"
+					"???xx????xxxxx"
+				);
+
+				SetFromAddress(RenderView, address.Get());
+			}
+
+			{
+				/*
+					Source 2013
+					\client\cdll_client_int.cpp
+					CHLClient::LevelShutdown
+				*/
+				SDR::AddressFinder address
+				(
+					/*
+						0x100D51D9 static CSS IDA address May 22 2017
+
+						In this function the global variable "view" is used.
+					*/
+					"client.dll",
+					SDR::MemoryPattern
+					(
+						"\x8B\x0D\x00\x00\x00\x00\x8B\x01\xFF\x50\x08\x8B"
+						"\x0D\x00\x00\x00\x00\x8B\x01\xFF\x50\x08\xE8\x00"
+						"\x00\x00\x00\x8B\xC8\xE8\x00\x00\x00\x00\xE8\x00"
+						"\x00\x00\x00\xB9\x00\x00\x00\x00"
+					),
+					"xx????xxxxxxx????xxxxxx????xxx????x????x????",
+
+					/*
+						Increment for MOV ECX instruction
+					*/
+					2
+				);
+
+				ViewPtr = **reinterpret_cast<IViewRender***>(address.Get());
+
+				int a = 5;
+				a = a;
 			}
 		}
 	}
