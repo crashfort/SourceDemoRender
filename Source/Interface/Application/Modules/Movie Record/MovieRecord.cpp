@@ -1460,6 +1460,9 @@ namespace
 
 	namespace Module_View_Render
 	{
+		/*
+			0x100D5EA0 static CSS IDA address May 22 2017
+		*/
 		auto Pattern = SDR::MemoryPattern
 		(
 			"\x55\x8B\xEC\x8B\x55\x08\x83\x7A\x08\x00\x74\x17"
