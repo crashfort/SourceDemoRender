@@ -1544,6 +1544,8 @@ namespace
 
 	namespace Module_PerformScreenSpaceEffects
 	{
+		#pragma region Init
+
 		/*
 			0x101BD810 static CSS IDA address April 22 2017
 		*/
@@ -1584,6 +1586,8 @@ namespace
 			"client.dll", "PerformScreenSpaceEffects", Override, Pattern, Mask
 		};
 
+		#pragma endregion
+
 		void __fastcall Override
 		(
 			void* thisptr,
@@ -1619,8 +1623,6 @@ namespace
 			auto device = Module_SourceGlobals::Device;
 
 			auto rendercontext = materials->GetRenderContext();
-
-
 
 			#if 0
 			static int counter = 0;
