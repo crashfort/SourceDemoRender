@@ -1654,7 +1654,15 @@ namespace
 			int h
 		)
 		{
-			ThisHook.GetOriginal()(thisptr, edx, x, y, w, h);
+			ThisHook.GetOriginal()
+			(
+				thisptr,
+				edx,
+				x,
+				y,
+				w,
+				h
+			);
 
 			auto& interfaces = SDR::GetEngineInterfaces();
 			auto client = interfaces.EngineClient;
