@@ -1460,6 +1460,8 @@ namespace
 
 	namespace Module_View_Render
 	{
+		#pragma region Init
+
 		/*
 			0x100D5EA0 static CSS IDA address May 22 2017
 		*/
@@ -1493,6 +1495,8 @@ namespace
 			Pattern,
 			Mask
 		};
+
+		#pragma endregion
 
 		void __fastcall Override
 		(
