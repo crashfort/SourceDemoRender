@@ -23,7 +23,11 @@ namespace Module_BaseTemplateMask
 
 	SDR::HookModuleMask<ThisFunction> ThisHook
 	{
-		"", "", Override, Pattern, Mask
+		"",
+		"",
+		Override,
+		Pattern,
+		Mask
 	};
 
 	void __cdecl Override()
@@ -40,7 +44,10 @@ namespace Module_BaseTemplateStaticTest
 
 	SDR::HookModuleStaticAddressTest<ThisFunction> ThisHook
 	{
-		"", "", Override, 0x00000000
+		"",
+		"",
+		Override,
+		0x00000000
 	};
 
 	void __cdecl Override()
@@ -57,7 +64,10 @@ namespace Module_BaseTemplateStatic
 
 	SDR::HookModuleStaticAddress<ThisFunction> ThisHook
 	{
-		"", "", Override, nullptr
+		"",
+		"",
+		Override,
+		nullptr
 	};
 
 	void __cdecl Override()
@@ -74,7 +84,10 @@ namespace Module_BaseTemplateAPI
 
 	SDR::HookModuleAPI<ThisFunction> ThisHook
 	{
-		"", "", "", Override
+		"",
+		"",
+		"",
+		Override
 	};
 
 	void __cdecl Override()
