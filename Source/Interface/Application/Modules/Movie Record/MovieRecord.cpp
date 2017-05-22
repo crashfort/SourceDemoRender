@@ -924,8 +924,16 @@ namespace
 				int texturechannel
 			);
 
-			using GetFullScreenTexture = ITexture*(__cdecl*)();
-			using GetFullFrameFrameBufferTexture = ITexture*(__cdecl*)();
+			using GetFullScreenTexture = ITexture*(__cdecl*)
+			(
+
+			);
+			
+			using GetFullFrameFrameBufferTexture = ITexture*(__cdecl*)
+			(
+
+			);
+
 		}
 
 		IDirect3DDevice9* Device;
