@@ -360,4 +360,40 @@ namespace SDR
 
 		void* Address;
 	};
+
+	struct StructureWalker
+	{
+		StructureWalker
+		(
+			void* address
+		) :
+			Address(static_cast<uint8_t*>(address)),
+			Start(Address)
+		{
+
+		}
+
+		template <typename Modifier = uint8_t>
+		uint8_t* Advance(int offset)
+		{
+			Address += offset * sizeof(Modifier);
+			return Address;
+		}
+
+		template <typename Modifier = uint8_t>
+		uint8_t* AdvanceAbsolute(int offset)
+		{
+			Reset();
+			Address += offset * sizeof(Modifier);
+			return Address;
+		}
+
+		void Reset()
+		{
+			Address = Start;
+		}
+
+		uint8_t* Address;
+		uint8_t* Start;
+	};
 }
