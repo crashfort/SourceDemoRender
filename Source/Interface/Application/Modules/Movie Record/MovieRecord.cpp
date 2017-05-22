@@ -1164,7 +1164,7 @@ namespace
 
 		if (dx9.ValveTexture)
 		{
-			dx9.ValveTexture->IncrementReferenceCount();
+			dx9.ValveTexture->AddRef();
 		}
 
 		materials->EndRenderTargetAllocation();
