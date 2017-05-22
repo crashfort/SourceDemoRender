@@ -780,7 +780,14 @@ namespace
 
 	void SDR_MovieShutdown()
 	{
-		if (!CurrentMovie.IsStarted)
+		auto& movie = CurrentMovie;
+
+		if (movie.DirectX.ValveTexture)
+		{
+			movie.DirectX.ValveTexture->Release();
+		}
+
+		if (!movie.IsStarted)
 		{
 			return;
 		}
@@ -788,10 +795,10 @@ namespace
 		if (!ShouldStopFrameThread)
 		{
 			ShouldStopFrameThread = true;
-			CurrentMovie.FrameHandlerThread.join();
+			movie.FrameHandlerThread.join();
 		}
 
-		CurrentMovie = MovieData();
+		movie = MovieData();
 	}
 
 	namespace Module_RenderContext
