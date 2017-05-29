@@ -1089,7 +1089,10 @@ namespace
 
 		SDR::HookModuleStaticAddress<ThisFunction> ThisHook
 		{
-			"engine.dll", "StartMovie", Override, StartMovieAddress.Get()
+			"engine.dll",
+			"StartMovie",
+			Override,
+			StartMovieAddress.Get()
 		};
 
 		#pragma endregion
@@ -1624,7 +1627,11 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "StartMovieCommand", Override, Pattern, Mask
+			"engine.dll",
+			"StartMovieCommand",
+			Override,
+			Pattern,
+			Mask
 		};
 
 		#pragma endregion
@@ -1685,7 +1692,11 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "EndMovie", Override, Pattern, Mask
+			"engine.dll",
+			"EndMovie",
+			Override,
+			Pattern,
+			Mask
 		};
 
 		#pragma endregion
@@ -1787,7 +1798,11 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "WriteMovieFrame", Override, Pattern, Mask
+			"engine.dll",
+			"WriteMovieFrame",
+			Override,
+			Pattern,
+			Mask
 		};
 
 		#pragma endregion
@@ -1916,7 +1931,11 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "SNDRecordBuffer", Override, Pattern, Mask
+			"engine.dll",
+			"SNDRecordBuffer",
+			Override,
+			Pattern,
+			Mask
 		};
 
 		#pragma endregion
@@ -1967,7 +1986,11 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "WaveCreateTmpFile", Override, Pattern, Mask
+			"engine.dll",
+			"WaveCreateTmpFile",
+			Override,
+			Pattern,
+			Mask
 		};
 
 		#pragma endregion
@@ -2027,7 +2050,11 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "WaveAppendTmpFile", Override, Pattern, Mask
+			"engine.dll",
+			"WaveAppendTmpFile",
+			Override,
+			Pattern,
+			Mask
 		};
 
 		#pragma endregion
@@ -2085,7 +2112,11 @@ namespace
 
 		SDR::HookModuleMask<ThisFunction> ThisHook
 		{
-			"engine.dll", "WaveFixupTmpFile", Override, Pattern, Mask
+			"engine.dll",
+			"WaveFixupTmpFile",
+			Override,
+			Pattern,
+			Mask
 		};
 
 		#pragma endregion
