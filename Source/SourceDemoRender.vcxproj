@@ -201,6 +201,7 @@
     <ClInclude Include="Interface\Application\Modules\ModuleTemplates.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\HLAE\Sampler.hpp" />
+    <ClInclude Include="Interface\Application\Shared\Shared.hpp" />
     <ClInclude Include="Main\Precompiled Header\PrecompiledHeader.hpp" />
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp" />
   </ItemGroup>

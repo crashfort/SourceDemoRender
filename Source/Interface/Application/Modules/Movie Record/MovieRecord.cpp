@@ -47,7 +47,7 @@ namespace
 			AllocAVFrame,
 			AllocVideoStream,
 			VideoEncoderNotFound,
-			OpenFile,
+			OpenWaveFile,
 		};
 
 		const char* ExceptionTypeToString(ExceptionType code)
@@ -303,65 +303,6 @@ namespace
 			AVDictionary* Options = nullptr;
 		};
 
-		struct ScopedFile
-		{
-			~ScopedFile()
-			{
-				Close();
-			}
-
-			void Close()
-			{
-				if (Handle)
-				{
-					fclose(Handle);
-					Handle = nullptr;
-				}
-			}
-
-			auto Get() const
-			{
-				return Handle;
-			}
-
-			explicit operator bool() const
-			{
-				return Get() != nullptr;
-			}
-
-			void Assign(const char* path, const char* mode)
-			{
-				Handle = fopen(path, mode);
-
-				ThrowIfNull(Handle, ExceptionType::OpenFile);
-			}
-
-			template <typename... Types>
-			void WriteSimple(const Types&... args)
-			{
-				bool adder[] =
-				{
-					[&]()
-					{
-						fwrite(&args, sizeof(args), 1, Get());
-						return true;
-					}()...
-				};
-			}
-
-			auto GetStreamPosition() const
-			{
-				return ftell(Get());
-			}
-
-			void SeekAbsolute(int32_t position)
-			{
-				fseek(Get(), position, SEEK_SET);
-			}
-
-			FILE* Handle = nullptr;
-		};
-
 		namespace Variables
 		{
 			ConVar SuppressLog
@@ -417,7 +358,19 @@ namespace
 
 		void Open(const char* name, int samplerate, int samplebits, int channels)
 		{
-			WaveFile.Assign(name, "wb");
+			try
+			{
+				WaveFile.Assign(name, "wb");
+			}
+
+			catch (SDR::Shared::ScopedFile::ExceptionType status)
+			{
+				LAV::ThrowIfNull
+				(
+					nullptr,
+					LAV::ExceptionType::OpenWaveFile
+				);
+			}
 
 			enum : int32_t
 			{
@@ -488,7 +441,7 @@ namespace
 			FileLength += DataLength;
 		}
 
-		LAV::ScopedFile WaveFile;
+		SDR::Shared::ScopedFile WaveFile;
 		
 		/*
 			These variables are used to reference a stream position
