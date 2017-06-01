@@ -28,6 +28,9 @@ using namespace std::chrono_literals;
 #include "materialsystem\imaterialsystem.h"
 
 #include "Interface\Application\Shared\Shared.hpp"
+
+#undef Verify
+
 namespace SDR
 {
 	struct EngineInterfaces
