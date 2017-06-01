@@ -126,7 +126,10 @@ void SDR::Close()
 	MH_Uninitialize();
 }
 
-void SDR::AddPluginStartupFunction(const StartupFuncData& data)
+void SDR::AddPluginStartupFunction
+(
+	const StartupFuncData& data
+)
 {
 	MainApplication.StartupFunctions.emplace_back(data);
 }
@@ -144,7 +147,10 @@ void SDR::CallPluginStartupFunctions()
 	}
 }
 
-void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
+void SDR::AddPluginShutdownFunction
+(
+	ShutdownFuncType function
+)
 {
 	MainApplication.ShutdownFunctions.emplace_back(function);
 }
