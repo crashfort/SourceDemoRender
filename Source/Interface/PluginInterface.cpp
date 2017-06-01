@@ -11,6 +11,51 @@ extern "C"
 
 namespace
 {
+	namespace ModuleGameDir
+	{
+		namespace Types
+		{
+			using GetGameDir = void(__cdecl*)
+			(
+				char* dest,
+				int length
+			);
+		}
+
+		char FullPath[1024];
+		char GameName[128];
+
+		Types::GetGameDir GetGameDir;
+
+		void Set()
+		{
+			auto patternstr = "55 8B EC 8B 45 08 85 C0 74 11 FF 75 0C 68 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 0C 5D C3";
+			auto pattern = SDR::GetPatternFromString(patternstr);
+
+			auto address = SDR::GetAddressFromPattern
+			(
+				"engine.dll",
+				pattern
+			);
+
+			SDR::ModuleShared::SetFromAddress
+			(
+				GetGameDir,
+				address
+			);
+
+			SDR::ModuleShared::Verify
+			(
+				GetGameDir,
+				"engine.dll",
+				"GetGameDir"
+			);
+		}
+	}
+}
+
+namespace
+{
 	class SourceDemoRenderPlugin final : public IServerPluginCallbacks
 	{
 	public:
@@ -264,14 +309,42 @@ namespace
 			SourceDemoRenderPlugin::PluginVersion
 		);
 
+		try
 		{
+			ModuleGameDir::Set();
+		}
 
+		catch (const char* name)
+		{
+			return false;
+		}
 
+		ModuleGameDir::GetGameDir
+		(
+			ModuleGameDir::FullPath,
+			sizeof(ModuleGameDir::FullPath)
+		);
 
+		strcpy_s
+		(
+			ModuleGameDir::GameName,
+			V_GetFileName(ModuleGameDir::FullPath)
+		);
 
+		strcat_s(ModuleGameDir::FullPath, "\\");
 
+		Msg
+		(
+			"SDR: Current game: %s\n",
+			ModuleGameDir::GameName
+		);
 
+		avcodec_register_all();
+		av_register_all();
 
+		ConnectTier1Libraries(&interfacefactory, 1);
+		ConnectTier2Libraries(&interfacefactory, 1);
+		ConVar_Register();
 
 		try
 		{
@@ -296,10 +369,14 @@ namespace
 
 		try
 		{
-			SDR::Setup();
+			SDR::Setup
+			(
+				ModuleGameDir::FullPath,
+				ModuleGameDir::GameName
+			);
 		}
 
-		catch (MH_STATUS status)
+		catch (bool status)
 		{
 			return false;
 		}
