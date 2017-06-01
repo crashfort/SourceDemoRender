@@ -136,14 +136,32 @@ void SDR::AddPluginStartupFunction
 
 void SDR::CallPluginStartupFunctions()
 {
+	if (MainApplication.StartupFunctions.empty())
+	{
+		return;
+	}
+
+	auto count = MainApplication.StartupFunctions.size();
+	auto index = 0;
+
 	for (auto entry : MainApplication.StartupFunctions)
 	{
+		Msg
+		(
+			"SDR: Startup procedure (%d/%d): %s\n",
+			index + 1,
+			count,
+			entry.Name
+		);
+
 		auto res = entry.Function();
 
 		if (!res)
 		{
 			throw entry.Name;
 		}
+
+		++index;
 	}
 }
 
