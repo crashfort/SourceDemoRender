@@ -224,13 +224,13 @@
 		},
 		"RenderContext_PopRenderTargetAndViewport":
 		{
-			"Comment": "0x10062E60 static CSS IDA address May 30 2017",
+			"Comment": "0x10061440 static HL2 IDA address June 1 2017",
 			"Module": "materialsystem.dll",
 			"Pattern": "83 79 4C 00 74 0B FF 49 4C 8B 01 FF A0 90 03 00 00 C3"
 		},
 		"Texture_GetTextureHandle":
 		{
-			"Comment": "0x10065620 static HL2 IDA address April 25 2017",
+			"Comment": "0x10065620 static HL2 IDA address June 1 2017",
 			"Module": "materialsystem.dll",
 			"Pattern": "55 8B EC 8B 55 08 56 8B F1 85 D2 79 1D 57 68 ?? ?? ?? ?? 33 FF FF 15 ?? ?? ?? ?? 8B 46 40 83 C4 04 8B 04 B8 5F 5E 5D C2 08 00 8B 46 40 5E 8B 04 90 5D C2 08 00"
 		}
