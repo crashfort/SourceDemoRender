@@ -710,13 +710,59 @@ namespace
 
 		struct DirectX9Data
 		{
-			ITexture* ValveTexture = nullptr;
+			struct RenderTarget
+			{
+				void Create
+				(
+					IDirect3DDevice9* device,
+					int width,
+					int height
+				)
+				{
+					MS::ThrowIfFailed
+					(
+						device->CreateTexture
+						(
+							width,
+							height,
+							1,
+							D3DUSAGE_RENDERTARGET,
+							D3DFMT_A8R8G8B8,
+							D3DPOOL_DEFAULT,
+							Texture.GetAddressOf(),
+							nullptr
+						)
+					);
 
-			Microsoft::WRL::ComPtr<IDirect3DTexture9> RenderTarget;
-			Microsoft::WRL::ComPtr<IDirect3DSurface9> RenderTargetSurface;
+					MS::ThrowIfFailed
+					(
+						Texture->GetSurfaceLevel
+						(
+							0,
+							Surface.GetAddressOf()
+						)
+					);
+				}
 
-			Microsoft::WRL::ComPtr<IDirect3DPixelShader9> MotionBlurPS;
-			Microsoft::WRL::ComPtr<IDirect3DVertexShader9> MotionBlurVS;
+				Microsoft::WRL::ComPtr<IDirect3DTexture9> Texture;
+				Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
+			};
+
+			~DirectX9Data()
+			{
+				if (ValveRT)
+				{
+					ValveRT->Release();
+				}
+			}
+
+			ITexture* ValveRT = nullptr;
+
+			RenderTarget Previous;
+			RenderTarget Current;
+
+			Microsoft::WRL::ComPtr<IDirect3DPixelShader9> PixelShader;
+			Microsoft::WRL::ComPtr<IDirect3DVertexShader9> VertexShader;
 		} DirectX;
 
 		std::unique_ptr<SDRVideoWriter> Video;
@@ -736,11 +782,6 @@ namespace
 	{
 		auto& movie = CurrentMovie;
 
-		if (movie.DirectX.ValveTexture)
-		{
-			movie.DirectX.ValveTexture->Release();
-		}
-
 		if (!movie.IsStarted)
 		{
 			return;
@@ -755,7 +796,7 @@ namespace
 		movie = MovieData();
 	}
 
-	namespace Module_RenderContext
+	namespace Module_VideoMode
 	{
 		namespace Types
 		{
@@ -774,35 +815,522 @@ namespace
 
 		Types::ReadScreenPixels ReadScreenPixels;
 
-		template <typename T>
-		void SetFromAddress(T& type, void* address)
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"VideoMode_ReadScreenPixels",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						ReadScreenPixels,
+						address
+					);
+				}
+			)
+		);
+	}
+
+	#if 0
+	namespace Module_ShaderAPI
+	{
+		namespace Types
 		{
-			type = (T)(address);
+			using ClearColor4 = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				unsigned char r,
+				unsigned char g,
+				unsigned char b,
+				unsigned char a
+			);
+
+			using ClearBuffers = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				bool clearcol,
+				bool cleardepth,
+				bool clearstencil,
+				int rtwidth,
+				int rtheight
+			);
 		}
+
+		void* ShaderAPI = nullptr;
+		Types::ClearColor4 ClearColor4;
+		Types::ClearBuffers ClearBuffers;
 
 		void Set()
 		{
 			{
+				SDR::AddressFinder address
+				(
+					/*
+						0x100D08C6 static HL2 IDA address April 25 2017
+						0x1004E547 static CSS IDA address May 30 2017
+
+						In the function "CShaderDeviceMgrDx8::SetMode" the global variable
+						"g_pShaderAPIDX8" is used.
+					*/
+					"materialsystem.dll",
+					SDR::MemoryPattern
+					(
+						"\xC7\x05\x00\x00\x00\x00\x00\x00\x00\x00\x83\xC4\x04\xC7\x05\x00\x00\x00\x00\x00\x00\x00\x00\xC7\x05\x00\x00\x00\x00\x00\x00\x00\x00\xC7\x87\x00\x00\x00\x00\x00\x00\x00\x00\x5F\x5D\xC2\x04\x00"
+					),
+					"xx????????xxxxx????????xx????????xx????????xxxxx",
+
+					/*
+						Increment for MOV instruction
+					*/
+					2
+				);
+
+				ShaderAPI = address.Get();
+
+				SDR::ModuleShared::VerifyEntry
+				(
+					ShaderAPI,
+					"materialsystem.dll",
+					"ShaderAPI"
+				);
+			}
+
+			{
 				/*
-					0x101FFF80 static CSS IDA address June 3 2016
+					0x100BDFE0 static CSS IDA address May 30 2017
 				*/
 				SDR::AddressFinder address
 				(
-					"engine.dll",
+					"shaderapidx9.dll",
 					SDR::MemoryPattern
 					(
-						"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
-						"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
+						"\x55\x8B\xEC\x8B\x45\x14\x0F\xB6\xD0\x8B\x45\x08\xC1"
+						"\xE2\x08\x0F\xB6\xC0\x0B\xD0\x8B\x45\x0C\xC1\xE2\x08"
+						"\x0F\xB6\xC0\x0B\xD0\x8B\x45\x10\xC1\xE2\x08\x0F\xB6"
+						"\xC0\x0B\xD0\x89\x91\x00\x00\x00\x00\x5D\xC2\x10\x00"
 					),
-					"xxxxxxxx?????xx????xx????"
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx????xxxx"
 				);
 
-				SetFromAddress(ReadScreenPixels, address.Get());
+				SDR::ModuleShared::SetFromAddress
+				(
+					ClearColor4,
+					address.Get()
+				);
+
+				SDR::ModuleShared::VerifyEntry
+				(
+					ClearColor4,
+					"shaderapidx9.dll",
+					"ClearColor4"
+				);
+			}
+
+			{
+				/*
+					0x100BDCB0 static CSS IDA address May 30 2017
+				*/
+				SDR::AddressFinder address
+				(
+					"shaderapidx9.dll",
+					SDR::MemoryPattern
+					(
+						"\x55\x8B\xEC\x83\xEC\x14\x56\x8B\xF1\x8B\x0D\x00\x00"
+						"\x00\x00\x8B\x01\xFF\x50\x14\x80\x78\x4B\x00\x0F\x85"
+						"\x00\x00\x00\x00\x8B\x86\x00\x00\x00\x00\x53\x8D\x9E"
+						"\x00\x00\x00\x00\x8B\xCB\x8B\x80\x00\x00\x00\x00\xFF"
+						"\xD0\x84\xC0\x0F\x85\x00\x00\x00\x00\x8B\x06\x8B\xCE"
+					),
+					"xxxxxxxxxxx????xxxxxxxxxxx????xx????xxx????xxxx????xxxxx"
+					"x????xxxx"
+				);
+
+				SDR::ModuleShared::SetFromAddress
+				(
+					ClearBuffers,
+					address.Get()
+				);
+
+				SDR::ModuleShared::VerifyEntry
+				(
+					ClearBuffers,
+					"shaderapidx9.dll",
+					"ClearBuffers"
+				);
 			}
 		}
 	}
+	#endif
 
-	namespace Module_SourceGlobals
+	namespace Module_ShaderDevice
+	{
+		namespace Types
+		{
+			using GetBackBufferDimensions = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				int& width,
+				int& height
+			);
+
+			using GetBackBufferFormat = ImageFormat(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+		}
+
+		void* ShaderDevicePtr;
+		Types::GetBackBufferDimensions GetBackBufferDimensions;
+		Types::GetBackBufferFormat GetBackBufferFormat;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"ShaderDevice_ShaderDevicePtr",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					ShaderDevicePtr = **reinterpret_cast<void***>(address);
+
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"ShaderDevice_GetBackBufferDimensions",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetBackBufferDimensions,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"ShaderDevice_GetBackBufferFormat",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetBackBufferFormat,
+						address
+					);
+				}
+			)
+		);
+	}
+
+	namespace Module_MaterialSystem
+	{
+		namespace Types
+		{
+			using GetRenderContext = void*(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using BeginRenderTargetAllocation = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using EndRenderTargetAllocation = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using CreateRenderTargetTexture = ITexture*(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				int width,
+				int height,
+				RenderTargetSizeMode_t sizemode,
+				ImageFormat	format,
+				MaterialRenderTargetDepth_t depth
+			);
+
+			using BeginFrame = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				float frametime
+			);
+
+			using EndFrame = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+		}
+		
+		void* MaterialsPtr;
+		Types::GetRenderContext GetRenderContext;
+		Types::BeginRenderTargetAllocation BeginRenderTargetAllocation;
+		Types::EndRenderTargetAllocation EndRenderTargetAllocation;
+		Types::CreateRenderTargetTexture CreateRenderTargetTexture;
+		Types::BeginFrame BeginFrame;
+		Types::EndFrame EndFrame;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_MaterialsPtr",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					MaterialsPtr = **reinterpret_cast<void***>(address);
+
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_GetRenderContext",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetRenderContext,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_BeginRenderTargetAllocation",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						BeginRenderTargetAllocation,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_EndRenderTargetAllocation",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						EndRenderTargetAllocation,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_CreateRenderTargetTexture",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						CreateRenderTargetTexture,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_BeginFrame",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						BeginFrame,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_EndFrame",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						EndFrame,
+						address
+					);
+				}
+			)
+		);
+	}
+
+	namespace Module_RenderContext
+	{
+		namespace Types
+		{
+			using Release = int(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using PushRenderTargetAndViewport1 = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				ITexture* texture,
+				ITexture* depthtexture,
+				int x,
+				int y,
+				int width,
+				int height
+			);
+
+			using PopRenderTargetAndViewport = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using ClearColor4 = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				unsigned char r,
+				unsigned char g,
+				unsigned char b,
+				unsigned char a
+			);
+
+			using ClearBuffers = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				bool clearcol,
+				bool cleardepth,
+				bool clearstencil
+			);
+		}
+
+		Types::Release Release;
+		Types::PushRenderTargetAndViewport1 PushRenderTargetAndViewport1;
+		Types::PopRenderTargetAndViewport PopRenderTargetAndViewport;
+		Types::ClearColor4 ClearColor4;
+		Types::ClearBuffers ClearBuffers;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"RenderContext_Release",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						Release,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"RenderContext_PushRenderTargetAndViewport1",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						PushRenderTargetAndViewport1,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"RenderContext_PopRenderTargetAndViewport",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						PopRenderTargetAndViewport,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"RenderContext_ClearBuffers",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						ClearBuffers,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"RenderContext_ClearColor4",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						ClearColor4,
+						address
+					);
+				}
+			)
+		);
+	}
+
+	namespace Module_Texture
 	{
 		namespace Types
 		{
@@ -877,314 +1405,199 @@ namespace
 				int frame,
 				int texturechannel
 			);
+		}
 
-			using GetFullScreenTexture = ITexture*(__cdecl*)
+		Types::GetTextureHandle GetTextureHandle = nullptr;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
 			(
+				"Texture_GetTextureHandle",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
 
-			);
-			
-			using GetFullFrameFrameBufferTexture = ITexture*(__cdecl*)
-			(
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetTextureHandle,
+						address
+					);
+				}
+			)
+		);
+	}
 
-			);
-
+	namespace Module_View
+	{
+		namespace Types
+		{
 			using RenderView = void(__fastcall*)
 			(
 				void* thisptr,
 				void* edx,
-				void* view,
+				const void* view,
 				int clearflags,
 				int drawflags
 			);
 		}
 
-		IDirect3DDevice9* Device;
-		bool* DrawLoading = nullptr;
-		Types::GetTextureHandle GetTextureHandle = nullptr;
-		void* ShaderAPI = nullptr;
-		Types::GetFullScreenTexture GetFullScreenTexture = nullptr;
-		Types::GetFullFrameFrameBufferTexture GetFullFrameFrameBufferTexture = nullptr;
-		int* CurrentViewID = nullptr;
+		int ViewSetupOffset;
+		void* ViewPtr = nullptr;
 		Types::RenderView RenderView = nullptr;
-		IViewRender* ViewPtr = nullptr;
 
-		#if 0
-		void* View_GetViewSetup(void* thisptr)
+		const void* GetViewSetup(void* thisptr)
 		{
 			/*
-				Static structure offset May 22 2017
+				Static CSS structure offset May 22 2017. See 101A76B0
 			*/
 			SDR::StructureWalker walker(thisptr);
-			auto ret = walker.Advance(636);
+			auto ret = walker.Advance(ViewSetupOffset);
 
 			return ret;
 		}
-		#endif
 
-		template <typename T>
-		void SetFromAddress(T& type, void* address)
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"View_ViewPtr",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					ViewPtr = **reinterpret_cast<void***>(address);
+
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"View_RenderView",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						RenderView,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"View_GetViewSetup",
+				[](rapidjson::Value& value)
+				{
+					try
+					{
+						ViewSetupOffset = SDR::ModuleShared::GetJsonOffsetInt(value);
+					}
+
+					catch (bool value)
+					{
+						return false;
+					}
+
+					return true;
+				}
+			)
+		);
+	}
+
+	namespace Module_SourceGlobals
+	{
+		IDirect3DDevice9* Device;
+		bool* DrawLoading = nullptr;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"D3D9_Device",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					Device = **reinterpret_cast<IDirect3DDevice9***>(address);
+
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"DrawLoading",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					DrawLoading = *reinterpret_cast<bool**>(address);
+
+					return true;
+				}
+			)
+		);
+
+		void SaveTempTexture
+		(
+			IDirect3DBaseTexture9* texture
+		)
 		{
-			type = (T)(address);
+			static int counter = 0;
+
+			wchar_t namebuf[1024];
+
+			swprintf_s
+			(
+				namebuf,
+				LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image%d.png)",
+				counter
+			);
+
+			auto hr = D3DXSaveTextureToFileW
+			(
+				namebuf,
+				D3DXIFF_PNG,
+				texture,
+				nullptr
+			);
+
+			++counter;
 		}
 
-		void Set()
+
+		void SaveTempTexture
+		(
+			ITexture* texture,
+			int frame = 0,
+			int channel = 0
+		)
 		{
-			{
-				SDR::AddressFinder address
-				(
-					"shaderapidx9.dll",
-					SDR::MemoryPattern
-					(
-						"\xA1\x00\x00\x00\x00\x53\x56\x8B\xD9\x83\x78\x30"
-						"\x00\x74\x0E\x68\x00\x00\x00\x00"
-					),
-					"x????xxxxxxxxxxx????",
-					/*
-						Function offset and increment for MOV EAX instruction
-					*/
-					0x39 + 1
-				);
+			auto handle = Module_Texture::GetTextureHandle
+			(
+				texture,
+				nullptr,
+				frame,
+				channel
+			);
 
-				Device = **reinterpret_cast<IDirect3DDevice9***>(address.Get());
-			}
-
-			{
-				SDR::AddressFinder address
-				(
-					/*
-						0x10105EA0 static CSS IDA address April 22 2017
-
-						In the function "SCR_BeginLoadingPlaque" the global variable
-						"scr_drawloading" is used.
-					*/
-					"engine.dll",
-					SDR::MemoryPattern
-					(
-						"\x80\x3D\x00\x00\x00\x00\x00\x0F\x85\x00\x00\x00"
-						"\x00\xE8\x00\x00\x00\x00\x6A\x00\x8B\xC8\x8B\x10"
-						"\xFF\x92\x00\x00\x00\x00"
-					),
-					"xx?????xx????x????xxxxxxxx????",
-
-					/*
-						Increment for CMP instruction
-					*/
-					2
-				);
-
-				DrawLoading = *reinterpret_cast<bool**>(address.Get());
-			}
-
-			{
-				/*
-					CTexture::GetTextureHandle, \materialsystem\ctexture.cpp @ 3466
-
-					Return value "int" changed to "Texture_t*" from heavy inlining.
-					This function actually belongs to "ITextureInternal" but it's not
-					a public header.
-				*/
-
-				SDR::AddressFinder address
-				(
-					/*
-						0x10065620 static HL2 IDA address April 25 2017
-					*/
-					"materialsystem.dll",
-					SDR::MemoryPattern
-					(
-						"\x55\x8B\xEC\x8B\x55\x08\x56\x8B\xF1\x85\xD2\x79"
-						"\x1D\x57\x68\x00\x00\x00\x00"
-					),
-					"xxxxxxxxxxxxxxx????"
-				);
-
-				SetFromAddress(GetTextureHandle, address.Get());
-			}
-
-			{
-				SDR::AddressFinder address
-				(
-					/*
-						0x100D08C6 static HL2 IDA address April 25 2017
-
-						In the function "CShaderDeviceMgrDx8::SetMode" the global variable
-						"g_pShaderAPIDX8" is used.
-					*/
-					"shaderapidx9.dll",
-					SDR::MemoryPattern
-					(
-						"\x8B\x0D\x00\x00\x00\x00\x89\x45\xEC\x52\xFF\x75"
-						"\x0C\x8B\x01\xFF\x75\x08\x8B\x80\x00\x00\x00\x00"
-					),
-					"xx????xxxxxxxxxxxxxx????",
-
-					/*
-						Increment for MOV ECX instruction
-					*/
-					2
-				);
-
-				ShaderAPI = address.Get();
-			}
-
-			{
-				/*
-					GetFullscreenTexture, \game\client\rendertexture.cpp @ 55
-				*/
-				SDR::AddressFinder address
-				(
-					/*
-						0x101BE79C static CSS IDA address April 25 2017
-					*/
-					"client.dll",
-					SDR::MemoryPattern
-					(
-						"\xE8\x00\x00\x00\x00\x8B\x4D\x0C\x50\xFF\x96\x00"
-						"\x00\x00\x00\x8B\x75\x0C\x8B\xCE\x8B\x06\xFF\x50"
-						"\x0C\x8B\x06\x8B\xCE\xFF\x50\x04\x8B\x43\x1C\xC6"
-						"\x84\x38\x00\x00\x00\x00\x00"
-					),
-					"x????xxxxxx????xxxxxxxxxxxxxxxxxxxxxxx?????"
-				);
-
-				auto addrmod = static_cast<uint8_t*>(address.Get());
-
-				/*
-					Increment to the next 4 bytes which is the jump distance
-				*/
-				addrmod += 1;
-
-				auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
-
-				addrmod += 4;
-				addrmod += offset;
-
-				SetFromAddress(GetFullScreenTexture, addrmod);
-			}
-
-			{
-				/*
-					GetFullFrameFrameBufferTexture, \game\client\rendertexture.cpp @ 103
-				*/
-				SDR::AddressFinder address
-				(
-					/*
-						0x101885A0 static CSS IDA address April 25 2017
-					*/
-					"client.dll",
-					SDR::MemoryPattern
-					(
-						"\x55\x8B\xEC\x8B\x45\x08\x81\xEC\x00\x00\x00\x00"
-						"\x83\x3C\x85\x00\x00\x00\x00\x00\x56\x8D\x34\x85"
-						"\x00\x00\x00\x00"
-					),
-					"xxxxxxxx????xxx?????xxxx????"
-				);
-
-				auto addrmod = static_cast<uint8_t*>(address.Get());
-
-				/*
-					Increment to the next 4 bytes which is the jump distance
-				*/
-				addrmod += 1;
-
-				auto offset = *reinterpret_cast<ptrdiff_t*>(addrmod);
-
-				addrmod += 4;
-				addrmod += offset;
-
-				SetFromAddress(GetFullFrameFrameBufferTexture, addrmod);
-			}
-
-			{
-				SDR::AddressFinder address
-				(
-					/*
-						0x101BA0FA static CSS IDA address April 26 2017
-
-						In the function "CBaseWorldView::DrawSetup" the global variable
-						"g_CurrentViewID" is used.
-					*/
-					"client.dll",
-					SDR::MemoryPattern
-					(
-						"\x8B\x35\x00\x00\x00\x00\x57\x8B\xF9\x89\x75\xF8"
-						"\x51\xD9\x1C\x24\xC7\x05\x00\x00\x00\x00\x00\x00"
-						"\x00\x00\x8B\x07\x8B\x40\x10"
-					),
-					"xx????xxxxxxxxxxxx????????xxxxx",
-
-					/*
-						Increment for MOV ESI instruction
-					*/
-					2
-				);
-
-				CurrentViewID = *reinterpret_cast<int**>(address.Get());
-			}
-
-			{
-				/*
-					Source 2013
-					\client\viewrender.cpp @ 1912
-					CViewRender::RenderView
-				*/
-				SDR::AddressFinder address
-				(
-					/*
-						0x101BE0E0 static CSS IDA address May 22 2017
-					*/
-					"client.dll",
-					SDR::MemoryPattern
-					(
-						"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x53\x56\x57"
-						"\x8B\xF9\x89\x7D\xFC\x8D\x8F\x00\x00\x00\x00\xE8"
-						"\x00\x00\x00\x00\x8B\x5D\x08\x8D\x8F\x00\x00\x00"
-						"\x00\x53\xE8\x00\x00\x00\x00\x6A\x01\x6A\x01\x8D"
-						"\x4D\xE2\xE8\x00\x00\x00\x00\x8B\x0D\x00\x00\x00"
-						"\x00\x33\xC0\x89\x45\xB4"
-					),
-					"xxxxx????xxxxxxxxxx????x????xxxxx????xx????xxxxxxxx?"
-					"???xx????xxxxx"
-				);
-
-				SetFromAddress(RenderView, address.Get());
-			}
-
-			{
-				/*
-					Source 2013
-					\client\cdll_client_int.cpp
-					CHLClient::LevelShutdown
-				*/
-				SDR::AddressFinder address
-				(
-					/*
-						0x100D51D9 static CSS IDA address May 22 2017
-
-						In this function the global variable "view" is used.
-					*/
-					"client.dll",
-					SDR::MemoryPattern
-					(
-						"\x8B\x0D\x00\x00\x00\x00\x8B\x01\xFF\x50\x08\x8B"
-						"\x0D\x00\x00\x00\x00\x8B\x01\xFF\x50\x08\xE8\x00"
-						"\x00\x00\x00\x8B\xC8\xE8\x00\x00\x00\x00\xE8\x00"
-						"\x00\x00\x00\xB9\x00\x00\x00\x00"
-					),
-					"xx????xxxxxxx????xxxxxx????xxx????x????x????",
-
-					/*
-						Increment for MOV ECX instruction
-					*/
-					2
-				);
-
-				ViewPtr = **reinterpret_cast<IViewRender***>(address.Get());
-
-				int a = 5;
-				a = a;
-			}
+			SaveTempTexture(handle->m_pTexture);
 		}
 	}
 
@@ -1194,41 +1607,59 @@ namespace
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
 
-	SDR::PluginStartupFunctionAdder A2("MovieRecordSetup", []()
+	SDR::PluginStartupFunctionAdder A2("MovieRecord Setup", []()
 	{
-		Module_SourceGlobals::Set();
-		Module_RenderContext::Set();
-
 		int width;
 		int height;
-		materials->GetBackBufferDimensions(width, height);
+
+		Module_ShaderDevice::GetBackBufferDimensions
+		(
+			Module_ShaderDevice::ShaderDevicePtr,
+			nullptr,
+			width,
+			height
+		);
 
 		auto device = Module_SourceGlobals::Device;
 		auto& dx9 = CurrentMovie.DirectX;
 
-		materials->BeginRenderTargetAllocation();
-		
-		dx9.ValveTexture = materials->CreateRenderTargetTexture
+		Module_MaterialSystem::BeginRenderTargetAllocation
 		(
+			Module_MaterialSystem::MaterialsPtr,
+			nullptr
+		);
+
+		dx9.ValveRT = Module_MaterialSystem::CreateRenderTargetTexture
+		(
+			Module_MaterialSystem::MaterialsPtr,
+			nullptr,
 			0,
 			0,
 			RT_SIZE_FULL_FRAME_BUFFER,
-			IMAGE_FORMAT_R32F,
+			Module_ShaderDevice::GetBackBufferFormat
+			(
+				Module_ShaderDevice::ShaderDevicePtr,
+				nullptr
+			),
 			MATERIAL_RT_DEPTH_SHARED
 		);
 
-		if (dx9.ValveTexture)
+		if (dx9.ValveRT)
 		{
-			dx9.ValveTexture->AddRef();
+			dx9.ValveRT->AddRef();
 		}
 
-		materials->EndRenderTargetAllocation();
+		Module_MaterialSystem::EndRenderTargetAllocation
+		(
+			Module_MaterialSystem::MaterialsPtr,
+			nullptr
+		);
 
-		if (!dx9.ValveTexture)
+		if (!dx9.ValveRT)
 		{
 			Warning
 			(
-				"SDR: Could not create depth texture\n"
+				"SDR: Could not Valve rendertarget\n"
 			);
 
 			return false;
@@ -1236,28 +1667,18 @@ namespace
 
 		try
 		{
-			MS::ThrowIfFailed
+			dx9.Previous.Create
 			(
-				device->CreateTexture
-				(
-					width,
-					height,
-					1,
-					D3DUSAGE_RENDERTARGET,
-					D3DFMT_A8R8G8B8,
-					D3DPOOL_DEFAULT,
-					dx9.RenderTarget.GetAddressOf(),
-					nullptr
-				)
+				device,
+				width,
+				height
 			);
 
-			MS::ThrowIfFailed
+			dx9.Current.Create
 			(
-				dx9.RenderTarget->GetSurfaceLevel
-				(
-					0,
-					dx9.RenderTargetSurface.GetAddressOf()
-				)
+				device,
+				width,
+				height
 			);
 
 			MS::ThrowIfFailed
@@ -1265,7 +1686,7 @@ namespace
 				device->CreatePixelShader
 				(
 					(DWORD*)MotionBlur_PS_Blob,
-					dx9.MotionBlurPS.GetAddressOf()
+					dx9.PixelShader.GetAddressOf()
 				)
 			);
 
@@ -1274,7 +1695,7 @@ namespace
 				device->CreateVertexShader
 				(
 					(DWORD*)MotionBlur_VS_Blob,
-					dx9.MotionBlurVS.GetAddressOf()
+					dx9.VertexShader.GetAddressOf()
 				)
 			);
 		}
@@ -1517,22 +1938,6 @@ namespace
 	{
 		#pragma region Init
 
-		/*
-			0x100D5EA0 static CSS IDA address May 22 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x8B\x55\x08\x83\x7A\x08\x00\x74\x17"
-			"\x83\x7A\x0C\x00\x74\x11\x8B\x0D\x00\x00\x00\x00"
-			"\x52\x8B\x01\xFF\x50\x14\xE8\x00\x00\x00\x00\x5D"
-			"\xC2\x04\x00"
-		);
-
-		auto Mask =
-		(
-			"xxxxxxxxxxxxxxxxxxxx????xxxxxxx????xxxx"
-		);
-
 		void __fastcall Override
 		(
 			void* thisptr,
@@ -1542,14 +1947,24 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"client.dll",
-			"View_Render",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"View_Render",
+				[](rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -1585,66 +2000,101 @@ namespace
 				return;
 			}
 
-			materials->EndFrame();
-			materials->BeginFrame(0);
+			Module_MaterialSystem::EndFrame
+			(
+				Module_MaterialSystem::MaterialsPtr,
+				nullptr
+			);
+
+			Module_MaterialSystem::BeginFrame
+			(
+				Module_MaterialSystem::MaterialsPtr,
+				nullptr,
+				0
+			);
 
 			auto& movie = CurrentMovie;
-			auto rendercontext = materials->GetRenderContext();
 
-			rendercontext->PushRenderTargetAndViewport
+			auto rendercontext = Module_MaterialSystem::GetRenderContext
 			(
-				movie.DirectX.ValveTexture,
+				Module_MaterialSystem::MaterialsPtr,
+				nullptr
+			);
+
+			Module_RenderContext::PushRenderTargetAndViewport1
+			(
+				rendercontext,
+				nullptr,
+				movie.DirectX.ValveRT,
+				nullptr,
 				0,
 				0,
 				movie.Width,
 				movie.Height
 			);
 
-			rendercontext->ClearColor4ub(0, 0, 0, 0);
-			rendercontext->ClearBuffers(true, false, false);
-
-			auto viewptr = Module_SourceGlobals::ViewPtr;
-			auto viewsetup = viewptr->GetViewSetup();
-			
-			viewptr->RenderView
+			Module_RenderContext::ClearColor4
 			(
-				*viewsetup,
+				rendercontext,
+				nullptr,
+				0,
+				0,
+				0,
+				0
+			);
+
+			Module_RenderContext::ClearBuffers
+			(
+				rendercontext,
+				nullptr,
+				true,
+				false,
+				false
+			);
+
+			/*Module_ShaderAPI::ClearColor4
+			(
+				Module_ShaderAPI::ShaderAPI,
+				nullptr,
+				0,
+				0,
+				0,
+				0
+			);
+
+			Module_ShaderAPI::ClearBuffers
+			(
+				Module_ShaderAPI::ShaderAPI,
+				nullptr,
+				true,
+				false,
+				false,
+				movie.Width,
+				movie.Height
+			);*/
+
+			Module_View::RenderView
+			(
+				Module_View::ViewPtr,
+				nullptr,
+				Module_View::GetViewSetup(Module_View::ViewPtr),
 				VIEW_CLEAR_STENCIL | VIEW_CLEAR_DEPTH,
 				RENDERVIEW_UNSPECIFIED
 			);
 
-			rendercontext->PopRenderTargetAndViewport();
+			Module_RenderContext::PopRenderTargetAndViewport
+			(
+				nullptr,
+				nullptr
+			);
 
-			{
-				static int counter = 0;
+			Module_SourceGlobals::SaveTempTexture(movie.DirectX.ValveRT);
 
-				wchar_t namebuf[1024];
-
-				swprintf_s
-				(
-					namebuf,
-					LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image%d.png)",
-					counter
-				);
-
-				auto handle = Module_SourceGlobals::GetTextureHandle
-				(
-					movie.DirectX.ValveTexture,
-					nullptr,
-					0,
-					0
-				);
-
-				auto hr = D3DXSaveTextureToFileW
-				(
-					namebuf,
-					D3DXIFF_PNG,
-					handle->m_pTexture,
-					nullptr
-				);
-
-				++counter;
-			}
+			Module_RenderContext::Release
+			(
+				rendercontext,
+				nullptr
+			);
 		}
 	}
 
@@ -1732,6 +2182,7 @@ namespace
 	}
 	#endif
 
+	#if 0
 	namespace Module_PerformScreenSpaceEffects
 	{
 		#pragma region Init
@@ -1849,6 +2300,7 @@ namespace
 			a = a;
 		}
 	}
+	#endif
 
 	#if 0
 	namespace Module_GetFullFrameDepthTexture
@@ -1894,32 +2346,6 @@ namespace
 	{
 		#pragma region Init
 
-		SDR::RelativeJumpFunctionFinder StartMovieAddress
-		{
-			SDR::AddressFinder
-			(
-				/*
-					0x100BF270 static CSS IDA address April 26 2017
-
-					This is inside the console command handler for "startmovie",
-					where it calls CL_StartMovie.
-				*/
-				"engine.dll",
-				SDR::MemoryPattern
-				(
-					"\xFF\x50\x44\x50\x53\x56\xE8\x00\x00\x00\x00\x68"
-					"\x00\x00\x00\x00\xFF\x15\x00\x00\x00\x00\x83\xC4"
-					"\x20\x5F\x5B\x5E\x8B\xE5\x5D\xC3"
-				),
-				"xxxxxxx????x????xx????xxxxxxxxxx",
-			
-				/*
-					Skip \xFF\x50\x44\x50\x53\x56 to where E8 is next
-				*/
-				6
-			)
-		};
-
 		void __cdecl Override
 		(
 			const char* filename,
@@ -1933,10 +2359,38 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleStaticAddress<ThisFunction> ThisHook
-		{
-			"engine.dll", "StartMovie", Override, StartMovieAddress.Get()
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"StartMovie",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					SDR::RelativeJumpFunctionFinder jumper(address);
+
+					try
+					{
+						SDR::CreateHook
+						(
+							ThisHook,
+							Override,
+							jumper.Get()
+						);
+					}
+
+					catch (MH_STATUS status)
+					{
+						return false;
+					}
+
+					return true;
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -2446,21 +2900,6 @@ namespace
 	{
 		#pragma region Init
 
-		/*
-			0x100BEF40 static CSS IDA address April 7 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x83\xEC\x08\x83\x3D\x00\x00\x00\x00"
-			"\x00\x0F\x85\x00\x00\x00\x00\x8B\x4D\x08\x56\x8B"
-			"\x01\x83\xF8\x02\x7D\x6B\x8B\x35\x00\x00\x00\x00"
-		);
-
-		auto Mask =
-		(
-			"xxxxxxxx?????xx????xxxxxxxxxxxxx????"
-		);
-
 		void __cdecl Override
 		(
 			const CCommand& args
@@ -2468,10 +2907,24 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "StartMovieCommand", Override, Pattern, Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"StartMovieCommand",
+				[](rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -2496,14 +2949,30 @@ namespace
 
 			int width;
 			int height;
-			materials->GetBackBufferDimensions(width, height);
+
+			Module_ShaderDevice::GetBackBufferDimensions
+			(
+				Module_ShaderDevice::ShaderDevicePtr,
+				nullptr,
+				width,
+				height
+			);
 
 			auto name = args[1];
 
 			/*
 				4 = FMOVIE_WAV, needed for future audio calls
 			*/
-			Module_StartMovie::Override(name, 4, width, height, 0, 0, 0);
+			Module_StartMovie::Override
+			(
+				name,
+				4,
+				width,
+				height,
+				0,
+				0,
+				0
+			);
 		}
 	}
 
@@ -2511,28 +2980,28 @@ namespace
 	{
 		#pragma region Init
 
-		/*
-			0x100BAE40 static CSS IDA address May 22 2016
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00\x00"
-			"\xD9\x05\x00\x00\x00\x00\x51\xB9\x00\x00\x00\x00"
-		);
-
-		auto Mask =
-		(
-			"xx?????xx????xx????xx????"
-		);
-
 		void __cdecl Override();
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "EndMovie", Override, Pattern, Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"EndMovie",
+				[](rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -2608,20 +3077,6 @@ namespace
 	{
 		#pragma region Init
 
-		/*
-			0x102011B0 static CSS IDA address June 3 2016
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x51\x80\x3D\x00\x00\x00\x00\x00\x53"
-			"\x8B\x5D\x08\x57\x8B\xF9\x8B\x83\x00\x00\x00\x00"
-		);
-
-		auto Mask =
-		(
-			"xxxxxx?????xxxxxxxxx????"
-		);
-
 		void __fastcall Override
 		(
 			void* thisptr,
@@ -2631,10 +3086,24 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "WriteMovieFrame", Override, Pattern, Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WriteMovieFrame",
+				[](rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -2688,7 +3157,7 @@ namespace
 				in newer games like TF2 the materials are handled much differently
 				but this endpoint function remains the same. Less elegant but what you gonna do.
 			*/
-			Module_RenderContext::ReadScreenPixels
+			Module_VideoMode::ReadScreenPixels
 			(
 				thisptr,
 				edx,
@@ -2742,30 +3211,28 @@ namespace
 	{
 		#pragma region Init
 
-		/*
-			0x1007C710 static CSS IDA address March 21 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x8B\x0D\x00\x00\x00\x00\x53\x56\x57\x85"
-			"\xC9\x74\x0B\x8B\x01\x8B\x40\x38\xFF\xD0\x84\xC0\x75"
-			"\x0D\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00"
-			"\x00"
-		);
-		
-		auto Mask =
-		(
-			"xxxxx????xxxxxxxxxxxxxxxxxxxx?????xx????"
-		);
-
 		void __cdecl Override();
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "SNDRecordBuffer", Override, Pattern, Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"SNDRecordBuffer",
+				[](rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -2782,27 +3249,6 @@ namespace
 	{
 		#pragma region Init
 
-		/*
-			0x1008EC90 static CSS IDA address March 21 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x57\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
-			"\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x68\x00\x00\x00\x00\x50\xE8\x00\x00\x00\x00"
-			"\x8B\x0D\x00\x00\x00\x00\x8D\x95\x00\x00\x00\x00\x83"
-			"\xC4\x18\x83\xC1\x04\x8B\x01\x6A\x00\x68\x00\x00\x00"
-			"\x00\x52\xFF\x50\x08\x8B\xF8\x85\xFF\x0F\x84\x00\x00"
-			"\x00\x00"
-		);
-		
-		auto Mask =
-		(
-			"xxxxx????xx????xx????xxxxx????x????xx????x????xx????"
-			"xx????xx????xxxxxxxxxxx????xxxxxxxxxx????"
-		);
-
 		void __cdecl Override
 		(
 			const char* filename,
@@ -2813,10 +3259,24 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "WaveCreateTmpFile", Override, Pattern, Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WaveCreateTmpFile",
+				[](rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -2843,26 +3303,6 @@ namespace
 	{
 		#pragma region Init
 
-		/*
-			0x1008EBE0 static CSS IDA address March 21 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x57\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
-			"\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x68\x00\x00\x00\x00\x50\xE8\x00\x00\x00\x00"
-			"\x8B\x0D\x00\x00\x00\x00\x8D\x95\x00\x00\x00\x00\x83"
-			"\xC4\x18\x83\xC1\x04\x8B\x01\x6A\x00\x68\x00\x00\x00"
-			"\x00\x52\xFF\x50\x08\x8B\xF8\x85\xFF\x74\x47"
-		);
-
-		auto Mask =
-		(
-			"xxxxx????xx????xx????xxxxx????x????xx????x????xx????"
-			"xx????xx????xxxxxxxxxxx????xxxxxxxxxx"
-		);
-
 		void __cdecl Override
 		(
 			const char* filename,
@@ -2873,10 +3313,24 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "WaveAppendTmpFile", Override, Pattern, Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WaveAppendTmpFile",
+				[](rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -2904,26 +3358,6 @@ namespace
 	{
 		#pragma region Init
 
-		/*
-			0x1008EE30 static CSS IDA address March 21 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x56\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
-			"\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x68\x00\x00\x00\x00\x50\xE8\x00\x00\x00\x00"
-			"\x8B\x0D\x00\x00\x00\x00\x8D\x95\x00\x00\x00\x00\x83"
-			"\xC4\x18\x83\xC1\x04\x8B\x01\x6A\x00\x68\x00\x00\x00"
-			"\x00"
-		);
-		
-		auto Mask =
-		(
-			"xxxxx????xx????xx????xxxxx????x????xx????x????xx????x"
-			"x????xx????xxxxxxxxxxx????"
-		);
-
 		void __cdecl Override
 		(
 			const char* filename
@@ -2931,10 +3365,24 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll", "WaveFixupTmpFile", Override, Pattern, Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WaveFixupTmpFile",
+				[](rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
