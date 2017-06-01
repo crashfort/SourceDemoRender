@@ -20,29 +20,57 @@ namespace
 			CreateInterfaceFn gameserverfactory
 		) override;
 
-		virtual void Unload() override;
+		virtual void Unload
+		(
 
-		virtual void Pause() override {}
-		virtual void UnPause() override {}
+		) override;
+
+		virtual void Pause
+		(
+
+		) override {}
+
+		virtual void UnPause
+		(
+
+		) override {}
 
 		virtual const char* GetPluginDescription() override
 		{
 			return "Source Demo Render";
 		}
 
-		virtual void LevelInit(char const* mapname) override {}
+		virtual void LevelInit
+		(
+			char const* mapname
+		) override {}
 
 		virtual void ServerActivate
 		(
-			edict_t* edictlist, int edictcount, int maxclients
+			edict_t* edictlist,
+			int edictcount,
+			int maxclients
 		) override {}
 
-		virtual void GameFrame(bool simulating) override {}
+		virtual void GameFrame
+		(
+			bool simulating
+		) override {}
 
-		virtual void LevelShutdown() override {}
+		virtual void LevelShutdown
+		(
 
-		virtual void ClientActive(edict_t* entity) override {}
-		virtual void ClientDisconnect(edict_t* entity) override {}
+		) override {}
+
+		virtual void ClientActive
+		(
+			edict_t* entity
+		) override {}
+
+		virtual void ClientDisconnect
+		(
+			edict_t* entity
+		) override {}
 		
 		virtual void ClientPutInServer
 		(
@@ -50,9 +78,15 @@ namespace
 			char const* playername
 		) override {}
 
-		virtual void SetCommandClient(int index) override {}
+		virtual void SetCommandClient
+		(
+			int index
+		) override {}
 
-		virtual void ClientSettingsChanged(edict_t* entity) override {}
+		virtual void ClientSettingsChanged
+		(
+			edict_t* entity
+		) override {}
 
 		virtual PLUGIN_RESULT ClientConnect
 		(
@@ -92,13 +126,17 @@ namespace
 			EQueryCvarValueStatus status,
 			const char *cvarname,
 			const char *cvarvalue
-		) override
-		{
+		) override {}
 
-		}
+		virtual void OnEdictAllocated
+		(
+			edict_t* entity
+		) override {}
 
-		virtual void OnEdictAllocated(edict_t* entity) override {}
-		virtual void OnEdictFreed(const edict_t* entity) override {}
+		virtual void OnEdictFreed
+		(
+			const edict_t* entity
+		) override {}
 
 		enum
 		{
