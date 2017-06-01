@@ -264,73 +264,14 @@ namespace
 			SourceDemoRenderPlugin::PluginVersion
 		);
 
-		avcodec_register_all();
-		av_register_all();
-
-		ConnectTier1Libraries(&interfacefactory, 1);
-		ConnectTier2Libraries(&interfacefactory, 1);
-		ConVar_Register();
-
-		/*
-			This is not accessible in newer games like TF2
-		*/
-		if (!materials)
 		{
-			Msg
-			(
-				"SDR: Materials were not found at %s\n",
-				MATERIAL_SYSTEM_INTERFACE_VERSION
-			);
 
-			/*
-				As of May 19 2017, the TF2 material version is 081,
-				it might inrease in the future but this works for the time being I guess.
 
-				Perhaps a more elegant version would be to grab the string address
-				that a related function reads from.
-			*/
 
-			for (size_t i = 80; i < 180; i++)
-			{
-				char format[256];
-				sprintf_s(format, "VMaterialSystem%03d", i);
 
-				try
-				{
-					CreateInterface
-					(
-						interfacefactory,
-						format,
-						materials
-					);
-				}
 
-				catch (const char* name)
-				{
-					continue;
-				}
 
-				g_pMaterialSystem = materials;
 
-				Msg
-				(
-					"SDR: Materials found at %s\n",
-					format
-				);
-
-				break;
-			}
-
-			if (!materials)
-			{
-				Warning
-				(
-					"SDR: Materials were not found\n"
-				);
-
-				return false;
-			}
-		}
 
 		try
 		{
