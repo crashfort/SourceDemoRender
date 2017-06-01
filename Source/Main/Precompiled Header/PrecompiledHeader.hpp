@@ -27,6 +27,7 @@ using namespace std::chrono_literals;
 #include "convar.h"
 #include "materialsystem\imaterialsystem.h"
 
+#include "Interface\Application\Shared\Shared.hpp"
 namespace SDR
 {
 	struct EngineInterfaces
