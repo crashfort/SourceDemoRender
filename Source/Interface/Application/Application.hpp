@@ -175,6 +175,18 @@ namespace SDR
 		rapidjson::Value& value
 	);
 
+	void* GetVirtualAddressFromIndex
+	(
+		void* ptr,
+		int index
+	);
+
+	void* GetVirtualAddressFromJson
+	(
+		void* ptr,
+		rapidjson::Value& value
+	);
+
 	namespace ModuleShared
 	{
 		template <typename T>

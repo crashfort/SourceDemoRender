@@ -581,3 +581,30 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 
 	return address.Get();
 }
+
+void* SDR::GetVirtualAddressFromIndex
+(
+	void* ptr,
+	int index
+)
+{
+	auto vtable = *((void***)ptr);
+	auto address = vtable[index];
+
+	return address;
+}
+
+void* SDR::GetVirtualAddressFromJson
+(
+	void* ptr,
+	rapidjson::Value& value
+)
+{
+	auto offset = value["Offset"].GetInt();
+
+	return GetVirtualAddressFromIndex
+	(
+		ptr,
+		offset
+	);
+}
