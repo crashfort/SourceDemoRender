@@ -15,6 +15,10 @@
 #include <memory>
 #include <thread>
 #include <atomic>
+#include <cctype>
+#include <array>
+
+#include "rapidjson\document.h"
 
 using namespace std::chrono_literals;
 
