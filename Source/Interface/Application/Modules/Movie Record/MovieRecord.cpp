@@ -2370,15 +2370,13 @@ namespace
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
-					SDR::RelativeJumpFunctionFinder jumper(address);
-
 					try
 					{
 						SDR::CreateHook
 						(
 							ThisHook,
 							Override,
-							jumper.Get()
+							address
 						);
 					}
 

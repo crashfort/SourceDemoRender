@@ -550,7 +550,8 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 	auto module = value["Module"].GetString();
 	auto patternstr = value["Pattern"].GetString();
 	int offset = 0;
-	
+	bool isjump = false;
+
 	{
 		auto iter = value.FindMember("Offset");
 
@@ -570,14 +571,29 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 		}
 	}
 
+	if (value.HasMember("IsRelativeJump"))
+	{
+		isjump = true;
+	}
+
 	auto pattern = GetPatternFromString(patternstr);
 
-	SDR::AddressFinder address
+	AddressFinder address
 	(
 		module,
 		pattern,
 		offset
 	);
+
+	if (isjump)
+	{
+		RelativeJumpFunctionFinder jumper
+		(
+			address.Get()
+		);
+
+		return jumper.Get();
+	}
 
 	return address.Get();
 }

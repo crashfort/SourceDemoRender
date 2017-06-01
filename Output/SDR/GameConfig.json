@@ -160,7 +160,8 @@
 			"Comment": "0x100BF270 static CSS IDA address April 26 2017",
 			"Module": "engine.dll",
 			"Pattern": "FF 50 44 50 53 56 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 20 5F 5B 5E 8B E5 5D C3",
-			"Offset": 6
+			"Offset": 6,
+			"IsRelativeJump": true
 		},
 		"StartMovieCommand":
 		{
