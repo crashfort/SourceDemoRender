@@ -1,4 +1,7 @@
 *
 !*.txt
 !*.cfg
+!*.json
+!/cfg/
+!/SDR/
 !.gitignore
