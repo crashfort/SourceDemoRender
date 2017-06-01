@@ -379,7 +379,10 @@ namespace
 			return false;
 		}
 
-		Msg("SDR: Source Demo Render loaded\n");
+		Msg
+		(
+			"SDR: Source Demo Render loaded\n"
+		);
 
 		return true;
 	}
