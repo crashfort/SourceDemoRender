@@ -115,7 +115,4 @@
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\MotionBlur_PS.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\MotionBlur_VS.hlsl" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Configuration File\GameConfig.json" />
-  </ItemGroup>
 </Project>

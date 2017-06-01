@@ -316,9 +316,6 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">2.0</ShaderModel>
     </FxCompile>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Configuration File\GameConfig.json" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>
