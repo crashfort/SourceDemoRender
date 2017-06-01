@@ -283,6 +283,8 @@ namespace
 							"SDR: Enabled module %s\n",
 							handler.Name
 						);
+
+						break;
 					}
 				}
 
