@@ -6,7 +6,7 @@ namespace
 {
 	struct Application
 	{
-		std::vector<SDR::HookModuleBase*> Modules;
+		std::vector<SDR::ModuleHandlerData> ModuleHandlers;
 		std::vector<SDR::StartupFuncData> StartupFunctions;
 		std::vector<SDR::ShutdownFuncType> ShutdownFunctions;
 	};
@@ -51,20 +51,330 @@ namespace
 				auto addr = reinterpret_cast<const uint8_t*>(start) + i;
 				
 				if (DataCompare(addr, pattern, mask))
+	namespace Config
+	{
+		enum class Status
+		{
+			CouldNotFindConfig,
+			CouldNotFindGame,
+
+			InheritTargetWrong,
+			HandlerNotFound,
+
+			CouldNotCreateModule,
+		};
+
+		const char* StatusNames[] =
+		{
+			"Could not find config",
+			"Could not find game",
+			"Inherit target not found",
+			"Module handler not found",
+			"Could not create module",
+		};
+
+		template
+		<
+			typename NodeType
+		>
+		auto SafeFindMember
+		(
+			NodeType& node,
+			const char* name,
+			Status code
+		)
+		{
+			auto it = node.FindMember(name);
+
+			if (it == node.MemberEnd())
+			{
+				throw code;
+			}
+
+			return it;
+		}
+
+		template
+		<
+			typename NodeType,
+			typename FuncType
+		>
+		void MemberLoop
+		(
+			NodeType& node,
+			FuncType callback
+		)
+		{
+			auto& begin = node.MemberBegin();
+			auto& end = node.MemberEnd();
+
+			for (auto it = begin; it != end; ++it)
+			{
+				callback(it);
+			}
+		}
+
+		struct GameData
+		{
+			using MemberIt = rapidjson::Document::MemberIterator;
+			using ValueType = rapidjson::Value;
+
+			std::string Name;
+			std::vector<std::pair<std::string, ValueType>> Properties;
+		};
+
+		std::vector<GameData> Configs;
+
+		void ResolveInherit
+		(
+			GameData* targetgame,
+			rapidjson::Document::AllocatorType& alloc
+		)
+		{
+			auto begin = targetgame->Properties.begin();
+			auto end = targetgame->Properties.end();
+
+			auto foundinherit = false;
+
+			for (auto it = begin; it != end; ++it)
+			{
+				if (it->first == "Inherit")
 				{
 					return const_cast<void*>
-					(
-						reinterpret_cast<const void*>(addr)
-					);
+					foundinherit = true;
+
+					if (!it->second.IsString())
+					{
+						Warning
+						(
+							"SDR: %s inherit field not a string\n",
+							targetgame->Name.c_str()
+						);
+
+						return;
+					}
+
+					std::string from = it->second.GetString();
+
+					targetgame->Properties.erase(it);
+
+					for (const auto& game : Configs)
+					{
+						bool foundgame = false;
+
+						if (game.Name == from)
+						{
+							foundgame = true;
+
+							for (const auto& sourceprop : game.Properties)
+							{
+								bool shouldadd = true;
+
+								for (const auto& destprop : targetgame->Properties)
+								{
+									if (sourceprop.first == destprop.first)
+									{
+										shouldadd = false;
+										break;
+									}
+								}
+
+								if (shouldadd)
+								{
+									targetgame->Properties.emplace_back
+									(
+										sourceprop.first,
+										rapidjson::Value
+										(
+											sourceprop.second,
+											alloc
+										)
+									);
+								}
+							}
+
+							break;
+						}
+
+						if (!foundgame)
+						{
+							Warning
+							(
+								"SDR: %s inherit target %s not found\n",
+								targetgame->Name.c_str(),
+								from.c_str()
+							);
+
+							throw Status::InheritTargetWrong;
+						}
+					}
+
+					break;
 				}
 			}
 
+			if (foundinherit)
+			{
+				ResolveInherit
+				(
+					targetgame,
+					alloc
+				);
+			}
+		}
+
+		void CallHandlers
+		(
+			GameData* game
+		)
+		{
+			Msg
+			(
+				"SDR: Creating %d modules\n",
+				MainApplication.ModuleHandlers.size()
+			);
+
+			for (auto& prop : game->Properties)
+			{
+				bool foundhadler = false;
+
+				for (auto& handler : MainApplication.ModuleHandlers)
+				{
+					if (prop.first == handler.Name)
+					{
+						foundhadler = true;
+
+						auto res = handler.Function
+						(
+							prop.second
+						);
+
+						if (!res)
+						{
+							Warning
+							(
+								"SDR: Could not enable module %s\n",
+								handler.Name
+							);
+
+							throw Status::CouldNotCreateModule;
+						}
+
+						Msg
+						(
+							"SDR: Enabled module %s\n",
+							handler.Name
+						);
+					}
+				}
+
+				if (!foundhadler)
+				{
+					Warning
+					(
+						reinterpret_cast<const void*>(addr)
+						"SDR: No handler found for %s\n",
+						prop.first.c_str()
+					);
+				}
+			}
+		}
+
 			return nullptr;
+		void SetupGame
+		(
+			const char* gamepath,
+			const char* gamename
+		)
+		{
+			char cfgpath[1024];
+		
+			strcpy_s(cfgpath, gamepath);
+			strcat_s(cfgpath, "SDR\\GameConfig.json");
+
+			SDR::Shared::ScopedFile config;
+
+			try
+			{
+				config.Assign
+				(
+					cfgpath,
+					"r"
+				);
+			}
+
+			catch (SDR::Shared::ScopedFile::ExceptionType status)
+			{
+				throw Status::CouldNotFindConfig;
+			}
+
+			auto data = config.ReadAll();
+			auto strdata = reinterpret_cast<const char*>(data.data());
+
+			rapidjson::Document document;
+			document.Parse(strdata, data.size());
+
+			GameData* currentgame = nullptr;
+
+			MemberLoop
+			(
+				document, [&](GameData::MemberIt gameit)
+				{
+					Configs.emplace_back();
+					auto& curgame = Configs.back();
+
+					curgame.Name = gameit->name.GetString();
+
+					MemberLoop
+					(
+						gameit->value, [&](GameData::MemberIt gamedata)
+						{
+							curgame.Properties.emplace_back
+							(
+								std::make_pair
+								(
+									gamedata->name.GetString(),
+									std::move(gamedata->value)
+								)
+							);
+						}
+					);
+				}
+			);
+
+			for (auto& game : Configs)
+			{
+				if (game.Name == gamename)
+				{
+					currentgame = &game;
+					break;
+				}
+			}
+
+			if (!currentgame)
+			{
+				throw Status::CouldNotFindGame;
+			}
+
+			ResolveInherit
+			(
+				currentgame,
+				document.GetAllocator()
+			);
+
+			CallHandlers
+			(
+				currentgame
+			);
 		}
 	}
 }
 
-void SDR::Setup()
+void SDR::Setup
+(
+	const char* gamepath,
+	const char* gamename
+)
 {
 	auto res = MH_Initialize();
 
@@ -75,44 +385,30 @@ void SDR::Setup()
 			"SDR: Failed to initialize hooks\n"
 		);
 
-		throw res;
+		throw false;
 	}
 
-	Msg
-	(
-		"SDR: Creating %d modules\n",
-		MainApplication.Modules.size()
-	);
-
-	for (auto module : MainApplication.Modules)
+	try
 	{
-		auto res = module->Create();
-		auto name = module->DisplayName;
-
-		if (res != MH_OK)
-		{
-			Warning
-			(
-				"SDR: Could not enable module \"%s\": \"%s\"\n",
-				name,
-				MH_StatusToString(res)
-			);
-
-			throw res;
-		}
-
-		auto library = module->Module;
-		auto function = module->TargetFunction;
-
-		MH_EnableHook(function);
-
-		Msg
+		Config::SetupGame
 		(
-			"SDR: Enabled module \"%s\" -> %s @ 0x%p\n",
-			name,
-			library,
-			function
+			gamepath,
+			gamename
 		);
+	}
+
+	catch (Config::Status status)
+	{
+		auto index = static_cast<int>(status);
+		auto name = Config::StatusNames[index];
+
+		Warning
+		(
+			"SDR: GameConfig: %s\n",
+			name
+		);
+
+		throw false;
 	}
 }
 
@@ -173,23 +469,97 @@ void SDR::AddPluginShutdownFunction
 	MainApplication.ShutdownFunctions.emplace_back(function);
 }
 
-void SDR::AddModule(HookModuleBase* module)
+void SDR::AddModuleHandler
+(
+	const ModuleHandlerData& data
+)
 {
-	MainApplication.Modules.emplace_back(module);
+	MainApplication.ModuleHandlers.emplace_back(data);
+}
+
+SDR::BytePattern SDR::GetPatternFromString
+(
+	const char* input
+)
+{
+	BytePattern ret;
+
+	while (*input)
+	{
+		if (std::isspace(*input))
+		{
+			++input;
+		}
+
+		BytePattern::Entry entry;
+
+		if (std::isxdigit(*input))
+		{
+			entry.Unknown = false;
+			entry.Value = std::strtol(input, nullptr, 16);
+
+			input += 2;
+		}
+
+		else
+		{
+			entry.Unknown = true;
+			input += 2;
+		}
+
+		ret.Bytes.emplace_back(entry);
+	}
+
+	return ret;
 }
 
 void* SDR::GetAddressFromPattern
 (
 	const ModuleInformation& library,
-	const uint8_t* pattern,
-	const char* mask
+	const BytePattern& pattern
 )
 {
 	return Memory::FindPattern
 	(
 		library.MemoryBase,
 		library.MemorySize,
-		pattern,
-		mask
+		pattern
 	);
+}
+
+void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
+{
+	auto module = value["Module"].GetString();
+	auto patternstr = value["Pattern"].GetString();
+	int offset = 0;
+	
+	{
+		auto iter = value.FindMember("Offset");
+
+		if (iter != value.MemberEnd())
+		{
+			if (!iter->value.IsNumber())
+			{
+				Warning
+				(
+					"SDR: Offset field not a number\n"
+				);
+
+				return nullptr;
+			}
+
+			offset = iter->value.GetInt();
+		}
+	}
+
+	auto pattern = GetPatternFromString(patternstr);
+
+	SDR::AddressFinder address
+	(
+		module,
+		pattern,
+		offset
+	);
+
+	return address.Get();
 }
