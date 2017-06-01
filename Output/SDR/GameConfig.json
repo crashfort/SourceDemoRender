@@ -113,7 +113,7 @@
 		},
 		"Texture_GetTextureHandle":
 		{
-			"Comment": "0x10065620 static HL2 IDA address April 25 2017",
+			"Comment": "0x10067700 static CSS IDA address April 25 2017",
 			"Module": "materialsystem.dll",
 			"Pattern": "55 8B EC 56 8B 75 08 57 8B F9 85 F6 79 10 68 ?? ?? ?? ?? 33 F6 FF 15 ?? ?? ?? ?? 83 C4 04 0F B7 47 32 3B F0 7D 1A"
 		},
