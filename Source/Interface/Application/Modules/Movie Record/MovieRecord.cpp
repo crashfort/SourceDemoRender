@@ -1407,7 +1407,7 @@ namespace
 			);
 		}
 
-		Types::GetTextureHandle GetTextureHandle = nullptr;
+		Types::GetTextureHandle GetTextureHandle;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -1443,8 +1443,8 @@ namespace
 		}
 
 		int ViewSetupOffset;
-		void* ViewPtr = nullptr;
-		Types::RenderView RenderView = nullptr;
+		void* ViewPtr;
+		Types::RenderView RenderView;
 
 		const void* GetViewSetup(void* thisptr)
 		{
@@ -1514,7 +1514,7 @@ namespace
 	namespace Module_SourceGlobals
 	{
 		IDirect3DDevice9* Device;
-		bool* DrawLoading = nullptr;
+		bool* DrawLoading;
 
 		auto Adders = SDR::CreateAdders
 		(
