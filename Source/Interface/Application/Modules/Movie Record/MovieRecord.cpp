@@ -1444,7 +1444,7 @@ namespace
 
 					return SDR::ModuleShared::SetFromAddress
 					(
-						GetTextureHandle,
+						IncrementReferenceCount,
 						address
 					);
 				}
@@ -1458,7 +1458,7 @@ namespace
 
 					return SDR::ModuleShared::SetFromAddress
 					(
-						GetTextureHandle,
+						DecrementReferenceCount,
 						address
 					);
 				}
