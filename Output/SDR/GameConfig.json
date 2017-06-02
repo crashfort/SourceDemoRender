@@ -111,6 +111,18 @@
 			"Module": "materialsystem.dll",
 			"Pattern": "55 8B EC 8B 0D ?? ?? ?? ?? 8B 01 5D FF A0 94 01 00 00"
 		},
+		"Texture_IncrementReferenceCount":
+		{
+			"Comment": "0x1003A3A0 static CSS IDA address June 2 2017",
+			"Module": "materialsystem.dll",
+			"Pattern": "83 C1 1C B8 ?? ?? ?? ?? F0 0F C1 01 C3"
+		},
+		"Texture_DecrementReferenceCount":
+		{
+			"Comment": "0x100664D0 static CSS IDA address June 2 2017",
+			"Module": "materialsystem.dll",
+			"Pattern": "8D 41 1C 83 CA FF F0 0F C1 10 4A 85 D2 7F 0E F7 41 ?? ?? ?? ?? ?? 74 05 8B 01 FF 60 64 C3"
+		},
 		"Texture_GetTextureHandle":
 		{
 			"Comment": "0x10067700 static CSS IDA address April 25 2017",
@@ -228,6 +240,12 @@
 			"Comment": "0x10061440 static HL2 IDA address June 1 2017",
 			"Module": "materialsystem.dll",
 			"Pattern": "83 79 4C 00 74 0B FF 49 4C 8B 01 FF A0 90 03 00 00 C3"
+		},
+		"Texture_DecrementReferenceCount":
+		{
+			"Comment": "0x10039240 static HL2 IDA address June 2 2017",
+			"Module": "materialsystem.dll",
+			"Pattern": "83 C1 1C 83 C8 FF F0 0F C1 01 C3"
 		},
 		"Texture_GetTextureHandle":
 		{
