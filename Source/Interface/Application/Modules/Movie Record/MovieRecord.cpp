@@ -1079,7 +1079,7 @@ namespace
 				int width,
 				int height,
 				int sizemode,
-				int	format,
+				int format,
 				int depth
 			);
 
