@@ -708,6 +708,23 @@ namespace
 
 		double SamplingTime = 0.0;
 
+		struct ScopedValveTexture
+		{
+			~ScopedValveTexture();
+
+			void* Get() const
+			{
+				return Texture;
+			}
+
+			explicit operator bool() const
+			{
+				return Get() != nullptr;
+			}
+
+			void* Texture = nullptr;
+		};
+
 		struct DirectX9Data
 		{
 			struct RenderTarget
@@ -748,15 +765,7 @@ namespace
 				Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 			};
 
-			~DirectX9Data()
-			{
-				if (ValveRT)
-				{
-					ValveRT->Release();
-				}
-			}
-
-			ITexture* ValveRT = nullptr;
+			ScopedValveTexture ValveRT;
 
 			RenderTarget Previous;
 			RenderTarget Current;
@@ -1063,15 +1072,15 @@ namespace
 				void* edx
 			);
 
-			using CreateRenderTargetTexture = ITexture*(__fastcall*)
+			using CreateRenderTargetTexture = void*(__fastcall*)
 			(
 				void* thisptr,
 				void* edx,
 				int width,
 				int height,
-				RenderTargetSizeMode_t sizemode,
-				ImageFormat	format,
-				MaterialRenderTargetDepth_t depth
+				int sizemode,
+				int	format,
+				int depth
 			);
 
 			using BeginFrame = void(__fastcall*)
@@ -1216,8 +1225,8 @@ namespace
 			(
 				void* thisptr,
 				void* edx,
-				ITexture* texture,
-				ITexture* depthtexture,
+				void* texture,
+				void* depthtexture,
 				int x,
 				int y,
 				int width,
@@ -1398,20 +1407,62 @@ namespace
 				short m_Count;
 				short m_CountIndex;
 			};
+
+			using IncrementReferenceCount = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using DecrementReferenceCount = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
 		
 			using GetTextureHandle = Texture_t*(__fastcall*)
 			(
-				ITexture* thisptr,
+				void* thisptr,
 				void* edx,
 				int frame,
 				int texturechannel
 			);
 		}
 
+		Types::IncrementReferenceCount IncrementReferenceCount;
+		Types::DecrementReferenceCount DecrementReferenceCount;
 		Types::GetTextureHandle GetTextureHandle;
 
 		auto Adders = SDR::CreateAdders
 		(
+			SDR::ModuleHandlerAdder
+			(
+				"Texture_IncrementReferenceCount",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetTextureHandle,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"Texture_DecrementReferenceCount",
+				[](rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetTextureHandle,
+						address
+					);
+				}
+			),
 			SDR::ModuleHandlerAdder
 			(
 				"Texture_GetTextureHandle",
@@ -1585,7 +1636,7 @@ namespace
 
 		void SaveTempTexture
 		(
-			ITexture* texture,
+			void* texture,
 			int frame = 0,
 			int channel = 0
 		)
@@ -1599,6 +1650,18 @@ namespace
 			);
 
 			SaveTempTexture(handle->m_pTexture);
+		}
+	}
+
+	MovieData::ScopedValveTexture::~ScopedValveTexture()
+	{
+		if (Texture)
+		{
+			Module_Texture::DecrementReferenceCount
+			(
+				Texture,
+				nullptr
+			);
 		}
 	}
 
@@ -1630,7 +1693,7 @@ namespace
 			nullptr
 		);
 
-		dx9.ValveRT = Module_MaterialSystem::CreateRenderTargetTexture
+		dx9.ValveRT.Texture = Module_MaterialSystem::CreateRenderTargetTexture
 		(
 			Module_MaterialSystem::MaterialsPtr,
 			nullptr,
@@ -1647,7 +1710,11 @@ namespace
 
 		if (dx9.ValveRT)
 		{
-			dx9.ValveRT->AddRef();
+			Module_Texture::IncrementReferenceCount
+			(
+				dx9.ValveRT.Get(),
+				nullptr
+			);
 		}
 
 		Module_MaterialSystem::EndRenderTargetAllocation
@@ -2026,7 +2093,7 @@ namespace
 			(
 				rendercontext,
 				nullptr,
-				movie.DirectX.ValveRT,
+				movie.DirectX.ValveRT.Get(),
 				nullptr,
 				0,
 				0,
@@ -2089,7 +2156,10 @@ namespace
 				nullptr
 			);
 
-			Module_SourceGlobals::SaveTempTexture(movie.DirectX.ValveRT);
+			Module_SourceGlobals::SaveTempTexture
+			(
+				movie.DirectX.ValveRT.Get()
+			);
 
 			Module_RenderContext::Release
 			(
