@@ -784,6 +784,7 @@ namespace
 
 		if (!movie.IsStarted)
 		{
+			movie = MovieData();
 			return;
 		}
 
