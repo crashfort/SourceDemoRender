@@ -1334,9 +1334,9 @@ namespace
 			);
 		}
 
-		Types::IncrementReferenceCount IncrementReferenceCount;
-		Types::DecrementReferenceCount DecrementReferenceCount;
-		Types::GetTextureHandle GetTextureHandle;
+		int IncrementReferenceCount;
+		int DecrementReferenceCount;
+		int GetTextureHandle;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -1349,13 +1349,8 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						IncrementReferenceCount,
-						address
-					);
+					IncrementReferenceCount = SDR::GetVirtualIndexFromJson(value);
+					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -1367,13 +1362,8 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						DecrementReferenceCount,
-						address
-					);
+					DecrementReferenceCount = SDR::GetVirtualIndexFromJson(value);
+					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -1385,13 +1375,8 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						GetTextureHandle,
-						address
-					);
+					GetTextureHandle = SDR::GetVirtualIndexFromJson(value);
+					return true;
 				}
 			)
 		);
@@ -1587,7 +1572,13 @@ namespace
 			int channel = 0
 		)
 		{
-			auto handle = ModuleTexture::GetTextureHandle
+			auto func = SDR::GetVirtual<ModuleTexture::Types::GetTextureHandle>
+			(
+				texture,
+				ModuleTexture::GetTextureHandle
+			);
+
+			auto handle = func
 			(
 				texture,
 				nullptr,
@@ -1603,7 +1594,13 @@ namespace
 	{
 		if (Texture)
 		{
-			ModuleTexture::DecrementReferenceCount
+			auto func = SDR::GetVirtual<ModuleTexture::Types::DecrementReferenceCount>
+			(
+				Texture,
+				ModuleTexture::DecrementReferenceCount
+			);
+
+			func
 			(
 				Texture,
 				nullptr
@@ -1656,7 +1653,13 @@ namespace
 
 		if (dx9.ValveRT)
 		{
-			ModuleTexture::IncrementReferenceCount
+			auto func = SDR::GetVirtual<ModuleTexture::Types::IncrementReferenceCount>
+			(
+				dx9.ValveRT.Get(),
+				ModuleTexture::IncrementReferenceCount
+			);
+
+			func
 			(
 				dx9.ValveRT.Get(),
 				nullptr
