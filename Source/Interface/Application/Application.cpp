@@ -486,6 +486,8 @@ namespace
 			(
 				currentgame
 			);
+
+			MainApplication.ModuleHandlers.clear();
 		}
 	}
 }
