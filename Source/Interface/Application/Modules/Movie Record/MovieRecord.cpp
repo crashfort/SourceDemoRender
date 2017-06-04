@@ -2028,19 +2028,6 @@ namespace
 				return;
 			}
 
-			ModuleMaterialSystem::EndFrame
-			(
-				ModuleMaterialSystem::MaterialsPtr,
-				nullptr
-			);
-
-			ModuleMaterialSystem::BeginFrame
-			(
-				ModuleMaterialSystem::MaterialsPtr,
-				nullptr,
-				0
-			);
-
 			auto& movie = CurrentMovie;
 
 			auto rendercontext = ModuleMaterialSystem::GetRenderContext
