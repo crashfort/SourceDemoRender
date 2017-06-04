@@ -848,47 +848,6 @@ namespace
 		);
 	}
 
-	namespace Module_ShaderDevice
-	{
-		namespace Types
-		{
-			
-		}
-
-		void* ShaderDevicePtr;
-
-		auto Adders = SDR::CreateAdders
-		(
-			SDR::ModuleHandlerAdder
-			(
-				"ShaderDevice_ShaderDevicePtr",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
-				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
-
-					if (!address)
-					{
-						return false;
-					}
-
-					ShaderDevicePtr = **(void***)(address);
-
-					SDR::ModuleShared::Registry::SetKeyValue
-					(
-						name,
-						ShaderDevicePtr
-					);
-
-					return true;
-				}
-			)
-		);
-	}
-
 	namespace Module_MaterialSystem
 	{
 		namespace Types
