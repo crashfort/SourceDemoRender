@@ -45,11 +45,17 @@
 			"VTPtrName": "MaterialSystem_MaterialsPtr",
 			"VTIndex": 32
 		},
-		"MaterialSystem_GetRenderContext":
+		"MaterialSystem_BeginFrame":
 		{
 			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
 			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 98
+			"VTIndex": 37
+		},
+		"MaterialSystem_EndFrame":
+		{
+			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_MaterialsPtr",
+			"VTIndex": 38
 		},
 		"MaterialSystem_BeginRenderTargetAllocation":
 		{
@@ -69,17 +75,11 @@
 			"VTPtrName": "MaterialSystem_MaterialsPtr",
 			"VTIndex": 84
 		},
-		"MaterialSystem_BeginFrame":
+		"MaterialSystem_GetRenderContext":
 		{
 			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
 			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 37
-		},
-		"MaterialSystem_EndFrame":
-		{
-			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 38
+			"VTIndex": 98
 		},
 		"RenderContext_Release":
 		{
