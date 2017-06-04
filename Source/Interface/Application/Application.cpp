@@ -72,6 +72,107 @@ namespace
 
 	namespace Config
 	{
+		namespace Registry
+		{
+			struct DataType
+			{
+				struct TypeIndex
+				{
+					enum Type
+					{
+						Invalid,
+						UInt32,
+					};
+				};
+
+				template <typename T>
+				struct TypeReturn
+				{
+					explicit operator bool() const
+					{
+						return Address && Type != TypeIndex::Invalid;
+					}
+
+					template <typename T>
+					void Set(T value)
+					{
+						if (*this)
+						{
+							*Address = value;
+						}
+					}
+
+					T Get() const
+					{
+						return *Address;
+					}
+
+					bool IsUInt32() const
+					{
+						return Type == TypeIndex::UInt32;
+					}
+
+					TypeIndex::Type Type = TypeIndex::Invalid;
+					T* Address = nullptr;
+				};
+
+				const char* Name = nullptr;
+				TypeIndex::Type TypeNumber = TypeIndex::Invalid;
+
+				union
+				{
+					uint32_t Value_U32;
+				};
+
+				template <typename T>
+				void SetValue(T value)
+				{
+					if (std::is_same<T, uint32_t>::value)
+					{
+						TypeNumber = TypeIndex::Type::UInt32;
+						Value_U32 = value;
+					}
+				}
+
+				template <typename T>
+				TypeReturn<T> GetActiveValue()
+				{
+					TypeReturn<T> ret;
+					ret.Type = TypeNumber;
+
+					switch (TypeNumber)
+					{
+						case TypeIndex::UInt32:
+						{
+							ret.Address = &Value_U32;							
+							return ret;
+						}
+					}
+
+					return {};
+				}
+			};
+
+			std::vector<DataType> KeyValues;
+
+			template <typename T>
+			void InsertKeyValue
+			(
+				const char* name,
+				T value
+			)
+			{
+				DataType newtype;
+				newtype.Name = name;
+				newtype.SetValue(value);
+
+				KeyValues.emplace_back
+				(
+					std::move(newtype)
+				);
+			}
+		}
+
 		enum class Status
 		{
 			CouldNotFindConfig,
@@ -624,4 +725,37 @@ void* SDR::GetVirtualAddressFromJson
 		ptr,
 		offset
 	);
+}
+
+void SDR::ModuleShared::Registry::SetKeyValue
+(
+	const char* name,
+	uint32_t value
+)
+{
+	Config::Registry::InsertKeyValue(name, value);
+}
+
+bool SDR::ModuleShared::Registry::GetKeyValue
+(
+	const char* name,
+	uint32_t* value
+)
+{
+	for (auto& keyvalue : Config::Registry::KeyValues)
+	{
+		if (strcmp(keyvalue.Name, name) == 0)
+		{
+			auto active = keyvalue.GetActiveValue<uint32_t>();
+
+			if (active && value)
+			{
+				*value = active.Get();
+			}
+
+			return true;
+		}
+	}
+
+	return false;
 }

@@ -193,6 +193,34 @@ namespace SDR
 
 	namespace ModuleShared
 	{
+		namespace Registry
+		{
+			void SetKeyValue
+			(
+				const char* name,
+				uint32_t value
+			);
+
+			bool GetKeyValue
+			(
+				const char* name,
+				uint32_t* value
+			);
+
+			inline void SetKeyValue
+			(
+				const char* name,
+				void* value
+			)
+			{
+				SetKeyValue
+				(
+					name,
+					(uintptr_t)value
+				);
+			}
+		}
+
 		template <typename T>
 		bool SetFromAddress
 		(
