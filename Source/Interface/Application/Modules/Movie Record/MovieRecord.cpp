@@ -1023,6 +1023,7 @@ namespace
 					}
 
 					ShaderDevicePtr = **reinterpret_cast<void***>(address);
+					ShaderDevicePtr = **(void***)(address);
 
 					return true;
 				}
@@ -1140,6 +1141,7 @@ namespace
 					}
 
 					MaterialsPtr = **reinterpret_cast<void***>(address);
+					MaterialsPtr = **(void***)(address);
 
 					return true;
 				}
@@ -1599,6 +1601,7 @@ namespace
 					}
 
 					ViewPtr = **reinterpret_cast<void***>(address);
+					ViewPtr = **(void***)(address);
 
 					return true;
 				}
@@ -1666,6 +1669,7 @@ namespace
 					}
 
 					Device = **reinterpret_cast<IDirect3DDevice9***>(address);
+					Device = **(IDirect3DDevice9***)(address);
 
 					return true;
 				}
@@ -1687,6 +1691,7 @@ namespace
 					}
 
 					DrawLoading = *reinterpret_cast<bool**>(address);
+					DrawLoading = *(bool**)(address);
 
 					return true;
 				}
