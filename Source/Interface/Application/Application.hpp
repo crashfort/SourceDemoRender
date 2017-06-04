@@ -63,7 +63,11 @@ namespace SDR
 
 	struct ModuleHandlerData
 	{
-		using FuncType = bool(*)(rapidjson::Value& value);
+		using FuncType = bool(*)
+		(
+			const char* name,
+			rapidjson::Value& value
+		);
 
 		const char* Name;
 		FuncType Function;

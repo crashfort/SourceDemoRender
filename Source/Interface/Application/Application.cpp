@@ -264,6 +264,7 @@ namespace
 
 						auto res = handler.Function
 						(
+							handler.Name,
 							prop.second
 						);
 
