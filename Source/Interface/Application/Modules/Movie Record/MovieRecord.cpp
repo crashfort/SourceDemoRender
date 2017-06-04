@@ -836,7 +836,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1042,7 +1042,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1060,7 +1060,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1165,7 +1165,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1183,7 +1183,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1201,7 +1201,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1219,7 +1219,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1237,7 +1237,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1255,7 +1255,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1332,7 +1332,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1350,7 +1350,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1368,7 +1368,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1386,7 +1386,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1404,7 +1404,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1520,7 +1520,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1538,7 +1538,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1556,7 +1556,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
@@ -1630,7 +1630,7 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
 					return SDR::ModuleShared::SetFromAddress
 					(
