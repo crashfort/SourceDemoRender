@@ -174,6 +174,11 @@ namespace SDR
 		const BytePattern& pattern
 	);
 
+	void* GetAddressFromJsonFlex
+	(
+		rapidjson::Value& value
+	);
+
 	void* GetAddressFromJsonPattern
 	(
 		rapidjson::Value& value

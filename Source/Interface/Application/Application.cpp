@@ -651,6 +651,27 @@ void* SDR::GetAddressFromPattern
 	);
 }
 
+void* SDR::GetAddressFromJsonFlex
+(
+	rapidjson::Value& value
+)
+{
+	if (value.HasMember("Pattern"))
+	{
+		return GetAddressFromJsonPattern(value);
+	}
+
+	else if (value.HasMember("VTIndex"))
+	{
+		if (value.HasMember("VTPtrName"))
+		{
+			return GetVirtualAddressFromJson(value);
+		}
+	}
+
+	return nullptr;
+}
+
 void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 {
 	auto module = value["Module"].GetString();
