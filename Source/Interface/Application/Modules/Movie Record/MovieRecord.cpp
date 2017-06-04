@@ -912,12 +912,12 @@ namespace
 		void* MaterialsPtr;
 		Types::GetBackBufferDimensions GetBackBufferDimensions;
 		Types::GetBackBufferFormat GetBackBufferFormat;
-		Types::GetRenderContext GetRenderContext;
+		Types::BeginFrame BeginFrame;
+		Types::EndFrame EndFrame;
 		Types::BeginRenderTargetAllocation BeginRenderTargetAllocation;
 		Types::EndRenderTargetAllocation EndRenderTargetAllocation;
 		Types::CreateRenderTargetTexture CreateRenderTargetTexture;
-		Types::BeginFrame BeginFrame;
-		Types::EndFrame EndFrame;
+		Types::GetRenderContext GetRenderContext;
 
 		auto Adders = SDR::CreateAdders
 		(
