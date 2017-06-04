@@ -2118,46 +2118,6 @@ namespace
 		}
 	}
 
-	#if 0
-	namespace Module_GetFullFrameDepthTexture
-	{
-		/*
-			GetFullFrameDepthTexture, \game\client\rendertexture.cpp @ 55
-
-			0x101ADD0E static CSS IDA address April 25 2017
-		*/
-		SDR::RelativeJumpFunctionFinder Address
-		{
-			SDR::AddressFinder
-			(
-				"client.dll",
-				SDR::MemoryPattern
-				(
-					"\xE8\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00\x8B"
-					"\xD8\x89\x5D\xFC\x8B\x11\xFF\x92\x00\x00\x00\x00"
-					"\x8B\xF0\x85\xF6\x74\x07\x8B\x06\x8B\xCE\xFF\x50"
-					"\x08"
-				),
-				"x????xx????xxxxxxxxx????xxxxxxxxxxxxx"
-			)
-		};
-
-		ITexture* __cdecl Override();
-
-		using ThisFunction = decltype(Override)*;
-
-		SDR::HookModuleStaticAddress<ThisFunction> ThisHook
-		{
-			"client.dll", "GetFullFrameDepthTexture", Override, Address.Get()
-		};
-
-		ITexture* __cdecl Override()
-		{
-			return CurrentMovie.DirectX9.DepthTexture;
-		}
-	}
-	#endif
-
 	namespace Module_StartMovie
 	{
 		#pragma region Init
