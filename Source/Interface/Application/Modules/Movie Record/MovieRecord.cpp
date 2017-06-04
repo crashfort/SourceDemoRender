@@ -1169,11 +1169,11 @@ namespace
 			);
 		}
 
-		Types::Release Release;
-		Types::PushRenderTargetAndViewport1 PushRenderTargetAndViewport1;
-		Types::PopRenderTargetAndViewport PopRenderTargetAndViewport;
-		Types::ClearColor4 ClearColor4;
-		Types::ClearBuffers ClearBuffers;
+		int Release;
+		int PushRenderTargetAndViewport1;
+		int PopRenderTargetAndViewport;
+		int ClearColor4;
+		int ClearBuffers;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -1186,13 +1186,8 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						Release,
-						address
-					);
+					Release = SDR::GetVirtualIndexFromJson(value);
+					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -1204,13 +1199,8 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						PushRenderTargetAndViewport1,
-						address
-					);
+					PushRenderTargetAndViewport1 = SDR::GetVirtualIndexFromJson(value);
+					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -1222,13 +1212,8 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						PopRenderTargetAndViewport,
-						address
-					);
+					PopRenderTargetAndViewport = SDR::GetVirtualIndexFromJson(value);
+					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -1240,13 +1225,8 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						ClearBuffers,
-						address
-					);
+					ClearBuffers = SDR::GetVirtualIndexFromJson(value);
+					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -1258,13 +1238,8 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						ClearColor4,
-						address
-					);
+					ClearColor4 = SDR::GetVirtualIndexFromJson(value);
+					return true;
 				}
 			)
 		);
@@ -2071,7 +2046,37 @@ namespace
 				nullptr
 			);
 
-			Module_RenderContext::PushRenderTargetAndViewport1
+			auto release = SDR::GetVirtual<Module_RenderContext::Types::Release>
+			(
+				rendercontext,
+				Module_RenderContext::Release
+			);
+
+			auto pushrt = SDR::GetVirtual<Module_RenderContext::Types::PushRenderTargetAndViewport1>
+			(
+				rendercontext,
+				Module_RenderContext::PushRenderTargetAndViewport1
+			);
+
+			auto poprt = SDR::GetVirtual<Module_RenderContext::Types::PopRenderTargetAndViewport>
+			(
+				rendercontext,
+				Module_RenderContext::PopRenderTargetAndViewport
+			);
+
+			auto clearcol = SDR::GetVirtual<Module_RenderContext::Types::ClearColor4>
+			(
+				rendercontext,
+				Module_RenderContext::ClearColor4
+			);
+
+			auto clearbuf = SDR::GetVirtual<Module_RenderContext::Types::ClearBuffers>
+			(
+				rendercontext,
+				Module_RenderContext::ClearBuffers
+			);
+
+			pushrt
 			(
 				rendercontext,
 				nullptr,
@@ -2083,7 +2088,7 @@ namespace
 				movie.Height
 			);
 
-			Module_RenderContext::ClearColor4
+			clearcol
 			(
 				rendercontext,
 				nullptr,
@@ -2093,7 +2098,7 @@ namespace
 				0
 			);
 
-			Module_RenderContext::ClearBuffers
+			clearbuf
 			(
 				rendercontext,
 				nullptr,
@@ -2101,27 +2106,6 @@ namespace
 				false,
 				false
 			);
-
-			/*Module_ShaderAPI::ClearColor4
-			(
-				Module_ShaderAPI::ShaderAPI,
-				nullptr,
-				0,
-				0,
-				0,
-				0
-			);
-
-			Module_ShaderAPI::ClearBuffers
-			(
-				Module_ShaderAPI::ShaderAPI,
-				nullptr,
-				true,
-				false,
-				false,
-				movie.Width,
-				movie.Height
-			);*/
 
 			Module_View::RenderView
 			(
@@ -2132,21 +2116,21 @@ namespace
 				RENDERVIEW_UNSPECIFIED
 			);
 
-			Module_RenderContext::PopRenderTargetAndViewport
+			poprt
 			(
-				nullptr,
+				rendercontext,
+				nullptr
+			);
+
+			release
+			(
+				rendercontext,
 				nullptr
 			);
 
 			Module_SourceGlobals::SaveTempTexture
 			(
 				movie.DirectX.ValveRT.Get()
-			);
-
-			Module_RenderContext::Release
-			(
-				rendercontext,
-				nullptr
 			);
 		}
 	}
