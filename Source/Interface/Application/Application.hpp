@@ -205,20 +205,30 @@ namespace SDR
 		int index
 	);
 
-	template
-	<
-		typename FuncType
-	>
+	template <typename T>
+	struct VirtualIndex
+	{
+		using FuncType = T;
+
+		void operator=(int other)
+		{
+			Index = other;
+		}
+
+		int Index;
+	};
+
+	template <typename FuncType>
 	auto GetVirtual
 	(
 		void* ptr,
-		int index
+		VirtualIndex<FuncType>& index
 	)
 	{
 		auto address = GetVirtualAddressFromIndex
 		(
 			ptr,
-			index
+			index.Index
 		);
 
 		auto func = (FuncType)(address);

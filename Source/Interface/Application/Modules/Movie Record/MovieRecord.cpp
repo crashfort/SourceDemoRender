@@ -1169,11 +1169,11 @@ namespace
 			);
 		}
 
-		int Release;
-		int PushRenderTargetAndViewport1;
-		int PopRenderTargetAndViewport;
-		int ClearColor4;
-		int ClearBuffers;
+		SDR::VirtualIndex<Types::Release> Release;
+		SDR::VirtualIndex<Types::PushRenderTargetAndViewport1> PushRenderTargetAndViewport1;
+		SDR::VirtualIndex<Types::PopRenderTargetAndViewport> PopRenderTargetAndViewport;
+		SDR::VirtualIndex<Types::ClearColor4> ClearColor4;
+		SDR::VirtualIndex<Types::ClearBuffers> ClearBuffers;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -1334,9 +1334,9 @@ namespace
 			);
 		}
 
-		int IncrementReferenceCount;
-		int DecrementReferenceCount;
-		int GetTextureHandle;
+		SDR::VirtualIndex<Types::IncrementReferenceCount> IncrementReferenceCount;
+		SDR::VirtualIndex<Types::DecrementReferenceCount> DecrementReferenceCount;
+		SDR::VirtualIndex<Types::GetTextureHandle> GetTextureHandle;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -1572,7 +1572,7 @@ namespace
 			int channel = 0
 		)
 		{
-			auto func = SDR::GetVirtual<ModuleTexture::Types::GetTextureHandle>
+			auto func = SDR::GetVirtual
 			(
 				texture,
 				ModuleTexture::GetTextureHandle
@@ -1597,7 +1597,7 @@ namespace
 	{
 		if (Texture)
 		{
-			auto func = SDR::GetVirtual<ModuleTexture::Types::DecrementReferenceCount>
+			auto func = SDR::GetVirtual
 			(
 				Texture,
 				ModuleTexture::DecrementReferenceCount
@@ -1656,7 +1656,7 @@ namespace
 
 		if (dx9.ValveRT)
 		{
-			auto func = SDR::GetVirtual<ModuleTexture::Types::IncrementReferenceCount>
+			auto func = SDR::GetVirtual
 			(
 				dx9.ValveRT.Get(),
 				ModuleTexture::IncrementReferenceCount
@@ -2041,19 +2041,19 @@ namespace
 
 			namespace Context = ModuleRenderContext::Types;
 
-			auto release = SDR::GetVirtual<Context::Release>
+			auto release = SDR::GetVirtual
 			(
 				rendercontext,
 				ModuleRenderContext::Release
 			);
 
-			auto pushrt = SDR::GetVirtual<Context::PushRenderTargetAndViewport1>
+			auto pushrt = SDR::GetVirtual
 			(
 				rendercontext,
 				ModuleRenderContext::PushRenderTargetAndViewport1
 			);
 
-			auto poprt = SDR::GetVirtual<Context::PopRenderTargetAndViewport>
+			auto poprt = SDR::GetVirtual
 			(
 				rendercontext,
 				ModuleRenderContext::PopRenderTargetAndViewport
