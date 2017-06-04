@@ -651,22 +651,61 @@ void* SDR::GetAddressFromPattern
 	);
 }
 
-void* SDR::GetAddressFromJsonFlex
+bool SDR::JsonHasPattern
 (
 	rapidjson::Value& value
 )
 {
 	if (value.HasMember("Pattern"))
 	{
-		return GetAddressFromJsonPattern(value);
+		return true;
 	}
 
-	else if (value.HasMember("VTIndex"))
+	return false;
+}
+
+bool SDR::JsonHasVirtualIndexOnly
+(
+	rapidjson::Value& value
+)
+{
+	if (value.HasMember("VTIndex"))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool SDR::JsonHasVirtualIndexAndNamePtr
+(
+	rapidjson::Value& value
+)
+{
+	if (JsonHasVirtualIndexOnly(value))
 	{
 		if (value.HasMember("VTPtrName"))
 		{
-			return GetVirtualAddressFromJson(value);
+			return true;
 		}
+	}
+
+	return false;
+}
+
+void* SDR::GetAddressFromJsonFlex
+(
+	rapidjson::Value& value
+)
+{
+	if (JsonHasPattern(value))
+	{
+		return GetAddressFromJsonPattern(value);
+	}
+
+	else if (JsonHasVirtualIndexAndNamePtr(value))
+	{
+		return GetVirtualAddressFromJson(value);
 	}
 
 	return nullptr;

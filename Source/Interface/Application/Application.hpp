@@ -174,6 +174,21 @@ namespace SDR
 		const BytePattern& pattern
 	);
 
+	bool JsonHasPattern
+	(
+		rapidjson::Value& value
+	);
+
+	bool JsonHasVirtualIndexOnly
+	(
+		rapidjson::Value& value
+	);
+
+	bool JsonHasVirtualIndexAndNamePtr
+	(
+		rapidjson::Value& value
+	);
+
 	void* GetAddressFromJsonFlex
 	(
 		rapidjson::Value& value
