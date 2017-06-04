@@ -1586,7 +1586,10 @@ namespace
 				channel
 			);
 
-			SaveTempTexture(handle->m_pTexture);
+			SaveTempTexture
+			(
+				handle->m_pTexture
+			);
 		}
 	}
 
