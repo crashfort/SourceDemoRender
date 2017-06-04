@@ -866,7 +866,14 @@ namespace
 				void* edx
 			);
 
-			using GetRenderContext = void*(__fastcall*)
+			using BeginFrame = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				float frametime
+			);
+
+			using EndFrame = void(__fastcall*)
 			(
 				void* thisptr,
 				void* edx
@@ -895,14 +902,7 @@ namespace
 				int depth
 			);
 
-			using BeginFrame = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx,
-				float frametime
-			);
-
-			using EndFrame = void(__fastcall*)
+			using GetRenderContext = void*(__fastcall*)
 			(
 				void* thisptr,
 				void* edx
