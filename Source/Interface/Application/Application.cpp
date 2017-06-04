@@ -743,13 +743,21 @@ void* SDR::GetVirtualAddressFromJson
 	rapidjson::Value& value
 )
 {
-	auto index = value["VTIndex"].GetInt();
+	auto index = GetVirtualIndexFromJson(value);
 
 	return GetVirtualAddressFromIndex
 	(
 		ptr,
 		index
 	);
+}
+
+int SDR::GetVirtualIndexFromJson
+(
+	rapidjson::Value& value
+)
+{
+	return value["VTIndex"].GetInt();
 }
 
 void* SDR::GetVirtualAddressFromJson

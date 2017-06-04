@@ -196,6 +196,11 @@ namespace SDR
 		rapidjson::Value& value
 	);
 
+	int GetVirtualIndexFromJson
+	(
+		rapidjson::Value& value
+	);
+
 	void* GetVirtualAddressFromJson
 	(
 		rapidjson::Value& value
