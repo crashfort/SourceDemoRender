@@ -89,33 +89,33 @@
 		},
 		"RenderContext_Release":
 		{
-			"Comment": "0x1004C3C0 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "56 8D 71 04 83 C8 FF 8D 4E 04 F0 0F C1 01 48 75 17 8B 06 8B CE 8B 40 04 FF D0 84 C0 74 08 8B 06 8B CE 6A 01 FF 10 33 C0 5E C3"
+			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_RenderContextPtr",
+			"VTIndex": 1
 		},
 		"RenderContext_PushRenderTargetAndViewport1":
 		{
-			"Comment": "0x10063150 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "55 8B EC 83 EC 24 8B 45 08 89 45 DC 8B 45 0C 89 45 EC 8B 45 10 89 45 F0 8B 45 14 53 89 45 F4 8B D9 8B 45 18 89 45 F8"
+			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_RenderContextPtr",
+			"VTIndex": 105
 		},
 		"RenderContext_PopRenderTargetAndViewport":
 		{
-			"Comment": "0x10062E60 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "56 8B F1 83 7E 4C 00 74 15 8B 06 6A 00 FF 50 10 FF 4E 4C 8B CE 8B 06 5E FF A0 A4 03 00 00 5E C3"
+			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_RenderContextPtr",
+			"VTIndex": 109
 		},
 		"RenderContext_ClearBuffers":
 		{
-			"Comment": "0x10062E80 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "8B 0D ?? ?? ?? ?? 8B 01 FF A0 9C 02 00 00"
+			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_RenderContextPtr",
+			"VTIndex": 71
 		},
 		"RenderContext_ClearColor4":
 		{
-			"Comment": "0x1005FD60 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "55 8B EC 8B 0D ?? ?? ?? ?? 8B 01 5D FF A0 94 01 00 00"
+			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_RenderContextPtr",
+			"VTIndex": 73
 		},
 		"Texture_IncrementReferenceCount":
 		{
@@ -230,24 +230,6 @@
 	{
 		"Inherit": "cstrike",
 
-		"MaterialSystem_EndRenderTargetAllocation":
-		{
-			"Comment": "0x10046DC0 static HL2 IDA address June 1 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "56 8B F1 8B 0D ?? ?? ?? ?? 8B 01 FF 90 ?? ?? ?? ?? C6 86 ?? ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 8B 01 FF 10 8B 0D ?? ?? ?? ?? 8B 01 FF 50 04 8B 0D ?? ?? ?? ?? 5E 8B 01 FF 60 10"
-		},
-		"MaterialSystem_EndFrame":
-		{
-			"Comment": "0x100467F0 static HL2 IDA address June 1 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "55 8B EC 83 EC 30 57 8B F9 FF 15 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 8B 07 8B CF 8B 80 ?? ?? ?? ?? FF D0 84 C0 0F 84 ?? ?? ?? ?? 8B 0D ?? ?? ?? ??"
-		},
-		"RenderContext_PopRenderTargetAndViewport":
-		{
-			"Comment": "0x10061440 static HL2 IDA address June 1 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "83 79 4C 00 74 0B FF 49 4C 8B 01 FF A0 90 03 00 00 C3"
-		},
 		"Texture_DecrementReferenceCount":
 		{
 			"Comment": "0x10039240 static HL2 IDA address June 2 2017",
