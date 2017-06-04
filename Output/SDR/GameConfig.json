@@ -47,39 +47,39 @@
 		},
 		"MaterialSystem_GetRenderContext":
 		{
-			"Comment": "0x100488F0 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "53 56 57 8B F9 8D 8F ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 8B F0 85 F6 75 13 8D B7 ?? ?? ?? ?? 56 8D 8F ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 8B 06"
+			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_MaterialsPtr",
+			"VTIndex": 98
 		},
 		"MaterialSystem_BeginRenderTargetAllocation":
 		{
-			"Comment": "0x10044B40 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "56 8B F1 8B 0D ?? ?? ?? ?? 8B 01 FF 90 ?? ?? ?? ?? C6 86 ?? ?? ?? ?? ?? 5E C3"
+			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_MaterialsPtr",
+			"VTIndex": 82
 		},
 		"MaterialSystem_EndRenderTargetAllocation":
 		{
-			"Comment": "0x100472A0 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "56 8B F1 8B 0D ?? ?? ?? ?? 8B 01 FF 90 ?? ?? ?? ?? C6 86 ?? ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 8B 01 8B 80 ?? ?? ?? ?? FF D0 5E 84 C0 74 15 8B 0D ?? ?? ?? ?? 8B 01 FF 10 8B 0D ?? ?? ?? ?? 8B 01 FF 50 04"
+			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_MaterialsPtr",
+			"VTIndex": 83
 		},
 		"MaterialSystem_CreateRenderTargetTexture":
 		{
-			"Comment": "0x10045DD0 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "55 8B EC 8B 01 6A 00 6A 0C FF 75 18 FF 75 14 FF 75 10 FF 75 0C FF 75 08 6A 00 FF 90 ?? ?? ?? ?? 5D C2 14 00"
+			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_MaterialsPtr",
+			"VTIndex": 84
 		},
 		"MaterialSystem_BeginFrame":
 		{
-			"Comment": "0x10044790 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "55 8B EC 83 EC 40 56 8B F1 FF 15 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 8B 06 8B CE 8B 80 ?? ?? ?? ?? FF D0 84 C0 0F 85 ?? ?? ?? ?? A1 ?? ?? ?? ?? 53 8B 1D ?? ?? ?? ??"
+			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_MaterialsPtr",
+			"VTIndex": 37
 		},
 		"MaterialSystem_EndFrame":
 		{
-			"Comment": "0x10046BC0 static CSS IDA address May 30 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "55 8B EC 83 EC 3C 56 8B F1 FF 15 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 8B 06 8B CE 8B 80 ?? ?? ?? ?? FF D0 84 C0 0F 84 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 57 8B 01"
+			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
+			"VTPtrName": "MaterialSystem_MaterialsPtr",
+			"VTIndex": 38
 		},
 		"RenderContext_Release":
 		{
