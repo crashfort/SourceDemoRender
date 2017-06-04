@@ -2069,18 +2069,6 @@ namespace
 				ModuleRenderContext::PopRenderTargetAndViewport
 			);
 
-			auto clearcol = SDR::GetVirtual<Context::ClearColor4>
-			(
-				rendercontext,
-				ModuleRenderContext::ClearColor4
-			);
-
-			auto clearbuf = SDR::GetVirtual<Context::ClearBuffers>
-			(
-				rendercontext,
-				ModuleRenderContext::ClearBuffers
-			);
-
 			pushrt
 			(
 				rendercontext,
@@ -2092,25 +2080,6 @@ namespace
 				movie.Width,
 				movie.Height
 			);
-
-			/*clearcol
-			(
-				rendercontext,
-				nullptr,
-				0,
-				0,
-				0,
-				0
-			);
-
-			clearbuf
-			(
-				rendercontext,
-				nullptr,
-				true,
-				false,
-				false
-			);*/
 
 			ModuleView::RenderView
 			(
