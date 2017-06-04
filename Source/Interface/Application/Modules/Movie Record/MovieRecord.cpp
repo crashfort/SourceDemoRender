@@ -2049,31 +2049,33 @@ namespace
 				nullptr
 			);
 
-			auto release = SDR::GetVirtual<ModuleRenderContext::Types::Release>
+			namespace Context = ModuleRenderContext::Types;
+
+			auto release = SDR::GetVirtual<Context::Release>
 			(
 				rendercontext,
 				ModuleRenderContext::Release
 			);
 
-			auto pushrt = SDR::GetVirtual<ModuleRenderContext::Types::PushRenderTargetAndViewport1>
+			auto pushrt = SDR::GetVirtual<Context::PushRenderTargetAndViewport1>
 			(
 				rendercontext,
 				ModuleRenderContext::PushRenderTargetAndViewport1
 			);
 
-			auto poprt = SDR::GetVirtual<ModuleRenderContext::Types::PopRenderTargetAndViewport>
+			auto poprt = SDR::GetVirtual<Context::PopRenderTargetAndViewport>
 			(
 				rendercontext,
 				ModuleRenderContext::PopRenderTargetAndViewport
 			);
 
-			auto clearcol = SDR::GetVirtual<ModuleRenderContext::Types::ClearColor4>
+			auto clearcol = SDR::GetVirtual<Context::ClearColor4>
 			(
 				rendercontext,
 				ModuleRenderContext::ClearColor4
 			);
 
-			auto clearbuf = SDR::GetVirtual<ModuleRenderContext::Types::ClearBuffers>
+			auto clearbuf = SDR::GetVirtual<Context::ClearBuffers>
 			(
 				rendercontext,
 				ModuleRenderContext::ClearBuffers
