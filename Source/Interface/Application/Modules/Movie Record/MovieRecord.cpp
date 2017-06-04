@@ -1694,6 +1694,13 @@ namespace
 			nullptr
 		);
 
+		Module_MaterialSystem::ReloadMaterials
+		(
+			Module_MaterialSystem::MaterialsPtr,
+			nullptr,
+			nullptr
+		);
+
 		if (!dx9.ValveRT)
 		{
 			Warning
