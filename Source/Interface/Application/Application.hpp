@@ -205,6 +205,26 @@ namespace SDR
 		int index
 	);
 
+	template
+	<
+		typename FuncType
+	>
+	auto GetVirtual
+	(
+		void* ptr,
+		int index
+	)
+	{
+		auto address = GetVirtualAddressFromIndex
+		(
+			ptr,
+			index
+		);
+
+		auto func = (FuncType)(address);
+		return func;
+	}
+
 	void* GetVirtualAddressFromJson
 	(
 		void* ptr,
