@@ -581,6 +581,8 @@ void SDR::CallPluginStartupFunctions()
 
 		++index;
 	}
+
+	MainApplication.StartupFunctions.clear();
 }
 
 void SDR::AddPluginShutdownFunction
