@@ -806,7 +806,7 @@ namespace
 		movie = MovieData();
 	}
 
-	namespace Module_VideoMode
+	namespace ModuleVideoMode
 	{
 		namespace Types
 		{
@@ -848,7 +848,7 @@ namespace
 		);
 	}
 
-	namespace Module_MaterialSystem
+	namespace ModuleMaterialSystem
 	{
 		namespace Types
 		{
@@ -1121,7 +1121,7 @@ namespace
 		);
 	}
 
-	namespace Module_RenderContext
+	namespace ModuleRenderContext
 	{
 		namespace Types
 		{
@@ -1245,7 +1245,7 @@ namespace
 		);
 	}
 
-	namespace Module_Texture
+	namespace ModuleTexture
 	{
 		namespace Types
 		{
@@ -1397,7 +1397,7 @@ namespace
 		);
 	}
 
-	namespace Module_View
+	namespace ModuleView
 	{
 		namespace Types
 		{
@@ -1489,7 +1489,7 @@ namespace
 		);
 	}
 
-	namespace Module_SourceGlobals
+	namespace ModuleSourceGlobals
 	{
 		IDirect3DDevice9* Device;
 		bool* DrawLoading;
@@ -1587,7 +1587,7 @@ namespace
 			int channel = 0
 		)
 		{
-			auto handle = Module_Texture::GetTextureHandle
+			auto handle = ModuleTexture::GetTextureHandle
 			(
 				texture,
 				nullptr,
@@ -1603,7 +1603,7 @@ namespace
 	{
 		if (Texture)
 		{
-			Module_Texture::DecrementReferenceCount
+			ModuleTexture::DecrementReferenceCount
 			(
 				Texture,
 				nullptr
@@ -1622,33 +1622,33 @@ namespace
 		int width;
 		int height;
 
-		Module_MaterialSystem::GetBackBufferDimensions
+		ModuleMaterialSystem::GetBackBufferDimensions
 		(
-			Module_MaterialSystem::MaterialsPtr,
+			ModuleMaterialSystem::MaterialsPtr,
 			nullptr,
 			width,
 			height
 		);
 
-		auto device = Module_SourceGlobals::Device;
+		auto device = ModuleSourceGlobals::Device;
 		auto& dx9 = CurrentMovie.DirectX;
 
-		Module_MaterialSystem::BeginRenderTargetAllocation
+		ModuleMaterialSystem::BeginRenderTargetAllocation
 		(
-			Module_MaterialSystem::MaterialsPtr,
+			ModuleMaterialSystem::MaterialsPtr,
 			nullptr
 		);
 
-		dx9.ValveRT.Texture = Module_MaterialSystem::CreateRenderTargetTexture
+		dx9.ValveRT.Texture = ModuleMaterialSystem::CreateRenderTargetTexture
 		(
-			Module_MaterialSystem::MaterialsPtr,
+			ModuleMaterialSystem::MaterialsPtr,
 			nullptr,
 			0,
 			0,
 			RT_SIZE_FULL_FRAME_BUFFER,
-			Module_MaterialSystem::GetBackBufferFormat
+			ModuleMaterialSystem::GetBackBufferFormat
 			(
-				Module_MaterialSystem::MaterialsPtr,
+				ModuleMaterialSystem::MaterialsPtr,
 				nullptr
 			),
 			MATERIAL_RT_DEPTH_SHARED
@@ -1656,22 +1656,22 @@ namespace
 
 		if (dx9.ValveRT)
 		{
-			Module_Texture::IncrementReferenceCount
+			ModuleTexture::IncrementReferenceCount
 			(
 				dx9.ValveRT.Get(),
 				nullptr
 			);
 		}
 
-		Module_MaterialSystem::EndRenderTargetAllocation
+		ModuleMaterialSystem::EndRenderTargetAllocation
 		(
-			Module_MaterialSystem::MaterialsPtr,
+			ModuleMaterialSystem::MaterialsPtr,
 			nullptr
 		);
 
-		Module_MaterialSystem::ReloadMaterials
+		ModuleMaterialSystem::ReloadMaterials
 		(
-			Module_MaterialSystem::MaterialsPtr,
+			ModuleMaterialSystem::MaterialsPtr,
 			nullptr,
 			nullptr
 		);
@@ -1955,7 +1955,7 @@ namespace
 		}
 	}
 
-	namespace Module_View_Render
+	namespace ModuleView_Render
 	{
 		#pragma region Init
 
@@ -2015,7 +2015,7 @@ namespace
 				return;
 			}
 
-			if (*Module_SourceGlobals::DrawLoading)
+			if (*ModuleSourceGlobals::DrawLoading)
 			{
 				return;
 			}
@@ -2025,55 +2025,55 @@ namespace
 				return;
 			}
 
-			Module_MaterialSystem::EndFrame
+			ModuleMaterialSystem::EndFrame
 			(
-				Module_MaterialSystem::MaterialsPtr,
+				ModuleMaterialSystem::MaterialsPtr,
 				nullptr
 			);
 
-			Module_MaterialSystem::BeginFrame
+			ModuleMaterialSystem::BeginFrame
 			(
-				Module_MaterialSystem::MaterialsPtr,
+				ModuleMaterialSystem::MaterialsPtr,
 				nullptr,
 				0
 			);
 
 			auto& movie = CurrentMovie;
 
-			auto rendercontext = Module_MaterialSystem::GetRenderContext
+			auto rendercontext = ModuleMaterialSystem::GetRenderContext
 			(
-				Module_MaterialSystem::MaterialsPtr,
+				ModuleMaterialSystem::MaterialsPtr,
 				nullptr
 			);
 
-			auto release = SDR::GetVirtual<Module_RenderContext::Types::Release>
+			auto release = SDR::GetVirtual<ModuleRenderContext::Types::Release>
 			(
 				rendercontext,
-				Module_RenderContext::Release
+				ModuleRenderContext::Release
 			);
 
-			auto pushrt = SDR::GetVirtual<Module_RenderContext::Types::PushRenderTargetAndViewport1>
+			auto pushrt = SDR::GetVirtual<ModuleRenderContext::Types::PushRenderTargetAndViewport1>
 			(
 				rendercontext,
-				Module_RenderContext::PushRenderTargetAndViewport1
+				ModuleRenderContext::PushRenderTargetAndViewport1
 			);
 
-			auto poprt = SDR::GetVirtual<Module_RenderContext::Types::PopRenderTargetAndViewport>
+			auto poprt = SDR::GetVirtual<ModuleRenderContext::Types::PopRenderTargetAndViewport>
 			(
 				rendercontext,
-				Module_RenderContext::PopRenderTargetAndViewport
+				ModuleRenderContext::PopRenderTargetAndViewport
 			);
 
-			auto clearcol = SDR::GetVirtual<Module_RenderContext::Types::ClearColor4>
+			auto clearcol = SDR::GetVirtual<ModuleRenderContext::Types::ClearColor4>
 			(
 				rendercontext,
-				Module_RenderContext::ClearColor4
+				ModuleRenderContext::ClearColor4
 			);
 
-			auto clearbuf = SDR::GetVirtual<Module_RenderContext::Types::ClearBuffers>
+			auto clearbuf = SDR::GetVirtual<ModuleRenderContext::Types::ClearBuffers>
 			(
 				rendercontext,
-				Module_RenderContext::ClearBuffers
+				ModuleRenderContext::ClearBuffers
 			);
 
 			pushrt
@@ -2107,11 +2107,11 @@ namespace
 				false
 			);
 
-			Module_View::RenderView
+			ModuleView::RenderView
 			(
-				Module_View::ViewPtr,
+				ModuleView::ViewPtr,
 				nullptr,
-				Module_View::GetViewSetup(Module_View::ViewPtr, nullptr),
+				ModuleView::GetViewSetup(ModuleView::ViewPtr, nullptr),
 				VIEW_CLEAR_STENCIL | VIEW_CLEAR_DEPTH,
 				RENDERVIEW_UNSPECIFIED
 			);
@@ -2128,14 +2128,14 @@ namespace
 				nullptr
 			);
 
-			Module_SourceGlobals::SaveTempTexture
+			ModuleSourceGlobals::SaveTempTexture
 			(
 				movie.DirectX.ValveRT.Get()
 			);
 		}
 	}
 
-	namespace Module_StartMovie
+	namespace ModuleStartMovie
 	{
 		#pragma region Init
 
@@ -2679,7 +2679,7 @@ namespace
 		}
 	}
 
-	namespace Module_StartMovieCommand
+	namespace ModuleStartMovieCommand
 	{
 		#pragma region Init
 
@@ -2737,9 +2737,9 @@ namespace
 			int width;
 			int height;
 
-			Module_MaterialSystem::GetBackBufferDimensions
+			ModuleMaterialSystem::GetBackBufferDimensions
 			(
-				Module_MaterialSystem::MaterialsPtr,
+				ModuleMaterialSystem::MaterialsPtr,
 				nullptr,
 				width,
 				height
@@ -2750,7 +2750,7 @@ namespace
 			/*
 				4 = FMOVIE_WAV, needed for future audio calls
 			*/
-			Module_StartMovie::Override
+			ModuleStartMovie::Override
 			(
 				name,
 				4,
@@ -2763,7 +2763,7 @@ namespace
 		}
 	}
 
-	namespace Module_EndMovie
+	namespace ModuleEndMovie
 	{
 		#pragma region Init
 
@@ -2864,7 +2864,7 @@ namespace
 		}
 	}
 
-	namespace Module_WriteMovieFrame
+	namespace ModuleWriteMovieFrame
 	{
 		#pragma region Init
 
@@ -2952,7 +2952,7 @@ namespace
 				in newer games like TF2 the materials are handled much differently
 				but this endpoint function remains the same. Less elegant but what you gonna do.
 			*/
-			Module_VideoMode::ReadScreenPixels
+			ModuleVideoMode::ReadScreenPixels
 			(
 				thisptr,
 				edx,
@@ -3002,7 +3002,7 @@ namespace
 		}
 	}
 
-	namespace Module_SNDRecordBuffer
+	namespace ModuleSNDRecordBuffer
 	{
 		#pragma region Init
 
@@ -3044,7 +3044,7 @@ namespace
 		}
 	}
 
-	namespace Module_WaveCreateTmpFile
+	namespace ModuleWaveCreateTmpFile
 	{
 		#pragma region Init
 
@@ -3102,7 +3102,7 @@ namespace
 		}
 	}
 
-	namespace Module_WaveAppendTmpFile
+	namespace ModuleWaveAppendTmpFile
 	{
 		#pragma region Init
 
@@ -3161,7 +3161,7 @@ namespace
 		}
 	}
 
-	namespace Module_WaveFixupTmpFile
+	namespace ModuleWaveFixupTmpFile
 	{
 		#pragma region Init
 

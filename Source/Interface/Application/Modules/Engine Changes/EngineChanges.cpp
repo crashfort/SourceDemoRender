@@ -12,7 +12,7 @@ namespace
 		);
 	}
 
-	namespace Module_OutputDebugString
+	namespace ModuleOutputDebugString
 	{
 		#pragma region Init
 
@@ -58,7 +58,7 @@ namespace
 
 	TabData EngineFocusData;
 
-	namespace Module_ActivateMouse
+	namespace ModuleActivateMouse
 	{
 		#pragma region Init
 
@@ -104,7 +104,7 @@ namespace
 		}
 	}
 
-	namespace Module_AppActivate
+	namespace ModuleAppActivate
 	{
 		/*
 			Structure from Source 2007
