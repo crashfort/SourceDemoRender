@@ -1022,7 +1022,6 @@ namespace
 						return false;
 					}
 
-					ShaderDevicePtr = **reinterpret_cast<void***>(address);
 					ShaderDevicePtr = **(void***)(address);
 
 					SDR::ModuleShared::Registry::SetKeyValue
@@ -1146,7 +1145,6 @@ namespace
 						return false;
 					}
 
-					MaterialsPtr = **reinterpret_cast<void***>(address);
 					MaterialsPtr = **(void***)(address);
 
 					SDR::ModuleShared::Registry::SetKeyValue
@@ -1612,7 +1610,6 @@ namespace
 						return false;
 					}
 
-					ViewPtr = **reinterpret_cast<void***>(address);
 					ViewPtr = **(void***)(address);
 
 					SDR::ModuleShared::Registry::SetKeyValue
@@ -1686,7 +1683,6 @@ namespace
 						return false;
 					}
 
-					Device = **reinterpret_cast<IDirect3DDevice9***>(address);
 					Device = **(IDirect3DDevice9***)(address);
 
 					SDR::ModuleShared::Registry::SetKeyValue
@@ -1714,7 +1710,6 @@ namespace
 						return false;
 					}
 
-					DrawLoading = *reinterpret_cast<bool**>(address);
 					DrawLoading = *(bool**)(address);
 
 					SDR::ModuleShared::Registry::SetKeyValue
