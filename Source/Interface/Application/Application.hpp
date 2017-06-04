@@ -191,6 +191,11 @@ namespace SDR
 		rapidjson::Value& value
 	);
 
+	void* GetVirtualAddressFromJson
+	(
+		rapidjson::Value& value
+	);
+
 	namespace ModuleShared
 	{
 		namespace Registry

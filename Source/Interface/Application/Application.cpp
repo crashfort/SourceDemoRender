@@ -722,12 +722,36 @@ void* SDR::GetVirtualAddressFromJson
 	rapidjson::Value& value
 )
 {
-	auto offset = value["Offset"].GetInt();
+	auto index = value["VTIndex"].GetInt();
 
 	return GetVirtualAddressFromIndex
 	(
 		ptr,
-		offset
+		index
+	);
+}
+
+void* SDR::GetVirtualAddressFromJson
+(
+	rapidjson::Value& value
+)
+{
+	auto instance = value["VTPtrName"].GetString();
+
+	uint32_t ptrnum;
+	auto res = ModuleShared::Registry::GetKeyValue(instance, &ptrnum);
+
+	if (!res)
+	{
+		return nullptr;
+	}
+
+	auto ptr = (void*)ptrnum;
+
+	return GetVirtualAddressFromJson
+	(
+		ptr,
+		value
 	);
 }
 
