@@ -2116,7 +2116,11 @@ namespace
 			(
 				ModuleView::ViewPtr,
 				nullptr,
-				ModuleView::GetViewSetup(ModuleView::ViewPtr, nullptr),
+				ModuleView::GetViewSetup
+				(
+					ModuleView::ViewPtr,
+					nullptr
+				),
 				VIEW_CLEAR_STENCIL | VIEW_CLEAR_DEPTH,
 				RENDERVIEW_UNSPECIFIED
 			);
