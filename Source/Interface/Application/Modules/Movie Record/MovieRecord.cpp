@@ -1570,20 +1570,8 @@ namespace
 			);
 		}
 
-		int ViewSetupOffset;
 		void* ViewPtr;
 		Types::RenderView RenderView;
-
-		const void* GetViewSetup(void* thisptr)
-		{
-			/*
-				Static CSS structure offset May 22 2017. See 101A76B0
-			*/
-			SDR::StructureWalker walker(thisptr);
-			auto ret = walker.Advance(ViewSetupOffset);
-
-			return ret;
-		}
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -1635,17 +1623,13 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					try
-					{
-						ViewSetupOffset = SDR::ModuleShared::GetJsonOffsetInt(value);
-					}
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
-					catch (bool value)
-					{
-						return false;
-					}
-
-					return true;
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetViewSetup,
+						address
+					);
 				}
 			)
 		);

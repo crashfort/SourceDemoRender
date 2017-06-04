@@ -248,36 +248,6 @@ namespace SDR
 			return true;
 		}
 
-		inline int GetJsonOffsetInt
-		(
-			rapidjson::Value& value
-		)
-		{
-			auto iter = value.FindMember("Offset");
-
-			if (iter == value.MemberEnd())
-			{
-				Warning
-				(
-					"SDR: Offset field does not exist\n"
-				);
-
-				throw false;
-			}
-
-			if (!iter->value.IsNumber())
-			{
-				Warning
-				(
-					"SDR: Offset field not a number\n"
-				);
-
-				throw false;
-			}
-
-			return iter->value.GetInt();
-		}
-
 		inline void Verify
 		(
 			void* address,
