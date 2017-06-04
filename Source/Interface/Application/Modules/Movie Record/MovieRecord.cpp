@@ -879,6 +879,13 @@ namespace
 				void* edx
 			);
 
+			using ReloadMaterials = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				const char* substring
+			);
+
 			using BeginRenderTargetAllocation = void(__fastcall*)
 			(
 				void* thisptr,
@@ -914,6 +921,7 @@ namespace
 		Types::GetBackBufferFormat GetBackBufferFormat;
 		Types::BeginFrame BeginFrame;
 		Types::EndFrame EndFrame;
+		Types::ReloadMaterials ReloadMaterials;
 		Types::BeginRenderTargetAllocation BeginRenderTargetAllocation;
 		Types::EndRenderTargetAllocation EndRenderTargetAllocation;
 		Types::CreateRenderTargetTexture CreateRenderTargetTexture;
@@ -1016,6 +1024,24 @@ namespace
 					return SDR::ModuleShared::SetFromAddress
 					(
 						EndFrame,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_ReloadMaterials",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						ReloadMaterials,
 						address
 					);
 				}
