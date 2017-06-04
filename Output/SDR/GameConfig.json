@@ -90,31 +90,26 @@
 		"RenderContext_Release":
 		{
 			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_RenderContextPtr",
 			"VTIndex": 1
 		},
 		"RenderContext_PushRenderTargetAndViewport1":
 		{
 			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_RenderContextPtr",
 			"VTIndex": 105
 		},
 		"RenderContext_PopRenderTargetAndViewport":
 		{
 			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_RenderContextPtr",
 			"VTIndex": 109
 		},
 		"RenderContext_ClearBuffers":
 		{
 			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_RenderContextPtr",
 			"VTIndex": 71
 		},
 		"RenderContext_ClearColor4":
 		{
 			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_RenderContextPtr",
 			"VTIndex": 73
 		},
 		"Texture_IncrementReferenceCount":
