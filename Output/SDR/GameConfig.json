@@ -144,7 +144,7 @@
 		},
 		"View_GetViewSetup":
 		{
-			"Comment": "Static CSS structure offset May 22 2017. See 0x101A76B0",
+			"Comment": "Static CSS IViewRender vtable offset June 4 2017.",
 			"VTPtrName": "View_ViewPtr",
 			"VTIndex": 13
 		},
