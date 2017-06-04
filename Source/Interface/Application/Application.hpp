@@ -370,17 +370,13 @@ namespace SDR
 		rapidjson::Value& value
 	)
 	{
-		auto module = value["Module"].GetString();
-		auto patternstr = value["Pattern"].GetString();
-
-		auto pattern = GetPatternFromString(patternstr);
+		auto address = GetAddressFromJsonPattern(value);
 
 		CreateHook
 		(
 			hook,
 			override,
-			module,
-			pattern
+			address
 		);
 	}
 
