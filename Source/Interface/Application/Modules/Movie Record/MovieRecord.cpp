@@ -985,24 +985,10 @@ namespace
 	{
 		namespace Types
 		{
-			using GetBackBufferDimensions = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx,
-				int& width,
-				int& height
-			);
-
-			using GetBackBufferFormat = ImageFormat(__fastcall*)
-			(
-				void* thisptr,
-				void* edx
-			);
+			
 		}
 
 		void* ShaderDevicePtr;
-		Types::GetBackBufferDimensions GetBackBufferDimensions;
-		Types::GetBackBufferFormat GetBackBufferFormat;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -1032,42 +1018,6 @@ namespace
 
 					return true;
 				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"ShaderDevice_GetBackBufferDimensions",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
-				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						GetBackBufferDimensions,
-						address
-					);
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"ShaderDevice_GetBackBufferFormat",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
-				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						GetBackBufferFormat,
-						address
-					);
-				}
 			)
 		);
 	}
@@ -1076,6 +1026,20 @@ namespace
 	{
 		namespace Types
 		{
+			using GetBackBufferDimensions = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				int& width,
+				int& height
+			);
+
+			using GetBackBufferFormat = int(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
 			using GetRenderContext = void*(__fastcall*)
 			(
 				void* thisptr,
@@ -1120,6 +1084,8 @@ namespace
 		}
 		
 		void* MaterialsPtr;
+		Types::GetBackBufferDimensions GetBackBufferDimensions;
+		Types::GetBackBufferFormat GetBackBufferFormat;
 		Types::GetRenderContext GetRenderContext;
 		Types::BeginRenderTargetAllocation BeginRenderTargetAllocation;
 		Types::EndRenderTargetAllocation EndRenderTargetAllocation;
@@ -1154,6 +1120,42 @@ namespace
 					);
 
 					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_GetBackBufferDimensions",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetBackBufferDimensions,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_GetBackBufferFormat",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetBackBufferFormat,
+						address
+					);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -1793,9 +1795,9 @@ namespace
 		int width;
 		int height;
 
-		Module_ShaderDevice::GetBackBufferDimensions
+		Module_MaterialSystem::GetBackBufferDimensions
 		(
-			Module_ShaderDevice::ShaderDevicePtr,
+			Module_MaterialSystem::MaterialsPtr,
 			nullptr,
 			width,
 			height
@@ -1817,9 +1819,9 @@ namespace
 			0,
 			0,
 			RT_SIZE_FULL_FRAME_BUFFER,
-			Module_ShaderDevice::GetBackBufferFormat
+			Module_MaterialSystem::GetBackBufferFormat
 			(
-				Module_ShaderDevice::ShaderDevicePtr,
+				Module_MaterialSystem::MaterialsPtr,
 				nullptr
 			),
 			MATERIAL_RT_DEPTH_SHARED
@@ -3136,9 +3138,9 @@ namespace
 			int width;
 			int height;
 
-			Module_ShaderDevice::GetBackBufferDimensions
+			Module_MaterialSystem::GetBackBufferDimensions
 			(
-				Module_ShaderDevice::ShaderDevicePtr,
+				Module_MaterialSystem::MaterialsPtr,
 				nullptr,
 				width,
 				height
