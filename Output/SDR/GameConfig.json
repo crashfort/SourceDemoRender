@@ -145,7 +145,8 @@
 		"View_GetViewSetup":
 		{
 			"Comment": "Static CSS structure offset May 22 2017. See 0x101A76B0",
-			"Offset": 636
+			"VTPtrName": "View_ViewPtr",
+			"VTIndex" 13
 		},
 		"D3D9_Device":
 		{
