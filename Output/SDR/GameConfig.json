@@ -220,6 +220,12 @@
 
 	"hl2":
 	{
-		"Inherit": "cstrike"
+		"Inherit": "cstrike",
+
+		"Texture_GetTextureHandle":
+		{
+			"Comment": "Static HL2 ITexture vtable offset June 4 2017.",
+			"VTIndex": 43
+		}
 	}
 }
