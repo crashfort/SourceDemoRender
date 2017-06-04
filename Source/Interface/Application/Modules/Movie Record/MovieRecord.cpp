@@ -2611,7 +2611,16 @@ namespace
 				}
 			}
 
-			ThisHook.GetOriginal()(filename, flags, width, height, framerate, jpegquality, unk);
+			ThisHook.GetOriginal()
+			(
+				filename,
+				flags,
+				width,
+				height,
+				framerate,
+				jpegquality,
+				unk
+			);
 
 			auto enginerate = Variables::SamplesPerSecond.GetInt();
 
