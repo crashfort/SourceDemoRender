@@ -2539,24 +2539,12 @@ namespace
 					rapidjson::Value& value
 				)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
-
-					try
-					{
-						SDR::CreateHook
-						(
-							ThisHook,
-							Override,
-							address
-						);
-					}
-
-					catch (MH_STATUS status)
-					{
-						return false;
-					}
-
-					return true;
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
 				}
 			)
 		);
