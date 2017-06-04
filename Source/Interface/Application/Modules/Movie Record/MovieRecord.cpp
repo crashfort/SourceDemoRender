@@ -1568,10 +1568,17 @@ namespace
 				int clearflags,
 				int drawflags
 			);
+
+			using GetViewSetup = const void*(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
 		}
 
 		void* ViewPtr;
 		Types::RenderView RenderView;
+		Types::GetViewSetup GetViewSetup;
 
 		auto Adders = SDR::CreateAdders
 		(
