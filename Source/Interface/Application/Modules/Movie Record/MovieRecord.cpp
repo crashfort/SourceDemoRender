@@ -986,7 +986,7 @@ namespace
 			),
 			SDR::ModuleHandlerAdder
 			(
-				"MaterialSystem_GetRenderContext",
+				"MaterialSystem_BeginFrame",
 				[]
 				(
 					const char* name,
@@ -997,7 +997,25 @@ namespace
 
 					return SDR::ModuleShared::SetFromAddress
 					(
-						GetRenderContext,
+						BeginFrame,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_EndFrame",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						EndFrame,
 						address
 					);
 				}
@@ -1058,7 +1076,7 @@ namespace
 			),
 			SDR::ModuleHandlerAdder
 			(
-				"MaterialSystem_BeginFrame",
+				"MaterialSystem_GetRenderContext",
 				[]
 				(
 					const char* name,
@@ -1069,25 +1087,7 @@ namespace
 
 					return SDR::ModuleShared::SetFromAddress
 					(
-						BeginFrame,
-						address
-					);
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"MaterialSystem_EndFrame",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
-				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						EndFrame,
+						GetRenderContext,
 						address
 					);
 				}
