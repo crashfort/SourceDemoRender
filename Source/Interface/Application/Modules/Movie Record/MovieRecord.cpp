@@ -2093,7 +2093,7 @@ namespace
 				movie.Height
 			);
 
-			clearcol
+			/*clearcol
 			(
 				rendercontext,
 				nullptr,
@@ -2110,7 +2110,7 @@ namespace
 				true,
 				false,
 				false
-			);
+			);*/
 
 			ModuleView::RenderView
 			(
