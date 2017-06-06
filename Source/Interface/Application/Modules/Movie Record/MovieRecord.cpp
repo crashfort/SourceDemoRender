@@ -1300,7 +1300,7 @@ namespace
 
 				union
 				{
-					IDirect3DBaseTexture9* m_pTexture; // used when there's one copy
+					IDirect3DTexture9* m_pTexture; // used when there's one copy
 					IDirect3DBaseTexture9** m_ppTexture; // used when there are more than one copies
 					IDirect3DSurface9* m_pDepthStencilSurface; // used when there's one depth stencil surface
 					IDirect3DSurface9* m_pRenderTargetSurface[2];
