@@ -711,7 +711,26 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
-		double SamplingTime = 0.0;
+		struct SamplingData
+		{
+			float FrameDuration;
+			float LastFrameTime;
+
+			float SampleTimeInterval;
+			float LastSampleTime;
+
+			float Exposure;
+			float FrameStrength;
+
+			bool ShutterOpen;
+			float ShutterOpenDuration;
+			float ShutterTime;
+
+			float CurrentTime = 0.0;
+			float FrameWhitePoint;
+		};
+
+		SamplingData SampleData;
 
 		struct ScopedValveTexture
 		{
@@ -2915,7 +2934,32 @@ namespace
 
 			auto enginerate = Variables::SamplesPerSecond.GetInt();
 
-			if (!Variables::UseSample.GetBool())
+			if (Variables::UseSample.GetBool())
+			{
+				auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+				auto sampleframerate = 1.0 / spsvar;
+
+				auto frameratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
+				auto exposure = Variables::Exposure.GetFloat();
+				auto framestrength = Variables::FrameStrength.GetFloat();
+
+				auto& settings = movie.SampleData;
+
+				settings.FrameDuration = frameratems;
+				settings.LastFrameTime = 0;
+
+				settings.SampleTimeInterval = sampleframerate;
+				settings.LastSampleTime = 0;
+
+				settings.Exposure = exposure;
+				settings.FrameStrength = framestrength;
+
+				settings.ShutterOpen = false;
+				settings.ShutterOpenDuration = frameratems * min(max(exposure, 0.0f), 1.0f);
+				settings.ShutterTime = 0;
+			}
+
+			else
 			{
 				enginerate = Variables::FrameRate.GetInt();
 			}
@@ -3239,7 +3283,7 @@ namespace
 
 			auto& movie = CurrentMovie;
 
-			auto& time = movie.SamplingTime;
+			auto& time = movie.SampleData.CurrentTime;
 
 			MovieData::VideoFutureSampleData newsample;
 			newsample.Time = time;
