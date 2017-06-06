@@ -2,6 +2,8 @@
 !*.txt
 !*.cfg
 !*.json
+!*.sdrshader
 !/cfg/
 !/SDR/
+!/SDR/Shaders/
 !.gitignore
