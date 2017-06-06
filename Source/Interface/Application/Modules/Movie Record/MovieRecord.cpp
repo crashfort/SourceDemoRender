@@ -2232,6 +2232,9 @@ namespace
 			}
 
 			auto& movie = CurrentMovie;
+			auto& dx9 = movie.DirectX9;
+			auto& dx11 = movie.DirectX11;
+			auto& sampledata = movie.SampleData;
 
 			auto rendercontext = ModuleMaterialSystem::GetRenderContext
 			(
@@ -2239,12 +2242,18 @@ namespace
 				nullptr
 			);
 
-			namespace Context = ModuleRenderContext::Types;
+			auto gettexturehandle = SDR::GetVirtual
+			(
+				dx9.ValveRT.Get(),
+				ModuleTexture::GetTextureHandle
+			);
 
 			auto release = SDR::GetVirtual
 			(
-				rendercontext,
-				ModuleRenderContext::Release
+				dx9.ValveRT.Get(),
+				nullptr,
+				0,
+				0
 			);
 
 			auto pushrt = SDR::GetVirtual
@@ -2259,11 +2268,17 @@ namespace
 				ModuleRenderContext::PopRenderTargetAndViewport
 			);
 
+			auto release = SDR::GetVirtual
+			(
+				rendercontext,
+				ModuleRenderContext::Release
+			);
+
 			pushrt
 			(
 				rendercontext,
 				nullptr,
-				movie.DirectX.ValveRT.Get(),
+				dx9.ValveRT.Get(),
 				nullptr,
 				0,
 				0,
@@ -2296,10 +2311,38 @@ namespace
 				nullptr
 			);
 
-			ModuleSourceGlobals::SaveTempTexture
+			HRESULT hr;
+			Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
+
+			hr = handle->m_pTexture->GetSurfaceLevel
 			(
-				movie.DirectX.ValveRT.Get()
+				0,
+				surface.GetAddressOf()
 			);
+
+			hr = ModuleSourceGlobals::Device->StretchRect
+			(
+				surface.Get(),
+				nullptr,
+				dx9.SharedRT.Surface.Get(),
+				nullptr,
+				D3DTEXF_NONE
+			);
+
+			std::initializer_list<ID3D11ShaderResourceView*> textures =
+			{
+				dx11.SharedTextureSRView.Get()
+			};
+
+			dx11.Context->PSSetShaderResources
+			(
+				0,
+				textures.size(),
+				textures.begin()
+			);
+
+			dx11.Context->Draw(4, 0);
+			dx11.Context->Flush();
 		}
 	}
 
