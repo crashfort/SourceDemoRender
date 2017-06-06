@@ -1676,7 +1676,7 @@ namespace
 			HRESULT hr;
 			Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
 
-			ModuleSourceGlobals::Device->GetBackBuffer
+			hr = ModuleSourceGlobals::Device->GetBackBuffer
 			(
 				0,
 				0,
