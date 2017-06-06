@@ -37,9 +37,8 @@ extern "C"
 #define SDR_DEBUG_D3D11_IMAGE
 
 #ifdef SDR_DEBUG_D3D11_IMAGE
-#include <d2d1.h>
-#include <wincodec.h>
-#pragma comment(lib, "windowscodecs")
+#include "D3DX11.h"
+#pragma comment(lib, "D3DX11")
 #endif
 
 namespace
@@ -795,17 +794,14 @@ namespace
 
 			void SaveDebugImage
 			(
-				int width,
-				int height,
 				const wchar_t* prefix = nullptr
 			)
 			{
 				if (!prefix)
 				{
-					prefix = L"";
+					prefix = L"x";
 				}
 				
-				static bool first = true;
 				static int counter = 0;
 
 				wchar_t namebuf[1024];
@@ -818,89 +814,13 @@ namespace
 					counter
 				);
 
-				Context->CopyResource
+				auto hr = D3DX11SaveTextureToFileW
 				(
-					DebugImage.Get(),
-					SharedTexture.Get()
+					Context.Get(),
+					OutputRT.Get(),
+					D3DX11_IFF_PNG,
+					namebuf
 				);
-
-				D3D11_MAPPED_SUBRESOURCE resource = {};
-				auto id = D3D11CalcSubresource(0, 0, 0);
-
-				Context->Map
-				(
-					DebugImage.Get(),
-					id,
-					D3D11_MAP_READ,
-					0,
-					&resource
-				);
-
-				if (first)
-				{
-					first = false;
-					CoInitialize(nullptr);
-				}
-
-				Microsoft::WRL::ComPtr<IWICImagingFactory> factory;
-
-				auto hr = CoCreateInstance
-				(
-					CLSID_WICImagingFactory,
-					nullptr,
-					CLSCTX_INPROC_SERVER,
-					__uuidof(IWICImagingFactory),
-					(void**)factory.GetAddressOf()
-				);
-
-				Microsoft::WRL::ComPtr<IWICBitmap> bitmap;
-
-				factory->CreateBitmapFromMemory
-				(
-					width,
-					height,
-					GUID_WICPixelFormat32bppRGBA,
-					resource.RowPitch,
-					resource.DepthPitch,
-					(BYTE*)resource.pData,
-					&bitmap
-				);
-
-				Context->Unmap
-				(
-					DebugImage.Get(),
-					id
-				);
-
-				Microsoft::WRL::ComPtr<IWICStream> stream;
-				Microsoft::WRL::ComPtr<IWICBitmapEncoder> encoder;
-				Microsoft::WRL::ComPtr<IWICBitmapFrameEncode> frame;
-
-				factory->CreateStream(&stream);
-					
-				stream->InitializeFromFilename
-				(
-					namebuf,
-					GENERIC_WRITE
-				);
-
-				factory->CreateEncoder
-				(
-					GUID_ContainerFormatPng,
-					nullptr,
-					&encoder
-				);
-
-				encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache);
-
-				encoder->CreateNewFrame(&frame, nullptr);
-
-				frame->Initialize(nullptr);
-
-				frame->WriteSource(bitmap.Get(), nullptr);
-
-				frame->Commit();
-				encoder->Commit();
 
 				++counter;
 			}
@@ -2484,15 +2404,25 @@ namespace
 				textures.begin()
 			);
 
-			dx11.Context->Draw(4, 0);
+			float clearcol[4] =
+			{
+				0,
+				1,
+				0,
+				1
+			};
+
+			dx11.Context->ClearRenderTargetView
+			(
+				dx11.OutputRTView.Get(),
+				clearcol
+			);
+
+			dx11.Context->Draw(3, 0);
 			dx11.Context->Flush();
 
 			#ifdef SDR_DEBUG_D3D11_IMAGE
-			dx11.SaveDebugImage
-			(
-				movie.Width,
-				movie.Height
-			);
+			dx11.SaveDebugImage();
 			#endif
 		}
 	}
