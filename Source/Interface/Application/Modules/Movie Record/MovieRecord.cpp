@@ -2280,8 +2280,8 @@ namespace
 					ModuleView::ViewPtr,
 					nullptr
 				),
-				VIEW_CLEAR_STENCIL | VIEW_CLEAR_DEPTH,
-				RENDERVIEW_UNSPECIFIED
+				0,
+				RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD
 			);
 
 			poprt
