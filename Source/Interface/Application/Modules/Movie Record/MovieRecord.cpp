@@ -873,7 +873,7 @@ namespace
 
 			void SaveDebugImage
 			(
-				
+				ID3D11Texture2D* texture
 			)
 			{				
 				static int counter = 0;
@@ -890,7 +890,7 @@ namespace
 				auto hr = D3DX11SaveTextureToFileW
 				(
 					Context.Get(),
-					OutputRT.Get(),
+					texture,
 					D3DX11_IFF_PNG,
 					namebuf
 				);
@@ -2431,7 +2431,10 @@ namespace
 			dx11.Context->Flush();
 
 			#ifdef SDR_DEBUG_D3D11_IMAGE
-			dx11.SaveDebugImage();
+			dx11.SaveDebugImage
+			(
+				dx11.OutputRT.Get()
+			);
 			#endif
 		}
 	}
