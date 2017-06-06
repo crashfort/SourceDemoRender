@@ -794,62 +794,6 @@ namespace
 				Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 			};
 
-			#ifdef SDR_DEBUG_D3D9_IMAGE
-			void SaveTempTexture
-			(
-				IDirect3DBaseTexture9* texture
-			)
-			{
-				static int counter = 0;
-
-				wchar_t namebuf[1024];
-
-				swprintf_s
-				(
-					namebuf,
-					LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image_d3d9_%d.png)",
-					counter
-				);
-
-				auto hr = D3DXSaveTextureToFileW
-				(
-					namebuf,
-					D3DXIFF_PNG,
-					texture,
-					nullptr
-				);
-
-				++counter;
-			}
-
-			void SaveTempTexture
-			(
-				void* texture,
-				int frame = 0,
-				int channel = 0
-			)
-			{
-				auto func = SDR::GetVirtual
-				(
-					texture,
-					ModuleTexture::GetTextureHandle
-				);
-
-				auto handle = func
-				(
-					texture,
-					nullptr,
-					frame,
-					channel
-				);
-
-				SaveTempTexture
-				(
-					handle->m_pTexture
-				);
-			}
-			#endif
-
 			ScopedValveTexture ValveRT;			
 			RenderTarget SharedRT;
 		} DirectX9;
@@ -1661,6 +1605,62 @@ namespace
 				}
 			)
 		);
+
+		#ifdef SDR_DEBUG_D3D9_IMAGE
+		void SaveTempTexture
+		(
+			IDirect3DBaseTexture9* texture
+		)
+		{
+			static int counter = 0;
+
+			wchar_t namebuf[1024];
+
+			swprintf_s
+			(
+				namebuf,
+				LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image_d3d9_%d.png)",
+				counter
+			);
+
+			auto hr = D3DXSaveTextureToFileW
+			(
+				namebuf,
+				D3DXIFF_PNG,
+				texture,
+				nullptr
+			);
+
+			++counter;
+		}
+
+		void SaveTempTexture
+		(
+			void* texture,
+			int frame = 0,
+			int channel = 0
+		)
+		{
+			auto func = SDR::GetVirtual
+			(
+				texture,
+				ModuleTexture::GetTextureHandle
+			);
+
+			auto handle = func
+			(
+				texture,
+				nullptr,
+				frame,
+				channel
+			);
+
+			SaveTempTexture
+			(
+				handle->m_pTexture
+			);
+		}
+		#endif
 	}
 
 	MovieData::ScopedValveTexture::~ScopedValveTexture()
