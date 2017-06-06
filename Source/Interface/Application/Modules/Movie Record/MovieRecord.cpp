@@ -1618,7 +1618,6 @@ namespace
 			++counter;
 		}
 
-
 		void SaveTempTexture
 		(
 			void* texture,
@@ -1780,12 +1779,12 @@ namespace
 					nullptr,
 					D3D_DRIVER_TYPE_HARDWARE,
 					0,
-					0,
+					flags,
 					nullptr,
 					0,
 					D3D11_SDK_VERSION,
 					dx11.Device.GetAddressOf(),
-					flags,
+					0,
 					dx11.Context.GetAddressOf()
 				)
 			);
