@@ -764,14 +764,24 @@ namespace
 				Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 			};
 
-			ScopedValveTexture ValveRT;
+			ScopedValveTexture ValveRT;			
+			RenderTarget SharedRT;
+		} DirectX9;
 
-			RenderTarget Previous;
-			RenderTarget Current;
+		struct DirectX11Data
+		{
+			Microsoft::WRL::ComPtr<ID3D11Device> Device;
+			Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
 
-			Microsoft::WRL::ComPtr<IDirect3DPixelShader9> PixelShader;
-			Microsoft::WRL::ComPtr<IDirect3DVertexShader9> VertexShader;
-		} DirectX;
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> MotionPS;
+			Microsoft::WRL::ComPtr<ID3D11VertexShader> MotionVS;
+
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRView;
+
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> OutputRT;
+			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> OutputRTView;
+		} DirectX11;
 
 		std::unique_ptr<SDRVideoWriter> Video;
 		std::unique_ptr<SDRAudioWriter> Audio;
@@ -1629,8 +1639,9 @@ namespace
 			height
 		);
 
-		auto device = ModuleSourceGlobals::Device;
-		auto& dx9 = CurrentMovie.DirectX;
+		auto& movie = CurrentMovie;
+		auto& dx9 = movie.DirectX9;
+		auto& dx11 = movie.DirectX11;
 
 		ModuleMaterialSystem::BeginRenderTargetAllocation
 		(
@@ -1693,43 +1704,233 @@ namespace
 
 		try
 		{
-			dx9.Previous.Create
+			dx9.SharedRT.Create
 			(
-				device,
+				ModuleSourceGlobals::Device,
 				width,
 				height
-			);
-
-			dx9.Current.Create
-			(
-				device,
-				width,
-				height
-			);
-
-			MS::ThrowIfFailed
-			(
-				device->CreatePixelShader
-				(
-					(DWORD*)MotionBlur_PS_Blob,
-					dx9.PixelShader.GetAddressOf()
-				)
-			);
-
-			MS::ThrowIfFailed
-			(
-				device->CreateVertexShader
-				(
-					(DWORD*)MotionBlur_VS_Blob,
-					dx9.VertexShader.GetAddressOf()
-				)
 			);
 		}
 
 		catch (HRESULT code)
 		{
-			auto dxerror = MAKE_D3DHRESULT(code);
+			int a = 5;
+			a = a;
 
+			return false;
+		}
+
+		try
+		{
+			MS::ThrowIfFailed
+			(
+				D3D11CreateDevice
+				(
+					nullptr,
+					D3D_DRIVER_TYPE_HARDWARE,
+					0,
+					0,
+					nullptr,
+					0,
+					D3D11_SDK_VERSION,
+					dx11.Device.GetAddressOf(),
+					0,
+					dx11.Context.GetAddressOf()
+				)
+			);
+
+			Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->OpenSharedResource
+				(
+					dx9.SharedRT.SharedHandle,
+					__uuidof(ID3D11Resource),
+					(void**)(tempresource.GetAddressOf())
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				tempresource.As
+				(
+					&dx11.SharedTexture
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateShaderResourceView
+				(
+					dx11.SharedTexture.Get(),
+					nullptr,
+					dx11.SharedTextureSRView.GetAddressOf()
+				)
+			);
+
+			D3D11_TEXTURE2D_DESC desc = {};
+			desc.Width = width;
+			desc.Height = height;
+			desc.ArraySize = 1;
+			desc.SampleDesc.Count = 1;
+			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateTexture2D
+				(
+					&desc,
+					nullptr,
+					dx11.OutputRT.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateRenderTargetView
+				(
+					dx11.OutputRT.Get(),
+					nullptr,
+					dx11.OutputRTView.GetAddressOf()
+				)
+			);
+
+			std::initializer_list<ID3D11RenderTargetView*> views =
+			{
+				dx11.OutputRTView.Get()
+			};
+
+			dx11.Context->OMSetRenderTargets
+			(
+				1,
+				views.begin(),
+				nullptr
+			);
+
+			D3D11_VIEWPORT viewport = {};
+			viewport.Width = width;
+			viewport.Height = height;
+			viewport.MaxDepth = D3D11_MAX_DEPTH;
+			
+			dx11.Context->RSSetViewports
+			(
+				1,
+				&viewport
+			);
+
+			auto openshader = []
+			(
+				const char* path
+			)
+			{
+				using Status = SDR::Shared::ScopedFile::ExceptionType;
+
+				SDR::Shared::ScopedFile file;
+
+				try
+				{
+					file.Assign
+					(
+						path,
+						"rb"
+					);
+				}
+
+				catch (Status status)
+				{
+					if (status == Status::CouldNotOpenFile)
+					{
+						Warning
+						(
+							"SDR: Could not open shader \"%s\"\n",
+							path
+						);
+					}
+
+					throw false;
+				}
+
+				return file.ReadAll();
+			};
+
+			{
+				char filename[1024];
+				strcpy_s(filename, SDR::GetGamePath());
+				strcat_s(filename, R"(SDR\Shaders\Shader_MotionBlur_PS.sdrshader)");
+
+				try
+				{
+					auto shadercode = openshader(filename);
+
+					MS::ThrowIfFailed
+					(
+						dx11.Device->CreatePixelShader
+						(
+							shadercode.data(),
+							shadercode.size(),
+							nullptr,
+							dx11.MotionPS.GetAddressOf()
+						)
+					);
+				}
+
+				catch (bool value)
+				{
+					return false;
+				}
+			}
+
+			{
+				char filename[1024];
+				strcpy_s(filename, SDR::GetGamePath());
+				strcat_s(filename, R"(SDR\Shaders\Shader_MotionBlur_VS.sdrshader)");
+
+				try
+				{
+					auto shadercode = openshader(filename);
+
+					MS::ThrowIfFailed
+					(
+						dx11.Device->CreateVertexShader
+						(
+							shadercode.data(),
+							shadercode.size(),
+							nullptr,
+							dx11.MotionVS.GetAddressOf()
+						)
+					);
+
+					dx11.Context->IASetPrimitiveTopology
+					(
+						D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP
+					);
+
+					dx11.Context->VSSetShader
+					(
+						dx11.MotionVS.Get(),
+						nullptr,
+						0
+					);
+
+					dx11.Context->PSSetShader
+					(
+						dx11.MotionPS.Get(),
+						nullptr,
+						0
+					);
+				}
+
+				catch (bool value)
+				{
+					return false;
+				}
+			}
+		}
+
+		catch (HRESULT code)
+		{
 			int a = 5;
 			a = a;
 
