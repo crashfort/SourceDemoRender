@@ -24,9 +24,7 @@ extern "C"
 
 #include <d3d9.h>
 #include <d3dx9.h>
-
-#include "Shaders\Compiled\MotionBlur_PS.hpp"
-#include "Shaders\Compiled\MotionBlur_VS.hpp"
+#include <d3d11.h>
 
 #include "materialsystem\itexture.h"
 #include "shaderapi\ishaderapi.h"
