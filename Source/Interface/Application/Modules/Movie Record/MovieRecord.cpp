@@ -873,14 +873,9 @@ namespace
 
 			void SaveDebugImage
 			(
-				const wchar_t* prefix = nullptr
-			)
-			{
-				if (!prefix)
-				{
-					prefix = L"x";
-				}
 				
+			)
+			{				
 				static int counter = 0;
 
 				wchar_t namebuf[1024];
@@ -888,8 +883,7 @@ namespace
 				swprintf_s
 				(
 					namebuf,
-					LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image_%s_d3d11_%d.png)",
-					prefix,
+					LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image_d3d11_%d.png)",
 					counter
 				);
 
