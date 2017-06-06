@@ -2283,10 +2283,10 @@ namespace
 			auto& interfaces = SDR::GetEngineInterfaces();
 			auto client = interfaces.EngineClient;
 
-			if (!CurrentMovie.IsStarted)
+			/*if (!CurrentMovie.IsStarted)
 			{
 				return;
-			}
+			}*/
 
 			if (*ModuleSourceGlobals::DrawLoading)
 			{
