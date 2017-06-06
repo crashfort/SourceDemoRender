@@ -1966,7 +1966,7 @@ namespace
 
 					dx11.Context->IASetPrimitiveTopology
 					(
-						D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP
+						D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
 					);
 
 					dx11.Context->VSSetShader
