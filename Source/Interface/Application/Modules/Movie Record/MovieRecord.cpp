@@ -2268,7 +2268,7 @@ namespace
 				ModuleRenderContext::PopRenderTargetAndViewport
 			);
 
-			auto release = SDR::GetVirtual
+			auto handle = gettexturehandle
 			(
 				rendercontext,
 				ModuleRenderContext::Release
