@@ -745,7 +745,7 @@ namespace
 							D3DFMT_A8R8G8B8,
 							D3DPOOL_DEFAULT,
 							Texture.GetAddressOf(),
-							nullptr
+							&SharedHandle
 						)
 					);
 
@@ -759,6 +759,7 @@ namespace
 					);
 				}
 
+				HANDLE SharedHandle = nullptr;
 				Microsoft::WRL::ComPtr<IDirect3DTexture9> Texture;
 				Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 			};
