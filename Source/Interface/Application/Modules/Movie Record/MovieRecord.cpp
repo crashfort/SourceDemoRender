@@ -34,6 +34,14 @@ extern "C"
 #include "ivrenderview.h"
 #include "iviewrender.h"
 
+#define SDR_DEBUG_D3D11_IMAGE
+
+#ifdef SDR_DEBUG_D3D11_IMAGE
+#include <d2d1.h>
+#include <wincodec.h>
+#pragma comment(lib, "windowscodecs")
+#endif
+
 namespace
 {
 	namespace LAV
@@ -781,6 +789,123 @@ namespace
 
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> OutputRT;
 			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> OutputRTView;
+
+			#ifdef SDR_DEBUG_D3D11_IMAGE
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> DebugImage;
+
+			void SaveDebugImage
+			(
+				int width,
+				int height,
+				const wchar_t* prefix = nullptr
+			)
+			{
+				if (!prefix)
+				{
+					prefix = L"";
+				}
+				
+				static bool first = true;
+				static int counter = 0;
+
+				wchar_t namebuf[1024];
+
+				swprintf_s
+				(
+					namebuf,
+					LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image_%s_d3d11_%d.png)",
+					prefix,
+					counter
+				);
+
+				Context->CopyResource
+				(
+					DebugImage.Get(),
+					SharedTexture.Get()
+				);
+
+				D3D11_MAPPED_SUBRESOURCE resource = {};
+				auto id = D3D11CalcSubresource(0, 0, 0);
+
+				Context->Map
+				(
+					DebugImage.Get(),
+					id,
+					D3D11_MAP_READ,
+					0,
+					&resource
+				);
+
+				if (first)
+				{
+					first = false;
+					CoInitialize(nullptr);
+				}
+
+				Microsoft::WRL::ComPtr<IWICImagingFactory> factory;
+
+				auto hr = CoCreateInstance
+				(
+					CLSID_WICImagingFactory,
+					nullptr,
+					CLSCTX_INPROC_SERVER,
+					__uuidof(IWICImagingFactory),
+					(void**)factory.GetAddressOf()
+				);
+
+				Microsoft::WRL::ComPtr<IWICBitmap> bitmap;
+
+				factory->CreateBitmapFromMemory
+				(
+					width,
+					height,
+					GUID_WICPixelFormat32bppRGBA,
+					resource.RowPitch,
+					resource.DepthPitch,
+					(BYTE*)resource.pData,
+					&bitmap
+				);
+
+				Context->Unmap
+				(
+					DebugImage.Get(),
+					id
+				);
+
+				Microsoft::WRL::ComPtr<IWICStream> stream;
+				Microsoft::WRL::ComPtr<IWICBitmapEncoder> encoder;
+				Microsoft::WRL::ComPtr<IWICBitmapFrameEncode> frame;
+
+				factory->CreateStream(&stream);
+					
+				stream->InitializeFromFilename
+				(
+					namebuf,
+					GENERIC_WRITE
+				);
+
+				factory->CreateEncoder
+				(
+					GUID_ContainerFormatPng,
+					nullptr,
+					&encoder
+				);
+
+				encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache);
+
+				encoder->CreateNewFrame(&frame, nullptr);
+
+				frame->Initialize(nullptr);
+
+				frame->WriteSource(bitmap.Get(), nullptr);
+
+				frame->Commit();
+				encoder->Commit();
+
+				++counter;
+			}
+			#endif
+
 		} DirectX11;
 
 		std::unique_ptr<SDRVideoWriter> Video;
@@ -1722,6 +1847,12 @@ namespace
 
 		try
 		{
+			uint32_t flags = 0;
+
+			#ifdef _DEBUG
+			flags |= D3D11_CREATE_DEVICE_DEBUG;
+			#endif
+
 			MS::ThrowIfFailed
 			(
 				D3D11CreateDevice
@@ -1734,7 +1865,7 @@ namespace
 					0,
 					D3D11_SDK_VERSION,
 					dx11.Device.GetAddressOf(),
-					0,
+					flags,
 					dx11.Context.GetAddressOf()
 				)
 			);
@@ -1796,6 +1927,18 @@ namespace
 					dx11.OutputRTView.GetAddressOf()
 				)
 			);
+
+			#ifdef SDR_DEBUG_D3D11_IMAGE
+			desc.BindFlags = 0;
+			desc.Usage = D3D11_USAGE_STAGING;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+			dx11.Device->CreateTexture2D
+			(
+				&desc,
+				nullptr,
+				dx11.DebugImage.GetAddressOf()
+			);
+			#endif
 
 			std::initializer_list<ID3D11RenderTargetView*> views =
 			{
@@ -2343,6 +2486,14 @@ namespace
 
 			dx11.Context->Draw(4, 0);
 			dx11.Context->Flush();
+
+			#ifdef SDR_DEBUG_D3D11_IMAGE
+			dx11.SaveDebugImage
+			(
+				movie.Width,
+				movie.Height
+			);
+			#endif
 		}
 	}
 
