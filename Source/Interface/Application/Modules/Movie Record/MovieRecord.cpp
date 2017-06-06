@@ -869,8 +869,6 @@ namespace
 			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> OutputRTView;
 
 			#ifdef SDR_DEBUG_D3D11_IMAGE
-			Microsoft::WRL::ComPtr<ID3D11Texture2D> DebugImage;
-
 			void SaveDebugImage
 			(
 				ID3D11Texture2D* texture
@@ -1865,18 +1863,6 @@ namespace
 					dx11.OutputRTView.GetAddressOf()
 				)
 			);
-
-			#ifdef SDR_DEBUG_D3D11_IMAGE
-			desc.BindFlags = 0;
-			desc.Usage = D3D11_USAGE_STAGING;
-			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-			dx11.Device->CreateTexture2D
-			(
-				&desc,
-				nullptr,
-				dx11.DebugImage.GetAddressOf()
-			);
-			#endif
 
 			std::initializer_list<ID3D11RenderTargetView*> views =
 			{
