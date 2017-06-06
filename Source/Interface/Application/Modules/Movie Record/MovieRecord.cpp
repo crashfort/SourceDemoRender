@@ -2427,20 +2427,6 @@ namespace
 				textures.begin()
 			);
 
-			float clearcol[4] =
-			{
-				0,
-				1,
-				0,
-				1
-			};
-
-			dx11.Context->ClearRenderTargetView
-			(
-				dx11.OutputRTView.Get(),
-				clearcol
-			);
-
 			dx11.Context->Draw(3, 0);
 			dx11.Context->Flush();
 
