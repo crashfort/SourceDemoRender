@@ -23,7 +23,6 @@ extern "C"
 #include <mmsystem.h>
 
 #include <d3d9.h>
-#include <d3dx9.h>
 #include <d3d11.h>
 
 #include "materialsystem\itexture.h"
@@ -34,7 +33,12 @@ extern "C"
 #include "ivrenderview.h"
 #include "iviewrender.h"
 
+#define SDR_DEBUG_D3D9_IMAGE
 #define SDR_DEBUG_D3D11_IMAGE
+
+#ifdef SDR_DEBUG_D3D9_IMAGE
+#include <d3dx9.h>
+#endif
 
 #ifdef SDR_DEBUG_D3D11_IMAGE
 #include "D3DX11.h"
@@ -1610,6 +1614,7 @@ namespace
 			)
 		);
 
+		#ifdef SDR_DEBUG_D3D9_IMAGE
 		void SaveTempTexture
 		(
 			IDirect3DBaseTexture9* texture
@@ -1663,6 +1668,7 @@ namespace
 				handle->m_pTexture
 			);
 		}
+		#endif
 	}
 
 	MovieData::ScopedValveTexture::~ScopedValveTexture()
