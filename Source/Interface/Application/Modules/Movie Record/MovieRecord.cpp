@@ -2413,6 +2413,18 @@ namespace
 				D3DTEXF_NONE
 			);
 
+			std::initializer_list<ID3D11ShaderResourceView*> textures =
+			{
+				dx11.SharedTextureSRView.Get()
+			};
+
+			dx11.Context->PSSetShaderResources
+			(
+				0,
+				textures.size(),
+				textures.begin()
+			);
+
 			dx11.Context->Draw(3, 0);
 			dx11.Context->Flush();
 
