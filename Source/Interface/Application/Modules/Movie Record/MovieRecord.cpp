@@ -1676,11 +1676,9 @@ namespace
 			HRESULT hr;
 			Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
 
-			hr = ModuleSourceGlobals::Device->GetBackBuffer
+			hr = ModuleSourceGlobals::Device->GetRenderTarget
 			(
 				0,
-				0,
-				D3DBACKBUFFER_TYPE_MONO,
 				surface.GetAddressOf()
 			);
 
