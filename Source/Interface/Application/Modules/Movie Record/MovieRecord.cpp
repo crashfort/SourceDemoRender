@@ -2248,7 +2248,7 @@ namespace
 				ModuleTexture::GetTextureHandle
 			);
 
-			auto release = SDR::GetVirtual
+			auto handle = gettexturehandle
 			(
 				dx9.ValveRT.Get(),
 				nullptr,
@@ -2268,7 +2268,7 @@ namespace
 				ModuleRenderContext::PopRenderTargetAndViewport
 			);
 
-			auto handle = gettexturehandle
+			auto release = SDR::GetVirtual
 			(
 				rendercontext,
 				ModuleRenderContext::Release
