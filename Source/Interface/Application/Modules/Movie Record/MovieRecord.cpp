@@ -1982,6 +1982,11 @@ namespace
 						nullptr,
 						0
 					);
+
+					dx11.Context->IASetInputLayout
+					(
+						nullptr
+					);
 				}
 
 				catch (bool value)
