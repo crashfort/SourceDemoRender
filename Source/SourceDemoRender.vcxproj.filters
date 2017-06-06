@@ -112,7 +112,7 @@
     <Text Include="Interface\Application\Modules\Movie Record\HLAE\Readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\MotionBlur_PS.hlsl" />
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\MotionBlur_VS.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_MotionBlur_PS.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_MotionBlur_VS.hlsl" />
   </ItemGroup>
 </Project>
