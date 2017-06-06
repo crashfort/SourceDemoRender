@@ -427,3 +427,13 @@ const SDR::EngineInterfaces& SDR::GetEngineInterfaces()
 {
 	return Interfaces;
 }
+
+const char* SDR::GetGameName()
+{
+	return ModuleGameDir::GameName;
+}
+
+const char* SDR::GetGamePath()
+{
+	return ModuleGameDir::FullPath;
+}

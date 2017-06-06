@@ -43,6 +43,9 @@ namespace SDR
 		IVEngineClient* EngineClient;
 	};
 
+	const char* GetGamePath();
+	const char* GetGameName();
+
 	const EngineInterfaces& GetEngineInterfaces();
 }
 
