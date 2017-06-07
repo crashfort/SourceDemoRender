@@ -1230,18 +1230,6 @@ namespace
 				)
 			);
 
-			std::initializer_list<ID3D11RenderTargetView*> views =
-			{
-				dx11.OutputRTView.Get()
-			};
-
-			dx11.Context->OMSetRenderTargets
-			(
-				1,
-				views.begin(),
-				nullptr
-			);
-
 			D3D11_VIEWPORT viewport = {};
 			viewport.Width = width;
 			viewport.Height = height;
@@ -1676,6 +1664,9 @@ namespace
 				surface.GetAddressOf()
 			);
 
+			/*
+				The DX11 texture now contains this data
+			*/
 			hr = ModuleSourceGlobals::Device->StretchRect
 			(
 				surface.Get(),
@@ -1685,19 +1676,51 @@ namespace
 				D3DTEXF_NONE
 			);
 
-			std::initializer_list<ID3D11ShaderResourceView*> textures =
+			/*
+				Pass 1
+			*/
 			{
-				dx11.SharedTextureSRView.Get()
-			};
+				auto views =
+				{
+					dx11.OutputRTView.Get()
+				};
 
-			dx11.Context->PSSetShaderResources
-			(
-				0,
-				textures.size(),
-				textures.begin()
-			);
+				auto textures =
+				{
+					dx11.SharedTextureSRView.Get()
+				};
 
-			dx11.Context->Draw(3, 0);
+				dx11.Context->OMSetRenderTargets
+				(
+					1,
+					views.begin(),
+					nullptr
+				);
+
+				dx11.Context->PSSetShader
+				(
+					dx11.MotionPS.Get(),
+					nullptr,
+					0
+				);
+
+				dx11.Context->PSSetShaderResources
+				(
+					0,
+					1,
+					textures.begin()
+				);
+
+				dx11.Context->Draw(3, 0);
+			}
+
+			/*
+				Pass 2
+			*/
+			{
+
+			}
+
 			dx11.Context->Flush();
 
 			#ifdef SDR_DEBUG_D3D11_IMAGE
