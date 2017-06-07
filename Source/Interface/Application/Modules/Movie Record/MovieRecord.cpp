@@ -784,11 +784,14 @@ namespace
 
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> MotionPS;
 
-			Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
-			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRView;
+			/*
+				This texture is shared from DX9
+			*/
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> LatestTexture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> LatestTextureSRV;
 
-			Microsoft::WRL::ComPtr<ID3D11Texture2D> OutputRT;
-			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> OutputRTView;
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> OutputTexture;
+			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> OutputTextureRTV;
 
 			#ifdef SDR_DEBUG_D3D11_IMAGE
 			void SaveDebugImage
@@ -1188,7 +1191,7 @@ namespace
 			(
 				tempresource.As
 				(
-					&dx11.SharedTexture
+					&dx11.LatestTexture
 				)
 			);
 
@@ -1196,9 +1199,9 @@ namespace
 			(
 				dx11.Device->CreateShaderResourceView
 				(
-					dx11.SharedTexture.Get(),
+					dx11.LatestTexture.Get(),
 					nullptr,
-					dx11.SharedTextureSRView.GetAddressOf()
+					dx11.LatestTextureSRV.GetAddressOf()
 				)
 			);
 
@@ -1216,7 +1219,7 @@ namespace
 				(
 					&desc,
 					nullptr,
-					dx11.OutputRT.GetAddressOf()
+					dx11.OutputTexture.GetAddressOf()
 				)
 			);
 
@@ -1224,9 +1227,9 @@ namespace
 			(
 				dx11.Device->CreateRenderTargetView
 				(
-					dx11.OutputRT.Get(),
+					dx11.OutputTexture.Get(),
 					nullptr,
-					dx11.OutputRTView.GetAddressOf()
+					dx11.OutputTextureRTV.GetAddressOf()
 				)
 			);
 
@@ -1682,12 +1685,12 @@ namespace
 			{
 				auto views =
 				{
-					dx11.OutputRTView.Get()
+					dx11.OutputTextureRTV.Get()
 				};
 
 				auto textures =
 				{
-					dx11.SharedTextureSRView.Get()
+					dx11.LatestTextureSRV.Get()
 				};
 
 				dx11.Context->OMSetRenderTargets
@@ -1733,7 +1736,7 @@ namespace
 			#ifdef SDR_DEBUG_D3D11_IMAGE
 			dx11.SaveDebugImage
 			(
-				dx11.OutputRT.Get()
+				dx11.OutputTexture.Get()
 			);
 			#endif
 		}
