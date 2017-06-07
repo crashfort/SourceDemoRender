@@ -790,6 +790,12 @@ namespace
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> LatestTexture;
 			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> LatestTextureSRV;
 
+			/*
+				
+			*/
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> PreviousTexture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> PreviousTextureSRV;
+
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> OutputTexture;
 			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> OutputTextureRTV;
 
@@ -1730,6 +1736,15 @@ namespace
 			{
 
 			}
+
+			/*
+				
+			*/
+			dx11.Context->CopyResource
+			(
+				dx11.PreviousTexture.Get(),
+				dx11.LatestTexture.Get()
+			);
 
 			dx11.Context->Flush();
 
