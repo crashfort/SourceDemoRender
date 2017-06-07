@@ -289,7 +289,7 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
     </FxCompile>
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_MotionBlur_VS.hlsl">
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_PostProcess_VS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Vertex</ShaderType>

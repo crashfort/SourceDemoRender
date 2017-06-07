@@ -780,8 +780,9 @@ namespace
 			Microsoft::WRL::ComPtr<ID3D11Device> Device;
 			Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
 
+			Microsoft::WRL::ComPtr<ID3D11VertexShader> PostProcVS;
+
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> MotionPS;
-			Microsoft::WRL::ComPtr<ID3D11VertexShader> MotionVS;
 
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
 			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRView;
@@ -1317,7 +1318,7 @@ namespace
 			{
 				char filename[1024];
 				strcpy_s(filename, SDR::GetGamePath());
-				strcat_s(filename, R"(SDR\Shaders\Shader_MotionBlur_VS.sdrshader)");
+				strcat_s(filename, R"(SDR\Shaders\Shader_PostProcess_VS.sdrshader)");
 
 				try
 				{
@@ -1330,7 +1331,7 @@ namespace
 							shadercode.data(),
 							shadercode.size(),
 							nullptr,
-							dx11.MotionVS.GetAddressOf()
+							dx11.PostProcVS.GetAddressOf()
 						)
 					);
 
@@ -1341,14 +1342,7 @@ namespace
 
 					dx11.Context->VSSetShader
 					(
-						dx11.MotionVS.Get(),
-						nullptr,
-						0
-					);
-
-					dx11.Context->PSSetShader
-					(
-						dx11.MotionPS.Get(),
+						dx11.PostProcVS.Get(),
 						nullptr,
 						0
 					);
