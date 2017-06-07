@@ -1,10 +1,3 @@
-SamplerState TextureSampler
-{
-    Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
-
 struct PS_INPUT
 {
     float4 Pos : SV_Position;
@@ -16,6 +9,7 @@ struct PS_OUTPUT
     float4 Color : SV_Target0;
 };
 
+SamplerState TextureSampler : register(s0);
 Texture2D NewTexture : register(t0);
 
 PS_OUTPUT PSMain(PS_INPUT input)

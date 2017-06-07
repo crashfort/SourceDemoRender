@@ -1704,6 +1704,13 @@ namespace
 					0
 				);
 
+				dx11.Context->PSSetSamplers
+				(
+					0,
+					0,
+					nullptr
+				);
+
 				dx11.Context->PSSetShaderResources
 				(
 					0,
