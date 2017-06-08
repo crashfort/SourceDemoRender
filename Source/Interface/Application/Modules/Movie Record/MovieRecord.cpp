@@ -483,14 +483,14 @@ namespace
 
 			CodecContext.Assign(Encoder);
 
+			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
+
+			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
+
 			if (FormatContext->oformat->flags & AVFMT_GLOBALHEADER)
 			{
 				CodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 			}
-
-			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
-
-			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
 		}
 
 		void SetCodecParametersToStream()
