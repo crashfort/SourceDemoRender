@@ -466,7 +466,7 @@ namespace
 		{
 			FormatContext.Assign(path);
 
-			if (!(FormatContext->oformat->flags & AVFMT_NOFILE))
+			if ((FormatContext->oformat->flags & AVFMT_NOFILE) == 0)
 			{
 				LAV::ThrowIfFailed
 				(
