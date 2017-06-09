@@ -756,16 +756,328 @@ namespace
 
 		struct DirectX11Data
 		{
+			void PrintFrame()
+			{
+				auto w = FrameWhitePoint;
+
+				if (0 == w)
+				{
+				
+				}
+
+				else
+				{
+					w = 255.0f / w;
+				}
+			}
+
+			void ScaleFrame(float factor)
+			{
+				auto w = FrameWhitePoint;
+
+				if (w * factor == w)
+				{
+					return;
+				}
+
+				if (0 == w * factor)
+				{
+					FrameWhitePoint = 0;
+					return;
+				}
+
+				FrameWhitePoint *= factor;
+			}
+
+			void ClearFrame()
+			{
+				auto factor = 1.0f - FrameStrength;
+				ScaleFrame(factor);
+			}
+
+			void MakeFrame()
+			{
+				PrintFrame();
+				ClearFrame();
+			}
+
+			void Func1
+			(
+				ID3D11Texture2D* sample
+			)
+			{
+				FrameWhitePoint += 255.0f;
+			}
+
+			void Func2
+			(
+				ID3D11Texture2D* sample,
+				float weight
+			)
+			{
+				FrameWhitePoint += weight * 255.0f;
+			}
+
+			void Func4
+			(
+				ID3D11Texture2D* sample1,
+				ID3D11Texture2D* sample2,
+				float weight
+			)
+			{
+				FrameWhitePoint += weight * 2.0f * 255.0f;
+			}
+
+			void Integrator
+			(
+				ID3D11Texture2D* sample1,
+				ID3D11Texture2D* sample2,
+				float time1,
+				float time2,
+				float subtime1,
+				float subtime2
+			)
+			{
+				float weightA;
+				float weightB;
+
+				{
+					auto dAB = time2 - time1;
+					auto w1 = (subtime2 - subtime1) / 2.0;
+					auto w2 = dAB ? (subtime1 + subtime2 - 2.0 * time1) / dAB : 0.0;
+					weightA = w1 * (2 - w2);
+					weightB = w1 * w2;
+				}
+
+				if (0 == weightA)
+				{
+					weightA = weightB;
+					weightB = 0;
+					sample1 = sample2;
+					sample2 = 0;
+				}
+
+				if (0 == weightA)
+				{
+					return;
+				}
+
+				if (0 == sample1)
+				{
+					sample1 = sample2;
+					sample2 = 0;
+
+					weightA = weightA + weightB;
+					weightB = 0;
+				}
+
+				if (0 == sample1)
+				{
+					return;
+				}
+
+				if (0 == sample2 || 0 == weightB)
+				{
+					if (1 == weightA)
+					{
+						Func1(sample1);
+					}
+
+					else
+					{
+						Func2(sample1, weightA);
+					}
+				}
+
+				else
+				{
+					if (weightA == weightB)
+					{
+						if (1 == weightA)
+						{
+							Func1(sample1);
+							Func1(sample2);
+						}
+
+						else
+						{
+							Func4(sample1, sample2, weightA);
+						}
+					}
+
+					else
+					{
+						if (1 == weightB)
+						{
+							auto tS = sample1;
+							auto tW = weightA;
+
+							sample1 = sample2;
+							sample2 = tS;
+
+							weightA = weightB;
+							weightB = tW;
+						}
+
+						if (1 == weightA)
+						{
+							Func1(sample1);
+							Func2(sample2, weightB);
+						}
+						else
+						{
+							Func2(sample1, weightA);
+							Func2(sample2, weightB);
+						}
+					}
+				}
+			}
+
+			void SubSample
+			(
+				ID3D11Texture2D* sample1,
+				ID3D11Texture2D* sample2,
+				float time1,
+				float time2,
+				float subtime1,
+				float subtime2
+			)
+			{
+				if (!HasLastSample)
+				{
+					sample1 = nullptr;
+				}
+
+				Integrator
+				(
+					sample1,
+					sample2,
+					time1,
+					time2,
+					subtime1,
+					subtime2
+				);
+			}
+
+			void Sample
+			(
+				ID3D11Texture2D* sample1,
+				ID3D11Texture2D* sample2,
+				float time
+			)
+			{
+				auto submin = LastSampleTime;
+
+				while (submin < time)
+				{
+					auto submax = time;
+
+					auto shutterevent = ShutterTime + (ShutterOpen ? ShutterOpenDuration : FrameDuration);
+					auto frameend = LastFrameTime + FrameDuration;
+
+					if (submin < frameend && frameend <= submax)
+					{
+						submax = frameend;
+					}
+
+					if (submin < shutterevent && shutterevent <= submax)
+					{
+						submax = shutterevent;
+					}
+
+					if (ShutterOpen)
+					{
+						SubSample
+						(
+							sample1,
+							sample2,
+							LastSampleTime,
+							time,
+							submin,
+							submax
+						);
+					}
+
+					if (submin < frameend && frameend <= submax)
+					{
+						MakeFrame();
+						LastFrameTime = submax;
+					}
+
+					if (submin < shutterevent && shutterevent <= submax)
+					{
+						if (0.0f < ShutterOpenDuration && ShutterOpenDuration < FrameDuration)
+						{
+							ShutterOpen = !ShutterOpen;
+
+							if (ShutterOpen)
+							{
+								ShutterTime = submax;
+							}
+						}
+					}
+
+					submin = submax;
+				}
+
+				LastSampleTime = time;
+			}
+
+			float FrameDuration;
+			float SampleTimeInterval;
+
+			float LastFrameTime = 0;
+			float LastSampleTime = 0;
+			bool HasLastSample = false;
+
+			float Exposure;
+			float FrameStrength;
+
+			bool ShutterOpen = true;
+			float ShutterOpenDuration = 0;
+			float ShutterTime = 0;
+
+			float CurrentTime = 0;
+			float FrameWhitePoint = 0;
+
 			Microsoft::WRL::ComPtr<ID3D11Device> Device;
 			Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
 
 			Microsoft::WRL::ComPtr<ID3D11VertexShader> PostProcVS;
 
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun1PS;
+
+			struct
+			{
+				float Weight;
+			} Fun2PS_Dynamic;
+
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun2PS;
+			Microsoft::WRL::ComPtr<ID3D11Buffer> Fun2PS_DynamicBuffer;
+
+			struct
+			{
+				float Weight;
+			} Fun4PS_Dynamic;
+
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun4PS;
+			Microsoft::WRL::ComPtr<ID3D11Buffer> Fun4PS_DynamicBuffer;
+
+			struct
+			{
+				float Factor;
+			} ScalePS_Dynamic;
+
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> ScalePS;
+			Microsoft::WRL::ComPtr<ID3D11Buffer> ScalePS_DynamicBuffer;
+
+			struct
+			{
+				float Weight;
+			} PrintPS_Dynamic;
+
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> PrintPS;
+			Microsoft::WRL::ComPtr<ID3D11Buffer> PrintPS_DynamicBuffer;
 
 			/*
 				This texture is shared from DX9
@@ -811,6 +1123,67 @@ namespace
 			}
 			#endif
 
+			template <typename T>
+			void CreateConstBuffer
+			(
+				T& initdata,
+				ID3D11Buffer** buffer
+			)
+			{
+				D3D11_BUFFER_DESC desc = {};
+				cbDesc.ByteWidth = sizeof(T);
+				cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+				cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+				cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+				D3D11_SUBRESOURCE_DATA subresource = {};
+				InitData.pSysMem = &initdata;
+
+				MS::ThrowIfFailed
+				(
+					Device->CreateBuffer
+					(
+						&desc,
+						&subresource,
+						buffer
+					)
+				);
+			}
+
+			template <typename T>
+			bool UpdateAllConstBuffer
+			(
+				const T& data,
+				ID3D11Buffer* buffer
+			)
+			{
+				D3D11_MAPPED_SUBRESOURCE mapped = {};
+
+				auto hr = Context->Map
+				(
+					buffer,
+					0,
+					D3D11_MAP_WRITE_DISCARD,
+					0,
+					&mapped
+				);
+
+				if (FAILED(hr))
+				{
+					return false;
+				}
+
+				*(T*)mapped.pData = data;
+
+				Context->Unmap
+				(
+					buffer,
+					0
+				);
+
+				return true;
+			}
+
 		} DirectX11;
 
 		std::unique_ptr<SDRVideoWriter> Video;
@@ -821,293 +1194,6 @@ namespace
 		int32_t BufferedFrames = 0;
 		std::unique_ptr<VideoQueueType> FramesToSampleBuffer;
 		std::thread FrameHandlerThread;
-	};
-
-	struct GPUSampler
-	{
-		void PrintFrame()
-		{
-			auto w = FrameWhitePoint;
-
-			if (0 == w)
-			{
-				
-			}
-
-			else
-			{
-				w = 255.0f / w;
-			}
-		}
-
-		void ScaleFrame(float factor)
-		{
-			auto w = FrameWhitePoint;
-
-			if (w * factor == w)
-			{
-				return;
-			}
-
-			if (0 == w * factor)
-			{
-				FrameWhitePoint = 0;
-				return;
-			}
-
-			FrameWhitePoint *= factor;
-		}
-
-		void ClearFrame()
-		{
-			auto factor = 1.0f - FrameStrength;
-			ScaleFrame(factor);
-		}
-
-		void MakeFrame()
-		{
-			PrintFrame();
-			ClearFrame();
-		}
-
-		void Func1
-		(
-			ID3D11Texture2D* sample
-		)
-		{
-			FrameWhitePoint += 255.0f;
-		}
-
-		void Func2
-		(
-			ID3D11Texture2D* sample,
-			float weight
-		)
-		{
-			FrameWhitePoint += weight * 255.0f;
-		}
-
-		void Func4
-		(
-			ID3D11Texture2D* sample1,
-			ID3D11Texture2D* sample2,
-			float weight
-		)
-		{
-			FrameWhitePoint += weight * 2.0f * 255.0f;
-		}
-
-		void Integrator
-		(
-			ID3D11Texture2D* sample1,
-			ID3D11Texture2D* sample2,
-			float time1,
-			float time2,
-			float subtime1,
-			float subtime2
-		)
-		{
-			float weightA;
-			float weightB;
-
-			{
-				auto dAB = time2 - time1;
-				auto w1 = (subtime2 - subtime1) / 2.0;
-				auto w2 = dAB ? (subtime1 + subtime2 - 2.0 * time1) / dAB : 0.0;
-				weightA = w1 * (2 - w2);
-				weightB = w1 * w2;
-			}
-
-			if (0 == weightA)
-			{
-				weightA = weightB;
-				weightB = 0;
-				sample1 = sample2;
-				sample2 = 0;
-			}
-
-			if (0 == weightA)
-			{
-				return;
-			}
-
-			if (0 == sample1)
-			{
-				sample1 = sample2;
-				sample2 = 0;
-
-				weightA = weightA + weightB;
-				weightB = 0;
-			}
-
-			if (0 == sample1)
-			{
-				return;
-			}
-
-			if (0 == sample2 || 0 == weightB)
-			{
-				if (1 == weightA)
-				{
-					Func1(sample1);
-				}
-
-				else
-				{
-					Func2(sample1, weightA);
-				}
-			}
-
-			else
-			{
-				if (weightA == weightB)
-				{
-					if (1 == weightA)
-					{
-						Func1(sample1);
-						Func1(sample2);
-					}
-
-					else
-					{
-						Func4(sample1, sample2, weightA);
-					}
-				}
-
-				else
-				{
-					if (1 == weightB)
-					{
-						auto tS = sample1;
-						auto tW = weightA;
-
-						sample1 = sample2;
-						sample2 = tS;
-
-						weightA = weightB;
-						weightB = tW;
-					}
-
-					if (1 == weightA)
-					{
-						Func1(sample1);
-						Func2(sample2, weightB);
-					}
-					else
-					{
-						Func2(sample1, weightA);
-						Func2(sample2, weightB);
-					}
-				}
-			}
-		}
-
-		void SubSample
-		(
-			ID3D11Texture2D* sample1,
-			ID3D11Texture2D* sample2,
-			float time1,
-			float time2,
-			float subtime1,
-			float subtime2
-		)
-		{
-			if (!HasLastSample)
-			{
-				sample1 = nullptr;
-			}
-
-			Integrator
-			(
-				sample1,
-				sample2,
-				time1,
-				time2,
-				subtime1,
-				subtime2
-			);
-		}
-
-		void Sample
-		(
-			ID3D11Texture2D* sample1,
-			ID3D11Texture2D* sample2,
-			float time
-		)
-		{
-			auto submin = LastSampleTime;
-
-			while (submin < time)
-			{
-				auto submax = time;
-
-				auto shutterevent = ShutterTime + (ShutterOpen ? ShutterOpenDuration : FrameDuration);
-				auto frameend = LastFrameTime + FrameDuration;
-
-				if (submin < frameend && frameend <= submax)
-				{
-					submax = frameend;
-				}
-
-				if (submin < shutterevent && shutterevent <= submax)
-				{
-					submax = shutterevent;
-				}
-
-				if (ShutterOpen)
-				{
-					SubSample
-					(
-						sample1,
-						sample2,
-						LastSampleTime,
-						time,
-						submin,
-						submax
-					);
-				}
-
-				if (submin < frameend && frameend <= submax)
-				{
-					MakeFrame();
-					LastFrameTime = submax;
-				}
-
-				if (submin < shutterevent && shutterevent <= submax)
-				{
-					if (0.0f < ShutterOpenDuration && ShutterOpenDuration < FrameDuration)
-					{
-						ShutterOpen = !ShutterOpen;
-
-						if (ShutterOpen)
-						{
-							ShutterTime = submax;
-						}
-					}
-				}
-
-				submin = submax;
-			}
-
-			LastSampleTime = time;
-		}
-
-		float FrameDuration;
-		float SampleTimeInterval;
-
-		float LastFrameTime = 0;
-		float LastSampleTime = 0;
-		bool HasLastSample = false;
-
-		float Exposure;
-		float FrameStrength;
-
-		bool ShutterOpen = true;
-		float ShutterOpenDuration = 0;
-		float ShutterTime = 0;
-
-		float CurrentTime = 0;
-		float FrameWhitePoint = 0;
 	};
 
 	MovieData CurrentMovie;
@@ -1603,57 +1689,79 @@ namespace
 				);
 			};
 
+			try
 			{
-				try
-				{
-					openvertexshader
-					(
-						"PostProcess_VS",
-						dx11.Device.Get(),
-						dx11.PostProcVS.GetAddressOf()
-					);
+				openvertexshader
+				(
+					"PostProcess_VS",
+					dx11.Device.Get(),
+					dx11.PostProcVS.GetAddressOf()
+				);
 
-					openpixelshader
-					(
-						"F1_PS",
-						dx11.Device.Get(),
-						dx11.Fun1PS.GetAddressOf()
-					);
+				openpixelshader
+				(
+					"F1_PS",
+					dx11.Device.Get(),
+					dx11.Fun1PS.GetAddressOf()
+				);
 
-					openpixelshader
-					(
-						"F2_PS",
-						dx11.Device.Get(),
-						dx11.Fun2PS.GetAddressOf()
-					);
+				openpixelshader
+				(
+					"F2_PS",
+					dx11.Device.Get(),
+					dx11.Fun2PS.GetAddressOf()
+				);
 
-					openpixelshader
-					(
-						"F4_PS",
-						dx11.Device.Get(),
-						dx11.Fun4PS.GetAddressOf()
-					);
+				openpixelshader
+				(
+					"F4_PS",
+					dx11.Device.Get(),
+					dx11.Fun4PS.GetAddressOf()
+				);
 
-					openpixelshader
-					(
-						"Print_PS",
-						dx11.Device.Get(),
-						dx11.PrintPS.GetAddressOf()
-					);
+				openpixelshader
+				(
+					"Print_PS",
+					dx11.Device.Get(),
+					dx11.PrintPS.GetAddressOf()
+				);
 
-					openpixelshader
-					(
-						"Scale_PS",
-						dx11.Device.Get(),
-						dx11.ScalePS.GetAddressOf()
-					);
-				}
-
-				catch (bool value)
-				{
-					return false;
-				}
+				openpixelshader
+				(
+					"Scale_PS",
+					dx11.Device.Get(),
+					dx11.ScalePS.GetAddressOf()
+				);
 			}
+
+			catch (bool value)
+			{
+				return false;
+			}
+
+			dx11.CreateConstBuffer
+			(
+				dx11.Fun2PS_Dynamic,
+				dx11.Fun2PS_DynamicBuffer.GetAddressOf()
+			);
+
+			dx11.CreateConstBuffer
+			(
+				dx11.Fun4PS_Dynamic,
+				dx11.Fun4PS_DynamicBuffer.GetAddressOf()
+			);
+
+			dx11.CreateConstBuffer
+			(
+				dx11.ScalePS_Dynamic,
+				dx11.ScalePS_DynamicBuffer.GetAddressOf()
+			);
+
+			dx11.CreateConstBuffer
+			(
+				dx11.PrintPS_Dynamic,
+				dx11.PrintPS_DynamicBuffer.GetAddressOf()
+			);
 
 			dx11.Context->IASetPrimitiveTopology
 			(
