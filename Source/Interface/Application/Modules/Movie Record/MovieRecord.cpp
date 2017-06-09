@@ -710,27 +710,6 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
-		struct SamplingData
-		{
-			float FrameDuration;
-			float LastFrameTime;
-
-			float SampleTimeInterval;
-			float LastSampleTime;
-
-			float Exposure;
-			float FrameStrength;
-
-			bool ShutterOpen;
-			float ShutterOpenDuration;
-			float ShutterTime;
-
-			float CurrentTime = 0.0;
-			float FrameWhitePoint;
-		};
-
-		SamplingData SampleData;
-
 		struct DirectX9Data
 		{
 			struct RenderTarget
@@ -842,6 +821,293 @@ namespace
 		int32_t BufferedFrames = 0;
 		std::unique_ptr<VideoQueueType> FramesToSampleBuffer;
 		std::thread FrameHandlerThread;
+	};
+
+	struct GPUSampler
+	{
+		void PrintFrame()
+		{
+			auto w = FrameWhitePoint;
+
+			if (0 == w)
+			{
+				
+			}
+
+			else
+			{
+				w = 255.0f / w;
+			}
+		}
+
+		void ScaleFrame(float factor)
+		{
+			auto w = FrameWhitePoint;
+
+			if (w * factor == w)
+			{
+				return;
+			}
+
+			if (0 == w * factor)
+			{
+				FrameWhitePoint = 0;
+				return;
+			}
+
+			FrameWhitePoint *= factor;
+		}
+
+		void ClearFrame()
+		{
+			auto factor = 1.0f - FrameStrength;
+			ScaleFrame(factor);
+		}
+
+		void MakeFrame()
+		{
+			PrintFrame();
+			ClearFrame();
+		}
+
+		void Func1
+		(
+			ID3D11Texture2D* sample
+		)
+		{
+			FrameWhitePoint += 255.0f;
+		}
+
+		void Func2
+		(
+			ID3D11Texture2D* sample,
+			float weight
+		)
+		{
+			FrameWhitePoint += weight * 255.0f;
+		}
+
+		void Func4
+		(
+			ID3D11Texture2D* sample1,
+			ID3D11Texture2D* sample2,
+			float weight
+		)
+		{
+			FrameWhitePoint += weight * 2.0f * 255.0f;
+		}
+
+		void Integrator
+		(
+			ID3D11Texture2D* sample1,
+			ID3D11Texture2D* sample2,
+			float time1,
+			float time2,
+			float subtime1,
+			float subtime2
+		)
+		{
+			float weightA;
+			float weightB;
+
+			{
+				auto dAB = time2 - time1;
+				auto w1 = (subtime2 - subtime1) / 2.0;
+				auto w2 = dAB ? (subtime1 + subtime2 - 2.0 * time1) / dAB : 0.0;
+				weightA = w1 * (2 - w2);
+				weightB = w1 * w2;
+			}
+
+			if (0 == weightA)
+			{
+				weightA = weightB;
+				weightB = 0;
+				sample1 = sample2;
+				sample2 = 0;
+			}
+
+			if (0 == weightA)
+			{
+				return;
+			}
+
+			if (0 == sample1)
+			{
+				sample1 = sample2;
+				sample2 = 0;
+
+				weightA = weightA + weightB;
+				weightB = 0;
+			}
+
+			if (0 == sample1)
+			{
+				return;
+			}
+
+			if (0 == sample2 || 0 == weightB)
+			{
+				if (1 == weightA)
+				{
+					Func1(sample1);
+				}
+
+				else
+				{
+					Func2(sample1, weightA);
+				}
+			}
+
+			else
+			{
+				if (weightA == weightB)
+				{
+					if (1 == weightA)
+					{
+						Func1(sample1);
+						Func1(sample2);
+					}
+
+					else
+					{
+						Func4(sample1, sample2, weightA);
+					}
+				}
+
+				else
+				{
+					if (1 == weightB)
+					{
+						auto tS = sample1;
+						auto tW = weightA;
+
+						sample1 = sample2;
+						sample2 = tS;
+
+						weightA = weightB;
+						weightB = tW;
+					}
+
+					if (1 == weightA)
+					{
+						Func1(sample1);
+						Func2(sample2, weightB);
+					}
+					else
+					{
+						Func2(sample1, weightA);
+						Func2(sample2, weightB);
+					}
+				}
+			}
+		}
+
+		void SubSample
+		(
+			ID3D11Texture2D* sample1,
+			ID3D11Texture2D* sample2,
+			float time1,
+			float time2,
+			float subtime1,
+			float subtime2
+		)
+		{
+			if (!HasLastSample)
+			{
+				sample1 = nullptr;
+			}
+
+			Integrator
+			(
+				sample1,
+				sample2,
+				time1,
+				time2,
+				subtime1,
+				subtime2
+			);
+		}
+
+		void Sample
+		(
+			ID3D11Texture2D* sample1,
+			ID3D11Texture2D* sample2,
+			float time
+		)
+		{
+			auto submin = LastSampleTime;
+
+			while (submin < time)
+			{
+				auto submax = time;
+
+				auto shutterevent = ShutterTime + (ShutterOpen ? ShutterOpenDuration : FrameDuration);
+				auto frameend = LastFrameTime + FrameDuration;
+
+				if (submin < frameend && frameend <= submax)
+				{
+					submax = frameend;
+				}
+
+				if (submin < shutterevent && shutterevent <= submax)
+				{
+					submax = shutterevent;
+				}
+
+				if (ShutterOpen)
+				{
+					SubSample
+					(
+						sample1,
+						sample2,
+						LastSampleTime,
+						time,
+						submin,
+						submax
+					);
+				}
+
+				if (submin < frameend && frameend <= submax)
+				{
+					MakeFrame();
+					LastFrameTime = submax;
+				}
+
+				if (submin < shutterevent && shutterevent <= submax)
+				{
+					if (0.0f < ShutterOpenDuration && ShutterOpenDuration < FrameDuration)
+					{
+						ShutterOpen = !ShutterOpen;
+
+						if (ShutterOpen)
+						{
+							ShutterTime = submax;
+						}
+					}
+				}
+
+				submin = submax;
+			}
+
+			LastSampleTime = time;
+		}
+
+		float FrameDuration;
+		float SampleTimeInterval;
+
+		float LastFrameTime = 0;
+		float LastSampleTime = 0;
+		bool HasLastSample = false;
+
+		float Exposure;
+		float FrameStrength;
+
+		bool ShutterOpen = true;
+		float ShutterOpenDuration = 0;
+		float ShutterTime = 0;
+
+		float CurrentTime = 0;
+		float FrameWhitePoint = 0;
 	};
 
 	MovieData CurrentMovie;
