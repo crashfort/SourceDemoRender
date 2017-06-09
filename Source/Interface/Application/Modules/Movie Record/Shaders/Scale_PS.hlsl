@@ -1,4 +1,4 @@
-#include "Shader_Common_PS.hlsl"
+#include "Common_PS.hlsl"
 
 struct PS_OUTPUT
 {
