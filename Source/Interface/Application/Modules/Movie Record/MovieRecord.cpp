@@ -782,7 +782,11 @@ namespace
 
 			Microsoft::WRL::ComPtr<ID3D11VertexShader> PostProcVS;
 
-			Microsoft::WRL::ComPtr<ID3D11PixelShader> MotionPS;
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun1PS;
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun2PS;
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun4PS;
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> ScalePS;
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> PrintPS;
 
 			/*
 				This texture is shared from DX9
@@ -1252,12 +1256,18 @@ namespace
 
 			auto openshader = []
 			(
-				const char* path
+				const char* name
 			)
 			{
 				using Status = SDR::Shared::ScopedFile::ExceptionType;
 
 				SDR::Shared::ScopedFile file;
+
+				char path[1024];
+				strcpy_s(path, SDR::GetGamePath());
+				strcat(path, "R(SDR\Shaders\)");
+				strcat_s(path, name);
+				strcat_s(path, ".sdrshader");
 
 				try
 				{
@@ -1285,68 +1295,91 @@ namespace
 				return file.ReadAll();
 			};
 
+			auto openvertexshader = [openshader]
+			(
+				const char* name,
+				ID3D11Device* device,
+				ID3D11VertexShader** shader
+			)
 			{
-				char filename[1024];
-				strcpy_s(filename, SDR::GetGamePath());
-				strcat_s(filename, R"(SDR\Shaders\Shader_MotionBlur_PS.sdrshader)");
+				auto data = openshader(name);
 
-				try
-				{
-					auto shadercode = openshader(filename);
-
-					MS::ThrowIfFailed
+				MS::ThrowIfFailed
+				(
+					device->CreateVertexShader
 					(
-						dx11.Device->CreatePixelShader
-						(
-							shadercode.data(),
-							shadercode.size(),
-							nullptr,
-							dx11.MotionPS.GetAddressOf()
-						)
-					);
-				}
-
-				catch (bool value)
-				{
-					return false;
-				}
-			}
-
-			{
-				char filename[1024];
-				strcpy_s(filename, SDR::GetGamePath());
-				strcat_s(filename, R"(SDR\Shaders\Shader_PostProcess_VS.sdrshader)");
-
-				try
-				{
-					auto shadercode = openshader(filename);
-
-					MS::ThrowIfFailed
-					(
-						dx11.Device->CreateVertexShader
-						(
-							shadercode.data(),
-							shadercode.size(),
-							nullptr,
-							dx11.PostProcVS.GetAddressOf()
-						)
-					);
-
-					dx11.Context->IASetPrimitiveTopology
-					(
-						D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
-					);
-
-					dx11.Context->VSSetShader
-					(
-						dx11.PostProcVS.Get(),
+						data.data(),
+						data.size(),
 						nullptr,
-						0
+						shader
+					)
+				);
+			};
+
+			auto openpixelshader = [openshader]
+			(
+				const char* name,
+				ID3D11Device* device,
+				ID3D11PixelShader** shader
+			)
+			{
+				auto data = openshader(name);
+
+				MS::ThrowIfFailed
+				(
+					device->CreatePixelShader
+					(
+						data.data(),
+						data.size(),
+						nullptr,
+						shader
+					)
+				);
+			};
+
+			{
+				try
+				{
+					openvertexshader
+					(
+						"Shader_PostProcess_VS",
+						dx11.Device.Get(),
+						dx11.PostProcVS.GetAddressOf()
 					);
 
-					dx11.Context->IASetInputLayout
+					openpixelshader
 					(
-						nullptr
+						"Shader_F1_PS",
+						dx11.Device.Get(),
+						dx11.Fun1PS.GetAddressOf()
+					);
+
+					openpixelshader
+					(
+						"Shader_F2_PS",
+						dx11.Device.Get(),
+						dx11.Fun2PS.GetAddressOf()
+					);
+
+					openpixelshader
+					(
+						"Shader_F4_PS",
+						dx11.Device.Get(),
+						dx11.Fun4PS.GetAddressOf()
+					);
+
+					openpixelshader
+					(
+						"Shader_Print_PS",
+						dx11.Device.Get(),
+						dx11.PrintPS.GetAddressOf()
+					);
+
+					openpixelshader
+					(
+						"Shader_Scale_PS",
+						dx11.Device.Get(),
+						dx11.ScalePS.GetAddressOf()
 					);
 				}
 
@@ -1355,6 +1388,23 @@ namespace
 					return false;
 				}
 			}
+
+			dx11.Context->IASetPrimitiveTopology
+			(
+				D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
+			);
+
+			dx11.Context->IASetInputLayout
+			(
+				nullptr
+			);
+
+			dx11.Context->VSSetShader
+			(
+				dx11.PostProcVS.Get(),
+				nullptr,
+				0
+			);
 		}
 
 		catch (HRESULT code)
@@ -1728,13 +1778,6 @@ namespace
 				);
 
 				dx11.Context->Draw(3, 0);
-			}
-
-			/*
-				Pass 2
-			*/
-			{
-
 			}
 
 			/*

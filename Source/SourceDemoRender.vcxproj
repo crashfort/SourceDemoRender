@@ -255,7 +255,7 @@
     <Text Include="Interface\Application\Modules\Movie Record\HLAE\Readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_MotionBlur_PS.hlsl">
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_F1_PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Pixel</ShaderType>
@@ -306,6 +306,113 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">VSMain</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_F2_PS.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">PSMain</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Pixel</ShaderType>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_F4_PS.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">PSMain</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Pixel</ShaderType>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_Scale_PS.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">PSMain</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Pixel</ShaderType>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+    </FxCompile>
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\Shader_Common_PS.hlsl">
+      <FileType>Document</FileType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      </EntryPointName>
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      </DisableOptimizations>
+      <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      </EnableDebuggingInformation>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      </ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      </EntryPointName>
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      </DisableOptimizations>
+      <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      </EnableDebuggingInformation>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      </ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
+      </EntryPointName>
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
+      </DisableOptimizations>
+      <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
+      </EnableDebuggingInformation>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
+      </ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
+      </EntryPointName>
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
+      </DisableOptimizations>
+      <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
+      </EnableDebuggingInformation>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
+      </ShaderModel>
+    </None>
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_Print_PS.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">PSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">PSMain</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Pixel</ShaderType>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(SolutionDir)..\Output\SDR\Shaders\%(Filename).sdrshader</ObjectFileOutput>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
