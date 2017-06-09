@@ -1342,42 +1342,42 @@ namespace
 				{
 					openvertexshader
 					(
-						"Shader_PostProcess_VS",
+						"PostProcess_VS",
 						dx11.Device.Get(),
 						dx11.PostProcVS.GetAddressOf()
 					);
 
 					openpixelshader
 					(
-						"Shader_F1_PS",
+						"F1_PS",
 						dx11.Device.Get(),
 						dx11.Fun1PS.GetAddressOf()
 					);
 
 					openpixelshader
 					(
-						"Shader_F2_PS",
+						"F2_PS",
 						dx11.Device.Get(),
 						dx11.Fun2PS.GetAddressOf()
 					);
 
 					openpixelshader
 					(
-						"Shader_F4_PS",
+						"F4_PS",
 						dx11.Device.Get(),
 						dx11.Fun4PS.GetAddressOf()
 					);
 
 					openpixelshader
 					(
-						"Shader_Print_PS",
+						"Print_PS",
 						dx11.Device.Get(),
 						dx11.PrintPS.GetAddressOf()
 					);
 
 					openpixelshader
 					(
-						"Shader_Scale_PS",
+						"Scale_PS",
 						dx11.Device.Get(),
 						dx11.ScalePS.GetAddressOf()
 					);
