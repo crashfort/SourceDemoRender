@@ -705,6 +705,7 @@ namespace
 			return (Width * Height) * BytesPerPixel;
 		}
 
+		bool TempStarted = false;
 		bool IsStarted = false;
 
 		uint32_t Width;
@@ -1251,6 +1252,12 @@ namespace
 	void SDR_MovieShutdown()
 	{
 		auto& movie = CurrentMovie;
+
+		if (movie.TempStarted)
+		{
+			movie = MovieData();
+			return;
+		}
 
 		if (!movie.IsStarted)
 		{
@@ -2141,10 +2148,10 @@ namespace
 			auto& interfaces = SDR::GetEngineInterfaces();
 			auto client = interfaces.EngineClient;
 
-			/*if (!CurrentMovie.IsStarted)
+			if (!CurrentMovie.TempStarted)
 			{
 				return;
-			}*/
+			}
 
 			if (*ModuleSourceGlobals::DrawLoading)
 			{
@@ -2890,6 +2897,32 @@ namespace
 				width,
 				height
 			);
+
+			auto& dx11 = CurrentMovie.DirectX11;
+
+			auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+			auto sampleframerate = 1.0 / spsvar;
+
+			auto frameratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
+			auto exposure = Variables::Exposure.GetFloat();
+			auto framestrength = Variables::FrameStrength.GetFloat();
+
+			dx11.FrameDuration = frameratems;
+			dx11.LastFrameTime = 0;
+
+			dx11.SampleTimeInterval = sampleframerate;
+			dx11.LastSampleTime = 0;
+
+			dx11.Exposure = exposure;
+			dx11.FrameStrength = framestrength;
+
+			dx11.ShutterOpen = true;
+			dx11.ShutterOpenDuration = frameratems * min(max(exposure, 0.0f), 1.0f);
+			dx11.ShutterTime = 0;
+
+			CurrentMovie.TempStarted = true;
+
+			return;
 
 			auto name = args[1];
 
