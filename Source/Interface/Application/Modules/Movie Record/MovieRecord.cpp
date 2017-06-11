@@ -1410,6 +1410,7 @@ namespace
 			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> TempTextureRTV;
 
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> OutputTexture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> OutputTextureSRV;
 			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> OutputTextureRTV;
 
 			#ifdef SDR_DEBUG_D3D11_IMAGE
@@ -1920,6 +1921,16 @@ namespace
 					&desc,
 					nullptr,
 					dx11.OutputTexture.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateShaderResourceView
+				(
+					dx11.OutputTexture.Get(),
+					nullptr,
+					dx11.OutputTextureSRV.GetAddressOf()
 				)
 			);
 
