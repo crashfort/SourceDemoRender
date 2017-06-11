@@ -1186,13 +1186,13 @@ namespace
 			)
 			{
 				D3D11_BUFFER_DESC desc = {};
-				cbDesc.ByteWidth = sizeof(T);
-				cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-				cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-				cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+				desc.ByteWidth = sizeof(T);
+				desc.Usage = D3D11_USAGE_DYNAMIC;
+				desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+				desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
 				D3D11_SUBRESOURCE_DATA subresource = {};
-				InitData.pSysMem = &initdata;
+				subresource.pSysMem = &initdata;
 
 				MS::ThrowIfFailed
 				(
