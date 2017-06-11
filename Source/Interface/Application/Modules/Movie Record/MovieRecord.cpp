@@ -1094,7 +1094,7 @@ namespace
 
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun1PS;
 
-			struct
+			__declspec(align(16)) struct
 			{
 				float Weight;
 			} Fun2PS_Dynamic;
@@ -1102,7 +1102,7 @@ namespace
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun2PS;
 			Microsoft::WRL::ComPtr<ID3D11Buffer> Fun2PS_DynamicBuffer;
 
-			struct
+			__declspec(align(16)) struct
 			{
 				float Weight;
 			} Fun4PS_Dynamic;
@@ -1110,7 +1110,7 @@ namespace
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun4PS;
 			Microsoft::WRL::ComPtr<ID3D11Buffer> Fun4PS_DynamicBuffer;
 
-			struct
+			__declspec(align(16)) struct
 			{
 				float Factor;
 			} ScalePS_Dynamic;
@@ -1118,7 +1118,7 @@ namespace
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> ScalePS;
 			Microsoft::WRL::ComPtr<ID3D11Buffer> ScalePS_DynamicBuffer;
 
-			struct
+			__declspec(align(16)) struct
 			{
 				float Weight;
 			} PrintPS_Dynamic;
