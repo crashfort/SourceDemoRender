@@ -999,10 +999,69 @@ namespace
 
 			void Func2
 			(
-				ID3D11Texture2D* sample,
+				ID3D11ShaderResourceView* sample,
 				float weight
 			)
 			{
+				auto outputs =
+				{
+					TempTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					OutputTextureSRV.Get(),
+					sample
+				};
+
+				auto buffers =
+				{
+					Fun2PS_DynamicBuffer.Get()
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					Fun2PS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
+				Fun2PS_Dynamic.Weight = weight;
+
+				UpdateAllConstBuffer
+				(
+					Fun2PS_Dynamic,
+					Fun2PS_DynamicBuffer.Get()
+				);
+
+				Context->PSSetConstantBuffers
+				(
+					0,
+					buffers.size(),
+					buffers.begin()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
+
 				FrameWhitePoint += weight * 255.0f;
 			}
 
