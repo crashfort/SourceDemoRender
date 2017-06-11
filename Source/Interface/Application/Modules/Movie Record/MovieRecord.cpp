@@ -806,17 +806,67 @@ namespace
 
 			void PrintFrame()
 			{
+				auto outputs =
+				{
+					OutputTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					TempTextureSRV.Get()
+				};
+
+				auto buffers =
+				{
+					PrintPS_DynamicBuffer.Get()
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					PrintPS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
 				auto w = FrameWhitePoint;
 
-				if (0 == w)
+				if (w == 0)
 				{
-				
+					PrintPS_Dynamic.Weight = 0;
 				}
 
 				else
 				{
 					w = 255.0f / w;
+					PrintPS_Dynamic.Weight = w;
 				}
+
+				UpdateAllConstBuffer
+				(
+					PrintPS_Dynamic,
+					PrintPS_DynamicBuffer.Get()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
 			}
 
 			void ScaleFrame(float factor)
