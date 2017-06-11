@@ -1076,11 +1076,11 @@ namespace
 				HasLastSample = true;
 			}
 
-			float FrameDuration;
-			float SampleTimeInterval;
+			double FrameDuration;
+			double SampleTimeInterval;
 
-			float LastFrameTime = 0;
-			float LastSampleTime = 0;
+			double LastFrameTime = 0;
+			double LastSampleTime = 0;
 			bool HasLastSample = false;
 
 			float Exposure;
@@ -1090,7 +1090,7 @@ namespace
 			float ShutterOpenDuration = 0;
 			float ShutterTime = 0;
 
-			float CurrentTime = 0;
+			double CurrentTime = 0;
 			float FrameWhitePoint = 0;
 
 			Microsoft::WRL::ComPtr<ID3D11Device> Device;
