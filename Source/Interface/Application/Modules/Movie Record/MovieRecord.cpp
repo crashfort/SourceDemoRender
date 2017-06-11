@@ -1555,6 +1555,9 @@ namespace
 		auto& dx9 = movie.DirectX9;
 		auto& dx11 = movie.DirectX11;
 
+		movie.Width = width;
+		movie.Height = height;
+
 		try
 		{
 			dx9.SharedRT.Create
