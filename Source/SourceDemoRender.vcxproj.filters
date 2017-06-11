@@ -112,12 +112,14 @@
     <Text Include="Interface\Application\Modules\Movie Record\HLAE\Readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Shader_Common_PS.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\F1_PS.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\F2_PS.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\F4_PS.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\PostProcess_VS.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Print_PS.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Scale_PS.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\Common_PS.hlsl" />
   </ItemGroup>
 </Project>
