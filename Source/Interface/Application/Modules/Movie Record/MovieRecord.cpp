@@ -2740,27 +2740,7 @@ namespace
 
 			if (Variables::UseSample.GetBool())
 			{
-				auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
-				auto sampleframerate = 1.0 / spsvar;
-
-				auto frameratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
-				auto exposure = Variables::Exposure.GetFloat();
-				auto framestrength = Variables::FrameStrength.GetFloat();
-
-				auto& settings = movie.SampleData;
-
-				settings.FrameDuration = frameratems;
-				settings.LastFrameTime = 0;
-
-				settings.SampleTimeInterval = sampleframerate;
-				settings.LastSampleTime = 0;
-
-				settings.Exposure = exposure;
-				settings.FrameStrength = framestrength;
-
-				settings.ShutterOpen = false;
-				settings.ShutterOpenDuration = frameratems * min(max(exposure, 0.0f), 1.0f);
-				settings.ShutterTime = 0;
+				
 			}
 
 			else
