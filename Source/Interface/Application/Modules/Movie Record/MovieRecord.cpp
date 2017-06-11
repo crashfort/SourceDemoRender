@@ -1007,13 +1007,9 @@ namespace
 				);
 			}
 
-			void Sample
-			(
-				ID3D11Texture2D* sample1,
-				ID3D11Texture2D* sample2,
-				float time
-			)
+			void Sample()
 			{
+				auto& time = CurrentTime;
 				auto submin = LastSampleTime;
 
 				while (submin < time)
@@ -1037,8 +1033,6 @@ namespace
 					{
 						SubSample
 						(
-							sample1,
-							sample2,
 							LastSampleTime,
 							time,
 							submin,
@@ -1069,6 +1063,17 @@ namespace
 				}
 
 				LastSampleTime = time;
+
+				/*
+
+				*/
+				Context->CopyResource
+				(
+					PreviousTexture.Get(),
+					LatestTexture.Get()
+				);
+
+				HasLastSample = true;
 			}
 
 			float FrameDuration;
@@ -2166,7 +2171,6 @@ namespace
 			auto& movie = CurrentMovie;
 			auto& dx9 = movie.DirectX9;
 			auto& dx11 = movie.DirectX11;
-			auto& sampledata = movie.SampleData;
 
 			HRESULT hr;
 			Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
@@ -2189,68 +2193,14 @@ namespace
 				D3DTEXF_NONE
 			);
 
-			/*
-				Pass 1
-			*/
 			{
-				auto views =
-				{
-					dx11.OutputTextureRTV.Get()
-				};
+				dx11.Sample();
 
-				auto textures =
-				{
-					dx11.LatestTextureSRV.Get()
-				};
+				auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+				auto sampleframerate = 1.0 / spsvar;
 
-				dx11.Context->OMSetRenderTargets
-				(
-					1,
-					views.begin(),
-					nullptr
-				);
-
-				dx11.Context->PSSetShader
-				(
-					dx11.MotionPS.Get(),
-					nullptr,
-					0
-				);
-
-				dx11.Context->PSSetSamplers
-				(
-					0,
-					0,
-					nullptr
-				);
-
-				dx11.Context->PSSetShaderResources
-				(
-					0,
-					1,
-					textures.begin()
-				);
-
-				dx11.Context->Draw(3, 0);
+				dx11.CurrentTime += sampleframerate;
 			}
-
-			/*
-				
-			*/
-			dx11.Context->CopyResource
-			(
-				dx11.PreviousTexture.Get(),
-				dx11.LatestTexture.Get()
-			);
-
-			dx11.Context->Flush();
-
-			#ifdef SDR_DEBUG_D3D11_IMAGE
-			dx11.SaveDebugImage
-			(
-				dx11.OutputTexture.Get()
-			);
-			#endif
 		}
 	}
 
