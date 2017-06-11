@@ -952,9 +952,48 @@ namespace
 
 			void Func1
 			(
-				ID3D11Texture2D* sample
+				ID3D11ShaderResourceView* sample
 			)
 			{
+				auto outputs =
+				{
+					TempTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					OutputTextureSRV.Get(),
+					sample
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					Fun1PS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
+
 				FrameWhitePoint += 255.0f;
 			}
 
