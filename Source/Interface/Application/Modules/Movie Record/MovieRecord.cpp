@@ -871,6 +871,42 @@ namespace
 
 			void ScaleFrame(float factor)
 			{
+				auto outputs =
+				{
+					TempTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					OutputTextureSRV.Get()
+				};
+
+				auto buffers =
+				{
+					ScalePS_DynamicBuffer.Get()
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					ScalePS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
 				auto w = FrameWhitePoint;
 
 				if (w * factor == w)
@@ -878,13 +914,28 @@ namespace
 					return;
 				}
 
-				if (0 == w * factor)
+				if (w * factor == 0)
 				{
 					FrameWhitePoint = 0;
-					return;
+					factor = 0;
 				}
 
 				FrameWhitePoint *= factor;
+
+				ScalePS_Dynamic.Factor = factor;
+
+				UpdateAllConstBuffer
+				(
+					ScalePS_Dynamic,
+					ScalePS_DynamicBuffer.Get()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
 			}
 
 			void ClearFrame()
