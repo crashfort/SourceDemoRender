@@ -1835,6 +1835,16 @@ namespace
 				dx11.PrintPS_DynamicBuffer.GetAddressOf()
 			);
 
+			D3D11_VIEWPORT viewport = {};
+			viewport.Width = width;
+			viewport.Height = height;
+			viewport.MaxDepth = D3D11_MAX_DEPTH;
+
+			dx11.Context->RSSetViewports
+			(
+				1,
+				&viewport
+			);
 
 			auto samplers =
 			{
