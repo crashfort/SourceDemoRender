@@ -1090,6 +1090,8 @@ namespace
 			Microsoft::WRL::ComPtr<ID3D11Device> Device;
 			Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
 
+			Microsoft::WRL::ComPtr<ID3D11SamplerState> SamplerState;
+
 			Microsoft::WRL::ComPtr<ID3D11VertexShader> PostProcVS;
 
 			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun1PS;
@@ -1583,6 +1585,17 @@ namespace
 					dx11.Context.GetAddressOf()
 				)
 			);
+			
+			CD3D11_SAMPLER_DESC samplerdesc(D3D11_DEFAULT);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateSamplerState
+				(
+					&samplerdesc,
+					dx11.SamplerState.GetAddressOf()
+				)
+			);
 
 			Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
 
@@ -1808,6 +1821,19 @@ namespace
 			(
 				dx11.PrintPS_Dynamic,
 				dx11.PrintPS_DynamicBuffer.GetAddressOf()
+			);
+
+
+			auto samplers =
+			{
+				dx11.SamplerState.Get()
+			};
+
+			dx11.Context->PSSetSamplers
+			(
+				0,
+				samplers.size(),
+				samplers.begin()
 			);
 
 			dx11.Context->IASetPrimitiveTopology
