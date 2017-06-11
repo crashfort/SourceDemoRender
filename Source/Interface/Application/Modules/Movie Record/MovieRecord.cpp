@@ -1137,8 +1137,8 @@ namespace
 
 			void Integrator
 			(
-				ID3D11Texture2D* sample1,
-				ID3D11Texture2D* sample2,
+				ID3D11ShaderResourceView* sample1,
+				ID3D11ShaderResourceView* sample2,
 				float time1,
 				float time2,
 				float subtime1,
@@ -1242,14 +1242,15 @@ namespace
 
 			void SubSample
 			(
-				ID3D11Texture2D* sample1,
-				ID3D11Texture2D* sample2,
 				float time1,
 				float time2,
 				float subtime1,
 				float subtime2
 			)
 			{
+				auto sample1 = PreviousTextureSRV.Get();
+				auto sample2 = LatestTextureSRV.Get();
+
 				if (!HasLastSample)
 				{
 					sample1 = nullptr;
