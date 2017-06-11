@@ -1677,7 +1677,7 @@ namespace
 
 				char path[1024];
 				strcpy_s(path, SDR::GetGamePath());
-				strcat(path, "R(SDR\Shaders\)");
+				strcat(path, R"(SDR\Shaders\)");
 				strcat_s(path, name);
 				strcat_s(path, ".sdrshader");
 
