@@ -1645,7 +1645,7 @@ namespace
 			desc.ArraySize = 1;
 			desc.SampleDesc.Count = 1;
 			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+			desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
 			MS::ThrowIfFailed
 			(
