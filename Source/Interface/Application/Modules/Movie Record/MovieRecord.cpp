@@ -1944,9 +1944,28 @@ namespace
 				)
 			);
 
+			D3D11_TEXTURE2D_DESC desc2;
+			dx11.LatestTexture->GetDesc(&desc2);
+
+			MS::ThrowIfFailed
 			(
-				1,
-				&viewport
+				dx11.Device->CreateTexture2D
+				(
+					&desc2,
+					nullptr,
+					dx11.PreviousTexture.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateShaderResourceView
+				(
+					dx11.PreviousTexture.Get(),
+					nullptr,
+					dx11.PreviousTextureSRV.GetAddressOf()
+				)
+			);
 
 			MS::ThrowIfFailed
 			(
