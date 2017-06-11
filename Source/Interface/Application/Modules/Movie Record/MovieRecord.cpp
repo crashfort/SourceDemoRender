@@ -3053,7 +3053,7 @@ namespace
 
 			auto& movie = CurrentMovie;
 
-			auto& time = movie.SampleData.CurrentTime;
+			auto& time = movie.DirectX11.CurrentTime;
 
 			MovieData::VideoFutureSampleData newsample;
 			newsample.Time = time;
