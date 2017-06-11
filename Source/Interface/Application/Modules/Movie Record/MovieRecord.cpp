@@ -756,6 +756,53 @@ namespace
 
 		struct DirectX11Data
 		{
+			void ResetRenderTargets()
+			{
+				std::initializer_list<ID3D11RenderTargetView*> values =
+				{
+					nullptr,
+				};
+
+				Context->OMSetRenderTargets
+				(
+					values.size(),
+					values.begin(),
+					nullptr
+				);
+			}
+
+			void ResetPSBuffers()
+			{
+				std::initializer_list<ID3D11Buffer*> values =
+				{
+					nullptr,
+				};
+
+				Context->PSSetConstantBuffers
+				(
+					0,
+					values.size(),
+					values.begin()
+				);
+			}
+
+			void ResetPSResources()
+			{
+				std::initializer_list<ID3D11ShaderResourceView*> values = 
+				{
+					nullptr,
+					nullptr,
+					nullptr,
+				};
+
+				Context->PSSetShaderResources
+				(
+					0,
+					values.size(),
+					values.begin()
+				);
+			}
+
 			void PrintFrame()
 			{
 				auto w = FrameWhitePoint;
