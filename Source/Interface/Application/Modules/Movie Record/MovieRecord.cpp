@@ -1067,11 +1067,71 @@ namespace
 
 			void Func4
 			(
-				ID3D11Texture2D* sample1,
-				ID3D11Texture2D* sample2,
+				ID3D11ShaderResourceView* sample1,
+				ID3D11ShaderResourceView* sample2,
 				float weight
 			)
 			{
+				auto outputs =
+				{
+					TempTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					OutputTextureSRV.Get(),
+					sample1,
+					sample2
+				};
+
+				auto buffers =
+				{
+					Fun4PS_DynamicBuffer.Get()
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					Fun4PS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
+				Fun4PS_Dynamic.Weight = weight;
+
+				UpdateAllConstBuffer
+				(
+					Fun4PS_Dynamic,
+					Fun4PS_DynamicBuffer.Get()
+				);
+
+				Context->PSSetConstantBuffers
+				(
+					0,
+					buffers.size(),
+					buffers.begin()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
+
 				FrameWhitePoint += weight * 2.0f * 255.0f;
 			}
 
