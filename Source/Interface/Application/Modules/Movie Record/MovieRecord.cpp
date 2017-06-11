@@ -1146,6 +1146,10 @@ namespace
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> PreviousTexture;
 			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> PreviousTextureSRV;
 
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> TempTexture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TempTextureSRV;
+			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> TempTextureRTV;
+
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> OutputTexture;
 			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> OutputTextureRTV;
 
@@ -1679,6 +1683,35 @@ namespace
 			(
 				1,
 				&viewport
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateTexture2D
+				(
+					&desc,
+					nullptr,
+					dx11.TempTexture.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateShaderResourceView
+				(
+					dx11.TempTexture.Get(),
+					nullptr,
+					dx11.TempTextureSRV.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateRenderTargetView
+				(
+					dx11.TempTexture.Get(),
+					nullptr,
+					dx11.TempTextureRTV.GetAddressOf()
+				)
 			);
 
 			auto openshader = []
