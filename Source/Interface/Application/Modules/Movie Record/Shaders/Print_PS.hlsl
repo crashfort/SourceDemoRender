@@ -18,7 +18,9 @@ PS_OUTPUT PSMain(PS_INPUT input)
 
 	float4 framecol = float4(Frame.Sample(TextureSampler, input.Tex).rgb, 1.0);
 
-	ret.Color = Weight * framecol;
+	float4 mult = float4(Weight, Weight, Weight, 1);
+
+	ret.Color = mult * framecol;
 
 	return ret;
 }

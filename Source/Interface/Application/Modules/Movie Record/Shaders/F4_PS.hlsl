@@ -22,7 +22,9 @@ PS_OUTPUT PSMain(PS_INPUT input)
 	float4 sample1col = float4(Sample1.Sample(TextureSampler, input.Tex).rgb, 1.0);
 	float4 sample2col = float4(Sample2.Sample(TextureSampler, input.Tex).rgb, 1.0);
 
-	ret.Color = framecol + Weight * (sample1col * sample2col);
+	float4 mult = float4(Weight, Weight, Weight, 1);
+
+	ret.Color = framecol + mult * (sample1col * sample2col);
 
 	return ret;
 }
