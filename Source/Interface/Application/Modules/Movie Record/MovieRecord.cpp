@@ -851,7 +851,7 @@ namespace
 
 				else
 				{
-					w = 255.0f / w;
+					w = 1.0f / w;
 					PrintPS_Dynamic.Weight = w;
 				}
 
@@ -994,7 +994,7 @@ namespace
 				ResetPSBuffers();
 				ResetPSResources();
 
-				FrameWhitePoint += 255.0f;
+				FrameWhitePoint += 1.0f;
 			}
 
 			void Func2
@@ -1062,7 +1062,7 @@ namespace
 				ResetPSBuffers();
 				ResetPSResources();
 
-				FrameWhitePoint += weight * 255.0f;
+				FrameWhitePoint += weight * 1.0f;
 			}
 
 			void Func4
@@ -1132,7 +1132,7 @@ namespace
 				ResetPSBuffers();
 				ResetPSResources();
 
-				FrameWhitePoint += weight * 2.0f * 255.0f;
+				FrameWhitePoint += weight * 2.0f * 1.0f;
 			}
 
 			void Integrator
