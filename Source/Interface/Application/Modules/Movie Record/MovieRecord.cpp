@@ -867,6 +867,11 @@ namespace
 				ResetRenderTargets();
 				ResetPSBuffers();
 				ResetPSResources();
+
+				SaveDebugImage
+				(
+					OutputTexture.Get()
+				);
 			}
 
 			void ScaleFrame(float factor)
