@@ -842,6 +842,13 @@ namespace
 					inputs.begin()
 				);
 
+				Context->PSSetConstantBuffers
+				(
+					0,
+					buffers.size(),
+					buffers.begin()
+				);
+
 				auto w = FrameWhitePoint;
 
 				if (w == 0)
@@ -910,6 +917,13 @@ namespace
 					0,
 					inputs.size(),
 					inputs.begin()
+				);
+
+				Context->PSSetConstantBuffers
+				(
+					0,
+					buffers.size(),
+					buffers.begin()
 				);
 
 				auto w = FrameWhitePoint;
