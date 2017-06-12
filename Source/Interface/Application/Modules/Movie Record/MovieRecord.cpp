@@ -883,6 +883,29 @@ namespace
 
 			void ScaleFrame(float factor)
 			{
+				auto w = FrameWhitePoint;
+
+				if (w * factor == w)
+				{
+					return;
+				}
+
+				if (w * factor == 0)
+				{
+					FrameWhitePoint = 0;
+					factor = 0;
+
+					float color[4] = {};
+
+					Context->ClearRenderTargetView
+					(
+						TempTextureRTV.Get(),
+						color
+					);
+
+					return;
+				}
+
 				auto outputs =
 				{
 					TempTextureRTV.Get()
@@ -925,19 +948,6 @@ namespace
 					buffers.size(),
 					buffers.begin()
 				);
-
-				auto w = FrameWhitePoint;
-
-				if (w * factor == w)
-				{
-					return;
-				}
-
-				if (w * factor == 0)
-				{
-					FrameWhitePoint = 0;
-					factor = 0;
-				}
 
 				FrameWhitePoint *= factor;
 
