@@ -1540,7 +1540,9 @@ namespace
 
 		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
 
+		int SamplesPerSecond;
 		int32_t BufferedFrames = 0;
+
 		std::unique_ptr<VideoQueueType> FramesToSampleBuffer;
 		std::thread FrameHandlerThread;
 	};
@@ -2281,11 +2283,11 @@ namespace
 			true, 0, true, 1
 		);
 
-		ConVar SamplesPerSecond
+		ConVar SampleMultiplier
 		(
-			"sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING,
-			"Game framerate in samples",
-			true, 0, false, 0
+			"sdr_render_samplemult", "20", FCVAR_NEVER_AS_STRING,
+			"Game framerate multiplier",
+			true, 2, false, 0
 		);
 
 		ConVar ShaderSamples
@@ -2421,7 +2423,7 @@ namespace
 		auto& movie = CurrentMovie;
 		auto& nonreadyframes = movie.FramesToSampleBuffer;
 
-		auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+		auto spsvar = static_cast<double>(movie.SamplesPerSecond);
 		auto sampleframerate = 1.0 / spsvar;
 
 		MovieData::VideoFutureSampleData videosample;
@@ -3045,17 +3047,14 @@ namespace
 				unk
 			);
 
-			auto enginerate = Variables::SamplesPerSecond.GetInt();
+			auto enginerate = Variables::FrameRate.GetInt();
 
 			if (Variables::UseSample.GetBool())
 			{
-				
+				enginerate *= Variables::SampleMultiplier.GetInt();
 			}
 
-			else
-			{
-				enginerate = Variables::FrameRate.GetInt();
-			}
+			movie.SamplesPerSecond = enginerate;
 
 			/*
 				The original function sets host_framerate to 30 so we override it
@@ -3462,7 +3461,7 @@ namespace
 
 			if (movie.Sampler)
 			{
-				auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+				auto spsvar = static_cast<double>(movie.SamplesPerSecond);
 				auto sampleframerate = 1.0 / spsvar;
 
 				time += sampleframerate;
