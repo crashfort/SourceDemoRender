@@ -475,22 +475,22 @@ namespace
 			}
 		}
 
-		void SetEncoder(const char* name)
+		void SetEncoder
+		(
+			const AVRational& timebase,
+			const char* name
+		)
 		{
 			Encoder = avcodec_find_encoder_by_name(name);
-
 			LAV::ThrowIfNull(Encoder, LAV::ExceptionType::VideoEncoderNotFound);
 
 			CodecContext.Assign(Encoder);
+		}
 
+		void SetStream()
+		{
 			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
-
 			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
-
-			if (FormatContext->oformat->flags & AVFMT_GLOBALHEADER)
-			{
-				CodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-			}
 		}
 
 		void SetCodecParametersToStream()
@@ -505,14 +505,32 @@ namespace
 			);
 		}
 
-		void OpenEncoder(AVDictionary** options)
+		void OpenEncoder
+		(
+			const AVRational& timebase,
+			AVDictionary** options
+		)
 		{
+			if (FormatContext->oformat->flags & AVFMT_GLOBALHEADER)
+			{
+				CodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+			}
+
+			CodecContext->time_base = timebase;
+
 			LAV::ThrowIfFailed
 			(
 				avcodec_open2(CodecContext.Get(), Encoder, options)
 			);
 
 			SetCodecParametersToStream();
+
+			AVRational inversetime;
+			inversetime.num = timebase.den;
+			inversetime.den = timebase.num;
+
+			Stream->time_base = timebase;
+			Stream->avg_frame_rate = inversetime;
 		}
 
 		void WriteHeader()
@@ -2767,6 +2785,10 @@ namespace
 						movie.Audio = std::make_unique<SDRAudioWriter>();
 					}
 
+					AVRational timebase;
+					timebase.num = 1;
+					timebase.den = Variables::FrameRate.GetInt();
+
 					auto vidwriter = movie.Video.get();
 					auto audiowriter = movie.Audio.get();
 
@@ -2884,7 +2906,13 @@ namespace
 						auto formatcontext = vidwriter->FormatContext.Get();
 						auto oformat = formatcontext->oformat;
 
-						vidwriter->SetEncoder(vidconfig->EncoderName);
+						vidwriter->SetEncoder
+						(
+							timebase,
+							vidconfig->EncoderName
+						);
+
+						vidwriter->SetStream();
 					}
 
 					auto linktabletovariable = []
@@ -2904,17 +2932,10 @@ namespace
 						}
 					};
 
-					AVRational timebase;
-					timebase.num = 1;
-					timebase.den = Variables::FrameRate.GetInt();
-
-					vidwriter->Stream->time_base = timebase;
-
 					auto codeccontext = vidwriter->CodecContext.Get();
 					codeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
 					codeccontext->width = width;
 					codeccontext->height = height;
-					codeccontext->time_base = timebase;
 
 					auto pxformat = AV_PIX_FMT_NONE;
 
@@ -2984,6 +3005,8 @@ namespace
 					}
 
 					{
+						AVDictionary** dictptr = nullptr;
+
 						if (vidconfig->EncoderType == AV_CODEC_ID_H264)
 						{
 							auto preset = Variables::Video::X264::Preset.GetString();
@@ -3006,13 +3029,14 @@ namespace
 							*/
 							options.Set("x264-params", "keyint=1");
 
-							vidwriter->OpenEncoder(options.Get());
+							dictptr = options.Get();
 						}
 
-						else
-						{
-							vidwriter->OpenEncoder(nullptr);
-						}
+						vidwriter->OpenEncoder
+						(
+							timebase,
+							dictptr
+						);
 					}
 
 					vidwriter->Frame.Assign
