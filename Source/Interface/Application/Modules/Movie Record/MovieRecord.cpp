@@ -2903,9 +2903,6 @@ namespace
 							audiowriter->Open(finalname, 44'100, 16, 2);
 						}
 
-						auto formatcontext = vidwriter->FormatContext.Get();
-						auto oformat = formatcontext->oformat;
-
 						vidwriter->SetEncoder
 						(
 							timebase,
