@@ -480,11 +480,7 @@ namespace
 			}
 		}
 
-		void SetEncoder
-		(
-			const AVRational& timebase,
-			const char* name
-		)
+		void SetEncoder(const char* name)
 		{
 			Encoder = avcodec_find_encoder_by_name(name);
 			LAV::ThrowIfNull(Encoder, LAV::ExceptionType::VideoEncoderNotFound);
@@ -2920,12 +2916,7 @@ namespace
 							audiowriter->Open(finalname, 44'100, 16, 2);
 						}
 
-						vidwriter->SetEncoder
-						(
-							timebase,
-							vidconfig->EncoderName
-						);
-
+						vidwriter->SetEncoder(vidconfig->EncoderName);
 						vidwriter->SetStream();
 					}
 
