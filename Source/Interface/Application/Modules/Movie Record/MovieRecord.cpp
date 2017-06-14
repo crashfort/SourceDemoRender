@@ -521,9 +521,7 @@ namespace
 			timebase.num = 1;
 			timebase.den = framerate;
 
-			AVRational inversetime;
-			inversetime.num = timebase.den;
-			inversetime.den = timebase.num;
+			auto inversetime = av_inv_q(timebase);
 
 			CodecContext->time_base = timebase;
 
