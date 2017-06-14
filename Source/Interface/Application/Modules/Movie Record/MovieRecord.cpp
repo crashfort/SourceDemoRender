@@ -470,7 +470,12 @@ namespace
 			{
 				LAV::ThrowIfFailed
 				(
-					avio_open(&FormatContext->pb, path, AVIO_FLAG_WRITE)
+					avio_open
+					(
+						&FormatContext->pb,
+						path,
+						AVIO_FLAG_WRITE
+					)
 				);
 			}
 		}
@@ -520,7 +525,12 @@ namespace
 
 			LAV::ThrowIfFailed
 			(
-				avcodec_open2(CodecContext.Get(), Encoder, options)
+				avcodec_open2
+				(
+					CodecContext.Get(),
+					Encoder,
+					options
+				)
 			);
 
 			SetCodecParametersToStream();
@@ -537,7 +547,11 @@ namespace
 		{
 			LAV::ThrowIfFailed
 			(
-				avformat_write_header(FormatContext.Get(), nullptr)
+				avformat_write_header
+				(
+					FormatContext.Get(),
+					nullptr
+				)
 			);
 		}
 
@@ -545,7 +559,10 @@ namespace
 		{
 			LAV::ThrowIfFailed
 			(
-				av_write_trailer(FormatContext.Get())
+				av_write_trailer
+				(
+					FormatContext.Get()
+				)
 			);
 		}
 
