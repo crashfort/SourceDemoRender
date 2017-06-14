@@ -508,7 +508,7 @@ namespace
 
 		void OpenEncoder
 		(
-			const AVRational& timebase,
+			int framerate,
 			AVDictionary** options
 		)
 		{
@@ -516,6 +516,14 @@ namespace
 			{
 				CodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 			}
+
+			AVRational timebase;
+			timebase.num = 1;
+			timebase.den = framerate;
+
+			AVRational inversetime;
+			inversetime.num = timebase.den;
+			inversetime.den = timebase.num;
 
 			CodecContext->time_base = timebase;
 
@@ -530,10 +538,6 @@ namespace
 			);
 
 			SetCodecParametersToStream();
-
-			AVRational inversetime;
-			inversetime.num = timebase.den;
-			inversetime.den = timebase.num;
 
 			Stream->time_base = timebase;
 			Stream->avg_frame_rate = inversetime;
@@ -2798,10 +2802,6 @@ namespace
 						movie.Audio = std::make_unique<SDRAudioWriter>();
 					}
 
-					AVRational timebase;
-					timebase.num = 1;
-					timebase.den = Variables::FrameRate.GetInt();
-
 					auto vidwriter = movie.Video.get();
 					auto audiowriter = movie.Audio.get();
 
@@ -3039,7 +3039,7 @@ namespace
 
 						vidwriter->OpenEncoder
 						(
-							timebase,
+							Variables::FrameRate.GetInt(),
 							dictptr
 						);
 					}
