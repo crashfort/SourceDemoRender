@@ -1,6 +1,6 @@
 # Build configurations used for external projects
 
-## ffmpeg-20170605-4705edb
+## ffmpeg
 ```
 CC=cl ./configure \
 --prefix=$HOME/ffmpegbuild \
@@ -38,7 +38,7 @@ CC=cl ./configure \
 
 ```
 
-## x264-snapshot-20170613-2245-stable
+## x264
 ```
 CC=cl ./configure \
 --prefix=$HOME/ffmpegbuild \
@@ -49,9 +49,11 @@ CC=cl ./configure \
 
 ```
 
-## zlib-1.2.11
+## zlib
 ```
-Static library with project contrib\vstudio\vc14\zlibvc.vcxproj, with MT. 
+CC=cl ./configure \
+--prefix=$HOME/ffmpegbuild \
+--static \
 
 ```
 
