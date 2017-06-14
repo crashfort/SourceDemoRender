@@ -1,6 +1,6 @@
 # Build configurations used for external projects
 
-## ffmpeg
+## ffmpeg-20170605-4705edb
 ```
 CC=cl ./configure \
 --prefix=$HOME/ffmpegbuild \
@@ -33,12 +33,12 @@ CC=cl ./configure \
 --enable-encoder=targa \
 --enable-encoder=huffyuv \
 --enable-parser=png \
---extra-ldflags="-LIBPATH:$HOME/ffmpegbuild/lib -lz" \
+--extra-ldflags="-LIBPATH:$HOME/ffmpegbuild/lib" \
 --extra-cflags="-I$HOME/ffmpegbuild/include" \
 
 ```
 
-## x264
+## x264-snapshot-20170613-2245-stable
 ```
 CC=cl ./configure \
 --prefix=$HOME/ffmpegbuild \
@@ -49,12 +49,13 @@ CC=cl ./configure \
 
 ```
 
-## zlib
+## zlib-1.2.11
 ```
 CC=cl ./configure \
 --prefix=$HOME/ffmpegbuild \
 --static \
 
+With zlib special changes from https://www.ffmpeg.org/platform.html#toc-Microsoft-Visual-C_002b_002b-or-Intel-C_002b_002b-Compiler-for-Windows
 ```
 
 ## cpprestsdk
