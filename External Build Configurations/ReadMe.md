@@ -55,7 +55,7 @@ CC=cl ./configure \
 --prefix=$HOME/ffmpegbuild \
 --static \
 
-With zlib special changes from https://www.ffmpeg.org/platform.html#toc-Microsoft-Visual-C_002b_002b-or-Intel-C_002b_002b-Compiler-for-Windows
+With zlib special changes from https://www.ffmpeg.org/platform.html#Microsoft-Visual-C_002b_002b-or-Intel-C_002b_002b-Compiler-for-Windows
 ```
 
 ## cpprestsdk
