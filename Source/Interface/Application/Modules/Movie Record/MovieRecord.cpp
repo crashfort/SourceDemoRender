@@ -643,7 +643,7 @@ namespace
 					&packet
 				);
 
-				if (status != 0)
+				if (status < 0)
 				{
 					return;
 				}
