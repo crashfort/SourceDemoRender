@@ -400,6 +400,8 @@ namespace
 			std::chrono::nanoseconds TotalTime = 0ms;
 		};
 
+		std::array<Entry, Types::Count> Entries;
+
 		struct ScopedEntry
 		{
 			ScopedEntry
@@ -419,8 +421,6 @@ namespace
 			TimePointType Start;
 			Entry& Target;
 		};
-
-		std::array<Entry, Types::Count> Entries;
 	}
 
 	struct SDRAudioWriter
