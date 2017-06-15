@@ -348,6 +348,79 @@ namespace
 
 namespace
 {
+	namespace Profile
+	{
+		const char* Names[] =
+		{
+			"FormatConversion",
+			"ReadScreenPixels",
+			"WriteEncodedPacket",
+			"Sample",
+			"Encode",
+		};
+
+		namespace Types
+		{
+			enum
+			{
+				FormatConversion,
+				ReadScreenPixels,
+				WriteEncodedPacket,
+				Sample,
+				Encode,
+
+				Count
+			};
+		}
+
+		auto GetTimeNow()
+		{
+			return std::chrono::high_resolution_clock::now();
+		}
+
+		using TimePointType = decltype(GetTimeNow());
+
+		std::chrono::nanoseconds GetTimeDifference(TimePointType start)
+		{
+			using namespace std::chrono;
+
+			auto now = GetTimeNow();
+			auto difference = now - start;
+
+			auto time = duration_cast<nanoseconds>(difference);
+
+			return time;
+		}
+
+		struct Entry
+		{
+			unsigned int Calls = 0;
+			std::chrono::nanoseconds TotalTime = 0ms;
+		};
+
+		struct ScopedEntry
+		{
+			ScopedEntry
+			(
+				Entry& entry
+			) : Target(entry),
+				Start(GetTimeNow())
+			{
+				++Target.Calls;
+			}
+
+			~ScopedEntry()
+			{
+				Target.TotalTime += GetTimeDifference(Start);
+			}
+
+			TimePointType Start;
+			Entry& Target;
+		};
+
+		std::array<Entry, Types::Count> Entries;
+	}
+
 	struct SDRAudioWriter
 	{
 		SDRAudioWriter()
@@ -562,6 +635,8 @@ namespace
 
 		void SetRGB24Input(uint8_t* buffer, int width, int height)
 		{
+			Profile::ScopedEntry e1(Profile::Entries[Profile::Types::FormatConversion]);
+
 			uint8_t* sourceplanes[] =
 			{
 				buffer
@@ -599,6 +674,8 @@ namespace
 
 		void SendRawFrame()
 		{
+			Profile::ScopedEntry e1(Profile::Entries[Profile::Types::Encode]);
+
 			Frame->pts = PresentationIndex;
 			PresentationIndex++;
 
@@ -654,6 +731,8 @@ namespace
 
 		void WriteEncodedPacket(AVPacket& packet)
 		{
+			Profile::ScopedEntry e1(Profile::Entries[Profile::Types::WriteEncodedPacket]);
+
 			av_packet_rescale_ts
 			(
 				&packet,
@@ -2468,6 +2547,8 @@ namespace
 
 				if (movie.Sampler)
 				{
+					Profile::ScopedEntry e1(Profile::Entries[Profile::Types::Sample]);
+
 					if (movie.Sampler->CanSkipConstant(time, sampleframerate))
 					{
 						movie.Sampler->Sample(nullptr, time);
@@ -3211,6 +3292,8 @@ namespace
 				height
 			);
 
+			Profile::Entries.fill({});
+
 			#if 0
 			auto& dx11 = CurrentMovie.DirectX11;
 
@@ -3354,6 +3437,28 @@ namespace
 					Color(88, 255, 39, 255),
 					"SDR: Movie is now complete\n"
 				);
+
+				int index = 0;
+
+				for (const auto& entry : Profile::Entries)
+				{
+					if (entry.Calls > 0)
+					{
+						auto name = Profile::Names[index];
+						auto avg = entry.TotalTime / entry.Calls;
+						float ms = avg / 1.0ms;
+
+						Msg
+						(
+							"- %s (%u): avg %0.4f ms\n",
+							name,
+							entry.Calls,
+							ms
+						);
+					}
+
+					++index;
+				}
 			});
 		}
 	}
@@ -3448,17 +3553,21 @@ namespace
 				in newer games like TF2 the materials are handled much differently
 				but this endpoint function remains the same. Less elegant but what you gonna do.
 			*/
-			ModuleVideoMode::ReadScreenPixels
-			(
-				thisptr,
-				edx,
-				0,
-				0,
-				width,
-				height,
-				newsample.Data.data(),
-				pxformat
-			);
+			{
+				Profile::ScopedEntry e1(Profile::Entries[Profile::Types::ReadScreenPixels]);
+
+				ModuleVideoMode::ReadScreenPixels
+				(
+					thisptr,
+					edx,
+					0,
+					0,
+					width,
+					height,
+					newsample.Data.data(),
+					pxformat
+				);
+			}
 
 			auto buffersize = Variables::FrameBufferSize.GetInt();
 
