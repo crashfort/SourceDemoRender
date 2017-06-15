@@ -600,6 +600,7 @@ namespace
 		void SendRawFrame()
 		{
 			Frame->pts = PresentationIndex;
+			PresentationIndex++;
 
 			auto ret = avcodec_send_frame
 			(
@@ -608,8 +609,6 @@ namespace
 			);
 
 			ReceivePacketFrame();
-
-			PresentationIndex++;
 		}
 
 		void SendFlushFrame()
