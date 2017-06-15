@@ -494,18 +494,6 @@ namespace
 			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
 		}
 
-		void SetCodecParametersToStream()
-		{
-			LAV::ThrowIfFailed
-			(
-				avcodec_parameters_from_context
-				(
-					Stream->codecpar,
-					CodecContext.Get()
-				)
-			);
-		}
-
 		void OpenEncoder
 		(
 			int framerate,
@@ -535,10 +523,17 @@ namespace
 				)
 			);
 
-			SetCodecParametersToStream();
-
 			Stream->time_base = timebase;
 			Stream->avg_frame_rate = inversetime;
+
+			LAV::ThrowIfFailed
+			(
+				avcodec_parameters_from_context
+				(
+					Stream->codecpar,
+					CodecContext.Get()
+				)
+			);
 		}
 
 		void WriteHeader()
