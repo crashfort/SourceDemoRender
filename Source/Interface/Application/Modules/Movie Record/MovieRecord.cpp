@@ -404,10 +404,8 @@ namespace
 
 		struct ScopedEntry
 		{
-			ScopedEntry
-			(
-				Types::Type entry
-			) : Target(Entries[entry]),
+			ScopedEntry(Types::Type entry) : 
+				Target(Entries[entry]),
 				Start(GetTimeNow())
 			{
 				++Target.Calls;
