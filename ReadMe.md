@@ -103,7 +103,7 @@ List of available video encoders:
 			0 to 1 fraction of a frame that is exposed for blending.
 			<br/><br/>
 			<b>Values:</b> Between 0 and 1 <br/>
-            <b>Default:</b> 0.5 <br/>
+            <b>Default:</b> 1 <br/>
 			<a href="https://github.com/ripieces/advancedfx/wiki/GoldSrc%3Amirv_sample_exposure">Read more</a>
 		</td>
 	</tr>
