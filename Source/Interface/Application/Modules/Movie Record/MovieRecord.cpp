@@ -357,6 +357,7 @@ namespace
 			"WriteEncodedPacket",
 			"Sample",
 			"Encode",
+			"TooManyFrames",
 		};
 
 		namespace Types
@@ -368,6 +369,7 @@ namespace
 				WriteEncodedPacket,
 				Sample,
 				Encode,
+				TooManyFrames,
 
 				Count
 			};
@@ -3578,6 +3580,8 @@ namespace
 			*/
 			if (movie.BufferedFrames > buffersize)
 			{
+				Profile::ScopedEntry e1(Profile::Entries[Profile::Types::TooManyFrames]);
+
 				Warning
 				(
 					"SDR: Too many buffered frames, waiting for encoder\n"
