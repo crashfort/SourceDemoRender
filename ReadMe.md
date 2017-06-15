@@ -108,13 +108,12 @@ List of available video encoders:
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_render_samplespersecond</td>
+		<td>sdr_render_samplemult</td>
 		<td>
-			Game framerate in samples (host_framerate).
+			Game framerate multiplier.
 			<br/><br/>
-			<b>Values:</b> See read more <br/>
-            <b>Default:</b> 600 <br/>
-			<a href="https://github.com/ripieces/advancedfx/wiki/GoldSrc%3Amirv_sample_sps">Read more</a>
+			<b>Values:</b> 2 or higher <br/>
+            <b>Default:</b> 20 <br/>
 		</td>
 	</tr>
 	<tr>
