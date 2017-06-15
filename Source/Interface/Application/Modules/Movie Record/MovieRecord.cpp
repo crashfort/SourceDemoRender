@@ -728,7 +728,9 @@ namespace
 			return (Width * Height) * BytesPerPixel;
 		}
 
+		#if 0
 		bool TempStarted = false;
+		#endif
 		bool IsStarted = false;
 
 		uint32_t Width;
@@ -1577,11 +1579,13 @@ namespace
 	{
 		auto& movie = CurrentMovie;
 
+		#if 0
 		if (movie.TempStarted)
 		{
 			movie = MovieData();
 			return;
 		}
+		#endif
 
 		if (!movie.IsStarted)
 		{
@@ -1857,6 +1861,7 @@ namespace
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
 
+	#if 0
 	SDR::PluginStartupFunctionAdder A2("MovieRecord Setup", []()
 	{
 		int width;
@@ -2260,6 +2265,7 @@ namespace
 
 		return true;
 	});
+	#endif
 }
 
 namespace
@@ -2482,6 +2488,7 @@ namespace
 		}
 	}
 
+	#if 0
 	namespace ModuleView_Render
 	{
 		#pragma region Init
@@ -2587,6 +2594,7 @@ namespace
 			}
 		}
 	}
+	#endif
 
 	namespace ModuleStartMovie
 	{
@@ -3203,6 +3211,7 @@ namespace
 				height
 			);
 
+			#if 0
 			auto& dx11 = CurrentMovie.DirectX11;
 
 			auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
@@ -3228,6 +3237,7 @@ namespace
 			CurrentMovie.TempStarted = true;
 
 			return;
+			#endif
 
 			auto name = args[1];
 
@@ -3411,7 +3421,9 @@ namespace
 			void* info
 		)
 		{
+			#if 0
 			return;
+			#endif
 
 			auto width = CurrentMovie.Width;
 			auto height = CurrentMovie.Height;
