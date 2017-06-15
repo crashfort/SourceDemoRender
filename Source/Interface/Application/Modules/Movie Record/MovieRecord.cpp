@@ -674,16 +674,18 @@ namespace
 
 		void SendRawFrame()
 		{
-			Profile::ScopedEntry e1(Profile::Entries[Profile::Types::Encode]);
+			{
+				Profile::ScopedEntry e1(Profile::Entries[Profile::Types::Encode]);
 
-			Frame->pts = PresentationIndex;
-			PresentationIndex++;
+				Frame->pts = PresentationIndex;
+				PresentationIndex++;
 
-			auto ret = avcodec_send_frame
-			(
-				CodecContext.Get(),
-				Frame.Get()
-			);
+				auto ret = avcodec_send_frame
+				(
+					CodecContext.Get(),
+					Frame.Get()
+				);
+			}
 
 			ReceivePacketFrame();
 		}
