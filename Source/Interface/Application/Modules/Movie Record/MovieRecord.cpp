@@ -512,6 +512,7 @@ namespace
 			auto inversetime = av_inv_q(timebase);
 
 			CodecContext->time_base = timebase;
+			CodecContext->framerate = inversetime;
 
 			LAV::ThrowIfFailed
 			(
@@ -523,9 +524,6 @@ namespace
 				)
 			);
 
-			Stream->time_base = timebase;
-			Stream->avg_frame_rate = inversetime;
-
 			LAV::ThrowIfFailed
 			(
 				avcodec_parameters_from_context
@@ -534,6 +532,9 @@ namespace
 					CodecContext.Get()
 				)
 			);
+
+			Stream->time_base = timebase;
+			Stream->avg_frame_rate = inversetime;
 		}
 
 		void WriteHeader()
