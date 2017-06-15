@@ -3448,7 +3448,7 @@ namespace
 					{
 						auto name = Profile::Names[index];
 						auto avg = entry.TotalTime / entry.Calls;
-						float ms = avg / 1.0ms;
+						auto ms = avg / 1.0ms;
 
 						Msg
 						(
