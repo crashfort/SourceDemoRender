@@ -3454,7 +3454,7 @@ namespace
 
 						Msg
 						(
-							"- %s (%u): avg %0.4f ms\n",
+							"SDR: %s (%u): avg %0.4f ms\n",
 							name,
 							entry.Calls,
 							ms
