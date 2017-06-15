@@ -668,8 +668,6 @@ namespace
 				FormatContext.Get(),
 				&packet
 			);
-
-			av_packet_unref(&packet);
 		}
 
 		LAV::ScopedFormatContext FormatContext;
