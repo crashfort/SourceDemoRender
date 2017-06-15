@@ -362,7 +362,7 @@ namespace
 
 		namespace Types
 		{
-			enum
+			enum Type
 			{
 				FormatConversion,
 				ReadScreenPixels,
@@ -404,8 +404,8 @@ namespace
 		{
 			ScopedEntry
 			(
-				Entry& entry
-			) : Target(entry),
+				Types::Type entry
+			) : Target(Entries[entry]),
 				Start(GetTimeNow())
 			{
 				++Target.Calls;
@@ -637,7 +637,7 @@ namespace
 
 		void SetRGB24Input(uint8_t* buffer, int width, int height)
 		{
-			Profile::ScopedEntry e1(Profile::Entries[Profile::Types::FormatConversion]);
+			Profile::ScopedEntry e1(Profile::Types::FormatConversion);
 
 			uint8_t* sourceplanes[] =
 			{
@@ -677,7 +677,7 @@ namespace
 		void SendRawFrame()
 		{
 			{
-				Profile::ScopedEntry e1(Profile::Entries[Profile::Types::Encode]);
+				Profile::ScopedEntry e1(Profile::Types::Encode);
 
 				Frame->pts = PresentationIndex;
 				PresentationIndex++;
@@ -735,7 +735,7 @@ namespace
 
 		void WriteEncodedPacket(AVPacket& packet)
 		{
-			Profile::ScopedEntry e1(Profile::Entries[Profile::Types::WriteEncodedPacket]);
+			Profile::ScopedEntry e1(Profile::Types::WriteEncodedPacket);
 
 			av_packet_rescale_ts
 			(
@@ -2551,7 +2551,7 @@ namespace
 
 				if (movie.Sampler)
 				{
-					Profile::ScopedEntry e1(Profile::Entries[Profile::Types::Sample]);
+					Profile::ScopedEntry e1(Profile::Types::Sample);
 
 					if (movie.Sampler->CanSkipConstant(time, sampleframerate))
 					{
@@ -3558,7 +3558,7 @@ namespace
 				but this endpoint function remains the same. Less elegant but what you gonna do.
 			*/
 			{
-				Profile::ScopedEntry e1(Profile::Entries[Profile::Types::ReadScreenPixels]);
+				Profile::ScopedEntry e1(Profile::Types::ReadScreenPixels);
 
 				ModuleVideoMode::ReadScreenPixels
 				(
@@ -3580,7 +3580,7 @@ namespace
 			*/
 			if (movie.BufferedFrames > buffersize)
 			{
-				Profile::ScopedEntry e1(Profile::Entries[Profile::Types::TooManyFrames]);
+				Profile::ScopedEntry e1(Profile::Types::TooManyFrames);
 
 				Warning
 				(
