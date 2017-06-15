@@ -632,7 +632,7 @@ namespace
 		{
 			int status = 0;
 
-			AVPacket packet;
+			AVPacket packet = {};
 			av_init_packet(&packet);
 
 			while (status == 0)
