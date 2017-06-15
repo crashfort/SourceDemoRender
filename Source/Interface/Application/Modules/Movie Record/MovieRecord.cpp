@@ -663,13 +663,10 @@ namespace
 
 			packet.stream_index = Stream->index;
 
-			LAV::ThrowIfFailed
+			av_interleaved_write_frame
 			(
-				av_interleaved_write_frame
-				(
-					FormatContext.Get(),
-					&packet
-				)
+				FormatContext.Get(),
+				&packet
 			);
 
 			av_packet_unref(&packet);
