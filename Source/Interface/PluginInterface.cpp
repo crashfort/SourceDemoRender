@@ -299,7 +299,7 @@ namespace
 					task.then([callback](web::http::http_response response)
 					{
 						/*
-							Content is only text containg a number, so extract it raw
+							Content is only text, so extract it raw
 						*/
 						auto task = response.extract_string(true);
 
