@@ -87,5 +87,10 @@
 	"hl2":
 	{
 		"Inherit": "cstrike"
+	},
+
+	"tf":
+	{
+		"Inherit": "cstrike"
 	}
 }
