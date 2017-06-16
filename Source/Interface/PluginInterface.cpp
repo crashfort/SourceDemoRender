@@ -298,15 +298,7 @@ namespace
 
 					task.then([callback](web::http::http_response response)
 					{
-						/*
-							Content is only text, so extract it raw
-						*/
-						auto task = response.extract_string(true);
-
-						task.then([callback](utility::string_t string)
-						{
-							callback(std::move(string));
-						});
+						callback(std::move(response));
 					});
 				});
 			};
@@ -314,8 +306,13 @@ namespace
 			webrequest
 			(
 				L"/crashfort/SourceDemoRender/master/Version/Latest",
-				[](utility::string_t&& string)
+				[](web::http::http_response&& response)
 				{
+					/*
+						Content is only text, so extract it raw
+					*/
+					auto string = response.extract_utf8string(true).get();
+
 					auto curversion = SourceDemoRenderPlugin::PluginVersion;
 					auto webversion = std::stoi(string);
 
@@ -353,7 +350,7 @@ namespace
 			webrequest
 			(
 				L"/crashfort/SourceDemoRender/master/Version/GameConfigLatest",
-				[webrequest](utility::string_t&& string)
+				[webrequest](web::http::http_response&& response)
 				{
 					int localversion;
 
@@ -366,6 +363,11 @@ namespace
 					{
 						return;
 					}
+
+					/*
+						Content is only text, so extract it raw
+					*/
+					auto string = response.extract_utf8string(true).get();
 
 					auto webversion = std::stoi(string);
 
@@ -391,9 +393,11 @@ namespace
 						webrequest
 						(
 							L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
-							[webversion](utility::string_t&& json)
+							[webversion](web::http::http_response&& response)
 							{
 								using Status = SDR::Shared::ScopedFile::ExceptionType;
+
+								auto json = response.extract_utf8string().get();
 
 								try
 								{
@@ -403,7 +407,7 @@ namespace
 									
 									SDR::Shared::ScopedFile file(path, "wb");
 
-									file.WriteText("%S", json.c_str());
+									file.WriteText("%s", json.c_str());
 								}
 
 								catch (Status status)
