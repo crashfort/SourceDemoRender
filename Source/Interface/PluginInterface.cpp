@@ -11,6 +11,51 @@ extern "C"
 
 namespace
 {
+	namespace ModuleGameDir
+	{
+		namespace Types
+		{
+			using GetGameDir = void(__cdecl*)
+			(
+				char* dest,
+				int length
+			);
+		}
+
+		char FullPath[1024];
+		char GameName[128];
+
+		Types::GetGameDir GetGameDir;
+
+		void Set()
+		{
+			auto patternstr = "55 8B EC 8B 45 08 85 C0 74 11 FF 75 0C 68 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 0C 5D C3";
+			auto pattern = SDR::GetPatternFromString(patternstr);
+
+			auto address = SDR::GetAddressFromPattern
+			(
+				"engine.dll",
+				pattern
+			);
+
+			SDR::ModuleShared::SetFromAddress
+			(
+				GetGameDir,
+				address
+			);
+
+			SDR::ModuleShared::Verify
+			(
+				GetGameDir,
+				"engine.dll",
+				"GetGameDir"
+			);
+		}
+	}
+}
+
+namespace
+{
 	class SourceDemoRenderPlugin final : public IServerPluginCallbacks
 	{
 	public:
@@ -20,29 +65,57 @@ namespace
 			CreateInterfaceFn gameserverfactory
 		) override;
 
-		virtual void Unload() override;
+		virtual void Unload
+		(
 
-		virtual void Pause() override {}
-		virtual void UnPause() override {}
+		) override;
+
+		virtual void Pause
+		(
+
+		) override {}
+
+		virtual void UnPause
+		(
+
+		) override {}
 
 		virtual const char* GetPluginDescription() override
 		{
 			return "Source Demo Render";
 		}
 
-		virtual void LevelInit(char const* mapname) override {}
+		virtual void LevelInit
+		(
+			char const* mapname
+		) override {}
 
 		virtual void ServerActivate
 		(
-			edict_t* edictlist, int edictcount, int maxclients
+			edict_t* edictlist,
+			int edictcount,
+			int maxclients
 		) override {}
 
-		virtual void GameFrame(bool simulating) override {}
+		virtual void GameFrame
+		(
+			bool simulating
+		) override {}
 
-		virtual void LevelShutdown() override {}
+		virtual void LevelShutdown
+		(
 
-		virtual void ClientActive(edict_t* entity) override {}
-		virtual void ClientDisconnect(edict_t* entity) override {}
+		) override {}
+
+		virtual void ClientActive
+		(
+			edict_t* entity
+		) override {}
+
+		virtual void ClientDisconnect
+		(
+			edict_t* entity
+		) override {}
 		
 		virtual void ClientPutInServer
 		(
@@ -50,9 +123,15 @@ namespace
 			char const* playername
 		) override {}
 
-		virtual void SetCommandClient(int index) override {}
+		virtual void SetCommandClient
+		(
+			int index
+		) override {}
 
-		virtual void ClientSettingsChanged(edict_t* entity) override {}
+		virtual void ClientSettingsChanged
+		(
+			edict_t* entity
+		) override {}
 
 		virtual PLUGIN_RESULT ClientConnect
 		(
@@ -92,17 +171,24 @@ namespace
 			EQueryCvarValueStatus status,
 			const char *cvarname,
 			const char *cvarvalue
-		) override
-		{
+		) override {}
 
-		}
+		virtual void OnEdictAllocated
+		(
+			edict_t* entity
+		) override {}
 
-		virtual void OnEdictAllocated(edict_t* entity) override {}
-		virtual void OnEdictFreed(const edict_t* entity) override {}
+		virtual void OnEdictFreed
+		(
+			const edict_t* entity
+		) override {}
 
 		enum
 		{
-			PluginVersion = 10
+			PluginVersion = 10,
+			
+			ShaderVersion = 1,
+			GameConfigVersion = 1,
 		};
 	};
 
@@ -226,73 +312,42 @@ namespace
 			SourceDemoRenderPlugin::PluginVersion
 		);
 
+		try
+		{
+			ModuleGameDir::Set();
+		}
+
+		catch (const char* name)
+		{
+			return false;
+		}
+
+		ModuleGameDir::GetGameDir
+		(
+			ModuleGameDir::FullPath,
+			sizeof(ModuleGameDir::FullPath)
+		);
+
+		strcpy_s
+		(
+			ModuleGameDir::GameName,
+			V_GetFileName(ModuleGameDir::FullPath)
+		);
+
+		strcat_s(ModuleGameDir::FullPath, "\\");
+
+		Msg
+		(
+			"SDR: Current game: %s\n",
+			ModuleGameDir::GameName
+		);
+
 		avcodec_register_all();
 		av_register_all();
 
 		ConnectTier1Libraries(&interfacefactory, 1);
 		ConnectTier2Libraries(&interfacefactory, 1);
 		ConVar_Register();
-
-		/*
-			This is not accessible in newer games like TF2
-		*/
-		if (!materials)
-		{
-			Msg
-			(
-				"SDR: Materials were not found at %s\n",
-				MATERIAL_SYSTEM_INTERFACE_VERSION
-			);
-
-			/*
-				As of May 19 2017, the TF2 material version is 081,
-				it might inrease in the future but this works for the time being I guess.
-
-				Perhaps a more elegant version would be to grab the string address
-				that a related function reads from.
-			*/
-
-			for (size_t i = 80; i < 180; i++)
-			{
-				char format[256];
-				sprintf_s(format, "VMaterialSystem%03d", i);
-
-				try
-				{
-					CreateInterface
-					(
-						interfacefactory,
-						format,
-						materials
-					);
-				}
-
-				catch (const char* name)
-				{
-					continue;
-				}
-
-				g_pMaterialSystem = materials;
-
-				Msg
-				(
-					"SDR: Materials found at %s\n",
-					format
-				);
-
-				break;
-			}
-
-			if (!materials)
-			{
-				Warning
-				(
-					"SDR: Materials were not found\n"
-				);
-
-				return false;
-			}
-		}
 
 		try
 		{
@@ -317,10 +372,14 @@ namespace
 
 		try
 		{
-			SDR::Setup();
+			SDR::Setup
+			(
+				ModuleGameDir::FullPath,
+				ModuleGameDir::GameName
+			);
 		}
 
-		catch (MH_STATUS status)
+		catch (bool status)
 		{
 			return false;
 		}
@@ -341,7 +400,10 @@ namespace
 			return false;
 		}
 
-		Msg("SDR: Source Demo Render loaded\n");
+		Msg
+		(
+			"SDR: Source Demo Render loaded\n"
+		);
 
 		return true;
 	}
@@ -367,4 +429,14 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR
 const SDR::EngineInterfaces& SDR::GetEngineInterfaces()
 {
 	return Interfaces;
+}
+
+const char* SDR::GetGameName()
+{
+	return ModuleGameDir::GameName;
+}
+
+const char* SDR::GetGamePath()
+{
+	return ModuleGameDir::FullPath;
 }

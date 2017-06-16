@@ -12,7 +12,7 @@ namespace
 		);
 	}
 
-	namespace Module_OutputDebugString
+	namespace ModuleOutputDebugString
 	{
 		#pragma region Init
 
@@ -20,13 +20,25 @@ namespace
 
 		using ThisFunction = decltype(OutputDebugStringA)*;
 
-		SDR::HookModuleAPI<ThisFunction> ThisHook
-		{
-			"kernel32.dll",
-			"OutputDebugString",
-			"OutputDebugStringA",
-			Override
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		SDR::PluginStartupFunctionAdder Adder
+		(
+			"OutputDebugString Patch",
+			[]()
+			{
+				auto res = MH_CreateHookApiEx
+				(
+					L"kernel32.dll",
+					"OutputDebugStringA",
+					Override,
+					&ThisHook.OriginalFunction,
+					&ThisHook.TargetFunction
+				);
+
+				return true;
+			}
+		);
 
 		#pragma endregion
 
@@ -46,36 +58,36 @@ namespace
 
 	TabData EngineFocusData;
 
-	namespace Module_ActivateMouse
+	namespace ModuleActivateMouse
 	{
 		#pragma region Init
-
-		/*
-			0x10216D80 static CSS IDA address June 3 2016
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x83\x3D\x00\x00\x00\x00\x00\x74\x4F\x8B\x0D\x00"
-			"\x00\x00\x00\x8B\x01\x8B\x40\x40\xFF\xD0"
-		);
-
-		auto Mask =
-		(
-			"xx?????xxxx????xxxxxxx"
-		);
 
 		void __cdecl Override();
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"ActivateMouse",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"ActivateMouse",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -92,7 +104,7 @@ namespace
 		}
 	}
 
-	namespace Module_AppActivate
+	namespace ModuleAppActivate
 	{
 		/*
 			Structure from Source 2007
@@ -108,20 +120,6 @@ namespace
 
 		#pragma region Init
 
-		/*
-			0x102013C0 static CSS IDA address June 3 2016
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x8B\x45\x08\x83\x78\x08\x00\x0F\x95\xC0"
-			"\x0F\xB6\xC0\x89\x45\x08\x5D\xE9\x00\x00\x00\x00"
-		);
-
-		auto Mask =
-		(
-			"xxxxxxxxxxxxxxxxxxxxx????"
-		);
-
 		void __fastcall Override
 		(
 			void* thisptr,
@@ -131,14 +129,28 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"AppActivate",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"AppActivate",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 

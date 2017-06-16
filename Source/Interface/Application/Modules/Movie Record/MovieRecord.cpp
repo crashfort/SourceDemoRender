@@ -22,6 +22,24 @@ extern "C"
 */
 #include <mmsystem.h>
 
+#include <d3d9.h>
+#include <d3d11.h>
+
+#include "materialsystem\itexture.h"
+#include "shaderapi\ishaderapi.h"
+#include "utlsymbol.h"
+
+#include "view_shared.h"
+#include "ivrenderview.h"
+#include "iviewrender.h"
+
+#define SDR_DEBUG_D3D11_IMAGE
+
+#ifdef SDR_DEBUG_D3D11_IMAGE
+#include "D3DX11.h"
+#pragma comment(lib, "D3DX11")
+#endif
+
 namespace
 {
 	namespace LAV
@@ -33,7 +51,7 @@ namespace
 			AllocAVFrame,
 			AllocVideoStream,
 			VideoEncoderNotFound,
-			OpenFile,
+			OpenWaveFile,
 		};
 
 		const char* ExceptionTypeToString(ExceptionType code)
@@ -43,8 +61,8 @@ namespace
 			static const char* names[] =
 			{
 				"Could not allocate video conversion context",
-				"Could not allocate audio video codec context",
-				"Could not allocate audio video frame",
+				"Could not allocate video codec context",
+				"Could not allocate video frame",
 				"Could not allocate video stream",
 				"Video encoder not found",
 				"Could not create file",
@@ -181,45 +199,6 @@ namespace
 			AVFormatContext* Context = nullptr;
 		};
 
-		struct ScopedCodecContext
-		{
-			~ScopedCodecContext()
-			{
-				if (Context)
-				{
-					avcodec_free_context(&Context);
-				}
-			}
-
-			void Assign(AVCodec* codec)
-			{
-				Context = avcodec_alloc_context3(codec);
-
-				ThrowIfNull
-				(
-					Context,
-					ExceptionType::AllocCodecContext
-				);
-			}
-
-			AVCodecContext* Get() const
-			{
-				return Context;
-			}
-
-			auto operator->() const
-			{
-				return Get();
-			}
-
-			explicit operator bool() const
-			{
-				return Get() != nullptr;
-			}
-
-			AVCodecContext* Context = nullptr;
-		};
-
 		struct ScopedAVFrame
 		{
 			~ScopedAVFrame()
@@ -289,65 +268,6 @@ namespace
 			AVDictionary* Options = nullptr;
 		};
 
-		struct ScopedFile
-		{
-			~ScopedFile()
-			{
-				Close();
-			}
-
-			void Close()
-			{
-				if (Handle)
-				{
-					fclose(Handle);
-					Handle = nullptr;
-				}
-			}
-
-			auto Get() const
-			{
-				return Handle;
-			}
-
-			explicit operator bool() const
-			{
-				return Get() != nullptr;
-			}
-
-			void Assign(const char* path, const char* mode)
-			{
-				Handle = fopen(path, mode);
-
-				ThrowIfNull(Handle, ExceptionType::OpenFile);
-			}
-
-			template <typename... Types>
-			void WriteSimple(const Types&... args)
-			{
-				bool adder[] =
-				{
-					[&]()
-					{
-						fwrite(&args, sizeof(args), 1, Get());
-						return true;
-					}()...
-				};
-			}
-
-			auto GetStreamPosition() const
-			{
-				return ftell(Get());
-			}
-
-			void SeekAbsolute(int32_t position)
-			{
-				fseek(Get(), position, SEEK_SET);
-			}
-
-			FILE* Handle = nullptr;
-		};
-
 		namespace Variables
 		{
 			ConVar SuppressLog
@@ -389,6 +309,79 @@ namespace
 
 namespace
 {
+	namespace Profile
+	{
+		const char* Names[] =
+		{
+			"FormatConversion",
+			"ReadScreenPixels",
+			"WriteEncodedPacket",
+			"Sample",
+			"Encode",
+			"TooManyFrames",
+		};
+
+		namespace Types
+		{
+			enum Type
+			{
+				FormatConversion,
+				ReadScreenPixels,
+				WriteEncodedPacket,
+				Sample,
+				Encode,
+				TooManyFrames,
+
+				Count
+			};
+		}
+
+		auto GetTimeNow()
+		{
+			return std::chrono::high_resolution_clock::now();
+		}
+
+		using TimePointType = decltype(GetTimeNow());
+
+		std::chrono::nanoseconds GetTimeDifference(TimePointType start)
+		{
+			using namespace std::chrono;
+
+			auto now = GetTimeNow();
+			auto difference = now - start;
+
+			auto time = duration_cast<nanoseconds>(difference);
+
+			return time;
+		}
+
+		struct Entry
+		{
+			unsigned int Calls = 0;
+			std::chrono::nanoseconds TotalTime = 0ms;
+		};
+
+		std::array<Entry, Types::Count> Entries;
+
+		struct ScopedEntry
+		{
+			ScopedEntry(Types::Type entry) : 
+				Target(Entries[entry]),
+				Start(GetTimeNow())
+			{
+				++Target.Calls;
+			}
+
+			~ScopedEntry()
+			{
+				Target.TotalTime += GetTimeDifference(Start);
+			}
+
+			TimePointType Start;
+			Entry& Target;
+		};
+	}
+
 	struct SDRAudioWriter
 	{
 		SDRAudioWriter()
@@ -403,7 +396,19 @@ namespace
 
 		void Open(const char* name, int samplerate, int samplebits, int channels)
 		{
-			WaveFile.Assign(name, "wb");
+			try
+			{
+				WaveFile.Assign(name, "wb");
+			}
+
+			catch (SDR::Shared::ScopedFile::ExceptionType status)
+			{
+				LAV::ThrowIfNull
+				(
+					nullptr,
+					LAV::ExceptionType::OpenWaveFile
+				);
+			}
 
 			enum : int32_t
 			{
@@ -474,7 +479,7 @@ namespace
 			FileLength += DataLength;
 		}
 
-		LAV::ScopedFile WaveFile;
+		SDR::Shared::ScopedFile WaveFile;
 		
 		/*
 			These variables are used to reference a stream position
@@ -495,11 +500,16 @@ namespace
 		{
 			FormatContext.Assign(path);
 
-			if (!(FormatContext->oformat->flags & AVFMT_NOFILE))
+			if ((FormatContext->oformat->flags & AVFMT_NOFILE) == 0)
 			{
 				LAV::ThrowIfFailed
 				(
-					avio_open(&FormatContext->pb, path, AVIO_FLAG_WRITE)
+					avio_open
+					(
+						&FormatContext->pb,
+						path,
+						AVIO_FLAG_WRITE
+					)
 				);
 			}
 		}
@@ -507,48 +517,66 @@ namespace
 		void SetEncoder(const char* name)
 		{
 			Encoder = avcodec_find_encoder_by_name(name);
-
 			LAV::ThrowIfNull(Encoder, LAV::ExceptionType::VideoEncoderNotFound);
 
-			CodecContext.Assign(Encoder);
+			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
+			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
 
+			CodecContext = Stream->codec;
+		}
+
+		void OpenEncoder
+		(
+			int framerate,
+			AVDictionary** options
+		)
+		{
 			if (FormatContext->oformat->flags & AVFMT_GLOBALHEADER)
 			{
 				CodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 			}
 
-			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
+			AVRational timebase;
+			timebase.num = 1;
+			timebase.den = framerate;
 
-			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
-		}
+			auto inversetime = av_inv_q(timebase);
 
-		void SetCodecParametersToStream()
-		{
+			CodecContext->time_base = timebase;
+			CodecContext->framerate = inversetime;
+
+			LAV::ThrowIfFailed
+			(
+				avcodec_open2
+				(
+					CodecContext,
+					Encoder,
+					options
+				)
+			);
+
 			LAV::ThrowIfFailed
 			(
 				avcodec_parameters_from_context
 				(
 					Stream->codecpar,
-					CodecContext.Get()
+					CodecContext
 				)
 			);
-		}
 
-		void OpenEncoder(AVDictionary** options)
-		{
-			LAV::ThrowIfFailed
-			(
-				avcodec_open2(CodecContext.Get(), Encoder, options)
-			);
-
-			SetCodecParametersToStream();
+			Stream->time_base = timebase;
+			Stream->avg_frame_rate = inversetime;
 		}
 
 		void WriteHeader()
 		{
 			LAV::ThrowIfFailed
 			(
-				avformat_write_header(FormatContext.Get(), nullptr)
+				avformat_write_header
+				(
+					FormatContext.Get(),
+					nullptr
+				)
 			);
 		}
 
@@ -556,12 +584,17 @@ namespace
 		{
 			LAV::ThrowIfFailed
 			(
-				av_write_trailer(FormatContext.Get())
+				av_write_trailer
+				(
+					FormatContext.Get()
+				)
 			);
 		}
 
 		void SetRGB24Input(uint8_t* buffer, int width, int height)
 		{
+			Profile::ScopedEntry e1(Profile::Types::FormatConversion);
+
 			uint8_t* sourceplanes[] =
 			{
 				buffer
@@ -599,24 +632,27 @@ namespace
 
 		void SendRawFrame()
 		{
-			Frame->pts = PresentationIndex;
+			{
+				Profile::ScopedEntry e1(Profile::Types::Encode);
 
-			auto ret = avcodec_send_frame
-			(
-				CodecContext.Get(),
-				Frame.Get()
-			);
+				Frame->pts = PresentationIndex;
+				PresentationIndex++;
+
+				auto ret = avcodec_send_frame
+				(
+					CodecContext,
+					Frame.Get()
+				);
+			}
 
 			ReceivePacketFrame();
-
-			PresentationIndex++;
 		}
 
 		void SendFlushFrame()
 		{
 			auto ret = avcodec_send_frame
 			(
-				CodecContext.Get(),
+				CodecContext,
 				nullptr
 			);
 
@@ -633,18 +669,18 @@ namespace
 		{
 			int status = 0;
 
-			AVPacket packet;
+			AVPacket packet = {};
 			av_init_packet(&packet);
 
 			while (status == 0)
 			{
 				status = avcodec_receive_packet
 				(
-					CodecContext.Get(),
+					CodecContext,
 					&packet
 				);
 
-				if (status != 0)
+				if (status < 0)
 				{
 					return;
 				}
@@ -655,6 +691,8 @@ namespace
 
 		void WriteEncodedPacket(AVPacket& packet)
 		{
+			Profile::ScopedEntry e1(Profile::Types::WriteEncodedPacket);
+
 			av_packet_rescale_ts
 			(
 				&packet,
@@ -664,21 +702,19 @@ namespace
 
 			packet.stream_index = Stream->index;
 
-			LAV::ThrowIfFailed
+			av_interleaved_write_frame
 			(
-				av_interleaved_write_frame
-				(
-					FormatContext.Get(),
-					&packet
-				)
+				FormatContext.Get(),
+				&packet
 			);
-
-			av_packet_unref(&packet);
 		}
 
 		LAV::ScopedFormatContext FormatContext;
 		
-		LAV::ScopedCodecContext CodecContext;
+		/*
+			This gets freed when FormatContext gets destroyed
+		*/
+		AVCodecContext* CodecContext;
 		AVCodec* Encoder = nullptr;
 		AVStream* Stream = nullptr;
 		LAV::ScopedAVFrame Frame;
@@ -734,19 +770,847 @@ namespace
 			return (Width * Height) * BytesPerPixel;
 		}
 
+		#if 0
+		bool TempStarted = false;
+		#endif
 		bool IsStarted = false;
 
 		uint32_t Width;
 		uint32_t Height;
 
-		double SamplingTime = 0.0;
+		struct DirectX9Data
+		{
+			struct RenderTarget
+			{
+				void Create
+				(
+					IDirect3DDevice9* device,
+					int width,
+					int height
+				)
+				{
+					MS::ThrowIfFailed
+					(
+						device->CreateTexture
+						(
+							width,
+							height,
+							1,
+							D3DUSAGE_RENDERTARGET,
+							D3DFMT_A8R8G8B8,
+							D3DPOOL_DEFAULT,
+							Texture.GetAddressOf(),
+							&SharedHandle
+						)
+					);
+
+					MS::ThrowIfFailed
+					(
+						Texture->GetSurfaceLevel
+						(
+							0,
+							Surface.GetAddressOf()
+						)
+					);
+				}
+
+				HANDLE SharedHandle = nullptr;
+				Microsoft::WRL::ComPtr<IDirect3DTexture9> Texture;
+				Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
+			};
+
+			RenderTarget SharedRT;
+		} DirectX9;
+
+		struct DirectX11Data
+		{
+			void ResetRenderTargets()
+			{
+				std::initializer_list<ID3D11RenderTargetView*> values =
+				{
+					nullptr,
+				};
+
+				Context->OMSetRenderTargets
+				(
+					values.size(),
+					values.begin(),
+					nullptr
+				);
+			}
+
+			void ResetPSBuffers()
+			{
+				std::initializer_list<ID3D11Buffer*> values =
+				{
+					nullptr,
+				};
+
+				Context->PSSetConstantBuffers
+				(
+					0,
+					values.size(),
+					values.begin()
+				);
+			}
+
+			void ResetPSResources()
+			{
+				std::initializer_list<ID3D11ShaderResourceView*> values = 
+				{
+					nullptr,
+					nullptr,
+					nullptr,
+				};
+
+				Context->PSSetShaderResources
+				(
+					0,
+					values.size(),
+					values.begin()
+				);
+			}
+
+			void PrintFrame()
+			{
+				auto outputs =
+				{
+					OutputTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					TempTextureSRV.Get()
+				};
+
+				auto buffers =
+				{
+					PrintPS_DynamicBuffer.Get()
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					PrintPS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
+				Context->PSSetConstantBuffers
+				(
+					0,
+					buffers.size(),
+					buffers.begin()
+				);
+
+				auto w = FrameWhitePoint;
+
+				if (w == 0)
+				{
+					PrintPS_Dynamic.Weight = 0;
+				}
+
+				else
+				{
+					w = 1.0f / w;
+					PrintPS_Dynamic.Weight = w;
+				}
+
+				UpdateAllConstBuffer
+				(
+					PrintPS_Dynamic,
+					PrintPS_DynamicBuffer.Get()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
+
+				SaveDebugImage
+				(
+					OutputTexture.Get()
+				);
+			}
+
+			void ScaleFrame(float factor)
+			{
+				auto w = FrameWhitePoint;
+
+				if (w * factor == w)
+				{
+					return;
+				}
+
+				if (w * factor == 0)
+				{
+					FrameWhitePoint = 0;
+					factor = 0;
+
+					float color[4] = {};
+
+					Context->ClearRenderTargetView
+					(
+						TempTextureRTV.Get(),
+						color
+					);
+
+					return;
+				}
+
+				auto outputs =
+				{
+					TempTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					OutputTextureSRV.Get()
+				};
+
+				auto buffers =
+				{
+					ScalePS_DynamicBuffer.Get()
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					ScalePS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
+				Context->PSSetConstantBuffers
+				(
+					0,
+					buffers.size(),
+					buffers.begin()
+				);
+
+				FrameWhitePoint *= factor;
+
+				ScalePS_Dynamic.Factor = factor;
+
+				UpdateAllConstBuffer
+				(
+					ScalePS_Dynamic,
+					ScalePS_DynamicBuffer.Get()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
+			}
+
+			void ClearFrame()
+			{
+				auto factor = 1.0f - FrameStrength;
+				ScaleFrame(factor);
+			}
+
+			void MakeFrame()
+			{
+				PrintFrame();
+				ClearFrame();
+			}
+
+			void Func1
+			(
+				ID3D11ShaderResourceView* sample
+			)
+			{
+				auto outputs =
+				{
+					TempTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					OutputTextureSRV.Get(),
+					sample
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					Fun1PS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
+
+				FrameWhitePoint += 1.0f;
+			}
+
+			void Func2
+			(
+				ID3D11ShaderResourceView* sample,
+				float weight
+			)
+			{
+				auto outputs =
+				{
+					TempTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					OutputTextureSRV.Get(),
+					sample
+				};
+
+				auto buffers =
+				{
+					Fun2PS_DynamicBuffer.Get()
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					Fun2PS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
+				Fun2PS_Dynamic.Weight = weight;
+
+				UpdateAllConstBuffer
+				(
+					Fun2PS_Dynamic,
+					Fun2PS_DynamicBuffer.Get()
+				);
+
+				Context->PSSetConstantBuffers
+				(
+					0,
+					buffers.size(),
+					buffers.begin()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
+
+				FrameWhitePoint += weight * 1.0f;
+			}
+
+			void Func4
+			(
+				ID3D11ShaderResourceView* sample1,
+				ID3D11ShaderResourceView* sample2,
+				float weight
+			)
+			{
+				auto outputs =
+				{
+					TempTextureRTV.Get()
+				};
+
+				auto inputs =
+				{
+					OutputTextureSRV.Get(),
+					sample1,
+					sample2
+				};
+
+				auto buffers =
+				{
+					Fun4PS_DynamicBuffer.Get()
+				};
+
+				Context->OMSetRenderTargets
+				(
+					1,
+					outputs.begin(),
+					nullptr
+				);
+
+				Context->PSSetShader
+				(
+					Fun4PS.Get(),
+					nullptr,
+					0
+				);
+
+				Context->PSSetShaderResources
+				(
+					0,
+					inputs.size(),
+					inputs.begin()
+				);
+
+				Fun4PS_Dynamic.Weight = weight;
+
+				UpdateAllConstBuffer
+				(
+					Fun4PS_Dynamic,
+					Fun4PS_DynamicBuffer.Get()
+				);
+
+				Context->PSSetConstantBuffers
+				(
+					0,
+					buffers.size(),
+					buffers.begin()
+				);
+
+				Context->Draw(3, 0);
+				Context->Flush();
+
+				ResetRenderTargets();
+				ResetPSBuffers();
+				ResetPSResources();
+
+				FrameWhitePoint += weight * 2.0f * 1.0f;
+			}
+
+			void Integrator
+			(
+				ID3D11ShaderResourceView* sample1,
+				ID3D11ShaderResourceView* sample2,
+				float time1,
+				float time2,
+				float subtime1,
+				float subtime2
+			)
+			{
+				float weightA;
+				float weightB;
+
+				{
+					auto dAB = time2 - time1;
+					auto w1 = (subtime2 - subtime1) / 2.0;
+					auto w2 = dAB ? (subtime1 + subtime2 - 2.0 * time1) / dAB : 0.0;
+					weightA = w1 * (2 - w2);
+					weightB = w1 * w2;
+				}
+
+				if (0 == weightA)
+				{
+					weightA = weightB;
+					weightB = 0;
+					sample1 = sample2;
+					sample2 = 0;
+				}
+
+				if (0 == weightA)
+				{
+					return;
+				}
+
+				if (0 == sample1)
+				{
+					sample1 = sample2;
+					sample2 = 0;
+
+					weightA = weightA + weightB;
+					weightB = 0;
+				}
+
+				if (0 == sample1)
+				{
+					return;
+				}
+
+				if (0 == sample2 || 0 == weightB)
+				{
+					if (1 == weightA)
+					{
+						Func1(sample1);
+					}
+
+					else
+					{
+						Func2(sample1, weightA);
+					}
+				}
+
+				else
+				{
+					if (weightA == weightB)
+					{
+						if (1 == weightA)
+						{
+							Func1(sample1);
+							Func1(sample2);
+						}
+
+						else
+						{
+							Func4(sample1, sample2, weightA);
+						}
+					}
+
+					else
+					{
+						if (1 == weightB)
+						{
+							auto tS = sample1;
+							auto tW = weightA;
+
+							sample1 = sample2;
+							sample2 = tS;
+
+							weightA = weightB;
+							weightB = tW;
+						}
+
+						if (1 == weightA)
+						{
+							Func1(sample1);
+							Func2(sample2, weightB);
+						}
+						else
+						{
+							Func2(sample1, weightA);
+							Func2(sample2, weightB);
+						}
+					}
+				}
+			}
+
+			void SubSample
+			(
+				float time1,
+				float time2,
+				float subtime1,
+				float subtime2
+			)
+			{
+				auto sample1 = PreviousTextureSRV.Get();
+				auto sample2 = LatestTextureSRV.Get();
+
+				if (!HasLastSample)
+				{
+					sample1 = nullptr;
+				}
+
+				Integrator
+				(
+					sample1,
+					sample2,
+					time1,
+					time2,
+					subtime1,
+					subtime2
+				);
+			}
+
+			void Sample()
+			{
+				auto& time = CurrentTime;
+				auto submin = LastSampleTime;
+
+				while (submin < time)
+				{
+					auto submax = time;
+
+					auto shutterevent = ShutterTime + (ShutterOpen ? ShutterOpenDuration : FrameDuration);
+					auto frameend = LastFrameTime + FrameDuration;
+
+					if (submin < frameend && frameend <= submax)
+					{
+						submax = frameend;
+					}
+
+					if (submin < shutterevent && shutterevent <= submax)
+					{
+						submax = shutterevent;
+					}
+
+					if (ShutterOpen)
+					{
+						SubSample
+						(
+							LastSampleTime,
+							time,
+							submin,
+							submax
+						);
+					}
+
+					if (submin < frameend && frameend <= submax)
+					{
+						MakeFrame();
+						LastFrameTime = submax;
+					}
+
+					if (submin < shutterevent && shutterevent <= submax)
+					{
+						if (0.0f < ShutterOpenDuration && ShutterOpenDuration < FrameDuration)
+						{
+							ShutterOpen = !ShutterOpen;
+
+							if (ShutterOpen)
+							{
+								ShutterTime = submax;
+							}
+						}
+					}
+
+					submin = submax;
+				}
+
+				LastSampleTime = time;
+
+				/*
+
+				*/
+				Context->CopyResource
+				(
+					PreviousTexture.Get(),
+					LatestTexture.Get()
+				);
+
+				HasLastSample = true;
+			}
+
+			double FrameDuration;
+			double SampleTimeInterval;
+
+			double LastFrameTime = 0;
+			double LastSampleTime = 0;
+			bool HasLastSample = false;
+
+			float Exposure;
+			float FrameStrength;
+
+			bool ShutterOpen = true;
+			float ShutterOpenDuration = 0;
+			float ShutterTime = 0;
+
+			double CurrentTime = 0;
+			float FrameWhitePoint = 0;
+
+			Microsoft::WRL::ComPtr<ID3D11Device> Device;
+			Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
+
+			Microsoft::WRL::ComPtr<ID3D11SamplerState> SamplerState;
+
+			Microsoft::WRL::ComPtr<ID3D11VertexShader> PostProcVS;
+
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun1PS;
+
+			__declspec(align(16)) struct
+			{
+				float Weight;
+			} Fun2PS_Dynamic;
+
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun2PS;
+			Microsoft::WRL::ComPtr<ID3D11Buffer> Fun2PS_DynamicBuffer;
+
+			__declspec(align(16)) struct
+			{
+				float Weight;
+			} Fun4PS_Dynamic;
+
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> Fun4PS;
+			Microsoft::WRL::ComPtr<ID3D11Buffer> Fun4PS_DynamicBuffer;
+
+			__declspec(align(16)) struct
+			{
+				float Factor;
+			} ScalePS_Dynamic;
+
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> ScalePS;
+			Microsoft::WRL::ComPtr<ID3D11Buffer> ScalePS_DynamicBuffer;
+
+			__declspec(align(16)) struct
+			{
+				float Weight;
+			} PrintPS_Dynamic;
+
+			Microsoft::WRL::ComPtr<ID3D11PixelShader> PrintPS;
+			Microsoft::WRL::ComPtr<ID3D11Buffer> PrintPS_DynamicBuffer;
+
+			/*
+				This texture is shared from DX9
+			*/
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> LatestTexture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> LatestTextureSRV;
+
+			/*
+				
+			*/
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> PreviousTexture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> PreviousTextureSRV;
+
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> TempTexture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TempTextureSRV;
+			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> TempTextureRTV;
+
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> OutputTexture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> OutputTextureSRV;
+			Microsoft::WRL::ComPtr<ID3D11RenderTargetView> OutputTextureRTV;
+
+			#ifdef SDR_DEBUG_D3D11_IMAGE
+			void SaveDebugImage
+			(
+				ID3D11Texture2D* texture
+			)
+			{				
+				static int counter = 0;
+
+				wchar_t namebuf[1024];
+
+				swprintf_s
+				(
+					namebuf,
+					L"%Simage_d3d11_%d.png",
+					Variables::OutputDirectory.GetString(),
+					counter
+				);
+
+				auto hr = D3DX11SaveTextureToFileW
+				(
+					Context.Get(),
+					texture,
+					D3DX11_IFF_PNG,
+					namebuf
+				);
+
+				++counter;
+			}
+			#endif
+
+			template <typename T>
+			void CreateConstBuffer
+			(
+				T& initdata,
+				ID3D11Buffer** buffer
+			)
+			{
+				D3D11_BUFFER_DESC desc = {};
+				desc.ByteWidth = sizeof(T);
+				desc.Usage = D3D11_USAGE_DYNAMIC;
+				desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+				desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+				D3D11_SUBRESOURCE_DATA subresource = {};
+				subresource.pSysMem = &initdata;
+
+				MS::ThrowIfFailed
+				(
+					Device->CreateBuffer
+					(
+						&desc,
+						&subresource,
+						buffer
+					)
+				);
+			}
+
+			template <typename T>
+			bool UpdateAllConstBuffer
+			(
+				const T& data,
+				ID3D11Buffer* buffer
+			)
+			{
+				D3D11_MAPPED_SUBRESOURCE mapped = {};
+
+				auto hr = Context->Map
+				(
+					buffer,
+					0,
+					D3D11_MAP_WRITE_DISCARD,
+					0,
+					&mapped
+				);
+
+				if (FAILED(hr))
+				{
+					return false;
+				}
+
+				*(T*)mapped.pData = data;
+
+				Context->Unmap
+				(
+					buffer,
+					0
+				);
+
+				return true;
+			}
+
+		} DirectX11;
 
 		std::unique_ptr<SDRVideoWriter> Video;
 		std::unique_ptr<SDRAudioWriter> Audio;
 
 		std::unique_ptr<SDR::Sampler::EasyByteSampler> Sampler;
 
+		int SamplesPerSecond;
 		int32_t BufferedFrames = 0;
+
 		std::unique_ptr<VideoQueueType> FramesToSampleBuffer;
 		std::thread FrameHandlerThread;
 	};
@@ -756,21 +1620,32 @@ namespace
 
 	void SDR_MovieShutdown()
 	{
-		if (!CurrentMovie.IsStarted)
+		auto& movie = CurrentMovie;
+
+		#if 0
+		if (movie.TempStarted)
 		{
+			movie = MovieData();
+			return;
+		}
+		#endif
+
+		if (!movie.IsStarted)
+		{
+			movie = MovieData();
 			return;
 		}
 
 		if (!ShouldStopFrameThread)
 		{
 			ShouldStopFrameThread = true;
-			CurrentMovie.FrameHandlerThread.join();
+			movie.FrameHandlerThread.join();
 		}
 
-		CurrentMovie = MovieData();
+		movie = MovieData();
 	}
 
-	namespace Module_RenderContext
+	namespace ModuleVideoMode
 	{
 		namespace Types
 		{
@@ -789,32 +1664,238 @@ namespace
 
 		Types::ReadScreenPixels ReadScreenPixels;
 
-		template <typename T>
-		void SetFromAddress(T& type, void* address)
-		{
-			type = (T)(address);
-		}
-
-		void Set()
-		{
-			{
-				/*
-					0x101FFF80 static CSS IDA address June 3 2016
-				*/
-				SDR::AddressFinder address
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"VideoMode_ReadScreenPixels",
+				[]
 				(
-					"engine.dll",
-					SDR::MemoryPattern
-					(
-						"\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x00\x00\x00\x00\x00"
-						"\x0F\x85\x00\x00\x00\x00\x8B\x0D\x00\x00\x00\x00"
-					),
-					"xxxxxxxx?????xx????xx????"
-				);
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
 
-				SetFromAddress(ReadScreenPixels, address.Get());
-			}
+					return SDR::ModuleShared::SetFromAddress
+					(
+						ReadScreenPixels,
+						address
+					);
+				}
+			)
+		);
+	}
+
+	namespace ModuleMaterialSystem
+	{
+		namespace Types
+		{
+			using GetBackBufferDimensions = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				int& width,
+				int& height
+			);
+
+			using GetBackBufferFormat = int(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using BeginFrame = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				float frametime
+			);
+
+			using EndFrame = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using ReloadMaterials = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				const char* substring
+			);
+
+			using BeginRenderTargetAllocation = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using EndRenderTargetAllocation = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+
+			using CreateRenderTargetTexture = void*(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				int width,
+				int height,
+				int sizemode,
+				int format,
+				int depth
+			);
+
+			using GetRenderContext = void*(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
 		}
+		
+		void* MaterialsPtr;
+		Types::GetBackBufferDimensions GetBackBufferDimensions;
+		Types::GetBackBufferFormat GetBackBufferFormat;
+		Types::BeginFrame BeginFrame;
+		Types::EndFrame EndFrame;
+		Types::ReloadMaterials ReloadMaterials;
+		Types::BeginRenderTargetAllocation BeginRenderTargetAllocation;
+		Types::EndRenderTargetAllocation EndRenderTargetAllocation;
+		Types::CreateRenderTargetTexture CreateRenderTargetTexture;
+		Types::GetRenderContext GetRenderContext;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_MaterialsPtr",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					MaterialsPtr = **(void***)(address);
+
+					SDR::ModuleShared::Registry::SetKeyValue
+					(
+						name,
+						MaterialsPtr
+					);
+
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_GetBackBufferDimensions",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetBackBufferDimensions,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_GetBackBufferFormat",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetBackBufferFormat,
+						address
+					);
+				}
+			)
+		);
+	}
+
+	namespace ModuleSourceGlobals
+	{
+		IDirect3DDevice9* Device;
+		bool* DrawLoading;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"D3D9_Device",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					Device = **(IDirect3DDevice9***)(address);
+
+					SDR::ModuleShared::Registry::SetKeyValue
+					(
+						name,
+						Device
+					);
+
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"DrawLoading",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					DrawLoading = *(bool**)(address);
+
+					SDR::ModuleShared::Registry::SetKeyValue
+					(
+						name,
+						DrawLoading
+					);
+
+					return true;
+				}
+			)
+		);
 	}
 
 	/*
@@ -823,12 +1904,411 @@ namespace
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
 
-	SDR::PluginStartupFunctionAdder A2("MovieRecordSetup", []()
+	#if 0
+	SDR::PluginStartupFunctionAdder A2("MovieRecord Setup", []()
 	{
-		Module_RenderContext::Set();
+		int width;
+		int height;
+
+		ModuleMaterialSystem::GetBackBufferDimensions
+		(
+			ModuleMaterialSystem::MaterialsPtr,
+			nullptr,
+			width,
+			height
+		);
+
+		auto& movie = CurrentMovie;
+		auto& dx9 = movie.DirectX9;
+		auto& dx11 = movie.DirectX11;
+
+		movie.Width = width;
+		movie.Height = height;
+
+		try
+		{
+			dx9.SharedRT.Create
+			(
+				ModuleSourceGlobals::Device,
+				width,
+				height
+			);
+		}
+
+		catch (HRESULT code)
+		{
+			int a = 5;
+			a = a;
+
+			return false;
+		}
+
+		try
+		{
+			uint32_t flags = 0;
+
+			#ifdef _DEBUG
+			flags |= D3D11_CREATE_DEVICE_DEBUG;
+			#endif
+
+			MS::ThrowIfFailed
+			(
+				D3D11CreateDevice
+				(
+					nullptr,
+					D3D_DRIVER_TYPE_HARDWARE,
+					0,
+					flags,
+					nullptr,
+					0,
+					D3D11_SDK_VERSION,
+					dx11.Device.GetAddressOf(),
+					0,
+					dx11.Context.GetAddressOf()
+				)
+			);
+			
+			CD3D11_SAMPLER_DESC samplerdesc(D3D11_DEFAULT);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateSamplerState
+				(
+					&samplerdesc,
+					dx11.SamplerState.GetAddressOf()
+				)
+			);
+
+			Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->OpenSharedResource
+				(
+					dx9.SharedRT.SharedHandle,
+					__uuidof(ID3D11Resource),
+					(void**)(tempresource.GetAddressOf())
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				tempresource.As
+				(
+					&dx11.LatestTexture
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateShaderResourceView
+				(
+					dx11.LatestTexture.Get(),
+					nullptr,
+					dx11.LatestTextureSRV.GetAddressOf()
+				)
+			);
+
+			D3D11_TEXTURE2D_DESC desc = {};
+			desc.Width = width;
+			desc.Height = height;
+			desc.ArraySize = 1;
+			desc.SampleDesc.Count = 1;
+			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateTexture2D
+				(
+					&desc,
+					nullptr,
+					dx11.OutputTexture.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateShaderResourceView
+				(
+					dx11.OutputTexture.Get(),
+					nullptr,
+					dx11.OutputTextureSRV.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateRenderTargetView
+				(
+					dx11.OutputTexture.Get(),
+					nullptr,
+					dx11.OutputTextureRTV.GetAddressOf()
+				)
+			);
+
+			D3D11_TEXTURE2D_DESC desc2;
+			dx11.LatestTexture->GetDesc(&desc2);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateTexture2D
+				(
+					&desc2,
+					nullptr,
+					dx11.PreviousTexture.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateShaderResourceView
+				(
+					dx11.PreviousTexture.Get(),
+					nullptr,
+					dx11.PreviousTextureSRV.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateTexture2D
+				(
+					&desc,
+					nullptr,
+					dx11.TempTexture.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateShaderResourceView
+				(
+					dx11.TempTexture.Get(),
+					nullptr,
+					dx11.TempTextureSRV.GetAddressOf()
+				)
+			);
+
+			MS::ThrowIfFailed
+			(
+				dx11.Device->CreateRenderTargetView
+				(
+					dx11.TempTexture.Get(),
+					nullptr,
+					dx11.TempTextureRTV.GetAddressOf()
+				)
+			);
+
+			auto openshader = []
+			(
+				const char* name
+			)
+			{
+				using Status = SDR::Shared::ScopedFile::ExceptionType;
+
+				SDR::Shared::ScopedFile file;
+
+				char path[1024];
+				strcpy_s(path, SDR::GetGamePath());
+				strcat(path, R"(SDR\Shaders\)");
+				strcat_s(path, name);
+				strcat_s(path, ".sdrshader");
+
+				try
+				{
+					file.Assign
+					(
+						path,
+						"rb"
+					);
+				}
+
+				catch (Status status)
+				{
+					if (status == Status::CouldNotOpenFile)
+					{
+						Warning
+						(
+							"SDR: Could not open shader \"%s\"\n",
+							path
+						);
+					}
+
+					throw false;
+				}
+
+				return file.ReadAll();
+			};
+
+			auto openvertexshader = [openshader]
+			(
+				const char* name,
+				ID3D11Device* device,
+				ID3D11VertexShader** shader
+			)
+			{
+				auto data = openshader(name);
+
+				MS::ThrowIfFailed
+				(
+					device->CreateVertexShader
+					(
+						data.data(),
+						data.size(),
+						nullptr,
+						shader
+					)
+				);
+			};
+
+			auto openpixelshader = [openshader]
+			(
+				const char* name,
+				ID3D11Device* device,
+				ID3D11PixelShader** shader
+			)
+			{
+				auto data = openshader(name);
+
+				MS::ThrowIfFailed
+				(
+					device->CreatePixelShader
+					(
+						data.data(),
+						data.size(),
+						nullptr,
+						shader
+					)
+				);
+			};
+
+			try
+			{
+				openvertexshader
+				(
+					"PostProcess_VS",
+					dx11.Device.Get(),
+					dx11.PostProcVS.GetAddressOf()
+				);
+
+				openpixelshader
+				(
+					"F1_PS",
+					dx11.Device.Get(),
+					dx11.Fun1PS.GetAddressOf()
+				);
+
+				openpixelshader
+				(
+					"F2_PS",
+					dx11.Device.Get(),
+					dx11.Fun2PS.GetAddressOf()
+				);
+
+				openpixelshader
+				(
+					"F4_PS",
+					dx11.Device.Get(),
+					dx11.Fun4PS.GetAddressOf()
+				);
+
+				openpixelshader
+				(
+					"Print_PS",
+					dx11.Device.Get(),
+					dx11.PrintPS.GetAddressOf()
+				);
+
+				openpixelshader
+				(
+					"Scale_PS",
+					dx11.Device.Get(),
+					dx11.ScalePS.GetAddressOf()
+				);
+			}
+
+			catch (bool value)
+			{
+				return false;
+			}
+
+			dx11.CreateConstBuffer
+			(
+				dx11.Fun2PS_Dynamic,
+				dx11.Fun2PS_DynamicBuffer.GetAddressOf()
+			);
+
+			dx11.CreateConstBuffer
+			(
+				dx11.Fun4PS_Dynamic,
+				dx11.Fun4PS_DynamicBuffer.GetAddressOf()
+			);
+
+			dx11.CreateConstBuffer
+			(
+				dx11.ScalePS_Dynamic,
+				dx11.ScalePS_DynamicBuffer.GetAddressOf()
+			);
+
+			dx11.CreateConstBuffer
+			(
+				dx11.PrintPS_Dynamic,
+				dx11.PrintPS_DynamicBuffer.GetAddressOf()
+			);
+
+			D3D11_VIEWPORT viewport = {};
+			viewport.Width = width;
+			viewport.Height = height;
+			viewport.MaxDepth = D3D11_MAX_DEPTH;
+
+			dx11.Context->RSSetViewports
+			(
+				1,
+				&viewport
+			);
+
+			auto samplers =
+			{
+				dx11.SamplerState.Get()
+			};
+
+			dx11.Context->PSSetSamplers
+			(
+				0,
+				samplers.size(),
+				samplers.begin()
+			);
+
+			dx11.Context->IASetPrimitiveTopology
+			(
+				D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
+			);
+
+			dx11.Context->IASetInputLayout
+			(
+				nullptr
+			);
+
+			dx11.Context->VSSetShader
+			(
+				dx11.PostProcVS.Get(),
+				nullptr,
+				0
+			);
+		}
+
+		catch (HRESULT code)
+		{
+			int a = 5;
+			a = a;
+
+			return false;
+		}
 
 		return true;
 	});
+	#endif
 }
 
 namespace
@@ -870,15 +2350,22 @@ namespace
 
 		ConVar Exposure
 		(
-			"sdr_render_exposure", "0.5", FCVAR_NEVER_AS_STRING,
+			"sdr_render_exposure", "1", FCVAR_NEVER_AS_STRING,
 			"Frame exposure fraction",
 			true, 0, true, 1
 		);
 
-		ConVar SamplesPerSecond
+		ConVar SampleMultiplier
 		(
-			"sdr_render_samplespersecond", "600", FCVAR_NEVER_AS_STRING,
-			"Game framerate in samples",
+			"sdr_render_samplemult", "20", FCVAR_NEVER_AS_STRING,
+			"Game framerate multiplier",
+			true, 2, false, 0
+		);
+
+		ConVar ShaderSamples
+		(
+			"sdr_shader_samples", "64", FCVAR_NEVER_AS_STRING,
+			"Motion blur samples",
 			true, 0, false, 0
 		);
 
@@ -1008,7 +2495,7 @@ namespace
 		auto& movie = CurrentMovie;
 		auto& nonreadyframes = movie.FramesToSampleBuffer;
 
-		auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+		auto spsvar = static_cast<double>(movie.SamplesPerSecond);
 		auto sampleframerate = 1.0 / spsvar;
 
 		MovieData::VideoFutureSampleData videosample;
@@ -1024,6 +2511,8 @@ namespace
 
 				if (movie.Sampler)
 				{
+					Profile::ScopedEntry e1(Profile::Types::Sample);
+
 					if (movie.Sampler->CanSkipConstant(time, sampleframerate))
 					{
 						movie.Sampler->Sample(nullptr, time);
@@ -1044,35 +2533,117 @@ namespace
 		}
 	}
 
-	namespace Module_StartMovie
+	#if 0
+	namespace ModuleView_Render
 	{
 		#pragma region Init
 
-		SDR::RelativeJumpFunctionFinder StartMovieAddress
-		{
-			SDR::AddressFinder
-			(
-				/*
-					0x100BF270 static CSS IDA address April 26 2017
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			void* rect
+		);
 
-					This is inside the console command handler for "startmovie",
-					where it calls CL_StartMovie.
-				*/
-				"engine.dll",
-				SDR::MemoryPattern
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"View_Render",
+				[]
 				(
-					"\xFF\x50\x44\x50\x53\x56\xE8\x00\x00\x00\x00\x68"
-					"\x00\x00\x00\x00\xFF\x15\x00\x00\x00\x00\x83\xC4"
-					"\x20\x5F\x5B\x5E\x8B\xE5\x5D\xC3"
-				),
-				"xxxxxxx????x????xx????xxxxxxxxxx",
-			
-				/*
-					Skip \xFF\x50\x44\x50\x53\x56 to where E8 is next
-				*/
-				6
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
 			)
-		};
+		);
+
+		#pragma endregion
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			void* rect
+		)
+		{
+			ThisHook.GetOriginal()
+			(
+				thisptr,
+				edx,
+				rect
+			);
+
+			auto& interfaces = SDR::GetEngineInterfaces();
+			auto client = interfaces.EngineClient;
+
+			if (!CurrentMovie.TempStarted)
+			{
+				return;
+			}
+
+			if (*ModuleSourceGlobals::DrawLoading)
+			{
+				return;
+			}
+
+			if (client->Con_IsVisible())
+			{
+				return;
+			}
+
+			auto& movie = CurrentMovie;
+			auto& dx9 = movie.DirectX9;
+			auto& dx11 = movie.DirectX11;
+
+			HRESULT hr;
+			Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
+
+			hr = ModuleSourceGlobals::Device->GetRenderTarget
+			(
+				0,
+				surface.GetAddressOf()
+			);
+
+			/*
+				The DX11 texture now contains this data
+			*/
+			hr = ModuleSourceGlobals::Device->StretchRect
+			(
+				surface.Get(),
+				nullptr,
+				dx9.SharedRT.Surface.Get(),
+				nullptr,
+				D3DTEXF_NONE
+			);
+
+			{
+				dx11.Sample();
+
+				auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+				auto sampleframerate = 1.0 / spsvar;
+
+				dx11.CurrentTime += sampleframerate;
+			}
+		}
+	}
+	#endif
+
+	namespace ModuleStartMovie
+	{
+		#pragma region Init
 
 		void __cdecl Override
 		(
@@ -1087,13 +2658,28 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleStaticAddress<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"StartMovie",
-			Override,
-			StartMovieAddress.Get()
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"StartMovie",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -1112,6 +2698,8 @@ namespace
 			int unk
 		)
 		{
+			auto& movie = CurrentMovie;
+
 			auto sdrpath = Variables::OutputDirectory.GetString();
 
 			auto res = SHCreateDirectoryExA(nullptr, sdrpath, nullptr);
@@ -1239,8 +2827,6 @@ namespace
 			}
 
 			const VideoConfigurationData* vidconfig = nullptr;
-
-			auto& movie = CurrentMovie;
 				
 			movie.Width = width;
 			movie.Height = height;
@@ -1371,9 +2957,6 @@ namespace
 							audiowriter->Open(finalname, 44'100, 16, 2);
 						}
 
-						auto formatcontext = vidwriter->FormatContext.Get();
-						auto oformat = formatcontext->oformat;
-
 						vidwriter->SetEncoder(vidconfig->EncoderName);
 					}
 
@@ -1394,17 +2977,10 @@ namespace
 						}
 					};
 
-					AVRational timebase;
-					timebase.num = 1;
-					timebase.den = Variables::FrameRate.GetInt();
-
-					vidwriter->Stream->time_base = timebase;
-
-					auto codeccontext = vidwriter->CodecContext.Get();
+					auto codeccontext = vidwriter->CodecContext;
 					codeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
 					codeccontext->width = width;
 					codeccontext->height = height;
-					codeccontext->time_base = timebase;
 
 					auto pxformat = AV_PIX_FMT_NONE;
 
@@ -1474,6 +3050,8 @@ namespace
 					}
 
 					{
+						AVDictionary** dictptr = nullptr;
+
 						if (vidconfig->EncoderType == AV_CODEC_ID_H264)
 						{
 							auto preset = Variables::Video::X264::Preset.GetString();
@@ -1496,13 +3074,14 @@ namespace
 							*/
 							options.Set("x264-params", "keyint=1");
 
-							vidwriter->OpenEncoder(options.Get());
+							dictptr = options.Get();
 						}
 
-						else
-						{
-							vidwriter->OpenEncoder(nullptr);
-						}
+						vidwriter->OpenEncoder
+						(
+							Variables::FrameRate.GetInt(),
+							dictptr
+						);
 					}
 
 					vidwriter->Frame.Assign
@@ -1526,14 +3105,25 @@ namespace
 				}
 			}
 
-			ThisHook.GetOriginal()(filename, flags, width, height, framerate, jpegquality, unk);
+			ThisHook.GetOriginal()
+			(
+				filename,
+				flags,
+				width,
+				height,
+				framerate,
+				jpegquality,
+				unk
+			);
 
-			auto enginerate = Variables::SamplesPerSecond.GetInt();
+			auto enginerate = Variables::FrameRate.GetInt();
 
-			if (!Variables::UseSample.GetBool())
+			if (Variables::UseSample.GetBool())
 			{
-				enginerate = Variables::FrameRate.GetInt();
+				enginerate *= Variables::SampleMultiplier.GetInt();
 			}
+
+			movie.SamplesPerSecond = enginerate;
 
 			/*
 				The original function sets host_framerate to 30 so we override it
@@ -1599,24 +3189,9 @@ namespace
 		}
 	}
 
-	namespace Module_StartMovieCommand
+	namespace ModuleStartMovieCommand
 	{
 		#pragma region Init
-
-		/*
-			0x100BEF40 static CSS IDA address April 7 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x83\xEC\x08\x83\x3D\x00\x00\x00\x00"
-			"\x00\x0F\x85\x00\x00\x00\x00\x8B\x4D\x08\x56\x8B"
-			"\x01\x83\xF8\x02\x7D\x6B\x8B\x35\x00\x00\x00\x00"
-		);
-
-		auto Mask =
-		(
-			"xxxxxxxx?????xx????xxxxxxxxxxxxx????"
-		);
 
 		void __cdecl Override
 		(
@@ -1625,14 +3200,28 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"StartMovieCommand",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"StartMovieCommand",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -1657,47 +3246,93 @@ namespace
 
 			int width;
 			int height;
-			materials->GetBackBufferDimensions(width, height);
+
+			ModuleMaterialSystem::GetBackBufferDimensions
+			(
+				ModuleMaterialSystem::MaterialsPtr,
+				nullptr,
+				width,
+				height
+			);
+
+			Profile::Entries.fill({});
+
+			#if 0
+			auto& dx11 = CurrentMovie.DirectX11;
+
+			auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+			auto sampleframerate = 1.0 / spsvar;
+
+			auto frameratems = 1.0 / static_cast<double>(Variables::FrameRate.GetInt());
+			auto exposure = Variables::Exposure.GetFloat();
+			auto framestrength = Variables::FrameStrength.GetFloat();
+
+			dx11.FrameDuration = frameratems;
+			dx11.LastFrameTime = 0;
+
+			dx11.SampleTimeInterval = sampleframerate;
+			dx11.LastSampleTime = 0;
+
+			dx11.Exposure = exposure;
+			dx11.FrameStrength = framestrength;
+
+			dx11.ShutterOpen = true;
+			dx11.ShutterOpenDuration = frameratems * min(max(exposure, 0.0f), 1.0f);
+			dx11.ShutterTime = 0;
+
+			CurrentMovie.TempStarted = true;
+
+			return;
+			#endif
 
 			auto name = args[1];
 
 			/*
 				4 = FMOVIE_WAV, needed for future audio calls
 			*/
-			Module_StartMovie::Override(name, 4, width, height, 0, 0, 0);
+			ModuleStartMovie::Override
+			(
+				name,
+				4,
+				width,
+				height,
+				0,
+				0,
+				0
+			);
 		}
 	}
 
-	namespace Module_EndMovie
+	namespace ModuleEndMovie
 	{
 		#pragma region Init
-
-		/*
-			0x100BAE40 static CSS IDA address May 22 2016
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00\x00"
-			"\xD9\x05\x00\x00\x00\x00\x51\xB9\x00\x00\x00\x00"
-		);
-
-		auto Mask =
-		(
-			"xx?????xx????xx????xx????"
-		);
 
 		void __cdecl Override();
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"EndMovie",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"EndMovie",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -1765,27 +3400,35 @@ namespace
 					Color(88, 255, 39, 255),
 					"SDR: Movie is now complete\n"
 				);
+
+				int index = 0;
+
+				for (const auto& entry : Profile::Entries)
+				{
+					if (entry.Calls > 0)
+					{
+						auto name = Profile::Names[index];
+						auto avg = entry.TotalTime / entry.Calls;
+						auto ms = avg / 1.0ms;
+
+						Msg
+						(
+							"SDR: %s (%u): avg %0.4f ms\n",
+							name,
+							entry.Calls,
+							ms
+						);
+					}
+
+					++index;
+				}
 			});
 		}
 	}
 
-	namespace Module_WriteMovieFrame
+	namespace ModuleWriteMovieFrame
 	{
 		#pragma region Init
-
-		/*
-			0x102011B0 static CSS IDA address June 3 2016
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x51\x80\x3D\x00\x00\x00\x00\x00\x53"
-			"\x8B\x5D\x08\x57\x8B\xF9\x8B\x83\x00\x00\x00\x00"
-		);
-
-		auto Mask =
-		(
-			"xxxxxx?????xxxxxxxxx????"
-		);
 
 		void __fastcall Override
 		(
@@ -1796,14 +3439,28 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"WriteMovieFrame",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WriteMovieFrame",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -1832,12 +3489,16 @@ namespace
 			void* info
 		)
 		{
+			#if 0
+			return;
+			#endif
+
 			auto width = CurrentMovie.Width;
 			auto height = CurrentMovie.Height;
 
 			auto& movie = CurrentMovie;
 
-			auto& time = movie.SamplingTime;
+			auto& time = movie.DirectX11.CurrentTime;
 
 			MovieData::VideoFutureSampleData newsample;
 			newsample.Time = time;
@@ -1855,17 +3516,21 @@ namespace
 				in newer games like TF2 the materials are handled much differently
 				but this endpoint function remains the same. Less elegant but what you gonna do.
 			*/
-			Module_RenderContext::ReadScreenPixels
-			(
-				thisptr,
-				edx,
-				0,
-				0,
-				width,
-				height,
-				newsample.Data.data(),
-				pxformat
-			);
+			{
+				Profile::ScopedEntry e1(Profile::Types::ReadScreenPixels);
+
+				ModuleVideoMode::ReadScreenPixels
+				(
+					thisptr,
+					edx,
+					0,
+					0,
+					width,
+					height,
+					newsample.Data.data(),
+					pxformat
+				);
+			}
 
 			auto buffersize = Variables::FrameBufferSize.GetInt();
 
@@ -1874,6 +3539,8 @@ namespace
 			*/
 			if (movie.BufferedFrames > buffersize)
 			{
+				Profile::ScopedEntry e1(Profile::Types::TooManyFrames);
+
 				Warning
 				(
 					"SDR: Too many buffered frames, waiting for encoder\n"
@@ -1897,7 +3564,7 @@ namespace
 
 			if (movie.Sampler)
 			{
-				auto spsvar = static_cast<double>(Variables::SamplesPerSecond.GetInt());
+				auto spsvar = static_cast<double>(movie.SamplesPerSecond);
 				auto sampleframerate = 1.0 / spsvar;
 
 				time += sampleframerate;
@@ -1905,38 +3572,36 @@ namespace
 		}
 	}
 
-	namespace Module_SNDRecordBuffer
+	namespace ModuleSNDRecordBuffer
 	{
 		#pragma region Init
-
-		/*
-			0x1007C710 static CSS IDA address March 21 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x8B\x0D\x00\x00\x00\x00\x53\x56\x57\x85"
-			"\xC9\x74\x0B\x8B\x01\x8B\x40\x38\xFF\xD0\x84\xC0\x75"
-			"\x0D\x80\x3D\x00\x00\x00\x00\x00\x0F\x84\x00\x00\x00"
-			"\x00"
-		);
-		
-		auto Mask =
-		(
-			"xxxxx????xxxxxxxxxxxxxxxxxxxx?????xx????"
-		);
 
 		void __cdecl Override();
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"SNDRecordBuffer",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"SNDRecordBuffer",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -1949,30 +3614,9 @@ namespace
 		}
 	}
 
-	namespace Module_WaveCreateTmpFile
+	namespace ModuleWaveCreateTmpFile
 	{
 		#pragma region Init
-
-		/*
-			0x1008EC90 static CSS IDA address March 21 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x57\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
-			"\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x68\x00\x00\x00\x00\x50\xE8\x00\x00\x00\x00"
-			"\x8B\x0D\x00\x00\x00\x00\x8D\x95\x00\x00\x00\x00\x83"
-			"\xC4\x18\x83\xC1\x04\x8B\x01\x6A\x00\x68\x00\x00\x00"
-			"\x00\x52\xFF\x50\x08\x8B\xF8\x85\xFF\x0F\x84\x00\x00"
-			"\x00\x00"
-		);
-		
-		auto Mask =
-		(
-			"xxxxx????xx????xx????xxxxx????x????xx????x????xx????"
-			"xx????xx????xxxxxxxxxxx????xxxxxxxxxx????"
-		);
 
 		void __cdecl Override
 		(
@@ -1984,14 +3628,28 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"WaveCreateTmpFile",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WaveCreateTmpFile",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -2014,29 +3672,9 @@ namespace
 		}
 	}
 
-	namespace Module_WaveAppendTmpFile
+	namespace ModuleWaveAppendTmpFile
 	{
 		#pragma region Init
-
-		/*
-			0x1008EBE0 static CSS IDA address March 21 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x57\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
-			"\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x68\x00\x00\x00\x00\x50\xE8\x00\x00\x00\x00"
-			"\x8B\x0D\x00\x00\x00\x00\x8D\x95\x00\x00\x00\x00\x83"
-			"\xC4\x18\x83\xC1\x04\x8B\x01\x6A\x00\x68\x00\x00\x00"
-			"\x00\x52\xFF\x50\x08\x8B\xF8\x85\xFF\x74\x47"
-		);
-
-		auto Mask =
-		(
-			"xxxxx????xx????xx????xxxxx????x????xx????x????xx????"
-			"xx????xx????xxxxxxxxxxx????xxxxxxxxxx"
-		);
 
 		void __cdecl Override
 		(
@@ -2048,14 +3686,28 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"WaveAppendTmpFile",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WaveAppendTmpFile",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 
@@ -2079,29 +3731,9 @@ namespace
 		}
 	}
 
-	namespace Module_WaveFixupTmpFile
+	namespace ModuleWaveFixupTmpFile
 	{
 		#pragma region Init
-
-		/*
-			0x1008EE30 static CSS IDA address March 21 2017
-		*/
-		auto Pattern = SDR::MemoryPattern
-		(
-			"\x55\x8B\xEC\x81\xEC\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x56\x68\x00\x00\x00\x00\x50\xFF\x75\x08\xE8"
-			"\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8D\x85\x00\x00"
-			"\x00\x00\x68\x00\x00\x00\x00\x50\xE8\x00\x00\x00\x00"
-			"\x8B\x0D\x00\x00\x00\x00\x8D\x95\x00\x00\x00\x00\x83"
-			"\xC4\x18\x83\xC1\x04\x8B\x01\x6A\x00\x68\x00\x00\x00"
-			"\x00"
-		);
-		
-		auto Mask =
-		(
-			"xxxxx????xx????xx????xxxxx????x????xx????x????xx????x"
-			"x????xx????xxxxxxxxxxx????"
-		);
 
 		void __cdecl Override
 		(
@@ -2110,14 +3742,28 @@ namespace
 
 		using ThisFunction = decltype(Override)*;
 
-		SDR::HookModuleMask<ThisFunction> ThisHook
-		{
-			"engine.dll",
-			"WaveFixupTmpFile",
-			Override,
-			Pattern,
-			Mask
-		};
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WaveFixupTmpFile",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
 
 		#pragma endregion
 

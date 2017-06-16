@@ -103,18 +103,17 @@ List of available video encoders:
 			0 to 1 fraction of a frame that is exposed for blending.
 			<br/><br/>
 			<b>Values:</b> Between 0 and 1 <br/>
-            <b>Default:</b> 0.5 <br/>
+            <b>Default:</b> 1 <br/>
 			<a href="https://github.com/ripieces/advancedfx/wiki/GoldSrc%3Amirv_sample_exposure">Read more</a>
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_render_samplespersecond</td>
+		<td>sdr_render_samplemult</td>
 		<td>
-			Game framerate in samples (host_framerate).
+			Game framerate multiplier.
 			<br/><br/>
-			<b>Values:</b> See read more <br/>
-            <b>Default:</b> 600 <br/>
-			<a href="https://github.com/ripieces/advancedfx/wiki/GoldSrc%3Amirv_sample_sps">Read more</a>
+			<b>Values:</b> 2 or higher <br/>
+            <b>Default:</b> 20 <br/>
 		</td>
 	</tr>
 	<tr>

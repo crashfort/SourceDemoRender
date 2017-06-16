@@ -2,7 +2,12 @@
 
 namespace SDR
 {
-	void Setup();
+	void Setup
+	(
+		const char* gamepath,
+		const char* gamename
+	);
+
 	void Close();
 
 	struct StartupFuncData
@@ -13,11 +18,18 @@ namespace SDR
 		FuncType Function;
 	};
 
-	void AddPluginStartupFunction(const StartupFuncData& data);
+	void AddPluginStartupFunction
+	(
+		const StartupFuncData& data
+	);
 
 	struct PluginStartupFunctionAdder
 	{
-		PluginStartupFunctionAdder(const char* name, StartupFuncData::FuncType function)
+		PluginStartupFunctionAdder
+		(
+			const char* name,
+			StartupFuncData::FuncType function
+		)
 		{
 			StartupFuncData data;
 			data.Name = name;
@@ -30,19 +42,82 @@ namespace SDR
 	void CallPluginStartupFunctions();
 
 	using ShutdownFuncType = void(*)();
-	void AddPluginShutdownFunction(ShutdownFuncType function);
+	void AddPluginShutdownFunction
+	(
+		ShutdownFuncType function
+	);
 
 	struct PluginShutdownFunctionAdder
 	{
-		PluginShutdownFunctionAdder(ShutdownFuncType function)
+		PluginShutdownFunctionAdder
+		(
+			ShutdownFuncType function
+		)
 		{
-			AddPluginShutdownFunction(function);
+			AddPluginShutdownFunction
+			(
+				function
+			);
 		}
 	};
 
+	struct ModuleHandlerData
+	{
+		using FuncType = bool(*)
+		(
+			const char* name,
+			rapidjson::Value& value
+		);
+
+		const char* Name;
+		FuncType Function;
+	};
+
+	void AddModuleHandler
+	(
+		const ModuleHandlerData& data
+	);
+
+	struct ModuleHandlerAdder
+	{
+		ModuleHandlerAdder
+		(
+			const char* name,
+			ModuleHandlerData::FuncType function
+		)
+		{
+			ModuleHandlerData data;
+			data.Name = name;
+			data.Function = function;
+
+			AddModuleHandler
+			(
+				data
+			);
+		}
+	};
+
+	template <typename... Types>
+	constexpr auto CreateAdders
+	(
+		Types&&... types
+	)
+	{
+		return std::array<ModuleHandlerAdder, sizeof...(Types)>
+		{
+			{
+				std::forward<Types>(types)...
+			}
+		};
+	}
+
 	struct ModuleInformation
 	{
-		ModuleInformation(const char* name) : Name(name)
+		ModuleInformation
+		(
+			const char* name
+		)
+			: Name(name)
 		{
 			MODULEINFO info;
 			
@@ -64,250 +139,307 @@ namespace SDR
 		size_t MemorySize;
 	};
 
-	struct HookModuleBase
+	struct BytePattern
 	{
-		HookModuleBase
-		(
-			const char* module,
-			const char* name,
-			void* newfunc
-		) :
-			DisplayName(name),
-			Module(module),
-			NewFunction(newfunc)
+		struct Entry
 		{
+			uint8_t Value;
+			bool Unknown;
+		};
 
+		std::vector<Entry> Bytes;
+	};
+
+	template <typename FuncSignature>
+	struct HookModule
+	{
+		inline auto GetOriginal() const
+		{
+			return static_cast<FuncSignature>(OriginalFunction);
 		}
-
-		const char* DisplayName;
-		const char* Module;
 
 		void* TargetFunction;
 		void* NewFunction;
 		void* OriginalFunction;
-
-		virtual MH_STATUS Create() = 0;
 	};
 
-	constexpr auto MemoryPattern(const char* input)
-	{
-		return reinterpret_cast<const uint8_t*>(input);
-	}
-
-	void AddModule(HookModuleBase* module);
+	BytePattern GetPatternFromString
+	(
+		const char* input
+	);
 
 	void* GetAddressFromPattern
 	(
 		const ModuleInformation& library,
-		const uint8_t* pattern,
-		const char* mask
+		const BytePattern& pattern
 	);
 
-	template <typename FuncSignature>
-	class HookModuleMask final : public HookModuleBase
+	bool JsonHasPattern
+	(
+		rapidjson::Value& value
+	);
+
+	bool JsonHasVirtualIndexOnly
+	(
+		rapidjson::Value& value
+	);
+
+	bool JsonHasVirtualIndexAndNamePtr
+	(
+		rapidjson::Value& value
+	);
+
+	void* GetAddressFromJsonFlex
+	(
+		rapidjson::Value& value
+	);
+
+	void* GetAddressFromJsonPattern
+	(
+		rapidjson::Value& value
+	);
+
+	void* GetVirtualAddressFromIndex
+	(
+		void* ptr,
+		int index
+	);
+
+	template <typename T>
+	struct VirtualIndex
 	{
-	public:
-		HookModuleMask
-		(
-			const char* module,
-			const char* name,
-			FuncSignature newfunction,
-			const uint8_t* pattern,
-			const char* mask
-		) :
-			HookModuleBase(module, name, newfunction),
-			Pattern(pattern),
-			Mask(mask)
+		using FuncType = T;
+
+		void operator=(int other)
 		{
-			AddModule(this);
+			Index = other;
 		}
 
-		inline auto GetOriginal() const
-		{
-			return static_cast<FuncSignature>(OriginalFunction);
-		}
-
-		virtual MH_STATUS Create() override
-		{
-			ModuleInformation info(Module);
-			TargetFunction = GetAddressFromPattern(info, Pattern, Mask);
-
-			auto res = MH_CreateHookEx
-			(
-				TargetFunction,
-				NewFunction,
-				&OriginalFunction
-			);
-
-			return res;
-		}
-
-	private:
-		const uint8_t* Pattern;
-		const char* Mask;
+		int Index;
 	};
 
-	/*
-		For use with unmodified addresses straight from IDA
-	*/
-	template <typename FuncSignature>
-	class HookModuleStaticAddressTest final : public HookModuleBase
+	template <typename FuncType>
+	auto GetVirtual
+	(
+		void* ptr,
+		VirtualIndex<FuncType>& index
+	)
 	{
-	public:
-		HookModuleStaticAddressTest
+		auto address = GetVirtualAddressFromIndex
 		(
-			const char* module,
-			const char* name,
-			FuncSignature newfunction,
-			uintptr_t address
-		) :
-			HookModuleBase(module, name, newfunction),
-			Address(address)
+			ptr,
+			index.Index
+		);
+
+		auto func = (FuncType)(address);
+		return func;
+	}
+
+	void* GetVirtualAddressFromJson
+	(
+		void* ptr,
+		rapidjson::Value& value
+	);
+
+	int GetVirtualIndexFromJson
+	(
+		rapidjson::Value& value
+	);
+
+	void* GetVirtualAddressFromJson
+	(
+		rapidjson::Value& value
+	);
+
+	namespace ModuleShared
+	{
+		namespace Registry
 		{
-			AddModule(this);
-		}
-
-		inline auto GetOriginal() const
-		{
-			return static_cast<FuncSignature>(OriginalFunction);
-		}
-
-		virtual MH_STATUS Create() override
-		{
-			/*
-				IDA starts addresses at this value
-			*/
-			Address -= 0x10000000;
-			
-			ModuleInformation info(Module);
-			Address += (uintptr_t)info.MemoryBase;
-
-			TargetFunction = (void*)Address;
-
-			auto res = MH_CreateHookEx
+			void SetKeyValue
 			(
-				TargetFunction,
-				NewFunction,
-				&OriginalFunction
+				const char* name,
+				uint32_t value
 			);
 
-			return res;
+			bool GetKeyValue
+			(
+				const char* name,
+				uint32_t* value
+			);
+
+			inline void SetKeyValue
+			(
+				const char* name,
+				void* value
+			)
+			{
+				SetKeyValue
+				(
+					name,
+					(uintptr_t)value
+				);
+			}
 		}
 
-	private:
-		uintptr_t Address;
-	};
-
-	/*
-		For use where the correct address is found
-		through another method
-	*/
-	template <typename FuncSignature>
-	class HookModuleStaticAddress final : public HookModuleBase
-	{
-	public:
-		HookModuleStaticAddress
+		template <typename T>
+		bool SetFromAddress
 		(
-			const char* module,
-			const char* name,
-			FuncSignature newfunction,
+			T& type,
 			void* address
-		) :
-			HookModuleBase(module, name, newfunction),
-			Address(address)
+		)
 		{
-			AddModule(this);
+			type = (T)(address);
+
+			if (!address)
+			{
+				return false;
+			}
+
+			return true;
 		}
 
-		inline auto GetOriginal() const
-		{
-			return static_cast<FuncSignature>(OriginalFunction);
-		}
-
-		virtual MH_STATUS Create() override
-		{
-			TargetFunction = Address;
-
-			auto res = MH_CreateHookEx
-			(
-				TargetFunction,
-				NewFunction,
-				&OriginalFunction
-			);
-
-			return res;
-		}
-
-	private:
-		void* Address;
-	};
-
-	template <typename FuncSignature>
-	class HookModuleAPI final : public HookModuleBase
-	{
-	public:
-		HookModuleAPI
+		inline void Verify
 		(
+			void* address,
 			const char* module,
-			const char* name,
-			const char* exportname,
-			FuncSignature newfunction
-		) :
-			HookModuleBase(module, name, newfunction),
-			ExportName(exportname)
+			const char* name
+		)
 		{
-			AddModule(this);
+			if (!address)
+			{
+				Warning
+				(
+					"SDR: Could not enable module \"%s\"\n",
+					name
+				);
+
+				throw name;
+			}
+		}
+	}
+
+	template <typename FuncType>
+	void CreateHook
+	(
+		HookModule<FuncType>& hook,
+		FuncType override,
+		void* address
+	)
+	{
+		hook.TargetFunction = address;
+		hook.NewFunction = override;
+
+		auto res = MH_CreateHookEx
+		(
+			hook.TargetFunction,
+			hook.NewFunction,
+			&hook.OriginalFunction
+		);
+
+		if (res != MH_OK)
+		{
+			throw res;
 		}
 
-		inline auto GetOriginal() const
+		res = MH_EnableHook(hook.TargetFunction);
+
+		if (res != MH_OK)
 		{
-			return static_cast<FuncSignature>(OriginalFunction);
+			throw res;
 		}
+	}
 
-		virtual MH_STATUS Create() override
+	template <typename FuncType>
+	void CreateHook
+	(
+		HookModule<FuncType>& hook,
+		FuncType override,
+		const char* module,
+		const BytePattern& pattern
+	)
+	{
+		auto address = GetAddressFromPattern
+		(
+			module,
+			pattern
+		);
+
+		CreateHook
+		(
+			hook,
+			override,
+			address
+		);
+	}
+
+	template <typename FuncType>
+	void CreateHook
+	(
+		HookModule<FuncType>& hook,
+		FuncType override,
+		rapidjson::Value& value
+	)
+	{
+		auto address = GetAddressFromJsonPattern(value);
+
+		CreateHook
+		(
+			hook,
+			override,
+			address
+		);
+	}
+
+	template <typename FuncType>
+	bool CreateHookShort
+	(
+		HookModule<FuncType>& hook,
+		FuncType override,
+		rapidjson::Value& value
+	)
+	{
+		try
 		{
-			wchar_t module[64];
-			swprintf_s(module, L"%S", Module);
-
-			auto res = MH_CreateHookApiEx
+			CreateHook
 			(
-				module,
-				ExportName,
-				NewFunction,
-				&OriginalFunction,
-				&TargetFunction
+				hook,
+				override,
+				value
 			);
-
-			return res;
 		}
 
-	private:
-		const char* ExportName;
-	};
+		catch (MH_STATUS status)
+		{
+			return false;
+		}
+
+		return true;
+	}
 
 	struct AddressFinder
 	{
 		AddressFinder
 		(
 			const char* module,
-			const uint8_t* pattern,
-			const char* mask,
+			const BytePattern& pattern,
 			int offset = 0
 		)
 		{
 			auto addr = GetAddressFromPattern
 			(
 				module,
-				pattern,
-				mask
+				pattern
 			);
 
 			auto addrmod = static_cast<uint8_t*>(addr);
 
-			/*
-				Increment for any extra instructions
-			*/
-			addrmod += offset;
+			if (addrmod)
+			{
+				/*
+					Increment for any extra instructions
+				*/
+				addrmod += offset;
+			}
 
 			Address = addrmod;
 		}
@@ -327,10 +459,10 @@ namespace SDR
 	{
 		RelativeJumpFunctionFinder
 		(
-			AddressFinder address
+			void* address
 		)
 		{
-			auto addrmod = static_cast<uint8_t*>(address.Get());
+			auto addrmod = static_cast<uint8_t*>(address);
 
 			/*
 				Skip the E8 byte
@@ -359,5 +491,41 @@ namespace SDR
 		}
 
 		void* Address;
+	};
+
+	struct StructureWalker
+	{
+		StructureWalker
+		(
+			void* address
+		) :
+			Address(static_cast<uint8_t*>(address)),
+			Start(Address)
+		{
+
+		}
+
+		template <typename Modifier = uint8_t>
+		uint8_t* Advance(int offset)
+		{
+			Address += offset * sizeof(Modifier);
+			return Address;
+		}
+
+		template <typename Modifier = uint8_t>
+		uint8_t* AdvanceAbsolute(int offset)
+		{
+			Reset();
+			Address += offset * sizeof(Modifier);
+			return Address;
+		}
+
+		void Reset()
+		{
+			Address = Start;
+		}
+
+		uint8_t* Address;
+		uint8_t* Start;
 	};
 }
