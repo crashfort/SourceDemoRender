@@ -288,7 +288,7 @@ namespace
 					{
 						Msg
 						(
-							"SDR Update: Could not reach update repository\n"
+							"SDR: Could not reach update repository\n"
 						);
 
 						return;
@@ -324,7 +324,7 @@ namespace
 						ConColorMsg
 						(
 							Color(88, 255, 39, 255),
-							"SDR Update: Using the latest library version\n"
+							"SDR: Using the latest library version\n"
 						);
 					}
 
@@ -333,7 +333,7 @@ namespace
 						ConColorMsg
 						(
 							Color(51, 167, 255, 255),
-							"SDR Update: A library update is available. New version: %d, current: %d\n"
+							"SDR: A library update is available. New version: %d, current: %d\n"
 							"Visit https://github.com/CRASHFORT/SourceDemoRender/releases\n",
 							webversion,
 							curversion
@@ -344,7 +344,7 @@ namespace
 					{
 						Msg
 						(
-							"SDR Update: Local library newer than update repository?\n"
+							"SDR: Local library newer than update repository?\n"
 						);
 					}
 				}
@@ -374,7 +374,7 @@ namespace
 						ConColorMsg
 						(
 							Color(88, 255, 39, 255),
-							"SDR Update: Using the latest game config\n"
+							"SDR: Using the latest game config\n"
 						);
 					}
 
@@ -383,7 +383,7 @@ namespace
 						ConColorMsg
 						(
 							Color(51, 167, 255, 255),
-							"SDR Update: A game config update is available: (%d -> %d), downloading\n",
+							"SDR: A game config update is available: (%d -> %d), downloading\n",
 							localversion,
 							webversion
 						);
@@ -450,7 +450,7 @@ namespace
 					{
 						Msg
 						(
-							"SDR Update: Local game config newer than update repository?\n"
+							"SDR: Local game config newer than update repository?\n"
 						);
 					}
 				}
