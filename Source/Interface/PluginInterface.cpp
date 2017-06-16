@@ -189,6 +189,37 @@ namespace
 		};
 	};
 
+	int GetGameConfigVersion()
+	{
+		int ret;
+
+		try
+		{
+			char path[1024];
+			strcpy_s(path, SDR::GetGamePath());
+			strcat(path, "SDR\\GameConfigLatest");
+
+			SDR::Shared::ScopedFile config(path, "rb");
+
+			auto content = config.ReadAll();
+			std::string str((const char*)content.data(), content.size());
+
+			ret = std::stoi(str);
+		}
+
+		catch (SDR::Shared::ScopedFile::ExceptionType status)
+		{
+			Warning
+			(
+				"SDR: Could not get GameConfig version\n"
+			);
+
+			throw false;
+		}
+
+		return ret;
+	}
+
 	namespace Commands
 	{
 		CON_COMMAND(sdr_version, "Show the current version")
@@ -199,111 +230,225 @@ namespace
 				SourceDemoRenderPlugin::PluginVersion
 			);
 
+			int gameconfigversion;
+
 			try
 			{
-				char path[1024];
-				strcpy_s(path, SDR::GetGamePath());
-				strcat(path, "SDR\\GameConfigLatest");
-
-				SDR::Shared::ScopedFile config(path, "rb");
-
-				auto content = config.ReadAll();
-				std::string str((const char*)content.data(), content.size());
-
-				auto version = std::stoi(str);
-
-				Msg
-				(
-					"SDR: GameConfig version: %d\n",
-					version
-				);
+				gameconfigversion = GetGameConfigVersion();
 			}
 
-			catch (SDR::Shared::ScopedFile::ExceptionType status)
+			catch (bool value)
 			{
-				Warning
-				(
-					"SDR: Could not get GameConfig version\n"
-				);
+				return;
 			}
+
+			Msg
+			(
+				"SDR: GameConfig version: %d\n",
+				gameconfigversion
+			);
 		}
 
 		CON_COMMAND(sdr_update, "Check for any available updates")
 		{
 			Msg
 			(
-				"SDR: Checking for any available update\n"
+				"SDR: Checking for any available updates\n"
 			);
 
-			auto task = concurrency::create_task([]()
+			auto webrequest = []
+			(
+				const wchar_t* path,
+				auto callback
+			)
 			{
-				auto address = L"https://raw.githubusercontent.com/";
-				auto path = L"/crashfort/SourceDemoRender/master/Version/Latest";
-
-				web::http::client::http_client_config config;
-				config.set_timeout(5s);
-
-				web::http::client::http_client webclient(address, config);
-
-				web::http::uri_builder pathbuilder(path);
-
-				return webclient.request(web::http::methods::GET, pathbuilder.to_string());
-			});
-
-			task.then([](web::http::http_response response)
-			{
-				auto status = response.status_code();
-
-				if (status != web::http::status_codes::OK)
+				auto task = concurrency::create_task([path]()
 				{
-					Msg("SDR Update: Could not reach update repository\n");
-					return;
-				}
+					auto address = L"https://raw.githubusercontent.com/";
 
-				auto task = response.content_ready();
+					web::http::client::http_client_config config;
+					config.set_timeout(5s);
 
-				task.then([](web::http::http_response response)
+					web::http::client::http_client webclient(address, config);
+
+					web::http::uri_builder pathbuilder(path);
+
+					return webclient.request
+					(
+						web::http::methods::GET,
+						pathbuilder.to_string()
+					);
+				});
+
+				task.then([callback](web::http::http_response response)
 				{
-					/*
-						Content is only text containg a number, so extract it raw
-					*/
-					auto task = response.extract_string(true);
+					auto status = response.status_code();
 
-					task.then([](utility::string_t string)
+					if (status != web::http::status_codes::OK)
 					{
-						constexpr auto curversion = SourceDemoRenderPlugin::PluginVersion;
-						auto webversion = std::stoi(string);
+						Msg
+						(
+							"SDR Update: Could not reach update repository\n"
+						);
 
-						if (curversion == webversion)
-						{
-							ConColorMsg
-							(
-								Color(88, 255, 39, 255),
-								"SDR Update: Using the latest version\n"
-							);
-						}
+						return;
+					}
 
-						else if (curversion < webversion)
-						{
-							ConColorMsg
-							(
-								Color(51, 167, 255, 255),
-								"SDR Update: An update is available. New version: %d, current: %d\n"
-								"Visit https://github.com/CRASHFORT/SourceDemoRender/releases\n",
-								webversion, curversion
-							);
-						}
+					auto task = response.content_ready();
 
-						else if (curversion > webversion)
+					task.then([callback](web::http::http_response response)
+					{
+						/*
+							Content is only text containg a number, so extract it raw
+						*/
+						auto task = response.extract_string(true);
+
+						task.then([callback](utility::string_t string)
 						{
-							Msg
-							(
-								"SDR Update: Current version greater than update repository?\n"
-							);
-						}
+							callback(std::move(string));
+						});
 					});
 				});
-			});
+			};
+
+			webrequest
+			(
+				L"/crashfort/SourceDemoRender/master/Version/Latest",
+				[](utility::string_t&& string)
+				{
+					auto curversion = SourceDemoRenderPlugin::PluginVersion;
+					auto webversion = std::stoi(string);
+
+					if (curversion == webversion)
+					{
+						ConColorMsg
+						(
+							Color(88, 255, 39, 255),
+							"SDR Update: Using the latest library version\n"
+						);
+					}
+
+					else if (curversion < webversion)
+					{
+						ConColorMsg
+						(
+							Color(51, 167, 255, 255),
+							"SDR Update: A library update is available. New version: %d, current: %d\n"
+							"Visit https://github.com/CRASHFORT/SourceDemoRender/releases\n",
+							webversion,
+							curversion
+						);
+					}
+
+					else if (curversion > webversion)
+					{
+						Msg
+						(
+							"SDR Update: Local library newer than update repository?\n"
+						);
+					}
+				}
+			);
+
+			webrequest
+			(
+				L"/crashfort/SourceDemoRender/master/Version/GameConfigLatest",
+				[webrequest](utility::string_t&& string)
+				{
+					int localversion;
+
+					try
+					{
+						localversion = GetGameConfigVersion();
+					}
+
+					catch (bool value)
+					{
+						return;
+					}
+
+					auto webversion = std::stoi(string);
+
+					if (localversion == webversion)
+					{
+						ConColorMsg
+						(
+							Color(88, 255, 39, 255),
+							"SDR Update: Using the latest game config\n"
+						);
+					}
+
+					else if (localversion < webversion)
+					{
+						ConColorMsg
+						(
+							Color(51, 167, 255, 255),
+							"SDR Update: A game config update is available: (%d -> %d), downloading\n",
+							localversion,
+							webversion
+						);
+
+						webrequest
+						(
+							L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
+							[webversion](utility::string_t&& json)
+							{
+								using Status = SDR::Shared::ScopedFile::ExceptionType;
+
+								try
+								{
+									char path[1024];
+									strcpy_s(path, SDR::GetGamePath());
+									strcat_s(path, "SDR\\GameConfig.json");
+									
+									SDR::Shared::ScopedFile file(path, "wb");
+
+									file.WriteText("%S", json.c_str());
+								}
+
+								catch (Status status)
+								{
+									Warning
+									(
+										"SDR: Could not write GameConfig.json\n"
+									);
+
+									return;
+								}
+
+								try
+								{
+									char path[1024];
+									strcpy_s(path, SDR::GetGamePath());
+									strcat_s(path, "SDR\\GameConfigLatest");
+
+									SDR::Shared::ScopedFile file(path, "wb");
+
+									file.WriteText("%d", webversion);
+								}
+
+								catch (Status status)
+								{
+									Warning
+									(
+										"SDR: Could not write GameConfigLatest\n"
+									);
+
+									return;
+								}
+							}
+						);
+					}
+
+					else if (localversion > webversion)
+					{
+						Msg
+						(
+							"SDR Update: Local game config newer than update repository?\n"
+						);
+					}
+				}
+			);
 		}
 	}
 
