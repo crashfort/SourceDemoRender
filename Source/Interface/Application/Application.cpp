@@ -419,7 +419,7 @@ namespace
 				config.Assign
 				(
 					cfgpath,
-					"r"
+					"rb"
 				);
 			}
 
