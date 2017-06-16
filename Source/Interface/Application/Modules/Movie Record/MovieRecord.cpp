@@ -199,45 +199,6 @@ namespace
 			AVFormatContext* Context = nullptr;
 		};
 
-		struct ScopedCodecContext
-		{
-			~ScopedCodecContext()
-			{
-				if (Context)
-				{
-					avcodec_free_context(&Context);
-				}
-			}
-
-			void Assign(AVCodec* codec)
-			{
-				Context = avcodec_alloc_context3(codec);
-
-				ThrowIfNull
-				(
-					Context,
-					ExceptionType::AllocCodecContext
-				);
-			}
-
-			AVCodecContext* Get() const
-			{
-				return Context;
-			}
-
-			auto operator->() const
-			{
-				return Get();
-			}
-
-			explicit operator bool() const
-			{
-				return Get() != nullptr;
-			}
-
-			AVCodecContext* Context = nullptr;
-		};
-
 		struct ScopedAVFrame
 		{
 			~ScopedAVFrame()
@@ -558,13 +519,10 @@ namespace
 			Encoder = avcodec_find_encoder_by_name(name);
 			LAV::ThrowIfNull(Encoder, LAV::ExceptionType::VideoEncoderNotFound);
 
-			CodecContext.Assign(Encoder);
-		}
-
-		void SetStream()
-		{
 			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
 			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
+
+			CodecContext = Stream->codec;
 		}
 
 		void OpenEncoder
@@ -591,7 +549,7 @@ namespace
 			(
 				avcodec_open2
 				(
-					CodecContext.Get(),
+					CodecContext,
 					Encoder,
 					options
 				)
@@ -602,7 +560,7 @@ namespace
 				avcodec_parameters_from_context
 				(
 					Stream->codecpar,
-					CodecContext.Get()
+					CodecContext
 				)
 			);
 
@@ -682,7 +640,7 @@ namespace
 
 				auto ret = avcodec_send_frame
 				(
-					CodecContext.Get(),
+					CodecContext,
 					Frame.Get()
 				);
 			}
@@ -694,7 +652,7 @@ namespace
 		{
 			auto ret = avcodec_send_frame
 			(
-				CodecContext.Get(),
+				CodecContext,
 				nullptr
 			);
 
@@ -718,7 +676,7 @@ namespace
 			{
 				status = avcodec_receive_packet
 				(
-					CodecContext.Get(),
+					CodecContext,
 					&packet
 				);
 
@@ -753,7 +711,10 @@ namespace
 
 		LAV::ScopedFormatContext FormatContext;
 		
-		LAV::ScopedCodecContext CodecContext;
+		/*
+			This gets freed when FormatContext gets destroyed
+		*/
+		AVCodecContext* CodecContext;
 		AVCodec* Encoder = nullptr;
 		AVStream* Stream = nullptr;
 		LAV::ScopedAVFrame Frame;
@@ -2996,7 +2957,6 @@ namespace
 						}
 
 						vidwriter->SetEncoder(vidconfig->EncoderName);
-						vidwriter->SetStream();
 					}
 
 					auto linktabletovariable = []
@@ -3016,7 +2976,7 @@ namespace
 						}
 					};
 
-					auto codeccontext = vidwriter->CodecContext.Get();
+					auto codeccontext = vidwriter->CodecContext;
 					codeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
 					codeccontext->width = width;
 					codeccontext->height = height;
