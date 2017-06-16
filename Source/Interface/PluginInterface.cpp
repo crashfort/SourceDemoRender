@@ -198,6 +198,32 @@ namespace
 				"SDR: Library version: %d\n",
 				SourceDemoRenderPlugin::PluginVersion
 			);
+
+			try
+			{
+				char path[1024];
+				strcpy_s(path, SDR::GetGamePath());
+				strcat(path, "SDR\\GameConfigLatest");
+
+				SDR::Shared::ScopedFile config(path, "rb");
+
+				int version;
+				config.ReadSimple(version);
+
+				Msg
+				(
+					"SDR: GameConfig version: %d\n",
+					version
+				);
+			}
+
+			catch (SDR::Shared::ScopedFile::ExceptionType status)
+			{
+				Warning
+				(
+					"SDR: Could not get GameConfig version\n"
+				);
+			}
 		}
 
 		CON_COMMAND(sdr_update, "Check for any available updates")
