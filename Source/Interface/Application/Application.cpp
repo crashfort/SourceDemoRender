@@ -429,10 +429,12 @@ namespace
 			}
 
 			auto data = config.ReadAll();
-			auto strdata = reinterpret_cast<const char*>(data.data());
+			std::string strdata((const char*)data.data(), data.size());
+
+			throw Status::CouldNotFindGame;
 
 			rapidjson::Document document;
-			document.Parse(strdata, data.size());
+			document.Parse(strdata.c_str());
 
 			GameData* currentgame = nullptr;
 
