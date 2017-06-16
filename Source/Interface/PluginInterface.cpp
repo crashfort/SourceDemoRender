@@ -407,7 +407,7 @@ namespace
 									
 									SDR::Shared::ScopedFile file(path, "wb");
 
-									file.WriteText("%s", json.c_str());
+									file.WriteText(json.c_str());
 								}
 
 								catch (Status status)
