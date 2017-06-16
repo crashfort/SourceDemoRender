@@ -306,11 +306,7 @@ namespace
 		CreateInterfaceFn gameserverfactory
 	)
 	{
-		Msg
-		(
-			"SDR: Current version: %d\n",
-			SourceDemoRenderPlugin::PluginVersion
-		);
+		Commands::sdr_version({});
 
 		try
 		{
