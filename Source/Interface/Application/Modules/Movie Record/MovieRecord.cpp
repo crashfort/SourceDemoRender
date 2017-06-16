@@ -382,6 +382,182 @@ namespace
 		};
 	}
 
+	namespace Variables
+	{
+		ConVar UseSample
+		(
+			"sdr_render_usesample", "1", FCVAR_NEVER_AS_STRING,
+			"Use frame blending",
+			true, 0, true, 1
+		);
+
+		ConVar FrameBufferSize
+		(
+			"sdr_frame_buffersize", "256", FCVAR_NEVER_AS_STRING,
+			"How many frames that are allowed to be buffered up for encoding. "
+			"This value can be lowered or increased depending your available RAM. "
+			"Keep in mind the sizes of an uncompressed RGB24 frame: \n"
+			"1280x720    : 2.7 MB\n"
+			"1920x1080   : 5.9 MB\n"
+			"Calculation : (((x * y) * 3) / 1024) / 1024"
+			"\n"
+			"Multiply the frame size with the buffer size to one that fits you.\n"
+			"*** Using too high of a buffer size might eventually crash the application "
+			"if there no longer is any available memory ***\n"
+			"\n"
+			"The frame buffer queue will only build up and fall behind when the encoding "
+			"is taking too long, consider not using too low of a preset.",
+			true, 8, true, 384
+		);
+
+		ConVar FrameRate
+		(
+			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING,
+			"Movie output framerate",
+			true, 30, false, 1000
+		);
+
+		ConVar Exposure
+		(
+			"sdr_render_exposure", "1", FCVAR_NEVER_AS_STRING,
+			"Frame exposure fraction",
+			true, 0, true, 1
+		);
+
+		ConVar SampleMultiplier
+		(
+			"sdr_render_samplemult", "20", FCVAR_NEVER_AS_STRING,
+			"Game framerate multiplier",
+			true, 2, false, 0
+		);
+
+		ConVar ShaderSamples
+		(
+			"sdr_shader_samples", "64", FCVAR_NEVER_AS_STRING,
+			"Motion blur samples",
+			true, 0, false, 0
+		);
+
+		ConVar FrameStrength
+		(
+			"sdr_render_framestrength", "1.0", FCVAR_NEVER_AS_STRING,
+			"Controls clearing of the sampling buffer upon framing. "
+			"The lower the value the more cross-frame motion blur",
+			true, 0, true, 1
+		);
+
+		ConVar SampleMethod
+		(
+			"sdr_render_samplemethod", "1", FCVAR_NEVER_AS_STRING,
+			"Selects the integral approximation method: "
+			"0: 1 point, rectangle method, 1: 2 point, trapezoidal rule",
+			true, 0, true, 1
+		);
+
+		ConVar OutputDirectory
+		(
+			"sdr_outputdir", "", 0,
+			"Where to save the output frames."
+		);
+
+		ConVar FlashWindow
+		(
+			"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING,
+			"Flash window when endmovie is called",
+			true, 0, true, 1
+		);
+
+		ConVar ExitOnFinish
+		(
+			"sdr_endmoviequit", "0", FCVAR_NEVER_AS_STRING,
+			"Quit game when endmovie is called",
+			true, 0, true, 1
+		);
+
+		namespace Audio
+		{
+			ConVar Enable
+			(
+				"sdr_audio_enable", "0", FCVAR_NEVER_AS_STRING,
+				"Process audio as well",
+				true, 0, true, 1
+			);
+		}
+
+		namespace Video
+		{
+			ConVar PixelFormat
+			(
+				"sdr_movie_encoder_pxformat", "", 0,
+				"Video pixel format"
+				"Values: Depends on encoder, view Github page"
+			);
+
+			namespace X264
+			{
+				ConVar CRF
+				(
+					"sdr_x264_crf", "0", 0,
+					"Constant rate factor value. Values: 0 (best) - 51 (worst). "
+					"See https://trac.ffmpeg.org/wiki/Encode/H.264",
+					true, 0, true, 51
+				);
+
+				ConVar Preset
+				{
+					"sdr_x264_preset", "ultrafast", 0,
+					"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
+					"Important note: Optimally, do not use a too low of a preset as the streaming "
+					"needs to be somewhat realtime.",
+					[](IConVar* var, const char* oldstr, float oldfloat)
+					{
+						auto newstr = Preset.GetString();
+
+						auto slowpresets =
+						{
+							"slow",
+							"slower",
+							"veryslow",
+							"placebo"
+						};
+
+						for (auto preset : slowpresets)
+						{
+							if (_strcmpi(newstr, preset) == 0)
+							{
+								Warning
+								(
+									"SDR: Slow encoder preset chosen, "
+									"this might not work very well for realtime\n"
+								);
+
+								return;
+							}
+						}
+					}
+				};
+
+				ConVar Tune
+				(
+					"sdr_x264_tune", "", 0,
+					"X264 encoder tune. See https://trac.ffmpeg.org/wiki/Encode/H.264"
+				);
+			}
+
+			ConVar ColorSpace
+			(
+				"sdr_movie_encoder_colorspace", "601", 0,
+				"Possible values: 601, 709"
+			);
+
+			ConVar ColorRange
+			(
+				"sdr_movie_encoder_colorrange", "partial", 0,
+				"Possible values: full, partial"
+			);
+		}
+	}
+
 	struct SDRAudioWriter
 	{
 		SDRAudioWriter()
@@ -2313,182 +2489,6 @@ namespace
 
 namespace
 {
-	namespace Variables
-	{
-		ConVar UseSample
-		(
-			"sdr_render_usesample", "1", FCVAR_NEVER_AS_STRING,
-			"Use frame blending",
-			true, 0, true, 1
-		);
-
-		ConVar FrameBufferSize
-		(
-			"sdr_frame_buffersize", "256", FCVAR_NEVER_AS_STRING,
-			"How many frames that are allowed to be buffered up for encoding. "
-			"This value can be lowered or increased depending your available RAM. "
-			"Keep in mind the sizes of an uncompressed RGB24 frame: \n"
-			"1280x720    : 2.7 MB\n"
-			"1920x1080   : 5.9 MB\n"
-			"Calculation : (((x * y) * 3) / 1024) / 1024"
-			"\n"
-			"Multiply the frame size with the buffer size to one that fits you.\n"
-			"*** Using too high of a buffer size might eventually crash the application "
-			"if there no longer is any available memory ***\n"
-			"\n"
-			"The frame buffer queue will only build up and fall behind when the encoding "
-			"is taking too long, consider not using too low of a preset.",
-			true, 8, true, 384
-		);
-
-		ConVar FrameRate
-		(
-			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING,
-			"Movie output framerate",
-			true, 30, false, 1000
-		);
-
-		ConVar Exposure
-		(
-			"sdr_render_exposure", "1", FCVAR_NEVER_AS_STRING,
-			"Frame exposure fraction",
-			true, 0, true, 1
-		);
-
-		ConVar SampleMultiplier
-		(
-			"sdr_render_samplemult", "20", FCVAR_NEVER_AS_STRING,
-			"Game framerate multiplier",
-			true, 2, false, 0
-		);
-
-		ConVar ShaderSamples
-		(
-			"sdr_shader_samples", "64", FCVAR_NEVER_AS_STRING,
-			"Motion blur samples",
-			true, 0, false, 0
-		);
-
-		ConVar FrameStrength
-		(
-			"sdr_render_framestrength", "1.0", FCVAR_NEVER_AS_STRING,
-			"Controls clearing of the sampling buffer upon framing. "
-			"The lower the value the more cross-frame motion blur",
-			true, 0, true, 1
-		);
-
-		ConVar SampleMethod
-		(
-			"sdr_render_samplemethod", "1", FCVAR_NEVER_AS_STRING,
-			"Selects the integral approximation method: "
-			"0: 1 point, rectangle method, 1: 2 point, trapezoidal rule",
-			true, 0, true, 1
-		);
-
-		ConVar OutputDirectory
-		(
-			"sdr_outputdir", "", 0,
-			"Where to save the output frames."
-		);
-
-		ConVar FlashWindow
-		(
-			"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING,
-			"Flash window when endmovie is called",
-			true, 0, true, 1
-		);
-
-		ConVar ExitOnFinish
-		(
-			"sdr_endmoviequit", "0", FCVAR_NEVER_AS_STRING,
-			"Quit game when endmovie is called",
-			true, 0, true, 1
-		);
-
-		namespace Audio
-		{
-			ConVar Enable
-			(
-				"sdr_audio_enable", "0", FCVAR_NEVER_AS_STRING,
-				"Process audio as well",
-				true, 0, true, 1
-			);
-		}
-
-		namespace Video
-		{
-			ConVar PixelFormat
-			(
-				"sdr_movie_encoder_pxformat", "", 0,
-				"Video pixel format"
-				"Values: Depends on encoder, view Github page"
-			);
-
-			namespace X264
-			{
-				ConVar CRF
-				(
-					"sdr_x264_crf", "0", 0,
-					"Constant rate factor value. Values: 0 (best) - 51 (worst). "
-					"See https://trac.ffmpeg.org/wiki/Encode/H.264",
-					true, 0, true, 51
-				);
-
-				ConVar Preset
-				{
-					"sdr_x264_preset", "ultrafast", 0,
-					"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
-					"Important note: Optimally, do not use a too low of a preset as the streaming "
-					"needs to be somewhat realtime.",
-					[](IConVar* var, const char* oldstr, float oldfloat)
-					{
-						auto newstr = Preset.GetString();
-
-						auto slowpresets =
-						{
-							"slow",
-							"slower",
-							"veryslow",
-							"placebo"
-						};
-
-						for (auto preset : slowpresets)
-						{
-							if (_strcmpi(newstr, preset) == 0)
-							{
-								Warning
-								(
-									"SDR: Slow encoder preset chosen, "
-									"this might not work very well for realtime\n"
-								);
-
-								return;
-							}
-						}
-					}
-				};
-
-				ConVar Tune
-				(
-					"sdr_x264_tune", "", 0,
-					"X264 encoder tune. See https://trac.ffmpeg.org/wiki/Encode/H.264"
-				);
-			}
-
-			ConVar ColorSpace
-			(
-				"sdr_movie_encoder_colorspace", "601", 0,
-				"Possible values: 601, 709"
-			);
-
-			ConVar ColorRange
-			(
-				"sdr_movie_encoder_colorrange", "partial", 0,
-				"Possible values: full, partial"
-			);
-		}
-	}
-
 	void FrameThreadHandler()
 	{
 		auto& interfaces = SDR::GetEngineInterfaces();
