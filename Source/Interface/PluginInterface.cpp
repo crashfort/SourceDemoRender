@@ -330,10 +330,10 @@ namespace
 						ConColorMsg
 						(
 							Color(51, 167, 255, 255),
-							"SDR: A library update is available. New version: %d, current: %d\n"
+							"SDR: A library update is available: (%d -> %d).\n"
 							"Visit https://github.com/CRASHFORT/SourceDemoRender/releases\n",
-							webversion,
-							curversion
+							curversion,
+							webversion
 						);
 					}
 
