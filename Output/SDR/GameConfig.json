@@ -19,13 +19,6 @@
 			"Module": "engine.dll",
 			"Pattern": "55 8B EC 83 EC 14 80 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 8B 01 8B 80 ?? ?? ?? ?? FF D0 88 45 FF 84 C0 74 05"
 		},
-		"ShaderDevice_ShaderDevicePtr":
-		{
-			"Comment": "0x100453F1 static CSS IDA address May 29 2017",
-			"Module": "materialsystem.dll",
-			"Pattern": "A3 ?? ?? ?? ?? 85 C0 74 8A 8B 86 ?? ?? ?? ?? 6A 00 68 ?? ?? ?? ?? FF D0 83 C4 08 A3 ?? ?? ?? ?? 85 C0 0F 84 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 89 3D ?? ?? ?? ?? 68 ?? ?? ?? ?? 8B 01 8B 00 FF D0 5F 5E 8B E5 5D C2 04 00",
-			"Offset": 1
-		},
 		"MaterialSystem_MaterialsPtr":
 		{
 			"Comment": "0x101FFFAF static CSS IDA address May 29 2017",
@@ -45,100 +38,12 @@
 			"VTPtrName": "MaterialSystem_MaterialsPtr",
 			"VTIndex": 32
 		},
-		"MaterialSystem_BeginFrame":
-		{
-			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 37
-		},
-		"MaterialSystem_EndFrame":
-		{
-			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 38
-		},
-		"MaterialSystem_ReloadMaterials":
-		{
-			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 69
-		},
-		"MaterialSystem_BeginRenderTargetAllocation":
-		{
-			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 82
-		},
-		"MaterialSystem_EndRenderTargetAllocation":
-		{
-			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 83
-		},
-		"MaterialSystem_CreateRenderTargetTexture":
-		{
-			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 84
-		},
-		"MaterialSystem_GetRenderContext":
-		{
-			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017.",
-			"VTPtrName": "MaterialSystem_MaterialsPtr",
-			"VTIndex": 98
-		},
-		"RenderContext_Release":
-		{
-			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTIndex": 1
-		},
-		"RenderContext_PushRenderTargetAndViewport1":
-		{
-			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTIndex": 105
-		},
-		"RenderContext_PopRenderTargetAndViewport":
-		{
-			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTIndex": 109
-		},
-		"RenderContext_ClearBuffers":
-		{
-			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTIndex": 71
-		},
-		"RenderContext_ClearColor4":
-		{
-			"Comment": "Static CSS IMatRenderContext vtable offset June 4 2017.",
-			"VTIndex": 73
-		},
-		"Texture_IncrementReferenceCount":
-		{
-			"Comment": "Static CSS ITexture vtable offset June 4 2017.",
-			"VTIndex": 10
-		},
-		"Texture_DecrementReferenceCount":
-		{
-			"Comment": "Static CSS ITexture vtable offset June 4 2017.",
-			"VTIndex": 11
-		},
-		"Texture_GetTextureHandle":
-		{
-			"Comment": "Static CSS ITexture vtable offset June 4 2017.",
-			"VTIndex": 45
-		},
 		"View_ViewPtr":
 		{
 			"Comment": "0x100D51D9 static CSS IDA address May 22 2017",
 			"Module": "client.dll",
 			"Pattern": "8B 0D ?? ?? ?? ?? 8B 01 FF 50 08 8B 0D ?? ?? ?? ?? 8B 01 FF 50 08 E8 ?? ?? ?? ?? 8B C8 E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 8B 01",
 			"Offset": 2
-		},
-		"View_RenderView":
-		{
-			"Comment": "Static CSS IViewRender vtable offset June 4 2017.",
-			"VTPtrName": "View_ViewPtr",
-			"VTIndex": 6
 		},
 		"View_GetViewSetup":
 		{
@@ -220,12 +125,6 @@
 
 	"hl2":
 	{
-		"Inherit": "cstrike",
-
-		"Texture_GetTextureHandle":
-		{
-			"Comment": "Static HL2 ITexture vtable offset June 4 2017.",
-			"VTIndex": 43
-		}
+		"Inherit": "cstrike"
 	}
 }
