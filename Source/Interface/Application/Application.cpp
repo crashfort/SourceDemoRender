@@ -431,8 +431,6 @@ namespace
 			auto data = config.ReadAll();
 			std::string strdata((const char*)data.data(), data.size());
 
-			throw Status::CouldNotFindGame;
-
 			rapidjson::Document document;
 			document.Parse(strdata.c_str());
 
