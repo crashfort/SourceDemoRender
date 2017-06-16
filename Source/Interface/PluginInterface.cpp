@@ -203,12 +203,15 @@ namespace
 
 		CON_COMMAND(sdr_update, "Check for any available updates")
 		{
-			Msg("SDR: Checking for any available update\n");
+			Msg
+			(
+				"SDR: Checking for any available update\n"
+			);
 
 			auto task = concurrency::create_task([]()
 			{
-				constexpr auto address = L"https://raw.githubusercontent.com/";
-				constexpr auto path = L"/crashfort/SourceDemoRender/master/Version/Latest";
+				auto address = L"https://raw.githubusercontent.com/";
+				auto path = L"/crashfort/SourceDemoRender/master/Version/Latest";
 
 				web::http::client::http_client_config config;
 				config.set_timeout(5s);
