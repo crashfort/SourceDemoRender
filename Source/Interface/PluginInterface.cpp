@@ -306,8 +306,6 @@ namespace
 		CreateInterfaceFn gameserverfactory
 	)
 	{
-		Commands::sdr_version({});
-
 		try
 		{
 			ModuleGameDir::Set();
@@ -315,6 +313,12 @@ namespace
 
 		catch (const char* name)
 		{
+			Warning
+			(
+				"SDR: Could not get game name. Version: %d\n",
+				SourceDemoRenderPlugin::PluginVersion
+			);
+
 			return false;
 		}
 
@@ -331,6 +335,8 @@ namespace
 		);
 
 		strcat_s(ModuleGameDir::FullPath, "\\");
+
+		Commands::sdr_version({});
 
 		Msg
 		(
