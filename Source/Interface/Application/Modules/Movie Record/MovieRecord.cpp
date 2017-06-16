@@ -1523,7 +1523,8 @@ namespace
 				swprintf_s
 				(
 					namebuf,
-					LR"(C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Source\cstrike\Source Demo Render Output\image_d3d11_%d.png)",
+					L"%Simage_d3d11_%d.png",
+					Variables::OutputDirectory.GetString(),
 					counter
 				);
 
