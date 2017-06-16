@@ -195,7 +195,7 @@ namespace
 		{
 			Msg
 			(
-				"SDR: Current version: %d\n",
+				"SDR: Library version: %d\n",
 				SourceDemoRenderPlugin::PluginVersion
 			);
 		}
