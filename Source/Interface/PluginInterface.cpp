@@ -436,6 +436,12 @@ namespace
 
 									return;
 								}
+
+								ConColorMsg
+								(
+									Color(51, 167, 255, 255),
+									"SDR: Game config download complete\n"
+								);
 							}
 						);
 					}
