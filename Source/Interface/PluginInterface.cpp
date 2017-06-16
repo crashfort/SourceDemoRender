@@ -186,7 +186,6 @@ namespace
 		enum
 		{
 			PluginVersion = 10,
-			GameConfigVersion = 1,
 		};
 	};
 
