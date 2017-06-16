@@ -207,8 +207,10 @@ namespace
 
 				SDR::Shared::ScopedFile config(path, "rb");
 
-				int version;
-				config.ReadSimple(version);
+				auto content = config.ReadAll();
+				std::string str((const char*)content.data(), content.size());
+
+				auto version = std::stoi(str);
 
 				Msg
 				(
