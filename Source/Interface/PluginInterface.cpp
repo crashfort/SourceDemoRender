@@ -186,8 +186,6 @@ namespace
 		enum
 		{
 			PluginVersion = 10,
-			
-			ShaderVersion = 1,
 			GameConfigVersion = 1,
 		};
 	};

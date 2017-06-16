@@ -22,24 +22,6 @@ extern "C"
 */
 #include <mmsystem.h>
 
-#include <d3d9.h>
-#include <d3d11.h>
-
-#include "materialsystem\itexture.h"
-#include "shaderapi\ishaderapi.h"
-#include "utlsymbol.h"
-
-#include "view_shared.h"
-#include "ivrenderview.h"
-#include "iviewrender.h"
-
-#define SDR_DEBUG_D3D11_IMAGE
-
-#ifdef SDR_DEBUG_D3D11_IMAGE
-#include "D3DX11.h"
-#pragma comment(lib, "D3DX11")
-#endif
-
 namespace
 {
 	namespace LAV
@@ -1040,73 +1022,10 @@ namespace
 				int& width,
 				int& height
 			);
-
-			using GetBackBufferFormat = int(__fastcall*)
-			(
-				void* thisptr,
-				void* edx
-			);
-
-			using BeginFrame = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx,
-				float frametime
-			);
-
-			using EndFrame = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx
-			);
-
-			using ReloadMaterials = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx,
-				const char* substring
-			);
-
-			using BeginRenderTargetAllocation = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx
-			);
-
-			using EndRenderTargetAllocation = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx
-			);
-
-			using CreateRenderTargetTexture = void*(__fastcall*)
-			(
-				void* thisptr,
-				void* edx,
-				int width,
-				int height,
-				int sizemode,
-				int format,
-				int depth
-			);
-
-			using GetRenderContext = void*(__fastcall*)
-			(
-				void* thisptr,
-				void* edx
-			);
 		}
 		
 		void* MaterialsPtr;
 		Types::GetBackBufferDimensions GetBackBufferDimensions;
-		Types::GetBackBufferFormat GetBackBufferFormat;
-		Types::BeginFrame BeginFrame;
-		Types::EndFrame EndFrame;
-		Types::ReloadMaterials ReloadMaterials;
-		Types::BeginRenderTargetAllocation BeginRenderTargetAllocation;
-		Types::EndRenderTargetAllocation EndRenderTargetAllocation;
-		Types::CreateRenderTargetTexture CreateRenderTargetTexture;
-		Types::GetRenderContext GetRenderContext;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -1151,24 +1070,6 @@ namespace
 					return SDR::ModuleShared::SetFromAddress
 					(
 						GetBackBufferDimensions,
-						address
-					);
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"MaterialSystem_GetBackBufferFormat",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
-				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						GetBackBufferFormat,
 						address
 					);
 				}
