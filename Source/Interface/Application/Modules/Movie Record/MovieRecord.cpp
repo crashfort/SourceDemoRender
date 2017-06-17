@@ -672,9 +672,9 @@ namespace
 			}
 		}
 
-		void SetEncoder(const char* name)
+		void SetEncoder(AVCodec* encoder)
 		{
-			Encoder = avcodec_find_encoder_by_name(name);
+			Encoder = encoder;
 			LAV::ThrowIfNull(Encoder, LAV::ExceptionType::VideoEncoderNotFound);
 
 			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
@@ -1238,8 +1238,7 @@ namespace
 
 			struct VideoConfigurationData
 			{
-				const char* EncoderName;
-				AVCodecID EncoderType;
+				AVCodec* Encoder;
 
 				std::vector<std::pair<const char*, AVPixelFormat>> PixelFormats;
 
@@ -1274,8 +1273,7 @@ namespace
 
 				videoconfigs.emplace_back();
 				auto& x264 = videoconfigs.back();				
-				x264.EncoderName = "libx264";
-				x264.EncoderType = AV_CODEC_ID_H264;
+				x264.Encoder = avcodec_find_encoder_by_name("libx264");
 				x264.PixelFormats =
 				{
 					i420,
@@ -1285,25 +1283,15 @@ namespace
 
 				videoconfigs.emplace_back();
 				auto& png = videoconfigs.back();
-				png.EncoderName = "png";
-				png.EncoderType = AV_CODEC_ID_PNG;
+				png.Encoder = avcodec_find_encoder_by_name("png");
 				png.ImageSequence = true;
 				png.SequenceExtension = "png";
-				png.PixelFormats =
-				{
-					rgb24,
-				};
 
 				videoconfigs.emplace_back();
 				auto& targa = videoconfigs.back();
-				targa.EncoderName = "targa";
-				targa.EncoderType = AV_CODEC_ID_TARGA;
+				targa.Encoder = avcodec_find_encoder_by_name("targa");
 				targa.ImageSequence = true;
 				targa.SequenceExtension = "tga";
-				targa.PixelFormats =
-				{
-					bgr24,
-				};
 			}
 
 			const VideoConfigurationData* vidconfig = nullptr;
@@ -1354,7 +1342,7 @@ namespace
 						*/
 						for (const auto& config : videoconfigs)
 						{
-							auto tester = config.EncoderName;
+							auto tester = config.Encoder->name;
 
 							if (config.ImageSequence)
 							{
@@ -1437,7 +1425,7 @@ namespace
 							audiowriter->Open(finalname, 44'100, 16, 2);
 						}
 
-						vidwriter->SetEncoder(vidconfig->EncoderName);
+						vidwriter->SetEncoder(vidconfig->Encoder);
 					}
 
 					auto linktabletovariable = []
@@ -1476,7 +1464,7 @@ namespace
 						pxformat = vidconfig->PixelFormats[0].second;
 					}
 
-					codeccontext->codec_id = vidconfig->EncoderType;
+					codeccontext->codec_id = vidconfig->Encoder->id;
 
 					if (pxformat != AV_PIX_FMT_RGB24 && pxformat != AV_PIX_FMT_BGR24)
 					{
@@ -1532,7 +1520,7 @@ namespace
 					{
 						AVDictionary** dictptr = nullptr;
 
-						if (vidconfig->EncoderType == AV_CODEC_ID_H264)
+						if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
 						{
 							auto preset = Variables::Video::X264::Preset.GetString();
 							auto tune = Variables::Video::X264::Tune.GetString();
