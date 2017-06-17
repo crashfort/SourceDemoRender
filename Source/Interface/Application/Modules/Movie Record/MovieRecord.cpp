@@ -1268,8 +1268,6 @@ namespace
 				auto i420 = std::make_pair("i420", AV_PIX_FMT_YUV420P);
 				auto i444 = std::make_pair("i444", AV_PIX_FMT_YUV444P);
 				auto nv12 = std::make_pair("nv12", AV_PIX_FMT_NV12);
-				auto rgb24 = std::make_pair("rgb24", AV_PIX_FMT_RGB24);
-				auto bgr24 = std::make_pair("bgr24", AV_PIX_FMT_BGR24);
 
 				videoconfigs.emplace_back();
 				auto& x264 = videoconfigs.back();				
