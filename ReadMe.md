@@ -22,10 +22,11 @@ The plugin can be loaded at the main menu or in demo playback, but must be befor
 ### Instructions
 **sdr_outputdir must be set before starting movie!** When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. There's no need to change host_framerate as that is done automatically. **Do not exit the game until you see a message that says the movie is completed.**
 
-For video you can output AVI or MP4, for image sequences there is PNG or TGA. The format is decided from the extension you choose in startmovie. Examples:
+Example of supported video containers and image sequence formats:
 
 * `startmovie test.avi`
 * `startmovie test.mp4`
+* `startmovie test.mkv`
 * `startmovie test.png`
 * `startmovie test.tga`
 
