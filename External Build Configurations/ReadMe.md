@@ -25,6 +25,7 @@ CC=cl ./configure \
 --enable-zlib \
 --enable-muxer=mp4 \
 --enable-muxer=avi \
+--enable-muxer=matroska \
 --enable-muxer=image2 \
 --enable-protocol=file \
 --enable-libx264 \
