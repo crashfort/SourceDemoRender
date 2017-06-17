@@ -31,16 +31,7 @@ For video you can output AVI or MP4, for image sequences there is PNG or TGA. Th
 
 Image sequences should not have a digit specifier, it is added automatically as 5 padded digits. Note that PNG may be slow, but significantly smaller size than TGA.
 
-If not specified, the default video encoder is x264. You can choose which video encoder you'd like to use as a second extension:
-
-* `startmovie test.avi.huffyuv`
-
-Above will create a huge AVI file with the huffyuv encoder.
-
-List of available video encoders:
-
-* libx264
-* huffyuv
+If not specified, the default video encoder is x264.
 
 ### General commands
 
@@ -226,10 +217,6 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 				<tr>
 					<td>x264</td>
 					<td>I420, I444, NV12</td>
-				</tr>
-				<tr>
-					<td>huffyuv</td>
-					<td>RGB24</td>
 				</tr>
 				<tr>
 					<td>png</td>
