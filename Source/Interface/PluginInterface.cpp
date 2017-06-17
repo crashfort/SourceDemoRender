@@ -397,7 +397,7 @@ namespace
 							{
 								using Status = SDR::Shared::ScopedFile::ExceptionType;
 
-								auto json = response.extract_utf8string().get();
+								auto json = response.extract_utf8string(true).get();
 
 								try
 								{
