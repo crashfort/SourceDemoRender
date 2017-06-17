@@ -1284,15 +1284,6 @@ namespace
 				};
 
 				videoconfigs.emplace_back();
-				auto& huffyuv = videoconfigs.back();
-				huffyuv.EncoderName = "huffyuv";
-				huffyuv.EncoderType = AV_CODEC_ID_HUFFYUV;
-				huffyuv.PixelFormats =
-				{
-					rgb24,
-				};
-
-				videoconfigs.emplace_back();
 				auto& png = videoconfigs.back();
 				png.EncoderName = "png";
 				png.EncoderType = AV_CODEC_ID_PNG;
