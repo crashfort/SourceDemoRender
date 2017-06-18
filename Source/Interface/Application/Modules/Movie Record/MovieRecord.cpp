@@ -340,7 +340,7 @@ namespace
 		struct Entry
 		{
 			unsigned int Calls = 0;
-			std::chrono::nanoseconds TotalTime = 0ms;
+			std::chrono::nanoseconds TotalTime = 0ns;
 		};
 
 		std::array<Entry, Types::Count> Entries;
