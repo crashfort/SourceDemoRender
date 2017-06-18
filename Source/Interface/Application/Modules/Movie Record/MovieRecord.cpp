@@ -339,7 +339,7 @@ namespace
 
 		struct Entry
 		{
-			unsigned int Calls = 0;
+			uint32_t Calls = 0;
 			std::chrono::nanoseconds TotalTime = 0ns;
 		};
 
