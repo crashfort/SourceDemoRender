@@ -29,7 +29,6 @@ namespace
 		enum class ExceptionType
 		{
 			AllocSWSContext,
-			AllocCodecContext,
 			AllocAVFrame,
 			AllocVideoStream,
 			VideoEncoderNotFound,
@@ -43,7 +42,6 @@ namespace
 			static const char* names[] =
 			{
 				"Could not allocate video conversion context",
-				"Could not allocate video codec context",
 				"Could not allocate video frame",
 				"Could not allocate video stream",
 				"Video encoder not found",
@@ -518,6 +516,13 @@ namespace
 						}
 					}
 				};
+
+				ConVar Intra
+				(
+					"sdr_x264_intra", "1", 0,
+					"Whether to produce a video of only keyframes",
+					true, 0, true, 1
+				);
 			}
 
 			ConVar ColorSpace
@@ -745,8 +750,6 @@ namespace
 
 		void SetRGB24Input(uint8_t* buffer, int width, int height)
 		{
-			Profile::ScopedEntry e1(Profile::Types::FormatConversion);
-
 			uint8_t* sourceplanes[] =
 			{
 				buffer
@@ -769,6 +772,8 @@ namespace
 
 			else
 			{
+				Profile::ScopedEntry e1(Profile::Types::FormatConversion);
+
 				sws_scale
 				(
 					FormatConverter.Get(),
@@ -1514,17 +1519,23 @@ namespace
 
 						if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
 						{
-							auto preset = Variables::Video::X264::Preset.GetString();
-							auto crf = Variables::Video::X264::CRF.GetString();
+							namespace X264 = Variables::Video::X264;
+
+							auto preset = X264::Preset.GetString();
+							auto crf = X264::CRF.GetString();
+							auto intra = X264::Intra.GetBool();
 							
 							options.Set("preset", preset);
 							options.Set("crf", crf);
 
-							/*
-								Setting every frame as a keyframe
-								gives the ability to use the video in a video editor with ease
-							*/
-							options.Set("x264-params", "keyint=1");
+							if (intra)
+							{
+								/*
+									Setting every frame as a keyframe
+									gives the ability to use the video in a video editor with ease
+								*/
+								options.Set("x264-params", "keyint=1");
+							}
 						}
 
 						vidwriter->OpenEncoder
