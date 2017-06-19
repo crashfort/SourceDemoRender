@@ -684,10 +684,21 @@ namespace
 
 		void OpenEncoder
 		(
+			int width,
+			int height,
 			int framerate,
+			AVPixelFormat pxformat,
+			AVColorSpace colorspace,
+			AVColorRange colorrange,
 			AVDictionary** options
 		)
 		{
+			CodecContext->width = width;
+			CodecContext->height = height;
+			CodecContext->pix_fmt = pxformat;
+			CodecContext->colorspace = colorspace;
+			CodecContext->color_range = colorrange;
+
 			if (FormatContext->oformat->flags & AVFMT_GLOBALHEADER)
 			{
 				CodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -1442,10 +1453,8 @@ namespace
 						}
 					};
 
-					auto codeccontext = vidwriter->CodecContext;
-					codeccontext->width = width;
-					codeccontext->height = height;
-
+					auto colorspace = AVCOL_SPC_UNSPECIFIED;
+					auto colorrange = AVCOL_RANGE_UNSPECIFIED;
 					auto pxformat = AV_PIX_FMT_NONE;
 
 					auto pxformatstr = Variables::Video::PixelFormat.GetString();
@@ -1470,8 +1479,6 @@ namespace
 							pxformat
 						);
 					}
-
-					codeccontext->pix_fmt = pxformat;
 		
 					/*
 						Not setting this will leave different colors across
@@ -1480,8 +1487,8 @@ namespace
 
 					if (pxformat == AV_PIX_FMT_RGB24 || pxformat == AV_PIX_FMT_BGR24)
 					{
-						codeccontext->color_range = AVCOL_RANGE_UNSPECIFIED;
-						codeccontext->colorspace = AVCOL_SPC_RGB;
+						colorrange = AVCOL_RANGE_UNSPECIFIED;
+						colorspace = AVCOL_SPC_RGB;
 					}
 
 					else
@@ -1495,7 +1502,7 @@ namespace
 								std::make_pair("709", AVCOL_SPC_BT709)
 							};
 
-							linktabletovariable(space, table, codeccontext->colorspace);
+							linktabletovariable(space, table, colorspace);
 						}
 
 						{
@@ -1507,7 +1514,7 @@ namespace
 								std::make_pair("partial", AVCOL_RANGE_MPEG)
 							};
 
-							linktabletovariable(range, table, codeccontext->color_range);
+							linktabletovariable(range, table, colorrange);
 						}
 					}
 
@@ -1535,9 +1542,16 @@ namespace
 							}
 						}
 
+						auto fps = Variables::FrameRate.GetInt();
+
 						vidwriter->OpenEncoder
 						(
-							Variables::FrameRate.GetInt(),
+							width,
+							height,
+							fps,
+							pxformat,
+							colorspace,
+							colorrange,
 							options.Get()
 						);
 					}
