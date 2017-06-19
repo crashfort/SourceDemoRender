@@ -518,12 +518,6 @@ namespace
 						}
 					}
 				};
-
-				ConVar Tune
-				(
-					"sdr_x264_tune", "", 0,
-					"X264 encoder tune. See https://trac.ffmpeg.org/wiki/Encode/H.264"
-				);
 			}
 
 			ConVar ColorSpace
@@ -1521,17 +1515,11 @@ namespace
 						if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
 						{
 							auto preset = Variables::Video::X264::Preset.GetString();
-							auto tune = Variables::Video::X264::Tune.GetString();
 							auto crf = Variables::Video::X264::CRF.GetString();
 
 							LAV::ScopedAVDictionary options;
+							
 							options.Set("preset", preset);
-
-							if (strlen(tune) > 0)
-							{
-								options.Set("tune", tune);
-							}
-
 							options.Set("crf", crf);
 
 							/*

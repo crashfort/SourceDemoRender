@@ -253,14 +253,6 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_x264_tune</td>
-		<td>
-			Only available for x264.
-			<br/>
-			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
-		</td>
-	</tr>
-	<tr>
 		<td>sdr_frame_buffersize</td>
 		<td>
 			How many frames that are allowed to be buffered up for encoding.
