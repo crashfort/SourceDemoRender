@@ -29,7 +29,6 @@ namespace
 		enum class ExceptionType
 		{
 			AllocSWSContext,
-			AllocCodecContext,
 			AllocAVFrame,
 			AllocVideoStream,
 			VideoEncoderNotFound,
@@ -43,7 +42,6 @@ namespace
 			static const char* names[] =
 			{
 				"Could not allocate video conversion context",
-				"Could not allocate video codec context",
 				"Could not allocate video frame",
 				"Could not allocate video stream",
 				"Video encoder not found",
