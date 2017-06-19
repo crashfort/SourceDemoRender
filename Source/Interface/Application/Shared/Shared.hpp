@@ -101,7 +101,7 @@ namespace SDR::Shared
 
 		size_t WriteRegion
 		(
-			void* start,
+			const void* start,
 			size_t size,
 			int count = 1
 		)

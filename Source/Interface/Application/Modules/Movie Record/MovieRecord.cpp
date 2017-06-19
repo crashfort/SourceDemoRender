@@ -630,7 +630,7 @@ namespace
 			auto buffer = samples.data();
 			auto length = samples.size();
 
-			fwrite(buffer, length, 1, WaveFile.Get());
+			WaveFile.WriteRegion(buffer, length);
 
 			DataLength += length;
 			FileLength += DataLength;
