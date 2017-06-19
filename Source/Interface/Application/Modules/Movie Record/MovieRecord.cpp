@@ -516,6 +516,13 @@ namespace
 						}
 					}
 				};
+
+				ConVar Intra
+				(
+					"sdr_x264_intra", "1", 0,
+					"Whether to produce a video of only keyframes",
+					true, 0, true, 1
+				);
 			}
 
 			ConVar ColorSpace
@@ -1512,17 +1519,23 @@ namespace
 
 						if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
 						{
-							auto preset = Variables::Video::X264::Preset.GetString();
-							auto crf = Variables::Video::X264::CRF.GetString();
+							namespace X264 = Variables::Video::X264;
+
+							auto preset = X264::Preset.GetString();
+							auto crf = X264::CRF.GetString();
+							auto intra = X264::Intra.GetBool();
 							
 							options.Set("preset", preset);
 							options.Set("crf", crf);
 
-							/*
-								Setting every frame as a keyframe
-								gives the ability to use the video in a video editor with ease
-							*/
-							options.Set("x264-params", "keyint=1");
+							if (intra)
+							{
+								/*
+									Setting every frame as a keyframe
+									gives the ability to use the video in a video editor with ease
+								*/
+								options.Set("x264-params", "keyint=1");
+							}
 						}
 
 						vidwriter->OpenEncoder
