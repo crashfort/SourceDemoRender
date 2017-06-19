@@ -1443,7 +1443,6 @@ namespace
 					};
 
 					auto codeccontext = vidwriter->CodecContext;
-					codeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
 					codeccontext->width = width;
 					codeccontext->height = height;
 
@@ -1460,8 +1459,6 @@ namespace
 					{
 						pxformat = vidconfig->PixelFormats[0].second;
 					}
-
-					codeccontext->codec_id = vidconfig->Encoder->id;
 
 					if (pxformat != AV_PIX_FMT_RGB24 && pxformat != AV_PIX_FMT_BGR24)
 					{
