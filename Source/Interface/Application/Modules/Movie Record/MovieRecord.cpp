@@ -748,7 +748,7 @@ namespace
 			);
 		}
 
-		void SetRGB24Input(uint8_t* buffer, int width, int height)
+		void SetRGB24Input(uint8_t* buffer)
 		{
 			uint8_t* sourceplanes[] =
 			{
@@ -760,7 +760,7 @@ namespace
 			*/
 			int sourcestrides[] =
 			{
-				width * 3
+				CodecContext->width * 3
 			};
 
 			if (CodecContext->pix_fmt == AV_PIX_FMT_RGB24 ||
@@ -780,7 +780,7 @@ namespace
 					sourceplanes,
 					sourcestrides,
 					0,
-					height,
+					CodecContext->height,
 					Frame->data,
 					Frame->linesize
 				);
@@ -918,7 +918,7 @@ namespace
 				write them out in another thread.
 			*/
 
-			Video->SetRGB24Input(data, Width, Height);
+			Video->SetRGB24Input(data);
 			Video->SendRawFrame();
 		}
 
