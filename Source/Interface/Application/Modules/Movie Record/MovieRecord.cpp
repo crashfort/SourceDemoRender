@@ -743,8 +743,6 @@ namespace
 
 		void SetRGB24Input(uint8_t* buffer, int width, int height)
 		{
-			Profile::ScopedEntry e1(Profile::Types::FormatConversion);
-
 			uint8_t* sourceplanes[] =
 			{
 				buffer
@@ -767,6 +765,8 @@ namespace
 
 			else
 			{
+				Profile::ScopedEntry e1(Profile::Types::FormatConversion);
+
 				sws_scale
 				(
 					FormatConverter.Get(),
