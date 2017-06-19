@@ -236,7 +236,7 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 	<tr>
 		<td>sdr_x264_crf</td>
 		<td>
-			Constant rate factor quality value. Only available for x264.
+			Constant rate factor quality value. Note that using 0 (lossless) can produce a video with a 4:4:4 profile which your media player might not support. Only available for x264.
 			<br/><br/>
             <b>Values:</b> 0 to 51 <br/>
             <b>Default:</b> 0 <br/>
@@ -253,11 +253,12 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_x264_tune</td>
+		<td>sdr_x264_intra</td>
 		<td>
-			Only available for x264.
-			<br/>
-			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
+			Whether to produce a video of only keyframes. Only available for x264.
+			<br/><br/>
+            <b>Values:</b> 0 or 1 <br/>
+            <b>Default:</b> 1 <br/>
 		</td>
 	</tr>
 	<tr>
