@@ -1520,6 +1520,7 @@ namespace
 
 					{
 						LAV::ScopedAVDictionary options;
+						AVDictionary** dictptr = nullptr;
 
 						if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
 						{
@@ -1540,6 +1541,8 @@ namespace
 								*/
 								options.Set("x264-params", "keyint=1");
 							}
+
+							dictptr = options.Get();
 						}
 
 						auto fps = Variables::FrameRate.GetInt();
@@ -1552,7 +1555,7 @@ namespace
 							pxformat,
 							colorspace,
 							colorrange,
-							options.Get()
+							dictptr
 						);
 					}
 
