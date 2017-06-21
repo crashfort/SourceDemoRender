@@ -1118,8 +1118,6 @@ namespace
 
 				if (movie.Sampler)
 				{
-					Profile::ScopedEntry e1(Profile::Types::Sample);
-
 					if (movie.Sampler->CanSkipConstant(time, sampleframerate))
 					{
 						movie.Sampler->Sample(nullptr, time);
@@ -1127,6 +1125,8 @@ namespace
 
 					else
 					{
+						Profile::ScopedEntry e1(Profile::Types::Sample);
+
 						auto data = videosample.Data.data();
 						movie.Sampler->Sample(data, time);
 					}
