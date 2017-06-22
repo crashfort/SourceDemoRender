@@ -630,7 +630,7 @@ namespace
 			auto buffer = samples.data();
 			auto length = samples.size();
 
-			fwrite(buffer, length, 1, WaveFile.Get());
+			WaveFile.WriteRegion(buffer, length);
 
 			DataLength += length;
 			FileLength += DataLength;
@@ -684,10 +684,21 @@ namespace
 
 		void OpenEncoder
 		(
+			int width,
+			int height,
 			int framerate,
+			AVPixelFormat pxformat,
+			AVColorSpace colorspace,
+			AVColorRange colorrange,
 			AVDictionary** options
 		)
 		{
+			CodecContext->width = width;
+			CodecContext->height = height;
+			CodecContext->pix_fmt = pxformat;
+			CodecContext->colorspace = colorspace;
+			CodecContext->color_range = colorrange;
+
 			if (FormatContext->oformat->flags & AVFMT_GLOBALHEADER)
 			{
 				CodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -748,7 +759,7 @@ namespace
 			);
 		}
 
-		void SetRGB24Input(uint8_t* buffer, int width, int height)
+		void SetRGB24Input(uint8_t* buffer)
 		{
 			uint8_t* sourceplanes[] =
 			{
@@ -760,7 +771,7 @@ namespace
 			*/
 			int sourcestrides[] =
 			{
-				width * 3
+				CodecContext->width * 3
 			};
 
 			if (CodecContext->pix_fmt == AV_PIX_FMT_RGB24 ||
@@ -780,7 +791,7 @@ namespace
 					sourceplanes,
 					sourcestrides,
 					0,
-					height,
+					CodecContext->height,
 					Frame->data,
 					Frame->linesize
 				);
@@ -918,7 +929,7 @@ namespace
 				write them out in another thread.
 			*/
 
-			Video->SetRGB24Input(data, Width, Height);
+			Video->SetRGB24Input(data);
 			Video->SendRawFrame();
 		}
 
@@ -1107,8 +1118,6 @@ namespace
 
 				if (movie.Sampler)
 				{
-					Profile::ScopedEntry e1(Profile::Types::Sample);
-
 					if (movie.Sampler->CanSkipConstant(time, sampleframerate))
 					{
 						movie.Sampler->Sample(nullptr, time);
@@ -1116,6 +1125,8 @@ namespace
 
 					else
 					{
+						Profile::ScopedEntry e1(Profile::Types::Sample);
+
 						auto data = videosample.Data.data();
 						movie.Sampler->Sample(data, time);
 					}
@@ -1442,11 +1453,8 @@ namespace
 						}
 					};
 
-					auto codeccontext = vidwriter->CodecContext;
-					codeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
-					codeccontext->width = width;
-					codeccontext->height = height;
-
+					auto colorspace = AVCOL_SPC_UNSPECIFIED;
+					auto colorrange = AVCOL_RANGE_UNSPECIFIED;
 					auto pxformat = AV_PIX_FMT_NONE;
 
 					auto pxformatstr = Variables::Video::PixelFormat.GetString();
@@ -1461,8 +1469,6 @@ namespace
 						pxformat = vidconfig->PixelFormats[0].second;
 					}
 
-					codeccontext->codec_id = vidconfig->Encoder->id;
-
 					if (pxformat != AV_PIX_FMT_RGB24 && pxformat != AV_PIX_FMT_BGR24)
 					{
 						vidwriter->FormatConverter.Assign
@@ -1473,8 +1479,6 @@ namespace
 							pxformat
 						);
 					}
-
-					codeccontext->pix_fmt = pxformat;
 		
 					/*
 						Not setting this will leave different colors across
@@ -1483,8 +1487,8 @@ namespace
 
 					if (pxformat == AV_PIX_FMT_RGB24 || pxformat == AV_PIX_FMT_BGR24)
 					{
-						codeccontext->color_range = AVCOL_RANGE_UNSPECIFIED;
-						codeccontext->colorspace = AVCOL_SPC_RGB;
+						colorrange = AVCOL_RANGE_UNSPECIFIED;
+						colorspace = AVCOL_SPC_RGB;
 					}
 
 					else
@@ -1498,7 +1502,7 @@ namespace
 								std::make_pair("709", AVCOL_SPC_BT709)
 							};
 
-							linktabletovariable(space, table, codeccontext->colorspace);
+							linktabletovariable(space, table, colorspace);
 						}
 
 						{
@@ -1510,12 +1514,13 @@ namespace
 								std::make_pair("partial", AVCOL_RANGE_MPEG)
 							};
 
-							linktabletovariable(range, table, codeccontext->color_range);
+							linktabletovariable(range, table, colorrange);
 						}
 					}
 
 					{
 						LAV::ScopedAVDictionary options;
+						AVDictionary** dictptr = nullptr;
 
 						if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
 						{
@@ -1536,12 +1541,21 @@ namespace
 								*/
 								options.Set("x264-params", "keyint=1");
 							}
+
+							dictptr = options.Get();
 						}
+
+						auto fps = Variables::FrameRate.GetInt();
 
 						vidwriter->OpenEncoder
 						(
-							Variables::FrameRate.GetInt(),
-							options.Get()
+							width,
+							height,
+							fps,
+							pxformat,
+							colorspace,
+							colorrange,
+							dictptr
 						);
 					}
 
@@ -1927,65 +1941,73 @@ namespace
 
 			auto& movie = CurrentMovie;
 
+			auto spsvar = static_cast<double>(movie.SamplesPerSecond);
+			auto sampleframerate = 1.0 / spsvar;
 			auto& time = movie.CurrentTime;
+
+			auto skip = movie.Sampler->CanSkipConstant(time, sampleframerate);
 
 			MovieData::VideoFutureSampleData newsample;
 			newsample.Time = time;
-			newsample.Data.resize(movie.GetRGB24ImageSize());
 
-			auto pxformat = IMAGE_FORMAT_RGB888;
-
-			if (movie.Video->CodecContext->pix_fmt == AV_PIX_FMT_BGR24)
+			if (!skip)
 			{
-				pxformat = IMAGE_FORMAT_BGR888;
-			}
+				auto pxformat = IMAGE_FORMAT_RGB888;
 
-			/*
-				This has been reverted to again,
-				in newer games like TF2 the materials are handled much differently
-				but this endpoint function remains the same. Less elegant but what you gonna do.
-			*/
-			{
-				Profile::ScopedEntry e1(Profile::Types::ReadScreenPixels);
-
-				ModuleVideoMode::ReadScreenPixels
-				(
-					thisptr,
-					edx,
-					0,
-					0,
-					width,
-					height,
-					newsample.Data.data(),
-					pxformat
-				);
-			}
-
-			auto buffersize = Variables::FrameBufferSize.GetInt();
-
-			/*
-				Encoder is falling behind, too much input with too little output
-			*/
-			if (movie.BufferedFrames > buffersize)
-			{
-				Profile::ScopedEntry e1(Profile::Types::TooManyFrames);
-
-				Warning
-				(
-					"SDR: Too many buffered frames, waiting for encoder\n"
-				);
-
-				while (movie.BufferedFrames > 1)
+				if (movie.Video->CodecContext->pix_fmt == AV_PIX_FMT_BGR24)
 				{
-					std::this_thread::sleep_for(1ms);
+					pxformat = IMAGE_FORMAT_BGR888;
 				}
 
-				Warning
-				(
-					"SDR: Encoder caught up, consider using faster encoding settings or "
-					"increasing sdr_frame_buffersize.\n"
-					R"(Type "help sdr_frame_buffersize" for more information.)" "\n"
-				);
+				newsample.Data.resize(movie.GetRGB24ImageSize());
+
+				/*
+					This has been reverted to again,
+					in newer games like TF2 the materials are handled much differently
+					but this endpoint function remains the same. Less elegant but what you gonna do.
+				*/
+				{
+					Profile::ScopedEntry e1(Profile::Types::ReadScreenPixels);
+
+					ModuleVideoMode::ReadScreenPixels
+					(
+						thisptr,
+						edx,
+						0,
+						0,
+						width,
+						height,
+						newsample.Data.data(),
+						pxformat
+					);
+				}
+
+				auto buffersize = Variables::FrameBufferSize.GetInt();
+
+				/*
+					Encoder is falling behind, too much input with too little output
+				*/
+				if (movie.BufferedFrames > buffersize)
+				{
+					Profile::ScopedEntry e1(Profile::Types::TooManyFrames);
+
+					Warning
+					(
+						"SDR: Too many buffered frames, waiting for encoder\n"
+					);
+
+					while (movie.BufferedFrames > 1)
+					{
+						std::this_thread::sleep_for(1ms);
+					}
+
+					Warning
+					(
+						"SDR: Encoder caught up, consider using faster encoding settings or "
+						"increasing sdr_frame_buffersize.\n"
+						R"(Type "help sdr_frame_buffersize" for more information.)" "\n"
+					);
+				}
 			}
 
 			movie.BufferedFrames++;
@@ -1993,9 +2015,6 @@ namespace
 
 			if (movie.Sampler)
 			{
-				auto spsvar = static_cast<double>(movie.SamplesPerSecond);
-				auto sampleframerate = 1.0 / spsvar;
-
 				time += sampleframerate;
 			}
 		}
