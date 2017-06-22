@@ -1941,65 +1941,73 @@ namespace
 
 			auto& movie = CurrentMovie;
 
+			auto spsvar = static_cast<double>(movie.SamplesPerSecond);
+			auto sampleframerate = 1.0 / spsvar;
 			auto& time = movie.CurrentTime;
+
+			auto skip = movie.Sampler->CanSkipConstant(time, sampleframerate);
 
 			MovieData::VideoFutureSampleData newsample;
 			newsample.Time = time;
-			newsample.Data.resize(movie.GetRGB24ImageSize());
 
-			auto pxformat = IMAGE_FORMAT_RGB888;
-
-			if (movie.Video->CodecContext->pix_fmt == AV_PIX_FMT_BGR24)
+			if (!skip)
 			{
-				pxformat = IMAGE_FORMAT_BGR888;
-			}
+				auto pxformat = IMAGE_FORMAT_RGB888;
 
-			/*
-				This has been reverted to again,
-				in newer games like TF2 the materials are handled much differently
-				but this endpoint function remains the same. Less elegant but what you gonna do.
-			*/
-			{
-				Profile::ScopedEntry e1(Profile::Types::ReadScreenPixels);
-
-				ModuleVideoMode::ReadScreenPixels
-				(
-					thisptr,
-					edx,
-					0,
-					0,
-					width,
-					height,
-					newsample.Data.data(),
-					pxformat
-				);
-			}
-
-			auto buffersize = Variables::FrameBufferSize.GetInt();
-
-			/*
-				Encoder is falling behind, too much input with too little output
-			*/
-			if (movie.BufferedFrames > buffersize)
-			{
-				Profile::ScopedEntry e1(Profile::Types::TooManyFrames);
-
-				Warning
-				(
-					"SDR: Too many buffered frames, waiting for encoder\n"
-				);
-
-				while (movie.BufferedFrames > 1)
+				if (movie.Video->CodecContext->pix_fmt == AV_PIX_FMT_BGR24)
 				{
-					std::this_thread::sleep_for(1ms);
+					pxformat = IMAGE_FORMAT_BGR888;
 				}
 
-				Warning
-				(
-					"SDR: Encoder caught up, consider using faster encoding settings or "
-					"increasing sdr_frame_buffersize.\n"
-					R"(Type "help sdr_frame_buffersize" for more information.)" "\n"
-				);
+				newsample.Data.resize(movie.GetRGB24ImageSize());
+
+				/*
+					This has been reverted to again,
+					in newer games like TF2 the materials are handled much differently
+					but this endpoint function remains the same. Less elegant but what you gonna do.
+				*/
+				{
+					Profile::ScopedEntry e1(Profile::Types::ReadScreenPixels);
+
+					ModuleVideoMode::ReadScreenPixels
+					(
+						thisptr,
+						edx,
+						0,
+						0,
+						width,
+						height,
+						newsample.Data.data(),
+						pxformat
+					);
+				}
+
+				auto buffersize = Variables::FrameBufferSize.GetInt();
+
+				/*
+					Encoder is falling behind, too much input with too little output
+				*/
+				if (movie.BufferedFrames > buffersize)
+				{
+					Profile::ScopedEntry e1(Profile::Types::TooManyFrames);
+
+					Warning
+					(
+						"SDR: Too many buffered frames, waiting for encoder\n"
+					);
+
+					while (movie.BufferedFrames > 1)
+					{
+						std::this_thread::sleep_for(1ms);
+					}
+
+					Warning
+					(
+						"SDR: Encoder caught up, consider using faster encoding settings or "
+						"increasing sdr_frame_buffersize.\n"
+						R"(Type "help sdr_frame_buffersize" for more information.)" "\n"
+					);
+				}
 			}
 
 			movie.BufferedFrames++;
@@ -2007,9 +2015,6 @@ namespace
 
 			if (movie.Sampler)
 			{
-				auto spsvar = static_cast<double>(movie.SamplesPerSecond);
-				auto sampleframerate = 1.0 / spsvar;
-
 				time += sampleframerate;
 			}
 		}
