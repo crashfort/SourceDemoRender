@@ -8,4 +8,3 @@ This program uses the following open source libraries:
 * https://github.com/TsudaKageyu/minhook
 * https://github.com/Microsoft/cpprestsdk
 * https://github.com/cameron314/readerwriterqueue
-* https://github.com/ripieces/advancedfx
