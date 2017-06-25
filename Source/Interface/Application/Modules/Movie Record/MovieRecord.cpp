@@ -461,18 +461,6 @@ namespace
 					true, 0, true, 1
 				);
 			}
-
-			ConVar ColorSpace
-			(
-				"sdr_movie_encoder_colorspace", "601", 0,
-				"Possible values: 601, 709"
-			);
-
-			ConVar ColorRange
-			(
-				"sdr_movie_encoder_colorrange", "partial", 0,
-				"Possible values: full, partial"
-			);
 		}
 	}
 
@@ -1752,8 +1740,8 @@ namespace
 			}
 
 			const VideoConfigurationData* vidconfig = nullptr;
-			auto colorspace = AVCOL_SPC_UNSPECIFIED;
-			auto colorrange = AVCOL_RANGE_UNSPECIFIED;
+			auto colorspace = AVCOL_SPC_BT470BG;
+			auto colorrange = AVCOL_RANGE_MPEG;
 			auto pxformat = AV_PIX_FMT_NONE;
 				
 			movie.Width = width;
@@ -1920,33 +1908,6 @@ namespace
 						{
 							colorrange = AVCOL_RANGE_UNSPECIFIED;
 							colorspace = AVCOL_SPC_RGB;
-						}
-
-						else
-						{
-							{
-								auto space = Variables::Video::ColorSpace.GetString();
-
-								auto table =
-								{
-									std::make_pair("601", AVCOL_SPC_BT470BG),
-									std::make_pair("709", AVCOL_SPC_BT709)
-								};
-
-								linktabletovariable(space, table, colorspace);
-							}
-
-							{
-								auto range = Variables::Video::ColorRange.GetString();
-
-								auto table =
-								{
-									std::make_pair("full", AVCOL_RANGE_JPEG),
-									std::make_pair("partial", AVCOL_RANGE_MPEG)
-								};
-
-								linktabletovariable(range, table, colorrange);
-							}
 						}
 
 						vidwriter->Frame.Assign
