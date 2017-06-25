@@ -22,7 +22,7 @@ CC=cl ./configure \
 --disable-sdl2 \
 --disable-securetransport \
 --disable-xlib \
---enable-zlib \
+--disable-zlib \
 --enable-muxer=mp4 \
 --enable-muxer=avi \
 --enable-muxer=matroska \
@@ -47,15 +47,6 @@ CC=cl ./configure \
 --enable-strip \
 --disable-opencl \
 
-```
-
-## zlib-1.2.11
-```
-CC=cl ./configure \
---prefix=$HOME/ffmpegbuild \
---static \
-
-With zlib special changes from https://www.ffmpeg.org/platform.html#Microsoft-Visual-C_002b_002b-or-Intel-C_002b_002b-Compiler-for-Windows
 ```
 
 ## cpprestsdk
