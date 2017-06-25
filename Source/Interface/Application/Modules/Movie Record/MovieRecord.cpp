@@ -1717,8 +1717,6 @@ namespace
 			{
 				auto i420 = std::make_pair("i420", AV_PIX_FMT_YUV420P);
 				auto i444 = std::make_pair("i444", AV_PIX_FMT_YUV444P);
-				auto rgba = std::make_pair("rgba", AV_PIX_FMT_RGBA);
-				auto bgra = std::make_pair("bgra", AV_PIX_FMT_BGRA);
 				auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
 
 				videoconfigs.emplace_back();
