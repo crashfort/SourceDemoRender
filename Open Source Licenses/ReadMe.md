@@ -7,4 +7,3 @@ This program uses the following open source libraries:
 * http://www.zlib.net/
 * https://github.com/TsudaKageyu/minhook
 * https://github.com/Microsoft/cpprestsdk
-* https://github.com/cameron314/readerwriterqueue
