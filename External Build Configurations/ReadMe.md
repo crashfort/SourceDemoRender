@@ -29,6 +29,7 @@ CC=cl ./configure \
 --enable-protocol=file \
 --enable-libx264 \
 --enable-encoder=libx264 \
+--enable-encoder=libx264rgb \
 --enable-parser=png \
 --extra-ldflags="-LIBPATH:$HOME/ffmpegbuild/lib" \
 --extra-cflags="-I$HOME/ffmpegbuild/include" \
