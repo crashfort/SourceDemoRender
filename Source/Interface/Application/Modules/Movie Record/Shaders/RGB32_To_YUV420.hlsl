@@ -31,9 +31,39 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 		/*
 			Average the 4 pixel values for better results
 		*/
-		float4 topright = RGB32Texture.Load(dtid, int2(1, 0));
-		float4 botleft = RGB32Texture.Load(dtid, int2(0, 1));
-		float4 botright = RGB32Texture.Load(dtid, int2(1, 1));
+		float4 topright;
+		float4 botleft;
+		float4 botright;
+
+		if (pos.x + 1 < width)
+		{
+			topright = RGB32Texture.Load(dtid, int2(1, 0));
+		}
+
+		else
+		{
+			topright = pix;
+		}
+
+		if (pos.y + 1 < height)
+		{
+			botleft = RGB32Texture.Load(dtid, int2(0, 1));
+		}
+
+		else 
+		{
+			botleft = pix;
+		}
+
+		if (pos.x + 1 < width && pos.y + 1 < height)
+		{
+			botright = RGB32Texture.Load(dtid, int2(1, 1));
+		}
+
+		else 
+		{
+			botright = pix;
+		}
 
 		pix = (pix + topright + botleft + botright) / 4.0;
 
