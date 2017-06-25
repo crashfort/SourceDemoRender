@@ -6,4 +6,8 @@ RWBuffer<uint> ChannelV : register(u2);
 cbuffer InputData : register(b0)
 {
 	int3 Strides;
+	int3 Room;
+	float3 CoeffsR;
+	float3 CoeffsG;
+	float3 CoeffsB;
 };
