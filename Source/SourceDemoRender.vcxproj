@@ -302,6 +302,9 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
     </FxCompile>
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
