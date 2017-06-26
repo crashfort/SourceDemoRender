@@ -968,7 +968,7 @@ namespace
 
 		struct DirectX9Data
 		{
-			struct RenderTarget
+			struct SharedSurfaceData
 			{
 				void Create(IDirect3DDevice9* device, int width, int height)
 				{
@@ -990,7 +990,7 @@ namespace
 				Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 			};
 
-			RenderTarget SharedRT;
+			SharedSurfaceData SharedSurface;
 		} DirectX9;
 
 		struct DirectX11Data
@@ -1512,7 +1512,7 @@ namespace
 			(
 				surface.Get(),
 				nullptr,
-				dx9.SharedRT.Surface.Get(),
+				dx9.SharedSurface.Surface.Get(),
 				nullptr,
 				D3DTEXF_NONE
 			);
@@ -2014,7 +2014,7 @@ namespace
 							auto& dx9 = movie.DirectX9;
 							auto& dx11 = movie.DirectX11;
 
-							dx9.SharedRT.Create
+							dx9.SharedSurface.Create
 							(
 								ModuleSourceGlobals::DX9Device,
 								width,
@@ -2023,7 +2023,7 @@ namespace
 
 							dx11.Create
 							(
-								movie.DirectX9.SharedRT.SharedHandle,
+								movie.DirectX9.SharedSurface.SharedHandle,
 								vidwriter->Frame.Get()
 							);
 
