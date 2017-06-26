@@ -6,6 +6,7 @@
 extern "C"
 {
 	#include "libavutil\avutil.h"
+	#include "libavutil\imgutils.h"
 	#include "libavcodec\avcodec.h"
 	#include "libavformat\avformat.h"
 	#include "libswscale\swscale.h"
@@ -1214,6 +1215,8 @@ namespace
 					ConversionRuleData(AV_PIX_FMT_BGR0, "BGRA_PackRemoveAlpha", false),
 				};
 
+				bool found = false;
+
 				for (auto&& entry : table)
 				{
 					if (entry.Format == baseyuv->format)
@@ -1227,8 +1230,20 @@ namespace
 							ComputeShader.GetAddressOf()
 						);
 
+						found = true;
 						break;
 					}
+				}
+
+				if (!found)
+				{
+					Warning
+					(
+						"SDR: No conversion rule found for %s\n",
+						av_get_pix_fmt_name((AVPixelFormat)baseyuv->format)
+					);
+
+					throw false;
 				}
 
 				if (ConversionRule.IsYUV)
@@ -2035,6 +2050,11 @@ namespace
 						}
 
 						catch (HRESULT status)
+						{
+							return;
+						}
+
+						catch (bool value)
 						{
 							return;
 						}
