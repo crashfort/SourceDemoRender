@@ -3,7 +3,7 @@
 */
 
 Texture2D<float4> RGB32Texture : register(t0);
-RWStructuredBuffer<uint> OutTexture : register(u0);
+RWBuffer<uint> OutTexture : register(u0);
 
 [numthreads(8, 8, 1)]
 void CSMain(uint3 dtid : SV_DispatchThreadID)
