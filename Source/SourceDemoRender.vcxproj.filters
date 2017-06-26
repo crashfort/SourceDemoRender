@@ -100,6 +100,8 @@
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\RGB32_To_YUV420.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\RGB32_To_YUV444.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\BGRA_PackRemoveAlpha.hlsl" />
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl" />
   </ItemGroup>
 </Project>
