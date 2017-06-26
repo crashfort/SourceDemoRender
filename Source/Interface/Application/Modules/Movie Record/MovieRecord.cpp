@@ -729,7 +729,7 @@ namespace
 			);
 		}
 
-		void SetFrameInput(std::array<std::vector<uint8_t>, 3>& planes)
+		void SetFrameInput(MovieData::VideoFutureData::PlaneType& planes)
 		{
 			int index = 0;
 
@@ -981,8 +981,15 @@ namespace
 
 		struct VideoFutureData
 		{
+			enum
+			{
+				PlaneCount = 3
+			};
+
+			using PlaneType = std::array<std::vector<uint8_t>, PlaneCount>;
+
 			VideoStreamBase* Stream;
-			std::array<std::vector<uint8_t>, 3> Planes;
+			PlaneType Planes;
 		};
 
 		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureData>;
@@ -2150,7 +2157,6 @@ namespace
 				}
 
 				movie.VideoStreams = std::move(tempstreams);
-
 				movie.Audio = std::move(tempaudio);
 			}
 					
