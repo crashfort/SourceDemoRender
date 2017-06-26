@@ -1062,14 +1062,9 @@ namespace
 				virtual void Create(ID3D11Device* device, AVFrame* reference) override
 				{
 					auto size = reference->buf[0]->size;
+					auto count = size / sizeof(uint32_t);
 
-					Buffer.Create
-					(
-						device,
-						DXGI_FORMAT_R32_UINT,
-						size,
-						size / sizeof(uint32_t)
-					);
+					Buffer.Create(device, DXGI_FORMAT_R32_UINT, size, count);
 				}
 
 				virtual void ShadowBind(ID3D11DeviceContext* context) override
