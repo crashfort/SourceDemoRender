@@ -107,9 +107,6 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	</tbody>
 </table>
 
-
-More details about sampling can be [read here](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3ASampling-System).
-
 ### Audio variables
 
 <table>
