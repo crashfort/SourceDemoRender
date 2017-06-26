@@ -21,6 +21,8 @@ extern "C"
 #include <d3d9.h>
 #include <d3d11.h>
 
+#include "readerwriterqueue.h"
+
 namespace
 {
 	namespace LAV
@@ -936,6 +938,25 @@ namespace
 		std::unique_ptr<SDRVideoWriter> Video;
 		std::unique_ptr<SDRAudioWriter> Audio;
 
+		struct YUVFutureData
+		{
+			std::vector<uint8_t> Y;
+			std::vector<uint8_t> U;
+			std::vector<uint8_t> V;
+		};
+
+		struct RGBFutureData
+		{
+			std::vector<uint8_t> RGB;
+		};
+
+		using YUVQueueType = moodycamel::ReaderWriterQueue<YUVFutureData>;
+		using RGBQueueType = moodycamel::ReaderWriterQueue<RGBFutureData>;
+
+		std::thread FrameBufferThreadHandle;
+		std::unique_ptr<YUVQueueType> YUVQueue;
+		std::unique_ptr<RGBQueueType> RGBQueue;
+
 		struct DirectX9Data
 		{
 			struct RenderTarget
@@ -1313,6 +1334,8 @@ namespace
 	};
 
 	MovieData CurrentMovie;
+	std::atomic_int32_t BufferedFrames;
+	std::atomic_bool ShouldStopFrameThread;
 
 	void SDR_MovieShutdown()
 	{
@@ -1324,6 +1347,12 @@ namespace
 			return;
 		}
 
+		if (!ShouldStopFrameThread)
+		{
+			ShouldStopFrameThread = true;
+			movie.FrameBufferThreadHandle.join();
+		}
+
 		movie = MovieData();
 	}
 
@@ -1332,6 +1361,41 @@ namespace
 		this handles the plugin_unload
 	*/
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
+
+	void FrameBufferThread()
+	{
+		auto& movie = CurrentMovie;
+		auto yuv = movie.DirectX11.ConversionRule.IsYUV;
+
+		while (!ShouldStopFrameThread)
+		{
+			if (yuv)
+			{
+				MovieData::YUVFutureData item;
+
+				while (movie.YUVQueue->try_dequeue(item))
+				{
+					--BufferedFrames;
+
+					movie.Video->SetYUVInput(item.Y.data(), item.U.data(), item.V.data());
+					movie.Video->SendRawFrame();
+				}
+			}
+
+			else
+			{
+				MovieData::RGBFutureData item;
+
+				while (movie.RGBQueue->try_dequeue(item))
+				{
+					--BufferedFrames;
+
+					movie.Video->SetRGBInput(item.RGB.data());
+					movie.Video->SendRawFrame();
+				}
+			}
+		}
+	}
 }
 
 namespace
@@ -1532,14 +1596,17 @@ namespace
 
 					if (pass)
 					{
-						movie.Video->SetYUVInput
-						(
-							(uint8_t*)mappedy.pData,
-							(uint8_t*)mappedu.pData,
-							(uint8_t*)mappedv.pData
-						);
+						auto ptry = (uint8_t*)mappedy.pData;
+						auto ptru = (uint8_t*)mappedu.pData;
+						auto ptrv = (uint8_t*)mappedv.pData;
 
-						movie.Video->SendRawFrame();
+						MovieData::YUVFutureData item;						
+						item.Y.assign(ptry, ptry + mappedy.RowPitch);
+						item.U.assign(ptru, ptru + mappedu.RowPitch);
+						item.V.assign(ptrv, ptrv + mappedv.RowPitch);
+
+						++BufferedFrames;
+						movie.YUVQueue->enqueue(std::move(item));
 					}
 
 					dx11.YUVBuffer.Y.UnMap(context.Get());
@@ -1570,8 +1637,13 @@ namespace
 
 					else
 					{
-						movie.Video->SetRGBInput((uint8_t*)mapped.pData);
-						movie.Video->SendRawFrame();
+						auto ptr = (uint8_t*)mapped.pData;
+
+						MovieData::RGBFutureData item;
+						item.RGB.assign(ptr, ptr + mapped.RowPitch);
+
+						++BufferedFrames;
+						movie.RGBQueue->enqueue(std::move(item));
 					}
 
 					context->Unmap(dx11.TempRGBBuffer.Get(), 0);
@@ -2063,7 +2135,20 @@ namespace
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(enginerate);
 
+			if (movie.DirectX11.ConversionRule.IsYUV)
+			{
+				movie.YUVQueue = std::make_unique<MovieData::YUVQueueType>(128);
+			}
+
+			else
+			{
+				movie.RGBQueue = std::make_unique<MovieData::RGBQueueType>(128);
+			}
+
 			movie.IsStarted = true;
+			BufferedFrames = 0;
+			ShouldStopFrameThread = false;
+			movie.FrameBufferThreadHandle = std::thread(FrameBufferThread);
 		}
 	}
 
@@ -2206,6 +2291,12 @@ namespace
 
 			auto task = concurrency::create_task([]()
 			{
+				if (!ShouldStopFrameThread)
+				{
+					ShouldStopFrameThread = true;
+					CurrentMovie.FrameBufferThreadHandle.join();
+				}
+
 				if (CurrentMovie.Audio)
 				{
 					CurrentMovie.Audio->Finish();
