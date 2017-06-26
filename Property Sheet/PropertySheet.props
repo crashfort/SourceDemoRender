@@ -8,6 +8,7 @@
     <SDR_2013SDK_SP>$(SDR_2013SDK_ROOT)SP Source\</SDR_2013SDK_SP>
     <SDR_2013SDK_MP>$(SDR_2013SDK_ROOT)MP Source\</SDR_2013SDK_MP>
     <SDR_RAPIDJSON_INCLUDE>C:\VS\3rd Party Libs\rapidjson\include\</SDR_RAPIDJSON_INCLUDE>
+    <SDR_RWQUEUE_INCLUDE>C:\VS\3rd Party Libs\readerwriterqueue\include\</SDR_RWQUEUE_INCLUDE>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
@@ -29,6 +30,9 @@
     </BuildMacro>
     <BuildMacro Include="SDR_RAPIDJSON_INCLUDE">
       <Value>$(SDR_RAPIDJSON_INCLUDE)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SDR_RWQUEUE_INCLUDE">
+      <Value>$(SDR_RWQUEUE_INCLUDE)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
