@@ -26,8 +26,8 @@ Example of supported video containers:
 
 * `startmovie test.avi`
 * `startmovie test.mp4`
-* `startmovie test.mkv`
 * `startmovie test.mov`
+* `startmovie test.mkv`
 
 If not specified, the default video encoder is x264. Other available is ``libx264rgb`` which will produce an RGB video with no color loss.
 
