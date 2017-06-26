@@ -695,21 +695,20 @@ namespace
 			);
 		}
 
-		void SetYUVInput
-		(
-			uint8_t* bufy,
-			uint8_t* bufu,
-			uint8_t* bufv
-		)
+		void SetFrameInput(std::array<std::vector<uint8_t>, 3>& planes)
 		{
-			Frame->data[0] = bufy;
-			Frame->data[1] = bufu;
-			Frame->data[2] = bufv;
-		}
+			int index = 0;
 
-		void SetRGBInput(uint8_t* buf)
-		{
-			Frame->data[0] = buf;
+			for (auto& plane : planes)
+			{
+				if (plane.empty())
+				{
+					break;
+				}
+
+				Frame->data[index] = plane.data();
+				++index;
+			}
 		}
 
 		void SendRawFrame()
@@ -947,24 +946,15 @@ namespace
 		std::unique_ptr<SDRVideoWriter> Video;
 		std::unique_ptr<SDRAudioWriter> Audio;
 
-		struct YUVFutureData
+		struct VideoFutureData
 		{
-			std::vector<uint8_t> Y;
-			std::vector<uint8_t> U;
-			std::vector<uint8_t> V;
+			std::array<std::vector<uint8_t>, 3> Planes;
 		};
 
-		struct RGBFutureData
-		{
-			std::vector<uint8_t> RGB;
-		};
-
-		using YUVQueueType = moodycamel::ReaderWriterQueue<YUVFutureData>;
-		using RGBQueueType = moodycamel::ReaderWriterQueue<RGBFutureData>;
+		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureData>;
 
 		std::thread FrameBufferThreadHandle;
-		std::unique_ptr<YUVQueueType> YUVQueue;
-		std::unique_ptr<RGBQueueType> RGBQueue;
+		std::unique_ptr<VideoQueueType> VideoQueue;
 
 		struct DirectX9Data
 		{
@@ -995,112 +985,258 @@ namespace
 
 		struct DirectX11Data
 		{
-			struct ConversionRuleData
+			struct FrameBufferBase
 			{
-				ConversionRuleData() = default;
+				virtual ~FrameBufferBase() = default;
 
-				ConversionRuleData
-				(
-					AVPixelFormat format,
-					const char* shader,
-					bool yuv
-				) :
-					Format(format),
-					ShaderName(shader),
-					IsYUV(yuv)
-				{
+				virtual void Create(ID3D11Device* device, AVFrame* reference) = 0;
 
-				}
+				/*
+					States that should be set once
+				*/
+				virtual void ShadowBind(ID3D11DeviceContext* context) = 0;
 
-				AVPixelFormat Format;
-				const char* ShaderName;
-				bool IsYUV;
+				/*
+					States that need update every frame
+				*/
+				virtual void DynamicBind(ID3D11DeviceContext* context) = 0;
+
+				/*
+					Try to retrieve data to CPU after an operation
+				*/
+				virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) = 0;
 			};
 
-			struct YUVBuffer
+			struct GPUBuffer
 			{
-				struct Entry
+				void Create(ID3D11Device* device, DXGI_FORMAT viewformat, int size, int numelements)
 				{
-					void Create(ID3D11Device* device, int size)
-					{
-						D3D11_BUFFER_DESC desc = {};
-						desc.ByteWidth = size;
-						desc.Usage = D3D11_USAGE_DEFAULT;
-						desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-						desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+					D3D11_BUFFER_DESC desc = {};
+					desc.ByteWidth = size;
+					desc.Usage = D3D11_USAGE_DEFAULT;
+					desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+					desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 
-						MS::ThrowIfFailed
+					MS::ThrowIfFailed
+					(
+						device->CreateBuffer
 						(
-							device->CreateBuffer
-							(
-								&desc,
-								nullptr,
-								Buffer.GetAddressOf()
-							)
-						);
+							&desc,
+							nullptr,
+							Buffer.GetAddressOf()
+						)
+					);
 
-						D3D11_UNORDERED_ACCESS_VIEW_DESC viewdesc = {};
-						viewdesc.Format = DXGI_FORMAT_R8_UINT;
-						viewdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
-						viewdesc.Buffer.NumElements = size;
+					D3D11_UNORDERED_ACCESS_VIEW_DESC viewdesc = {};
+					viewdesc.Format = viewformat;
+					viewdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+					viewdesc.Buffer.NumElements = numelements;
 
-						MS::ThrowIfFailed
-						(
-							device->CreateUnorderedAccessView
-							(
-								Buffer.Get(),
-								&viewdesc,
-								View.GetAddressOf()
-							)
-						);
-					}
-
-					HRESULT Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped)
-					{
-						auto hr = context->Map
+					MS::ThrowIfFailed
+					(
+						device->CreateUnorderedAccessView
 						(
 							Buffer.Get(),
-							0,
-							D3D11_MAP_READ,
-							0,
-							mapped
-						);
-
-						return hr;
-					}
-
-					void UnMap(ID3D11DeviceContext* context)
-					{
-						context->Unmap
-						(
-							Buffer.Get(),
-							0
-						);
-					}
-
-					Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
-					Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
-				};
-
-				void Create
-				(
-					ID3D11Device* device,
-					int sizey,
-					int sizeu,
-					int sizev
-				)
-				{
-					Y.Create(device, sizey);
-					U.Create(device, sizeu);
-					V.Create(device, sizev);
+							&viewdesc,
+							View.GetAddressOf()
+						)
+					);
 				}
 
-				Entry Y;
-				Entry U;
-				Entry V;
+				HRESULT Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped)
+				{
+					return context->Map(Buffer.Get(), 0, D3D11_MAP_READ, 0, mapped);
+				}
+
+				void Unmap(ID3D11DeviceContext* context)
+				{
+					context->Unmap(Buffer.Get(), 0);
+				}
+
+				Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
+				Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
 			};
 
-			void Create(HANDLE dx9handle, AVFrame* baseyuv)
+			struct RGBABuffer : FrameBufferBase
+			{
+				virtual void Create(ID3D11Device* device, AVFrame* reference) override
+				{
+					auto size = reference->buf[0]->size;
+
+					Buffer.Create
+					(
+						device,
+						DXGI_FORMAT_R32_UINT,
+						size,
+						size / sizeof(uint32_t)
+					);
+				}
+
+				virtual void ShadowBind(ID3D11DeviceContext* context) override
+				{
+					
+				}
+
+				virtual void DynamicBind(ID3D11DeviceContext* context) override
+				{
+					auto uavs =
+					{
+						Buffer.View.Get(),
+					};
+
+					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
+				}
+
+				virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) override
+				{
+					Profile::ScopedEntry e1(Profile::Types::PushRGB);
+
+					D3D11_MAPPED_SUBRESOURCE mapped;
+
+					auto hr = Buffer.Map(context, &mapped);
+
+					if (FAILED(hr))
+					{
+						Warning
+						(
+							"SDR: Could not map DX11 RGB buffer\n"
+						);
+					}
+
+					else
+					{
+						auto ptr = (uint8_t*)mapped.pData;
+						item.Planes[0].assign(ptr, ptr + mapped.RowPitch);
+					}
+
+					Buffer.Unmap(context);
+
+					return SUCCEEDED(hr);
+				}
+
+				GPUBuffer Buffer;
+			};
+
+			struct YUVBuffer : FrameBufferBase
+			{
+				virtual void Create(ID3D11Device* device, AVFrame* reference) override
+				{
+					auto sizey = reference->buf[0]->size;
+					auto sizeu = reference->buf[1]->size;
+					auto sizev = reference->buf[2]->size;
+
+					Y.Create(device, DXGI_FORMAT_R8_UINT, sizey, sizey);
+					U.Create(device, DXGI_FORMAT_R8_UINT, sizeu, sizeu);
+					V.Create(device, DXGI_FORMAT_R8_UINT, sizev, sizev);
+
+					__declspec(align(16)) struct
+					{
+						int Strides[3];
+					} constantbufferdata;
+
+					constantbufferdata.Strides[0] = reference->linesize[0];
+					constantbufferdata.Strides[1] = reference->linesize[1];
+					constantbufferdata.Strides[2] = reference->linesize[2];
+
+					D3D11_BUFFER_DESC cbufdesc = {};
+					cbufdesc.ByteWidth = sizeof(constantbufferdata);
+					cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+					cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+					D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
+					cbufsubdesc.pSysMem = &constantbufferdata;
+
+					MS::ThrowIfFailed
+					(
+						device->CreateBuffer
+						(
+							&cbufdesc,
+							&cbufsubdesc,
+							ConstantBuffer.GetAddressOf()
+						)
+					);
+				}
+
+				virtual void ShadowBind(ID3D11DeviceContext* context) override
+				{
+					auto cbufs =
+					{
+						ConstantBuffer.Get()
+					};
+
+					context->CSSetConstantBuffers(0, 1, cbufs.begin());
+				}
+
+				virtual void DynamicBind(ID3D11DeviceContext* context) override
+				{
+					auto uavs =
+					{
+						Y.View.Get(),
+						U.View.Get(),
+						V.View.Get(),
+					};
+
+					context->CSSetUnorderedAccessViews(0, 3, uavs.begin(), nullptr);
+				}
+
+				virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) override
+				{
+					Profile::ScopedEntry e1(Profile::Types::PushYUV);
+
+					D3D11_MAPPED_SUBRESOURCE mappedy;
+					D3D11_MAPPED_SUBRESOURCE mappedu;
+					D3D11_MAPPED_SUBRESOURCE mappedv;
+
+					auto hrs =
+					{
+						Y.Map(context, &mappedy),
+						U.Map(context, &mappedu),
+						V.Map(context, &mappedv)
+					};
+
+					bool pass = true;
+
+					for (auto res : hrs)
+					{
+						if (FAILED(res))
+						{
+							pass = false;
+
+							Warning
+							(
+								"SDR: Could not map DX11 YUV buffers\n"
+							);
+
+							break;
+						}
+					}
+
+					if (pass)
+					{
+						auto ptry = (uint8_t*)mappedy.pData;
+						auto ptru = (uint8_t*)mappedu.pData;
+						auto ptrv = (uint8_t*)mappedv.pData;
+
+						item.Planes[0].assign(ptry, ptry + mappedy.RowPitch);
+						item.Planes[1].assign(ptru, ptru + mappedu.RowPitch);
+						item.Planes[2].assign(ptrv, ptrv + mappedv.RowPitch);
+					}
+
+					Y.Unmap(context);
+					U.Unmap(context);
+					V.Unmap(context);
+
+					return pass;
+				}
+
+				GPUBuffer Y;
+				GPUBuffer U;
+				GPUBuffer V;
+
+				Microsoft::WRL::ComPtr<ID3D11Buffer> ConstantBuffer;
+			};
+
+			void Create(HANDLE dx9handle, AVFrame* reference)
 			{
 				uint32_t flags = 0;
 				#ifdef _DEBUG
@@ -1169,11 +1305,7 @@ namespace
 
 					try
 					{
-						file.Assign
-						(
-							path,
-							"rb"
-						);
+						file.Assign(path, "rb");
 					}
 
 					catch (Status status)
@@ -1204,6 +1336,26 @@ namespace
 					);
 				};
 
+				struct ConversionRuleData
+				{
+					ConversionRuleData
+					(
+						AVPixelFormat format,
+						const char* shader,
+						bool yuv
+					) :
+						Format(format),
+						ShaderName(shader),
+						IsYUV(yuv)
+					{
+
+					}
+
+					AVPixelFormat Format;
+					const char* ShaderName;
+					bool IsYUV;
+				};
+
 				ConversionRuleData table[] =
 				{
 					ConversionRuleData(AV_PIX_FMT_YUV420P, "RGB32_To_YUV420", true),
@@ -1215,14 +1367,12 @@ namespace
 					ConversionRuleData(AV_PIX_FMT_BGR0, "BGRA_PackRemoveAlpha", false),
 				};
 
-				bool found = false;
+				ConversionRuleData* found = nullptr;
 
 				for (auto&& entry : table)
 				{
-					if (entry.Format == baseyuv->format)
+					if (entry.Format == reference->format)
 					{
-						ConversionRule = entry;
-
 						openshader
 						(
 							Device.Get(),
@@ -1230,7 +1380,7 @@ namespace
 							ComputeShader.GetAddressOf()
 						);
 
-						found = true;
+						found = &entry;
 						break;
 					}
 				}
@@ -1240,107 +1390,33 @@ namespace
 					Warning
 					(
 						"SDR: No conversion rule found for %s\n",
-						av_get_pix_fmt_name((AVPixelFormat)baseyuv->format)
+						av_get_pix_fmt_name((AVPixelFormat)reference->format)
 					);
 
 					throw false;
 				}
 
-				if (ConversionRule.IsYUV)
+				if (found->IsYUV)
 				{
-					YUVBuffer.Create
-					(
-						Device.Get(),
-						baseyuv->buf[0]->size,
-						baseyuv->buf[1]->size,
-						baseyuv->buf[2]->size
-					);
-
-					__declspec(align(16)) struct
-					{
-						int Strides[3];
-					} constantbufferdata;
-
-					constantbufferdata.Strides[0] = baseyuv->linesize[0];
-					constantbufferdata.Strides[1] = baseyuv->linesize[1];
-					constantbufferdata.Strides[2] = baseyuv->linesize[2];
-
-					D3D11_BUFFER_DESC cbufdesc = {};
-					cbufdesc.ByteWidth = sizeof(constantbufferdata);
-					cbufdesc.Usage = D3D11_USAGE_DEFAULT;
-					cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-					D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-					cbufsubdesc.pSysMem = &constantbufferdata;
-
-					MS::ThrowIfFailed
-					(
-						Device->CreateBuffer
-						(
-							&cbufdesc,
-							&cbufsubdesc,
-							YUVConstantBuffer.GetAddressOf()
-						)
-					);
+					GPUFrameBuffer = std::make_unique<YUVBuffer>();
 				}
 
 				else
 				{
-					auto size = baseyuv->buf[0]->size;
-
-					D3D11_TEXTURE2D_DESC texdesc;
-					SharedTexture->GetDesc(&texdesc);
-
-					D3D11_BUFFER_DESC desc = {};
-					desc.ByteWidth = size * sizeof(uint32_t);
-					desc.Usage = D3D11_USAGE_DEFAULT;
-					desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-					desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-					desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-					desc.StructureByteStride = sizeof(uint32_t);
-
-					MS::ThrowIfFailed
-					(
-						Device->CreateBuffer
-						(
-							&desc,
-							nullptr,
-							TempRGBBuffer.GetAddressOf()
-						)
-					);
-
-					D3D11_UNORDERED_ACCESS_VIEW_DESC viewdesc = {};
-					viewdesc.Format = DXGI_FORMAT_UNKNOWN;
-					viewdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
-					viewdesc.Buffer.NumElements = size / sizeof(uint32_t);
-
-					MS::ThrowIfFailed
-					(
-						Device->CreateUnorderedAccessView
-						(
-							TempRGBBuffer.Get(),
-							&viewdesc,
-							TempRGBBufferUAV.GetAddressOf()
-						)
-					);
+					GPUFrameBuffer = std::make_unique<RGBABuffer>();
 				}
-			}
 
-			ConversionRuleData ConversionRule;
+				GPUFrameBuffer->Create(Device.Get(), reference);
+			}
 
 			Microsoft::WRL::ComPtr<ID3D11Device> Device;
 			Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
 			Microsoft::WRL::ComPtr<ID3D11ComputeShader> ComputeShader;
 
-			Microsoft::WRL::ComPtr<ID3D11Buffer> YUVConstantBuffer;
-
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
 			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRV;
 
-			Microsoft::WRL::ComPtr<ID3D11Buffer> TempRGBBuffer;
-			Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> TempRGBBufferUAV;
-			
-			YUVBuffer YUVBuffer;
+			std::unique_ptr<FrameBufferBase> GPUFrameBuffer;
 		} DirectX11;
 	};
 
@@ -1376,34 +1452,17 @@ namespace
 	void FrameBufferThread()
 	{
 		auto& movie = CurrentMovie;
-		auto yuv = movie.DirectX11.ConversionRule.IsYUV;
+
+		MovieData::VideoFutureData item;
 
 		while (!ShouldStopFrameThread)
 		{
-			if (yuv)
+			while (movie.VideoQueue->try_dequeue(item))
 			{
-				MovieData::YUVFutureData item;
+				--BufferedFrames;
 
-				while (movie.YUVQueue->try_dequeue(item))
-				{
-					--BufferedFrames;
-
-					movie.Video->SetYUVInput(item.Y.data(), item.U.data(), item.V.data());
-					movie.Video->SendRawFrame();
-				}
-			}
-
-			else
-			{
-				MovieData::RGBFutureData item;
-
-				while (movie.RGBQueue->try_dequeue(item))
-				{
-					--BufferedFrames;
-
-					movie.Video->SetRGBInput(item.RGB.data());
-					movie.Video->SendRawFrame();
-				}
+				movie.Video->SetFrameInput(item.Planes);
+				movie.Video->SendRawFrame();
 			}
 		}
 	}
@@ -1536,41 +1595,14 @@ namespace
 				HRESULT hr;
 				auto& context = dx11.Context;
 
-				if (dx11.ConversionRule.IsYUV)
+				auto srvs =
 				{
-					auto srvs =
-					{
-						dx11.SharedTextureSRV.Get()
-					};
+					dx11.SharedTextureSRV.Get()
+				};
 
-					context->CSSetShaderResources(0, srvs.size(), srvs.begin());
+				context->CSSetShaderResources(0, 1, srvs.begin());
 
-					auto uavs =
-					{
-						dx11.YUVBuffer.Y.View.Get(),
-						dx11.YUVBuffer.U.View.Get(),
-						dx11.YUVBuffer.V.View.Get(),
-					};
-
-					context->CSSetUnorderedAccessViews(0, uavs.size(), uavs.begin(), nullptr);
-				}
-
-				else
-				{
-					auto srvs =
-					{
-						dx11.SharedTextureSRV.Get()
-					};
-
-					context->CSSetShaderResources(0, srvs.size(), srvs.begin());
-
-					auto uavs =
-					{
-						dx11.TempRGBBufferUAV.Get(),
-					};
-
-					context->CSSetUnorderedAccessViews(0, uavs.size(), uavs.begin(), nullptr);
-				}
+				dx11.GPUFrameBuffer->DynamicBind(context.Get());
 
 				context->Dispatch
 				(
@@ -1579,93 +1611,14 @@ namespace
 					1
 				);
 
-				if (dx11.ConversionRule.IsYUV)
+				MovieData::VideoFutureData item;
+				
+				auto res = dx11.GPUFrameBuffer->Download(context.Get(), item);
+
+				if (res)
 				{
-					Profile::ScopedEntry e1(Profile::Types::PushYUV);
-
-					D3D11_MAPPED_SUBRESOURCE mappedy;
-					D3D11_MAPPED_SUBRESOURCE mappedu;
-					D3D11_MAPPED_SUBRESOURCE mappedv;
-
-					auto hrs =
-					{
-						dx11.YUVBuffer.Y.Map(context.Get(), &mappedy),
-						dx11.YUVBuffer.U.Map(context.Get(), &mappedu),
-						dx11.YUVBuffer.V.Map(context.Get(), &mappedv)
-					};
-
-					bool pass = true;
-
-					for (auto res : hrs)
-					{
-						if (FAILED(res))
-						{
-							pass = false;
-
-							Warning
-							(
-								"SDR: Could not map DX11 YUV buffers\n"
-							);
-
-							break;
-						}
-					}
-
-					if (pass)
-					{
-						auto ptry = (uint8_t*)mappedy.pData;
-						auto ptru = (uint8_t*)mappedu.pData;
-						auto ptrv = (uint8_t*)mappedv.pData;
-
-						MovieData::YUVFutureData item;						
-						item.Y.assign(ptry, ptry + mappedy.RowPitch);
-						item.U.assign(ptru, ptru + mappedu.RowPitch);
-						item.V.assign(ptrv, ptrv + mappedv.RowPitch);
-
-						++BufferedFrames;
-						movie.YUVQueue->enqueue(std::move(item));
-					}
-
-					dx11.YUVBuffer.Y.UnMap(context.Get());
-					dx11.YUVBuffer.U.UnMap(context.Get());
-					dx11.YUVBuffer.V.UnMap(context.Get());
-				}
-
-				else
-				{
-					Profile::ScopedEntry e1(Profile::Types::PushRGB);
-
-					D3D11_MAPPED_SUBRESOURCE mapped;
-
-					hr = context->Map
-					(
-						dx11.TempRGBBuffer.Get(),
-						0,
-						D3D11_MAP_READ,
-						0,
-						&mapped
-					);
-
-					if (FAILED(hr))
-					{
-						Warning
-						(
-							"SDR: Could not map DX11 RGB buffer\n"
-						);
-					}
-
-					else
-					{
-						auto ptr = (uint8_t*)mapped.pData;
-
-						MovieData::RGBFutureData item;
-						item.RGB.assign(ptr, ptr + mapped.RowPitch);
-
-						++BufferedFrames;
-						movie.RGBQueue->enqueue(std::move(item));
-					}
-
-					context->Unmap(dx11.TempRGBBuffer.Get(), 0);
+					++BufferedFrames;
+					movie.VideoQueue->enqueue(std::move(item));
 				}
 			}
 		}
@@ -2027,27 +1980,8 @@ namespace
 								vidwriter->Frame.Get()
 							);
 
-							if (dx11.ConversionRule.IsYUV)
-							{
-								auto cbufs =
-								{
-									dx11.YUVConstantBuffer.Get()
-								};
-
-								dx11.Context->CSSetConstantBuffers
-								(
-									0,
-									cbufs.size(),
-									cbufs.begin()
-								);
-							}
-
-							dx11.Context->CSSetShader
-							(
-								dx11.ComputeShader.Get(),
-								nullptr,
-								0
-							);
+							dx11.GPUFrameBuffer->ShadowBind(dx11.Context.Get());
+							dx11.Context->CSSetShader(dx11.ComputeShader.Get(), nullptr, 0);
 						}
 
 						catch (HRESULT status)
@@ -2163,15 +2097,7 @@ namespace
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(enginerate);
 
-			if (movie.DirectX11.ConversionRule.IsYUV)
-			{
-				movie.YUVQueue = std::make_unique<MovieData::YUVQueueType>(128);
-			}
-
-			else
-			{
-				movie.RGBQueue = std::make_unique<MovieData::RGBQueueType>(128);
-			}
+			movie.VideoQueue = std::make_unique<MovieData::VideoQueueType>(128);
 
 			movie.IsStarted = true;
 			BufferedFrames = 0;
