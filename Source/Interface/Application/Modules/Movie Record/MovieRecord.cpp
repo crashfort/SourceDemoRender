@@ -303,6 +303,10 @@ namespace
 	{
 		const char* Names[] =
 		{
+			"ViewRender",
+			"DX11Proc",
+			"PushYUV",
+			"PushRGB",
 			"Encode",
 			"WriteEncodedPacket",
 		};
@@ -311,6 +315,10 @@ namespace
 		{
 			enum Type
 			{
+				ViewRender,
+				DX11Proc,
+				PushYUV,
+				PushRGB,
 				Encode,
 				WriteEncodedPacket,
 
@@ -1473,6 +1481,8 @@ namespace
 				return;
 			}
 
+			Profile::ScopedEntry e1(Profile::Types::ViewRender);
+
 			HRESULT hr;
 			Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
 
@@ -1518,6 +1528,8 @@ namespace
 				Convert RGBA32 to wanted format
 			*/
 			{
+				Profile::ScopedEntry e1(Profile::Types::DX11Proc);
+
 				HRESULT hr;
 				auto& context = dx11.Context;
 
@@ -1566,6 +1578,8 @@ namespace
 
 				if (dx11.ConversionRule.IsYUV)
 				{
+					Profile::ScopedEntry e1(Profile::Types::PushYUV);
+
 					D3D11_MAPPED_SUBRESOURCE mappedy;
 					D3D11_MAPPED_SUBRESOURCE mappedu;
 					D3D11_MAPPED_SUBRESOURCE mappedv;
@@ -1616,6 +1630,8 @@ namespace
 
 				else
 				{
+					Profile::ScopedEntry e1(Profile::Types::PushRGB);
+
 					D3D11_MAPPED_SUBRESOURCE mapped;
 
 					hr = context->Map
