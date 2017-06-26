@@ -1538,14 +1538,14 @@ namespace
 
 				if (dx11.ConversionRule.IsYUV)
 				{
-					std::initializer_list<ID3D11ShaderResourceView*> srvs =
+					auto srvs =
 					{
 						dx11.SharedTextureSRV.Get()
 					};
 
 					context->CSSetShaderResources(0, srvs.size(), srvs.begin());
 
-					std::initializer_list<ID3D11UnorderedAccessView*> uavs =
+					auto uavs =
 					{
 						dx11.YUVBuffer.Y.View.Get(),
 						dx11.YUVBuffer.U.View.Get(),
@@ -1557,14 +1557,14 @@ namespace
 
 				else
 				{
-					std::initializer_list<ID3D11ShaderResourceView*> srvs =
+					auto srvs =
 					{
 						dx11.SharedTextureSRV.Get()
 					};
 
 					context->CSSetShaderResources(0, srvs.size(), srvs.begin());
 
-					std::initializer_list<ID3D11UnorderedAccessView*> uavs =
+					auto uavs =
 					{
 						dx11.TempRGBBufferUAV.Get(),
 					};
@@ -2029,7 +2029,7 @@ namespace
 
 							if (dx11.ConversionRule.IsYUV)
 							{
-								std::initializer_list<ID3D11Buffer*> cbufs =
+								auto cbufs =
 								{
 									dx11.YUVConstantBuffer.Get()
 								};
