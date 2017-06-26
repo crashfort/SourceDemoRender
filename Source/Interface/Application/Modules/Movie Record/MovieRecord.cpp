@@ -1057,7 +1057,7 @@ namespace
 				Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
 			};
 
-			struct RGBABuffer : FrameBufferBase
+			struct RGBAFrameBuffer : FrameBufferBase
 			{
 				virtual void Create(ID3D11Device* device, AVFrame* reference) override
 				{
@@ -1117,7 +1117,7 @@ namespace
 				GPUBuffer Buffer;
 			};
 
-			struct YUVBuffer : FrameBufferBase
+			struct YUVFrameBuffer : FrameBufferBase
 			{
 				virtual void Create(ID3D11Device* device, AVFrame* reference) override
 				{
@@ -1398,12 +1398,12 @@ namespace
 
 				if (found->IsYUV)
 				{
-					GPUFrameBuffer = std::make_unique<YUVBuffer>();
+					GPUFrameBuffer = std::make_unique<YUVFrameBuffer>();
 				}
 
 				else
 				{
-					GPUFrameBuffer = std::make_unique<RGBABuffer>();
+					GPUFrameBuffer = std::make_unique<RGBAFrameBuffer>();
 				}
 
 				GPUFrameBuffer->Create(Device.Get(), reference);
