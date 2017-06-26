@@ -2206,10 +2206,6 @@ namespace
 
 			auto task = concurrency::create_task([]()
 			{
-				/*
-					Let the worker thread complete the sampling and
-					giving the frames to the encoder
-				*/
 				if (CurrentMovie.Audio)
 				{
 					CurrentMovie.Audio->Finish();
