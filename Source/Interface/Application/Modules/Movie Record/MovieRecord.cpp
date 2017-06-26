@@ -1841,15 +1841,16 @@ namespace
 				{
 					av_log_set_callback(LAV::LogFunction);
 
-					movie.Video = std::make_unique<SDRVideoWriter>();
+					auto tempvideo = std::make_unique<SDRVideoWriter>();
+					std::unique_ptr<SDRAudioWriter> tempaudio;
 
 					if (Variables::Audio::Enable.GetBool())
 					{
-						movie.Audio = std::make_unique<SDRAudioWriter>();
+						tempaudio = std::make_unique<SDRAudioWriter>();
 					}
 
-					auto vidwriter = movie.Video.get();
-					auto audiowriter = movie.Audio.get();
+					auto vidwriter = tempvideo.get();
+					auto audiowriter = tempaudio.get();
 
 					auto linktabletovariable = []
 					(
@@ -2127,6 +2128,9 @@ namespace
 					}
 
 					vidwriter->WriteHeader();
+
+					movie.Video = std::move(tempvideo);
+					movie.Audio = std::move(tempaudio);
 				}
 					
 				catch (const LAV::Exception& error)
