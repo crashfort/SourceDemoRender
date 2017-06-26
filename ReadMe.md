@@ -148,6 +148,24 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 		</td>
 	</tr>
 	<tr>
+		<td>sdr_pass_fullbright</td>
+		<td>
+			Do an extra pass to a separate video file that contains fullbright data. This extra video file will have the same encoding parameters as the main stream.
+			<br/><br/>
+			<b>Values:</b> 0 or 1 <br/>
+            <b>Default:</b> 0 <br/>
+		</td>
+	</tr>
+	<tr>
+		<td>sdr_movie_encoder</td>
+		<td>
+			Desired video encoder.
+			<br/><br/>
+			<b>Values:</b> libx264, libx264rgb <br/>
+            <b>Default:</b> libx264 <br/>
+		</td>
+	</tr>
+	<tr>
 		<td>sdr_movie_encoder_pxformat</td>
 		<td>
 			Encoded pixel format to use.

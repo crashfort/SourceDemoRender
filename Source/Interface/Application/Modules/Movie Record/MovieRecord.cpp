@@ -66,7 +66,7 @@ namespace
 			int Code;
 		};
 
-		inline void ThrowIfNull(void* ptr, ExceptionType code)
+		inline void ThrowIfNull(const void* ptr, ExceptionType code)
 		{
 			if (!ptr)
 			{
@@ -412,8 +412,51 @@ namespace
 			);
 		}
 
+		namespace Pass
+		{
+			ConVar Fullbright
+			(
+				"sdr_pass_fullbright", "0", FCVAR_NEVER_AS_STRING,
+				"Perform extra fullbright pass to separate video",
+				true, 0, true, 1
+			);
+		}
+
 		namespace Video
 		{
+			ConVar Encoder
+			{
+				"sdr_movie_encoder", "libx264", 0,
+				"Video encoder"
+				"Values: libx264, libx264rgb",
+				[](IConVar* var, const char* oldstr, float oldfloat)
+				{
+					auto newstr = Encoder.GetString();
+
+					auto encoder = avcodec_find_encoder_by_name(newstr);
+
+					if (!encoder)
+					{
+						Warning
+						(
+							"SDR: Encoder %s not found\n",
+							newstr
+						);
+
+						Msg("SDR: Available encoders: \n");
+
+						auto next = av_codec_next(nullptr);
+
+						while (next)
+						{
+							Msg("SDR: * %s\n", next->name);
+							
+							next = av_codec_next(next);
+						}
+					}
+				}
+			};
+
 			ConVar PixelFormat
 			(
 				"sdr_movie_encoder_pxformat", "", 0,
@@ -618,22 +661,13 @@ namespace
 			CodecContext = Stream->codec;
 		}
 
-		void OpenEncoder
-		(
-			int width,
-			int height,
-			int framerate,
-			AVPixelFormat pxformat,
-			AVColorSpace colorspace,
-			AVColorRange colorrange,
-			AVDictionary** options
-		)
+		void OpenEncoder(int framerate, AVDictionary** options)
 		{
-			CodecContext->width = width;
-			CodecContext->height = height;
-			CodecContext->pix_fmt = pxformat;
-			CodecContext->colorspace = colorspace;
-			CodecContext->color_range = colorrange;
+			CodecContext->width = Frame->width;
+			CodecContext->height = Frame->height;
+			CodecContext->pix_fmt = (AVPixelFormat)Frame->format;
+			CodecContext->colorspace = Frame->colorspace;
+			CodecContext->color_range = Frame->color_range;
 
 			if (FormatContext->oformat->flags & AVFMT_GLOBALHEADER)
 			{
@@ -943,476 +977,496 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
-		std::unique_ptr<SDRVideoWriter> Video;
-		std::unique_ptr<SDRAudioWriter> Audio;
+		struct VideoStreamBase;
 
 		struct VideoFutureData
 		{
+			VideoStreamBase* Stream;
 			std::array<std::vector<uint8_t>, 3> Planes;
 		};
 
 		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureData>;
 
-		std::thread FrameBufferThreadHandle;
-		std::unique_ptr<VideoQueueType> VideoQueue;
-
-		struct DirectX9Data
+		struct VideoStreamBase
 		{
-			struct SharedSurfaceData
+			struct DirectX9Data
 			{
-				void Create(IDirect3DDevice9* device, int width, int height)
+				struct SharedSurfaceData
 				{
-					MS::ThrowIfFailed
-					(
-						device->CreateOffscreenPlainSurface
-						(
-							width,
-							height,
-							D3DFMT_A8R8G8B8,
-							D3DPOOL_DEFAULT,
-							Surface.GetAddressOf(),
-							&SharedHandle
-						)
-					);
-				}
-
-				HANDLE SharedHandle = nullptr;
-				Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
-			};
-
-			SharedSurfaceData SharedSurface;
-		} DirectX9;
-
-		struct DirectX11Data
-		{
-			struct FrameBufferBase
-			{
-				virtual ~FrameBufferBase() = default;
-
-				virtual void Create(ID3D11Device* device, AVFrame* reference) = 0;
-
-				/*
-					States that should be set once
-				*/
-				virtual void ShadowBind(ID3D11DeviceContext* context) = 0;
-
-				/*
-					States that need update every frame
-				*/
-				virtual void DynamicBind(ID3D11DeviceContext* context) = 0;
-
-				/*
-					Try to retrieve data to CPU after an operation
-				*/
-				virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) = 0;
-			};
-
-			struct GPUBuffer
-			{
-				void Create(ID3D11Device* device, DXGI_FORMAT viewformat, int size, int numelements)
-				{
-					D3D11_BUFFER_DESC desc = {};
-					desc.ByteWidth = size;
-					desc.Usage = D3D11_USAGE_DEFAULT;
-					desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-					desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-
-					MS::ThrowIfFailed
-					(
-						device->CreateBuffer
-						(
-							&desc,
-							nullptr,
-							Buffer.GetAddressOf()
-						)
-					);
-
-					D3D11_UNORDERED_ACCESS_VIEW_DESC viewdesc = {};
-					viewdesc.Format = viewformat;
-					viewdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
-					viewdesc.Buffer.NumElements = numelements;
-
-					MS::ThrowIfFailed
-					(
-						device->CreateUnorderedAccessView
-						(
-							Buffer.Get(),
-							&viewdesc,
-							View.GetAddressOf()
-						)
-					);
-				}
-
-				HRESULT Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped)
-				{
-					return context->Map(Buffer.Get(), 0, D3D11_MAP_READ, 0, mapped);
-				}
-
-				void Unmap(ID3D11DeviceContext* context)
-				{
-					context->Unmap(Buffer.Get(), 0);
-				}
-
-				Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
-				Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
-			};
-
-			struct RGBAFrameBuffer : FrameBufferBase
-			{
-				virtual void Create(ID3D11Device* device, AVFrame* reference) override
-				{
-					auto size = reference->buf[0]->size;
-					auto count = size / sizeof(uint32_t);
-
-					Buffer.Create(device, DXGI_FORMAT_R32_UINT, size, count);
-				}
-
-				virtual void ShadowBind(ID3D11DeviceContext* context) override
-				{
-					
-				}
-
-				virtual void DynamicBind(ID3D11DeviceContext* context) override
-				{
-					auto uavs =
+					void Create(IDirect3DDevice9* device, int width, int height)
 					{
-						Buffer.View.Get(),
-					};
-
-					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
-				}
-
-				virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) override
-				{
-					Profile::ScopedEntry e1(Profile::Types::PushRGB);
-
-					D3D11_MAPPED_SUBRESOURCE mapped;
-
-					auto hr = Buffer.Map(context, &mapped);
-
-					if (FAILED(hr))
-					{
-						Warning
+						MS::ThrowIfFailed
 						(
-							"SDR: Could not map DX11 RGB buffer\n"
+							device->CreateOffscreenPlainSurface
+							(
+								width,
+								height,
+								D3DFMT_A8R8G8B8,
+								D3DPOOL_DEFAULT,
+								Surface.GetAddressOf(),
+								&SharedHandle
+							)
 						);
 					}
 
-					else
+					HANDLE SharedHandle = nullptr;
+					Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
+				};
+
+				SharedSurfaceData SharedSurface;
+			} DirectX9;
+
+			struct DirectX11Data
+			{
+				struct FrameBufferBase
+				{
+					virtual ~FrameBufferBase() = default;
+
+					virtual void Create(ID3D11Device* device, AVFrame* reference) = 0;
+
+					/*
+						States that need update every frame
+					*/
+					virtual void DynamicBind(ID3D11DeviceContext* context) = 0;
+
+					/*
+						Try to retrieve data to CPU after an operation
+					*/
+					virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) = 0;
+				};
+
+				struct GPUBuffer
+				{
+					void Create(ID3D11Device* device, DXGI_FORMAT viewformat, int size, int numelements)
 					{
-						auto ptr = (uint8_t*)mapped.pData;
-						item.Planes[0].assign(ptr, ptr + mapped.RowPitch);
+						D3D11_BUFFER_DESC desc = {};
+						desc.ByteWidth = size;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+						desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+						desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+						MS::ThrowIfFailed
+						(
+							device->CreateBuffer
+							(
+								&desc,
+								nullptr,
+								Buffer.GetAddressOf()
+							)
+						);
+
+						D3D11_UNORDERED_ACCESS_VIEW_DESC viewdesc = {};
+						viewdesc.Format = viewformat;
+						viewdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+						viewdesc.Buffer.NumElements = numelements;
+
+						MS::ThrowIfFailed
+						(
+							device->CreateUnorderedAccessView
+							(
+								Buffer.Get(),
+								&viewdesc,
+								View.GetAddressOf()
+							)
+						);
 					}
 
-					Buffer.Unmap(context);
-
-					return SUCCEEDED(hr);
-				}
-
-				GPUBuffer Buffer;
-			};
-
-			struct YUVFrameBuffer : FrameBufferBase
-			{
-				virtual void Create(ID3D11Device* device, AVFrame* reference) override
-				{
-					auto sizey = reference->buf[0]->size;
-					auto sizeu = reference->buf[1]->size;
-					auto sizev = reference->buf[2]->size;
-
-					Y.Create(device, DXGI_FORMAT_R8_UINT, sizey, sizey);
-					U.Create(device, DXGI_FORMAT_R8_UINT, sizeu, sizeu);
-					V.Create(device, DXGI_FORMAT_R8_UINT, sizev, sizev);
-
-					__declspec(align(16)) struct
+					HRESULT Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped)
 					{
-						int Strides[3];
-					} constantbufferdata;
+						return context->Map(Buffer.Get(), 0, D3D11_MAP_READ, 0, mapped);
+					}
 
-					constantbufferdata.Strides[0] = reference->linesize[0];
-					constantbufferdata.Strides[1] = reference->linesize[1];
-					constantbufferdata.Strides[2] = reference->linesize[2];
+					void Unmap(ID3D11DeviceContext* context)
+					{
+						context->Unmap(Buffer.Get(), 0);
+					}
 
-					D3D11_BUFFER_DESC cbufdesc = {};
-					cbufdesc.ByteWidth = sizeof(constantbufferdata);
-					cbufdesc.Usage = D3D11_USAGE_DEFAULT;
-					cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+					Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
+					Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
+				};
 
-					D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-					cbufsubdesc.pSysMem = &constantbufferdata;
+				struct RGBAFrameBuffer : FrameBufferBase
+				{
+					virtual void Create(ID3D11Device* device, AVFrame* reference) override
+					{
+						auto size = reference->buf[0]->size;
+						auto count = size / sizeof(uint32_t);
+
+						Buffer.Create(device, DXGI_FORMAT_R32_UINT, size, count);
+					}
+
+					virtual void DynamicBind(ID3D11DeviceContext* context) override
+					{
+						auto uavs =
+						{
+							Buffer.View.Get(),
+						};
+
+						context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
+					}
+
+					virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) override
+					{
+						Profile::ScopedEntry e1(Profile::Types::PushRGB);
+
+						D3D11_MAPPED_SUBRESOURCE mapped;
+
+						auto hr = Buffer.Map(context, &mapped);
+
+						if (FAILED(hr))
+						{
+							Warning
+							(
+								"SDR: Could not map DX11 RGB buffer\n"
+							);
+						}
+
+						else
+						{
+							auto ptr = (uint8_t*)mapped.pData;
+							item.Planes[0].assign(ptr, ptr + mapped.RowPitch);
+						}
+
+						Buffer.Unmap(context);
+
+						return SUCCEEDED(hr);
+					}
+
+					GPUBuffer Buffer;
+				};
+
+				struct YUVFrameBuffer : FrameBufferBase
+				{
+					virtual void Create(ID3D11Device* device, AVFrame* reference) override
+					{
+						auto sizey = reference->buf[0]->size;
+						auto sizeu = reference->buf[1]->size;
+						auto sizev = reference->buf[2]->size;
+
+						Y.Create(device, DXGI_FORMAT_R8_UINT, sizey, sizey);
+						U.Create(device, DXGI_FORMAT_R8_UINT, sizeu, sizeu);
+						V.Create(device, DXGI_FORMAT_R8_UINT, sizev, sizev);
+
+						__declspec(align(16)) struct
+						{
+							int Strides[3];
+						} constantbufferdata;
+
+						constantbufferdata.Strides[0] = reference->linesize[0];
+						constantbufferdata.Strides[1] = reference->linesize[1];
+						constantbufferdata.Strides[2] = reference->linesize[2];
+
+						D3D11_BUFFER_DESC cbufdesc = {};
+						cbufdesc.ByteWidth = sizeof(constantbufferdata);
+						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
+						cbufsubdesc.pSysMem = &constantbufferdata;
+
+						MS::ThrowIfFailed
+						(
+							device->CreateBuffer
+							(
+								&cbufdesc,
+								&cbufsubdesc,
+								ConstantBuffer.GetAddressOf()
+							)
+						);
+					}
+
+					virtual void DynamicBind(ID3D11DeviceContext* context) override
+					{
+						auto cbufs =
+						{
+							ConstantBuffer.Get()
+						};
+
+						context->CSSetConstantBuffers(0, 1, cbufs.begin());
+
+						auto uavs =
+						{
+							Y.View.Get(),
+							U.View.Get(),
+							V.View.Get(),
+						};
+
+						context->CSSetUnorderedAccessViews(0, 3, uavs.begin(), nullptr);
+					}
+
+					virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) override
+					{
+						Profile::ScopedEntry e1(Profile::Types::PushYUV);
+
+						D3D11_MAPPED_SUBRESOURCE mappedy;
+						D3D11_MAPPED_SUBRESOURCE mappedu;
+						D3D11_MAPPED_SUBRESOURCE mappedv;
+
+						auto hrs =
+						{
+							Y.Map(context, &mappedy),
+							U.Map(context, &mappedu),
+							V.Map(context, &mappedv)
+						};
+
+						bool pass = true;
+
+						for (auto res : hrs)
+						{
+							if (FAILED(res))
+							{
+								pass = false;
+
+								Warning
+								(
+									"SDR: Could not map DX11 YUV buffers\n"
+								);
+
+								break;
+							}
+						}
+
+						if (pass)
+						{
+							auto ptry = (uint8_t*)mappedy.pData;
+							auto ptru = (uint8_t*)mappedu.pData;
+							auto ptrv = (uint8_t*)mappedv.pData;
+
+							item.Planes[0].assign(ptry, ptry + mappedy.RowPitch);
+							item.Planes[1].assign(ptru, ptru + mappedu.RowPitch);
+							item.Planes[2].assign(ptrv, ptrv + mappedv.RowPitch);
+						}
+
+						Y.Unmap(context);
+						U.Unmap(context);
+						V.Unmap(context);
+
+						return pass;
+					}
+
+					GPUBuffer Y;
+					GPUBuffer U;
+					GPUBuffer V;
+
+					Microsoft::WRL::ComPtr<ID3D11Buffer> ConstantBuffer;
+				};
+
+				void Create
+				(
+					ID3D11Device* device,
+					HANDLE dx9handle,
+					AVFrame* reference
+				)
+				{
+					Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
 
 					MS::ThrowIfFailed
 					(
-						device->CreateBuffer
+						device->OpenSharedResource
 						(
-							&cbufdesc,
-							&cbufsubdesc,
-							ConstantBuffer.GetAddressOf()
+							dx9handle,
+							IID_PPV_ARGS(tempresource.GetAddressOf())
 						)
 					);
-				}
 
-				virtual void ShadowBind(ID3D11DeviceContext* context) override
-				{
-					auto cbufs =
+					MS::ThrowIfFailed
+					(
+						tempresource.As(&SharedTexture)
+					);
+
+					MS::ThrowIfFailed
+					(
+						device->CreateShaderResourceView
+						(
+							SharedTexture.Get(),
+							nullptr,
+							SharedTextureSRV.GetAddressOf()
+						)
+					);
+
+					auto openshader = []
+					(
+						ID3D11Device* device,
+						const char* name,
+						ID3D11ComputeShader** shader
+					)
 					{
-						ConstantBuffer.Get()
-					};
+						using Status = SDR::Shared::ScopedFile::ExceptionType;
 
-					context->CSSetConstantBuffers(0, 1, cbufs.begin());
-				}
+						SDR::Shared::ScopedFile file;
 
-				virtual void DynamicBind(ID3D11DeviceContext* context) override
-				{
-					auto uavs =
-					{
-						Y.View.Get(),
-						U.View.Get(),
-						V.View.Get(),
-					};
+						char path[1024];
+						strcpy_s(path, SDR::GetGamePath());
+						strcat(path, R"(SDR\)");
+						strcat_s(path, name);
+						strcat_s(path, ".sdrshader");
 
-					context->CSSetUnorderedAccessViews(0, 3, uavs.begin(), nullptr);
-				}
-
-				virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) override
-				{
-					Profile::ScopedEntry e1(Profile::Types::PushYUV);
-
-					D3D11_MAPPED_SUBRESOURCE mappedy;
-					D3D11_MAPPED_SUBRESOURCE mappedu;
-					D3D11_MAPPED_SUBRESOURCE mappedv;
-
-					auto hrs =
-					{
-						Y.Map(context, &mappedy),
-						U.Map(context, &mappedu),
-						V.Map(context, &mappedv)
-					};
-
-					bool pass = true;
-
-					for (auto res : hrs)
-					{
-						if (FAILED(res))
+						try
 						{
-							pass = false;
+							file.Assign(path, "rb");
+						}
 
-							Warning
+						catch (Status status)
+						{
+							if (status == Status::CouldNotOpenFile)
+							{
+								Warning
+								(
+									"SDR: Could not open shader \"%s\"\n",
+									path
+								);
+							}
+
+							throw false;
+						}
+
+						auto data = file.ReadAll();
+
+						MS::ThrowIfFailed
+						(
+							device->CreateComputeShader
 							(
-								"SDR: Could not map DX11 YUV buffers\n"
+								data.data(),
+								data.size(),
+								nullptr,
+								shader
+							)
+						);
+					};
+
+					struct ConversionRuleData
+					{
+						ConversionRuleData
+						(
+							AVPixelFormat format,
+							const char* shader,
+							bool yuv
+						) :
+							Format(format),
+							ShaderName(shader),
+							IsYUV(yuv)
+						{
+
+						}
+
+						AVPixelFormat Format;
+						const char* ShaderName;
+						bool IsYUV;
+					};
+
+					ConversionRuleData table[] =
+					{
+						ConversionRuleData(AV_PIX_FMT_YUV420P, "RGB32_To_YUV420", true),
+						ConversionRuleData(AV_PIX_FMT_YUV444P, "RGB32_To_YUV444", true),
+
+						/*
+							libx264rgb
+						*/
+						ConversionRuleData(AV_PIX_FMT_BGR0, "BGRA_PackRemoveAlpha", false),
+					};
+
+					ConversionRuleData* found = nullptr;
+
+					for (auto&& entry : table)
+					{
+						if (entry.Format == reference->format)
+						{
+							openshader
+							(
+								device,
+								entry.ShaderName,
+								ComputeShader.GetAddressOf()
 							);
 
+							found = &entry;
 							break;
 						}
 					}
 
-					if (pass)
+					if (!found)
 					{
-						auto ptry = (uint8_t*)mappedy.pData;
-						auto ptru = (uint8_t*)mappedu.pData;
-						auto ptrv = (uint8_t*)mappedv.pData;
-
-						item.Planes[0].assign(ptry, ptry + mappedy.RowPitch);
-						item.Planes[1].assign(ptru, ptru + mappedu.RowPitch);
-						item.Planes[2].assign(ptrv, ptrv + mappedv.RowPitch);
-					}
-
-					Y.Unmap(context);
-					U.Unmap(context);
-					V.Unmap(context);
-
-					return pass;
-				}
-
-				GPUBuffer Y;
-				GPUBuffer U;
-				GPUBuffer V;
-
-				Microsoft::WRL::ComPtr<ID3D11Buffer> ConstantBuffer;
-			};
-
-			void Create(HANDLE dx9handle, AVFrame* reference)
-			{
-				uint32_t flags = 0;
-				#ifdef _DEBUG
-				flags |= D3D11_CREATE_DEVICE_DEBUG;
-				#endif
-
-				MS::ThrowIfFailed
-				(
-					D3D11CreateDevice
-					(
-						nullptr,
-						D3D_DRIVER_TYPE_HARDWARE,
-						0,
-						flags,
-						nullptr,
-						0,
-						D3D11_SDK_VERSION,
-						Device.GetAddressOf(),
-						0,
-						Context.GetAddressOf()
-					)
-				);
-
-				Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
-
-				MS::ThrowIfFailed
-				(
-					Device->OpenSharedResource
-					(
-						dx9handle,
-						IID_PPV_ARGS(tempresource.GetAddressOf())
-					)
-				);
-
-				MS::ThrowIfFailed
-				(
-					tempresource.As(&SharedTexture)
-				);
-
-				MS::ThrowIfFailed
-				(
-					Device->CreateShaderResourceView
-					(
-						SharedTexture.Get(),
-						nullptr,
-						SharedTextureSRV.GetAddressOf()
-					)
-				);
-
-				auto openshader = []
-				(
-					ID3D11Device* device,
-					const char* name,
-					ID3D11ComputeShader** shader
-				)
-				{
-					using Status = SDR::Shared::ScopedFile::ExceptionType;
-
-					SDR::Shared::ScopedFile file;
-
-					char path[1024];
-					strcpy_s(path, SDR::GetGamePath());
-					strcat(path, R"(SDR\)");
-					strcat_s(path, name);
-					strcat_s(path, ".sdrshader");
-
-					try
-					{
-						file.Assign(path, "rb");
-					}
-
-					catch (Status status)
-					{
-						if (status == Status::CouldNotOpenFile)
-						{
-							Warning
-							(
-								"SDR: Could not open shader \"%s\"\n",
-								path
-							);
-						}
+						Warning
+						(
+							"SDR: No conversion rule found for %s\n",
+							av_get_pix_fmt_name((AVPixelFormat)reference->format)
+						);
 
 						throw false;
 					}
 
-					auto data = file.ReadAll();
-
-					MS::ThrowIfFailed
-					(
-						device->CreateComputeShader
-						(
-							data.data(),
-							data.size(),
-							nullptr,
-							shader
-						)
-					);
-				};
-
-				struct ConversionRuleData
-				{
-					ConversionRuleData
-					(
-						AVPixelFormat format,
-						const char* shader,
-						bool yuv
-					) :
-						Format(format),
-						ShaderName(shader),
-						IsYUV(yuv)
+					if (found->IsYUV)
 					{
-
+						GPUFrameBuffer = std::make_unique<YUVFrameBuffer>();
 					}
 
-					AVPixelFormat Format;
-					const char* ShaderName;
-					bool IsYUV;
-				};
-
-				ConversionRuleData table[] =
-				{
-					ConversionRuleData(AV_PIX_FMT_YUV420P, "RGB32_To_YUV420", true),
-					ConversionRuleData(AV_PIX_FMT_YUV444P, "RGB32_To_YUV444", true),
-
-					/*
-						libx264rgb
-					*/
-					ConversionRuleData(AV_PIX_FMT_BGR0, "BGRA_PackRemoveAlpha", false),
-				};
-
-				ConversionRuleData* found = nullptr;
-
-				for (auto&& entry : table)
-				{
-					if (entry.Format == reference->format)
+					else
 					{
-						openshader
-						(
-							Device.Get(),
-							entry.ShaderName,
-							ComputeShader.GetAddressOf()
-						);
-
-						found = &entry;
-						break;
+						GPUFrameBuffer = std::make_unique<RGBAFrameBuffer>();
 					}
+
+					GPUFrameBuffer->Create(device, reference);
 				}
 
-				if (!found)
-				{
-					Warning
-					(
-						"SDR: No conversion rule found for %s\n",
-						av_get_pix_fmt_name((AVPixelFormat)reference->format)
-					);
+				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ComputeShader;
 
-					throw false;
-				}
+				Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
+				Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRV;
 
-				if (found->IsYUV)
-				{
-					GPUFrameBuffer = std::make_unique<YUVFrameBuffer>();
-				}
+				std::unique_ptr<FrameBufferBase> GPUFrameBuffer;
+			} DirectX11;
 
-				else
-				{
-					GPUFrameBuffer = std::make_unique<RGBAFrameBuffer>();
-				}
+			SDRVideoWriter Video;
 
-				GPUFrameBuffer->Create(Device.Get(), reference);
+			virtual const char* GetSuffix() const
+			{
+				return nullptr;
 			}
 
-			Microsoft::WRL::ComPtr<ID3D11Device> Device;
-			Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
-			Microsoft::WRL::ComPtr<ID3D11ComputeShader> ComputeShader;
+			void DynamicBind(ID3D11DeviceContext* context)
+			{
+				context->CSSetShader(DirectX11.ComputeShader.Get(), nullptr, 0);
+				DirectX11.GPUFrameBuffer->DynamicBind(context);
+			}
 
-			Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
-			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRV;
+			virtual void PreRender()
+			{
 
-			std::unique_ptr<FrameBufferBase> GPUFrameBuffer;
-		} DirectX11;
+			}
+
+			virtual void PostRender()
+			{
+
+			}
+		};
+
+		struct FullbrightVideoStream : VideoStreamBase
+		{
+			virtual const char* GetSuffix() const override
+			{
+				return "fullbright";
+			}
+
+			virtual void PreRender()
+			{
+				ConVarRef ref("mat_fullbright");
+				ref.SetValue(1);
+			}
+
+			virtual void PostRender()
+			{
+				ConVarRef ref("mat_fullbright");
+				ref.SetValue(0);
+			}
+		};
+
+		std::unique_ptr<SDRAudioWriter> Audio;
+		std::vector<std::unique_ptr<VideoStreamBase>> VideoStreams;
+
+		std::thread FrameBufferThreadHandle;
+		std::unique_ptr<VideoQueueType> VideoQueue;
+
+		Microsoft::WRL::ComPtr<ID3D11Device> Device;
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
 	};
 
 	MovieData CurrentMovie;
@@ -1456,8 +1510,8 @@ namespace
 			{
 				--BufferedFrames;
 
-				movie.Video->SetFrameInput(item.Planes);
-				movie.Video->SendRawFrame();
+				item.Stream->Video.SetFrameInput(item.Planes);
+				item.Stream->Video.SendRawFrame();
 			}
 		}
 	}
@@ -1503,43 +1557,8 @@ namespace
 
 		#pragma endregion
 
-		void __fastcall Override
-		(
-			void* thisptr,
-			void* edx,
-			void* rect
-		)
+		void Pass(MovieData::VideoStreamBase* stream)
 		{
-			ThisHook.GetOriginal()
-			(
-				thisptr,
-				edx,
-				rect
-			);
-
-			auto& movie = CurrentMovie;
-			auto& dx9 = movie.DirectX9;
-			auto& dx11 = movie.DirectX11;
-			auto& interfaces = SDR::GetEngineInterfaces();
-			auto client = interfaces.EngineClient;
-
-			if (!CurrentMovie.IsStarted)
-			{
-				return;
-			}
-
-			if (*ModuleSourceGlobals::DrawLoading)
-			{
-				return;
-			}
-
-			if (client->Con_IsVisible())
-			{
-				return;
-			}
-
-			Profile::ScopedEntry e1(Profile::Types::ViewRender);
-
 			HRESULT hr;
 			Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
 
@@ -1566,7 +1585,7 @@ namespace
 			(
 				surface.Get(),
 				nullptr,
-				dx9.SharedSurface.Surface.Get(),
+				stream->DirectX9.SharedSurface.Surface.Get(),
 				nullptr,
 				D3DTEXF_NONE
 			);
@@ -1588,33 +1607,94 @@ namespace
 				Profile::ScopedEntry e1(Profile::Types::DX11Proc);
 
 				HRESULT hr;
-				auto& context = dx11.Context;
+				auto& context = CurrentMovie.Context;
 
 				auto srvs =
 				{
-					dx11.SharedTextureSRV.Get()
+					stream->DirectX11.SharedTextureSRV.Get()
 				};
 
 				context->CSSetShaderResources(0, 1, srvs.begin());
 
-				dx11.GPUFrameBuffer->DynamicBind(context.Get());
+				stream->DynamicBind(context.Get());
 
 				context->Dispatch
 				(
-					std::ceil(movie.Width / 8.0),
-					std::ceil(movie.Height / 8.0),
+					std::ceil(CurrentMovie.Width / 8.0),
+					std::ceil(CurrentMovie.Height / 8.0),
 					1
 				);
 
 				MovieData::VideoFutureData item;
+				item.Stream = stream;
 				
-				auto res = dx11.GPUFrameBuffer->Download(context.Get(), item);
+				auto res = stream->DirectX11.GPUFrameBuffer->Download(context.Get(), item);
 
 				if (res)
 				{
 					++BufferedFrames;
-					movie.VideoQueue->enqueue(std::move(item));
+					CurrentMovie.VideoQueue->enqueue(std::move(item));
 				}
+			}
+		}
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			void* rect
+		)
+		{
+			bool dopasses = true;
+
+			auto& movie = CurrentMovie;
+			auto& interfaces = SDR::GetEngineInterfaces();
+			auto client = interfaces.EngineClient;
+
+			if (!CurrentMovie.IsStarted)
+			{
+				dopasses = false;
+			}
+
+			if (*ModuleSourceGlobals::DrawLoading)
+			{
+				dopasses = false;
+			}
+
+			if (client->Con_IsVisible())
+			{
+				dopasses = false;
+			}
+
+			if (dopasses)
+			{
+				Profile::ScopedEntry e1(Profile::Types::ViewRender);
+
+				for (auto& stream : movie.VideoStreams)
+				{
+					stream->PreRender();
+
+					ThisHook.GetOriginal()
+					(
+						thisptr,
+						edx,
+						rect
+					);
+
+					Pass(stream.get());
+
+					stream->PostRender();
+				}
+			}
+
+			else
+			{
+				ThisHook.GetOriginal()
+				(
+					thisptr,
+					edx,
+					rect
+				);
 			}
 		}
 	}
@@ -1661,26 +1741,9 @@ namespace
 
 		#pragma endregion
 
-		/*
-			The 7th parameter (unk) was been added in Source 2013,
-			it's not there in Source 2007
-		*/
-		void __cdecl Override
-		(
-			const char* filename,
-			int flags,
-			int width,
-			int height,
-			float framerate,
-			int jpegquality,
-			int unk
-		)
+		void CreateOutputDirectory(const char* path)
 		{
-			auto& movie = CurrentMovie;
-
-			auto sdrpath = Variables::OutputDirectory.GetString();
-
-			auto res = SHCreateDirectoryExA(nullptr, sdrpath, nullptr);
+			auto res = SHCreateDirectoryExA(nullptr, path, nullptr);
 
 			switch (res)
 			{
@@ -1700,7 +1763,7 @@ namespace
 						"SDR: Movie output path is invalid\n"
 					);
 
-					return;
+					throw false;
 				}
 
 				case ERROR_CANCELLED:
@@ -1710,7 +1773,7 @@ namespace
 						"SDR: Extra directories were created but are hidden, aborting\n"
 					);
 
-					return;
+					throw false;
 				}
 
 				default:
@@ -1721,62 +1784,106 @@ namespace
 						"related to sdr_outputdir\n"
 					);
 
-					return;
+					throw false;
 				}
 			}
+		}
 
-			struct VideoConfigurationData
+		std::string BuildVideoStreamName
+		(
+			const char* savepath,
+			const char* filename,
+			MovieData::VideoStreamBase* stream
+		)
+		{
+			char finalname[2048];
+			char finalfilename[1024];
+			char extension[64];
+
+			auto suffix = stream->GetSuffix();
+
+			if (suffix)
 			{
-				AVCodec* Encoder;
+				auto ptr = V_GetFileExtension(filename);
+				strcpy_s(extension, ptr);
 
-				std::vector<std::pair<const char*, AVPixelFormat>> PixelFormats;
+				V_StripExtension(filename, finalfilename, sizeof(finalfilename));
 
-				bool ImageSequence = false;
-				const char* SequenceExtension;
-			};
+				strcat_s(finalfilename, "_");
+				strcat_s(finalfilename, suffix);
 
-			auto seqremovepercent = [](char* filename)
-			{
-				auto length = strlen(filename);
-
-				for (int i = length - 1; i >= 0; i--)
-				{
-					auto& curchar = filename[i];
-
-					if (curchar == '%')
-					{
-						curchar = 0;
-						break;
-					}
-				}
-			};
-
-			std::vector<VideoConfigurationData> videoconfigs;
-
-			{
-				auto i420 = std::make_pair("i420", AV_PIX_FMT_YUV420P);
-				auto i444 = std::make_pair("i444", AV_PIX_FMT_YUV444P);
-				auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
-
-				videoconfigs.emplace_back();
-				auto& x264 = videoconfigs.back();				
-				x264.Encoder = avcodec_find_encoder_by_name("libx264");
-				x264.PixelFormats =
-				{
-					i420,
-					i444,
-				};
-
-				videoconfigs.emplace_back();
-				auto& x264rgb = videoconfigs.back();
-				x264rgb.Encoder = avcodec_find_encoder_by_name("libx264rgb");
-				x264rgb.PixelFormats =
-				{
-					bgr0,
-				};
+				strcat_s(finalfilename, ".");
+				strcat_s(finalfilename, extension);
 			}
 
-			const VideoConfigurationData* vidconfig = nullptr;
+			else
+			{
+				strcpy_s(finalfilename, filename);
+			}
+
+			V_ComposeFileName
+			(
+				savepath,
+				finalfilename,
+				finalname,
+				sizeof(finalname)
+			);
+
+			return {finalname};
+		}
+
+		std::string BuildAudioName
+		(
+			const char* savepath,
+			const char* filename
+		)
+		{
+			char finalname[2048];
+			char finalfilename[1024];
+
+			V_StripExtension(filename, finalfilename, sizeof(finalfilename));
+			strcat_s(finalfilename, ".wav");
+
+			V_ComposeFileName
+			(
+				savepath,
+				finalfilename,
+				finalname,
+				sizeof(finalname)
+			);
+
+			return {finalname};
+		}
+
+		/*
+			The 7th parameter (unk) was been added in Source 2013,
+			it's not there in Source 2007
+		*/
+		void __cdecl Override
+		(
+			const char* filename,
+			int flags,
+			int width,
+			int height,
+			float framerate,
+			int jpegquality,
+			int unk
+		)
+		{
+			auto& movie = CurrentMovie;
+
+			auto sdrpath = Variables::OutputDirectory.GetString();
+
+			try
+			{
+				CreateOutputDirectory(sdrpath);
+			}
+
+			catch (bool value)
+			{
+				return;
+			}
+
 			auto colorspace = AVCOL_SPC_BT470BG;
 			auto colorrange = AVCOL_RANGE_MPEG;
 			auto pxformat = AV_PIX_FMT_NONE;
@@ -1784,171 +1891,148 @@ namespace
 			movie.Width = width;
 			movie.Height = height;
 
+			try
 			{
-				try
+				av_log_set_callback(LAV::LogFunction);
+
+				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
+				tempstreams.emplace_back(std::make_unique<MovieData::VideoStreamBase>());
+
+				if (Variables::Pass::Fullbright.GetBool())
 				{
-					av_log_set_callback(LAV::LogFunction);
+					tempstreams.emplace_back(std::make_unique<MovieData::FullbrightVideoStream>());
+				}
 
-					auto tempvideo = std::make_unique<SDRVideoWriter>();
-					std::unique_ptr<SDRAudioWriter> tempaudio;
+				std::unique_ptr<SDRAudioWriter> tempaudio;
 
-					if (Variables::Audio::Enable.GetBool())
+				if (Variables::Audio::Enable.GetBool())
+				{
+					tempaudio = std::make_unique<SDRAudioWriter>();
+				}
+
+				auto audiowriter = tempaudio.get();
+
+				auto linktabletovariable = []
+				(
+					const char* key,
+					const auto& table,
+					auto& variable
+				)
+				{
+					for (const auto& entry : table)
 					{
-						tempaudio = std::make_unique<SDRAudioWriter>();
-					}
-
-					auto vidwriter = tempvideo.get();
-					auto audiowriter = tempaudio.get();
-
-					auto linktabletovariable = []
-					(
-						const char* key,
-						const auto& table,
-						auto& variable
-					)
-					{
-						for (const auto& entry : table)
+						if (_strcmpi(key, entry.first) == 0)
 						{
-							if (_strcmpi(key, entry.first) == 0)
-							{
-								variable = entry.second;
-								break;
-							}
+							variable = entry.second;
+							break;
 						}
+					}
+				};
+
+				struct VideoConfigurationData
+				{
+					AVCodec* Encoder;
+					std::vector<std::pair<const char*, AVPixelFormat>> PixelFormats;
+				};
+
+				std::vector<VideoConfigurationData> videoconfigs;
+				const VideoConfigurationData* vidconfig = nullptr;
+
+				{
+					auto i420 = std::make_pair("i420", AV_PIX_FMT_YUV420P);
+					auto i444 = std::make_pair("i444", AV_PIX_FMT_YUV444P);
+					auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
+
+					videoconfigs.emplace_back();
+					auto& x264 = videoconfigs.back();
+					x264.Encoder = avcodec_find_encoder_by_name("libx264");
+					x264.PixelFormats =
+					{
+						i420,
+						i444,
 					};
 
-					{						
-						char finalfilename[1024];
-						strcpy_s(finalfilename, filename);
+					videoconfigs.emplace_back();
+					auto& x264rgb = videoconfigs.back();
+					x264rgb.Encoder = avcodec_find_encoder_by_name("libx264rgb");
+					x264rgb.PixelFormats =
+					{
+						bgr0,
+					};
+				}
 
-						std::string extension;
+				{
+					auto encoderstr = Variables::Video::Encoder.GetString();
+
+					auto encoder = avcodec_find_encoder_by_name(encoderstr);
+					LAV::ThrowIfNull(encoder, LAV::ExceptionType::VideoEncoderNotFound);
+
+					for (const auto& config : videoconfigs)
+					{
+						if (config.Encoder == encoder)
 						{
-							auto ptr = V_GetFileExtension(finalfilename);
-
-							if (ptr)
-							{
-								extension = ptr;
-							}
+							vidconfig = &config;
+							break;
 						}
+					}
 
-						/*
-							Default to avi container with x264
-						*/
-						if (extension.empty())
-						{
-							extension = "libx264";
-							strcat_s(finalfilename, ".avi.libx264");
-						}
-
-						/*
-							Users can select what available encoder they want
-						*/
-						for (const auto& config : videoconfigs)
-						{
-							auto tester = config.Encoder->name;
-
-							if (config.ImageSequence)
-							{
-								tester = config.SequenceExtension;
-							}
-
-							if (_strcmpi(extension.c_str(), tester) == 0)
-							{
-								vidconfig = &config;
-								break;
-							}
-						}
-
-						/*
-							None selected by user, use x264
-						*/
-						if (!vidconfig)
-						{
-							vidconfig = &videoconfigs[0];
-						}
-
-						else
-						{
-							V_StripExtension
-							(
-								finalfilename,
-								finalfilename,
-								sizeof(finalfilename)
-							);
-
-							if (!vidconfig->ImageSequence)
-							{
-								auto ptr = V_GetFileExtension(finalfilename);
-
-								if (!ptr)
-								{
-									ptr = "avi";
-									strcat_s(finalfilename, ".avi");
-								}
-							}
-						}
-
-						if (vidconfig->ImageSequence)
-						{
-							seqremovepercent(finalfilename);
-							strcat_s(finalfilename, "%05d.");
-							strcat_s(finalfilename, vidconfig->SequenceExtension);
-						}
-
-						char finalname[2048];
-
-						V_ComposeFileName
+					if (!vidconfig)
+					{
+						Warning
 						(
-							sdrpath,
-							finalfilename,
-							finalname,
-							sizeof(finalname)
+							"SDR: Encoder %s not found\n",
+							encoderstr
 						);
 
-						auto pxformatstr = Variables::Video::PixelFormat.GetString();
+						LAV::ThrowIfNull(vidconfig, LAV::ExceptionType::VideoEncoderNotFound);
+					}
 
-						linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat);
+					auto pxformatstr = Variables::Video::PixelFormat.GetString();
 
-						/*
-							User selected pixel format does not match any in config
-						*/
-						if (pxformat == AV_PIX_FMT_NONE)
+					linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat);
+
+					/*
+						User selected pixel format does not match any in config
+					*/
+					if (pxformat == AV_PIX_FMT_NONE)
+					{
+						pxformat = vidconfig->PixelFormats[0].second;
+					}
+
+					/*
+						Not setting this will leave different colors across
+						multiple programs
+					*/
+
+					auto isrgbtype = [](AVPixelFormat format)
+					{
+						auto table =
 						{
-							pxformat = vidconfig->PixelFormats[0].second;
-						}
-		
-						/*
-							Not setting this will leave different colors across
-							multiple programs
-						*/
-
-						auto isrgbtype = [](AVPixelFormat format)
-						{
-							auto table =
-							{
-								AV_PIX_FMT_RGB24,
-								AV_PIX_FMT_BGR24,
-								AV_PIX_FMT_BGR0,
-							};
-
-							for (auto entry : table)
-							{
-								if (format == entry)
-								{
-									return true;
-								}
-							}
-
-							return false;
+							AV_PIX_FMT_RGB24,
+							AV_PIX_FMT_BGR24,
+							AV_PIX_FMT_BGR0,
 						};
 
-						if (isrgbtype(pxformat))
+						for (auto entry : table)
 						{
-							colorrange = AVCOL_RANGE_UNSPECIFIED;
-							colorspace = AVCOL_SPC_RGB;
+							if (format == entry)
+							{
+								return true;
+							}
 						}
 
-						vidwriter->Frame.Assign
+						return false;
+					};
+
+					if (isrgbtype(pxformat))
+					{
+						colorrange = AVCOL_RANGE_UNSPECIFIED;
+						colorspace = AVCOL_SPC_RGB;
+					}
+
+					for (auto& stream : tempstreams)
+					{
+						stream->Video.Frame.Assign
 						(
 							width,
 							height,
@@ -1956,121 +2040,128 @@ namespace
 							colorspace,
 							colorrange
 						);
+					}
 
-						try
+					try
+					{
+						uint32_t flags = 0;
+						#ifdef _DEBUG
+						flags |= D3D11_CREATE_DEVICE_DEBUG;
+						#endif
+
+						MS::ThrowIfFailed
+						(
+							D3D11CreateDevice
+							(
+								nullptr,
+								D3D_DRIVER_TYPE_HARDWARE,
+								0,
+								flags,
+								nullptr,
+								0,
+								D3D11_SDK_VERSION,
+								movie.Device.GetAddressOf(),
+								0,
+								movie.Context.GetAddressOf()
+							)
+						);
+
+						for (auto& stream : tempstreams)
 						{
-							auto& dx9 = movie.DirectX9;
-							auto& dx11 = movie.DirectX11;
-
-							dx9.SharedSurface.Create
+							stream->DirectX9.SharedSurface.Create
 							(
 								ModuleSourceGlobals::DX9Device,
 								width,
 								height
 							);
 
-							dx11.Create
+							stream->DirectX11.Create
 							(
-								movie.DirectX9.SharedSurface.SharedHandle,
-								vidwriter->Frame.Get()
+								movie.Device.Get(),
+								stream->DirectX9.SharedSurface.SharedHandle,
+								stream->Video.Frame.Get()
 							);
-
-							dx11.GPUFrameBuffer->ShadowBind(dx11.Context.Get());
-							dx11.Context->CSSetShader(dx11.ComputeShader.Get(), nullptr, 0);
 						}
-
-						catch (HRESULT status)
-						{
-							return;
-						}
-
-						catch (bool value)
-						{
-							return;
-						}
-
-						vidwriter->OpenFileForWrite(finalname);
-
-						if (audiowriter)
-						{
-							V_StripExtension(finalname, finalname, sizeof(finalname));
-							
-							/*
-								If the user wants an image sequence, it means the filename
-								has the digit formatting, don't want this in audio name
-							*/
-							if (vidconfig->ImageSequence)
-							{
-								seqremovepercent(finalname);
-							}
-
-							strcat_s(finalname, ".wav");
-
-							/*
-								This is the only supported audio output format
-							*/
-							audiowriter->Open(finalname, 44'100, 16, 2);
-						}
-
-						vidwriter->SetEncoder(vidconfig->Encoder);
 					}
 
+					catch (HRESULT status)
 					{
-						LAV::ScopedAVDictionary options;
-						AVDictionary** dictptr = nullptr;
-
-						if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
-						{
-							namespace X264 = Variables::Video::X264;
-
-							auto preset = X264::Preset.GetString();
-							auto crf = X264::CRF.GetString();
-							auto intra = X264::Intra.GetBool();
-							
-							options.Set("preset", preset);
-							options.Set("crf", crf);
-
-							if (intra)
-							{
-								/*
-									Setting every frame as a keyframe
-									gives the ability to use the video in a video editor with ease
-								*/
-								options.Set("x264-params", "keyint=1");
-							}
-
-							dictptr = options.Get();
-						}
-
-						auto fps = Variables::FrameRate.GetInt();
-
-						vidwriter->OpenEncoder
-						(
-							width,
-							height,
-							fps,
-							pxformat,
-							colorspace,
-							colorrange,
-							dictptr
-						);
+						return;
 					}
 
-					vidwriter->WriteHeader();
+					catch (bool value)
+					{
+						return;
+					}
 
-					movie.Video = std::move(tempvideo);
-					movie.Audio = std::move(tempaudio);
+					for (auto& stream : tempstreams)
+					{
+						auto name = BuildVideoStreamName
+						(
+							sdrpath,
+							filename,
+							stream.get()
+						);
+
+						stream->Video.OpenFileForWrite(name.c_str());
+						stream->Video.SetEncoder(vidconfig->Encoder);
+					}
+
+					if (audiowriter)
+					{
+						auto name = BuildAudioName(sdrpath, filename);
+
+						/*
+							This is the only supported audio output format
+						*/
+						audiowriter->Open(name.c_str(), 44'100, 16, 2);
+					}
 				}
+
+				for (auto& stream : tempstreams)
+				{
+					LAV::ScopedAVDictionary options;
+
+					if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
+					{
+						namespace X264 = Variables::Video::X264;
+
+						auto preset = X264::Preset.GetString();
+						auto crf = X264::CRF.GetString();
+						auto intra = X264::Intra.GetBool();
+							
+						options.Set("preset", preset);
+						options.Set("crf", crf);
+
+						if (intra)
+						{
+							/*
+								Setting every frame as a keyframe
+								gives the ability to use the video in a video editor with ease
+							*/
+							options.Set("x264-params", "keyint=1");
+						}
+					}
+
+					auto fps = Variables::FrameRate.GetInt();
+					stream->Video.OpenEncoder(fps, options.Get());
+
+					stream->Video.WriteHeader();
+				}
+
+				movie.VideoStreams = std::move(tempstreams);
+
+				movie.Audio = std::move(tempaudio);
+			}
 					
-				catch (const LAV::Exception& error)
-				{
-					return;
-				}
+			catch (const LAV::Exception& error)
+			{
+				return;
+			}
 
-				catch (const LAV::ExceptionNullPtr& error)
-				{
-					return;
-				}
+			catch (const LAV::ExceptionNullPtr& error)
+			{
+				return;
 			}
 
 			ThisHook.GetOriginal()
@@ -2252,9 +2343,12 @@ namespace
 				}
 
 				/*
-					Let the encoder finish all the delayed frames
+					Let the encoders finish all the delayed frames
 				*/
-				CurrentMovie.Video->Finish();
+				for (auto& stream : CurrentMovie.VideoStreams)
+				{
+					stream->Video.Finish();
+				}
 			});
 
 			task.then([]()
