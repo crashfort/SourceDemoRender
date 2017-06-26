@@ -973,31 +973,19 @@ namespace
 				{
 					MS::ThrowIfFailed
 					(
-						device->CreateTexture
+						device->CreateOffscreenPlainSurface
 						(
 							width,
 							height,
-							1,
-							0,
 							D3DFMT_A8R8G8B8,
 							D3DPOOL_DEFAULT,
-							Texture.GetAddressOf(),
+							Surface.GetAddressOf(),
 							&SharedHandle
-						)
-					);
-
-					MS::ThrowIfFailed
-					(
-						Texture->GetSurfaceLevel
-						(
-							0,
-							Surface.GetAddressOf()
 						)
 					);
 				}
 
 				HANDLE SharedHandle = nullptr;
-				Microsoft::WRL::ComPtr<IDirect3DTexture9> Texture;
 				Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 			};
 
