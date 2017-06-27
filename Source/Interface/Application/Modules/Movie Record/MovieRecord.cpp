@@ -2003,14 +2003,25 @@ namespace
 
 			auto sdrpath = Variables::OutputDirectory.GetString();
 
-			try
+			/*
+				No desired path, use game root
+			*/
+			if (strlen(sdrpath) == 0)
 			{
-				CreateOutputDirectory(sdrpath);
+				sdrpath = SDR::GetGamePath();
 			}
 
-			catch (bool value)
+			else
 			{
-				return;
+				try
+				{
+					CreateOutputDirectory(sdrpath);
+				}
+
+				catch (bool value)
+				{
+					return;
+				}
 			}
 
 			auto colorspace = AVCOL_SPC_BT470BG;
