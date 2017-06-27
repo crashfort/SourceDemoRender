@@ -1084,6 +1084,11 @@ namespace
 					Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 				};
 
+				void Create(IDirect3DDevice9* device, int width, int height)
+				{
+					SharedSurface.Create(device, width, height);
+				}
+
 				/*
 					This is the surface that we draw on to.
 					It is shared with a DirectX 11 texture so we can run it through
@@ -2169,7 +2174,7 @@ namespace
 
 						for (auto& stream : tempstreams)
 						{
-							stream->DirectX9.SharedSurface.Create
+							stream->DirectX9.Create
 							(
 								ModuleSourceGlobals::DX9Device,
 								width,
