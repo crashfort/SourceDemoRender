@@ -632,6 +632,13 @@ namespace
 
 	struct SDRVideoWriter
 	{
+		enum
+		{
+			PlaneCount = 3
+		};
+
+		using PlaneType = std::array<std::vector<uint8_t>, PlaneCount>;
+
 		void OpenFileForWrite(const char* path)
 		{
 			FormatContext.Assign(path);
@@ -729,7 +736,7 @@ namespace
 			);
 		}
 
-		void SetFrameInput(MovieData::VideoFutureData::PlaneType& planes)
+		void SetFrameInput(PlaneType& planes)
 		{
 			int index = 0;
 
@@ -981,15 +988,8 @@ namespace
 
 		struct VideoFutureData
 		{
-			enum
-			{
-				PlaneCount = 3
-			};
-
-			using PlaneType = std::array<std::vector<uint8_t>, PlaneCount>;
-
 			VideoStreamBase* Stream;
-			PlaneType Planes;
+			SDRVideoWriter::PlaneType Planes;
 		};
 
 		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureData>;
