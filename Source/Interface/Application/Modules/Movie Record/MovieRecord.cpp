@@ -1721,11 +1721,7 @@ namespace
 
 			if (FAILED(hr))
 			{
-				Warning
-				(
-					"SDR: Could not get DX9 RT\n"
-				);
-
+				Warning("SDR: Could not get DX9 RT\n");
 				return;
 			}
 
@@ -1743,11 +1739,7 @@ namespace
 
 			if (FAILED(hr))
 			{
-				Warning
-				(
-					"SDR: Could not copy DX9 RT -> DX11 RT\n"
-				);
-
+				Warning("SDR: Could not copy DX9 RT -> DX11 RT\n");
 				return;
 			}
 
