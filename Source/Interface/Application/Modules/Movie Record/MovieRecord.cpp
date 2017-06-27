@@ -633,12 +633,10 @@ namespace
 
 	struct SDRVideoWriter
 	{
-		enum
-		{
-			PlaneCount = 3
-		};
-
-		using PlaneType = std::array<std::vector<uint8_t>, PlaneCount>;
+		/*
+			At most, YUV formats will use all planes. RGB only uses 1.
+		*/
+		using PlaneType = std::array<std::vector<uint8_t>, 3>;
 
 		void OpenFileForWrite(const char* path)
 		{
@@ -666,6 +664,9 @@ namespace
 			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
 			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
 
+			/*
+				Against what the new ffmpeg API incorrectly suggests, but is the right way.
+			*/
 			CodecContext = Stream->codec;
 		}
 
@@ -1128,6 +1129,11 @@ namespace
 					Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 				};
 
+				/*
+					This is the surface that we draw on to.
+					It is shared with a DirectX 11 texture so we can run it through
+					shaders.
+				*/
 				SharedSurfaceData SharedSurface;
 			} DirectX9;
 
@@ -2289,6 +2295,9 @@ namespace
 					stream->Video.WriteHeader();
 				}
 
+				/*
+					All went well, move state over
+				*/
 				movie.VideoStreams = std::move(tempstreams);
 				movie.Audio = std::move(tempaudio);
 			}
@@ -2303,6 +2312,9 @@ namespace
 				return;
 			}
 
+			/*
+				Let the engine set its movie recording state
+			*/
 			ThisHook.GetOriginal()
 			(
 				filename,
@@ -2322,6 +2334,9 @@ namespace
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(enginerate);
 
+			/*
+				Make room for 128 entries in this queue
+			*/
 			movie.VideoQueue = std::make_unique<MovieData::VideoQueueType>(128);
 
 			movie.IsStarted = true;
