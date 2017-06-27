@@ -1824,7 +1824,11 @@ namespace
 
 				else
 				{
-					Pass(movie.VideoStreams[0].get());
+					auto& stream = movie.VideoStreams[0];
+					
+					stream->PreRender();
+					Pass(stream.get());
+					stream->PostRender();
 				}
 			}
 		}
