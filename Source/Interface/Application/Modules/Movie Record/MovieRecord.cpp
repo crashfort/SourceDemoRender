@@ -10,7 +10,6 @@ extern "C"
 	#include "libavutil\imgutils.h"
 	#include "libavcodec\avcodec.h"
 	#include "libavformat\avformat.h"
-	#include "libswscale\swscale.h"
 }
 
 #include <ppltasks.h>
@@ -95,50 +94,6 @@ namespace
 				throw info;
 			}
 		}
-
-		struct ScopedSWSContext
-		{
-			~ScopedSWSContext()
-			{
-				sws_freeContext(Context);
-			}
-
-			void Assign
-			(
-				int width,
-				int height,
-				AVPixelFormat sourceformat,
-				AVPixelFormat destformat
-			)
-			{
-				Context = sws_getContext
-				(
-					width,
-					height,
-					sourceformat,
-					width,
-					height,
-					destformat,
-					0,
-					nullptr,
-					nullptr,
-					nullptr
-				);
-
-				ThrowIfNull
-				(
-					Context,
-					ExceptionType::AllocSWSContext
-				);
-			}
-
-			SwsContext* Get()
-			{
-				return Context;
-			}
-
-			SwsContext* Context = nullptr;
-		};
 
 		struct ScopedFormatContext
 		{
