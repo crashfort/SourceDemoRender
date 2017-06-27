@@ -1230,10 +1230,7 @@ namespace
 
 						if (FAILED(hr))
 						{
-							Warning
-							(
-								"SDR: Could not map DX11 RGB buffer\n"
-							);
+							Warning("SDR: Could not map DX11 RGB buffer\n");
 						}
 
 						else
@@ -1332,11 +1329,7 @@ namespace
 							{
 								pass = false;
 
-								Warning
-								(
-									"SDR: Could not map DX11 YUV buffers\n"
-								);
-
+								Warning("SDR: Could not map DX11 YUV buffers\n");
 								break;
 							}
 						}
