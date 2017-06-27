@@ -23,6 +23,7 @@ extern "C"
 #include <d3d11.h>
 
 #include "readerwriterqueue.h"
+#include "view_shared.h"
 
 namespace
 {
@@ -858,10 +859,25 @@ namespace
 				int& width,
 				int& height
 			);
+
+			using BeginFrame = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				float frametime
+			);
+
+			using EndFrame = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
 		}
 		
 		void* MaterialsPtr;
 		Types::GetBackBufferDimensions GetBackBufferDimensions;
+		Types::BeginFrame BeginFrame;
+		Types::EndFrame EndFrame;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -906,6 +922,134 @@ namespace
 					return SDR::ModuleShared::SetFromAddress
 					(
 						GetBackBufferDimensions,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_BeginFrame",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						BeginFrame,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MaterialSystem_EndFrame",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						EndFrame,
+						address
+					);
+				}
+			)
+		);
+	}
+
+	namespace ModuleView
+	{
+		namespace Types
+		{
+			using RenderView = void(__fastcall*)
+			(
+				void* thisptr,
+				void* edx,
+				const void* view,
+				int clearflags,
+				int whattodraw
+			);
+
+			using GetViewSetup = const void*(__fastcall*)
+			(
+				void* thisptr,
+				void* edx
+			);
+		}
+		
+		void* ViewPtr;
+		Types::RenderView RenderView;
+		Types::GetViewSetup GetViewSetup;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"View_ViewPtr",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					ViewPtr = **(void***)(address);
+
+					SDR::ModuleShared::Registry::SetKeyValue
+					(
+						name,
+						ViewPtr
+					);
+
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"View_RenderView",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						RenderView,
+						address
+					);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"View_GetViewSetup",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					auto address = SDR::GetAddressFromJsonFlex(value);
+
+					return SDR::ModuleShared::SetFromAddress
+					(
+						GetViewSetup,
 						address
 					);
 				}
@@ -1652,6 +1796,13 @@ namespace
 			void* rect
 		)
 		{
+			ThisHook.GetOriginal()
+			(
+				thisptr,
+				edx,
+				rect
+			);
+
 			bool dopasses = true;
 
 			auto& movie = CurrentMovie;
@@ -1677,31 +1828,52 @@ namespace
 			{
 				Profile::ScopedEntry e1(Profile::Types::ViewRender);
 
-				for (auto& stream : movie.VideoStreams)
+				auto count = movie.VideoStreams.size();
+
+				if (count > 1)
 				{
-					stream->PreRender();
+					for (auto& stream : movie.VideoStreams)
+					{
+						stream->PreRender();
 
-					ThisHook.GetOriginal()
-					(
-						thisptr,
-						edx,
-						rect
-					);
+						ModuleMaterialSystem::EndFrame
+						(
+							ModuleMaterialSystem::MaterialsPtr,
+							nullptr
+						);
 
-					Pass(stream.get());
+						ModuleMaterialSystem::BeginFrame
+						(
+							ModuleMaterialSystem::MaterialsPtr,
+							nullptr,
+							0
+						);
 
-					stream->PostRender();
+						auto setup = ModuleView::GetViewSetup
+						(
+							ModuleView::ViewPtr,
+							nullptr
+						);
+
+						ModuleView::RenderView
+						(
+							ModuleView::ViewPtr,
+							nullptr,
+							setup,
+							0,
+							RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD
+						);
+
+						Pass(stream.get());
+
+						stream->PostRender();
+					}
 				}
-			}
 
-			else
-			{
-				ThisHook.GetOriginal()
-				(
-					thisptr,
-					edx,
-					rect
-				);
+				else
+				{
+					Pass(movie.VideoStreams[0].get());
+				}
 			}
 		}
 	}
