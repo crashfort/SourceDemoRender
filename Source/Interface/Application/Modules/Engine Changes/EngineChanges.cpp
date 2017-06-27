@@ -73,11 +73,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ActivateMouse",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(
@@ -136,11 +132,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"AppActivate",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(

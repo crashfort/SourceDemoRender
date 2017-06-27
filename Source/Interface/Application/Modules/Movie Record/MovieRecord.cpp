@@ -884,11 +884,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialSystem_MaterialsPtr",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
@@ -911,11 +907,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialSystem_GetBackBufferDimensions",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
 
@@ -929,11 +921,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialSystem_BeginFrame",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
 
@@ -947,11 +935,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialSystem_EndFrame",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
 
@@ -994,11 +978,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"View_ViewPtr",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
@@ -1021,11 +1001,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"View_RenderView",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
 
@@ -1039,11 +1015,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"View_GetViewSetup",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
 
@@ -1067,11 +1039,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"D3D9_Device",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
@@ -1094,11 +1062,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"DrawLoading",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
@@ -1690,11 +1654,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"View_Render",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(
@@ -1894,11 +1854,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"StartMovie",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(
@@ -2380,11 +2336,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"StartMovieCommand",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(
@@ -2463,11 +2415,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EndMovie",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(
@@ -2585,11 +2533,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"SNDRecordBuffer",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(
@@ -2633,11 +2577,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"WaveCreateTmpFile",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(
@@ -2691,11 +2631,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"WaveAppendTmpFile",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(
@@ -2747,11 +2683,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"WaveFixupTmpFile",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
 					return SDR::CreateHookShort
 					(
