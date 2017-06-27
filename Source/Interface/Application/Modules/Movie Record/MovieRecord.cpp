@@ -1867,7 +1867,12 @@ namespace
 
 		void CreateOutputDirectory(const char* path)
 		{
-			auto res = SHCreateDirectoryExA(nullptr, path, nullptr);
+			char final[1024];
+			strcpy_s(final, path);
+
+			V_AppendSlash(final, sizeof(final));
+
+			auto res = SHCreateDirectoryExA(nullptr, final, nullptr);
 
 			switch (res)
 			{
