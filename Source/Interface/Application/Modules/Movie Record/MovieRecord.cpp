@@ -2,6 +2,7 @@
 #include "Interface\Application\Application.hpp"
 
 #include "dbg.h"
+#include "view_shared.h"
 
 extern "C"
 {
@@ -23,7 +24,6 @@ extern "C"
 #include <d3d11.h>
 
 #include "readerwriterqueue.h"
-#include "view_shared.h"
 
 namespace
 {
