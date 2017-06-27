@@ -1,3 +1,5 @@
+#include "PackUtility.hlsl"
+
 /*
 	This shader converts a UNORM texture into a uint BGR0 format
 */
@@ -16,7 +18,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	RGB32Texture.GetDimensions(width, height);
 
 	uint4 color = uint4(round(pix.rgb * 255.0), 255);
-	uint final = ((color.a << 24) | (color.r << 16) | (color.g << 8) | (color.b)) & 0xFFFFFFFF;
+	uint final = PackBGRA(color.b, color.g, color.r, 255);
 
 	OutTexture[pos.y * (width) + pos.x] = final;
 }
