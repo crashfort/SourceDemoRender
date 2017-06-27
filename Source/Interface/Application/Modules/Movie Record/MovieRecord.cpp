@@ -1822,7 +1822,7 @@ namespace
 					}
 				}
 
-				else
+				else if (count == 1)
 				{
 					auto& stream = movie.VideoStreams[0];
 					
