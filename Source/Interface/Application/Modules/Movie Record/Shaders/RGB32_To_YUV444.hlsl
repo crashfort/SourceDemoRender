@@ -3,7 +3,7 @@
 [numthreads(8, 8, 1)]
 void CSMain(uint3 dtid : SV_DispatchThreadID)
 {
-	int2 pos = dtid.xy;
+	uint2 pos = dtid.xy;
 	float4 pix = RGB32Texture.Load(dtid);
 
 	float Y = 16 + pix.r * 65.481 + pix.g * 128.553 + pix.b * 24.966;
