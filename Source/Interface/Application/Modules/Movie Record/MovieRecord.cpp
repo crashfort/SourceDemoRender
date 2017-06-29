@@ -2273,18 +2273,9 @@ namespace
 			}
 
 			/*
-				Let the engine set its movie recording state
+				Don't call the original CL_StartMovie as it causes
+				major recording slowdowns
 			*/
-			ThisHook.GetOriginal()
-			(
-				filename,
-				flags,
-				width,
-				height,
-				framerate,
-				jpegquality,
-				unk
-			);
 
 			auto enginerate = Variables::FrameRate.GetInt();
 
@@ -2346,9 +2337,15 @@ namespace
 			const CCommand& args
 		)
 		{
+			if (CurrentMovie.IsStarted)
+			{
+				Msg("SDR: Movie is already started\n");
+				return;
+			}
+
 			if (args.ArgC() < 2)
 			{
-				ConMsg
+				Msg
 				(
 					"SDR: Name is required for startmovie, "
 					"see Github page for help\n"
@@ -2372,13 +2369,10 @@ namespace
 
 			auto name = args[1];
 
-			/*
-				4 = FMOVIE_WAV, needed for future audio calls
-			*/
 			ModuleStartMovie::Override
 			(
 				name,
-				4,
+				0,
 				width,
 				height,
 				0,
@@ -2419,12 +2413,16 @@ namespace
 
 		void __cdecl Override()
 		{
-			ThisHook.GetOriginal()();
-
 			if (!CurrentMovie.IsStarted)
 			{
+				Msg("SDR: No movie is started\n");
 				return;
 			}
+
+			/*
+				Don't call original function as we don't
+				call the engine's startmovie
+			*/
 
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(0);
