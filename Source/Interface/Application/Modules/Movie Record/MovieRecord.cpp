@@ -2506,6 +2506,50 @@ namespace
 		}
 	}
 
+	namespace ModuleEndMovieCommand
+	{
+		#pragma region Init
+
+		void __cdecl Override
+		(
+			const CCommand& args
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"EndMovieCommand",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
+
+		#pragma endregion
+
+		/*
+			Always allow ending movie
+		*/
+		void __cdecl Override
+		(
+			const CCommand& args
+		)
+		{
+			ModuleEndMovie::Override();
+		}
+	}
+
 	namespace ModuleSNDRecordBuffer
 	{
 		#pragma region Init
