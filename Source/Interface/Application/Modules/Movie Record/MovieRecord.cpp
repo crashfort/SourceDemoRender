@@ -1436,7 +1436,7 @@ namespace
 						/*
 							libx264rgb
 						*/
-						ConversionRuleData(AV_PIX_FMT_BGR0, "BGRA_PackRemoveAlpha", false),
+						ConversionRuleData(AV_PIX_FMT_BGR0, "RGB32_To_BGRA", false),
 					};
 
 					ConversionRuleData* found = nullptr;
