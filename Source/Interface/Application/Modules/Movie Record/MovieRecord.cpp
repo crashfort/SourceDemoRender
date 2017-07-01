@@ -1545,6 +1545,7 @@ namespace
 
 					openshader(device, "Sampling", SamplingShader.GetAddressOf());
 					openshader(device, "ClearUAV", ClearShader.GetAddressOf());
+					openshader(device, "PassUAV", PassShader.GetAddressOf());
 
 					ConversionRuleData table[] =
 					{
@@ -1693,6 +1694,20 @@ namespace
 
 					ResetShaderInputs(context);
 				}
+
+				void Pass
+				(
+					int threadgroupsx,
+					int threadgroupsy,
+					ID3D11DeviceContext* context
+				)
+				{
+					context->CSSetShader(PassShader.Get(), nullptr, 0);
+
+					auto srvs = { SharedTextureSRV.Get() };
+					context->CSSetShaderResources(0, 1, srvs.begin());
+
+					auto uavs = { WorkBufferUAV.Get() };
 					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 
 					auto cbufs = { SharedConstantBuffer.Get() };
@@ -1740,6 +1755,7 @@ namespace
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> SamplingShader;
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ConversionShader;
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ClearShader;
+				Microsoft::WRL::ComPtr<ID3D11ComputeShader> PassShader;
 
 				/*
 					The newest and freshest frame provided by the engine
@@ -2025,6 +2041,12 @@ namespace
 						save(stream->DirectX11.WorkBufferSRV.Get());
 						clear();
 					}
+				}
+
+				else
+				{
+					stream->DirectX11.Pass(groupsx, groupsy, CurrentMovie.Context.Get());
+					save(stream->DirectX11.WorkBufferSRV.Get());
 				}
 			}
 		}

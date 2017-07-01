@@ -102,6 +102,7 @@
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\BGR0.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV420.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV444.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\PassUAV.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl" />
