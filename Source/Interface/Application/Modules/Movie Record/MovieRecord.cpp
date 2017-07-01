@@ -1193,15 +1193,15 @@ namespace
 
 					virtual void DynamicBind(ID3D11DeviceContext* context) override
 					{
-						auto uavs =
-						{
-							Buffer.View.Get(),
-						};
-
+						auto uavs = { Buffer.View.Get() };
 						context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 					}
 
-					virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) override
+					virtual bool Download
+					(
+						ID3D11DeviceContext* context,
+						MovieData::VideoFutureData& item
+					) override
 					{
 						Profile::ScopedEntry e1(Profile::Types::PushRGB);
 
@@ -1287,7 +1287,11 @@ namespace
 						context->CSSetUnorderedAccessViews(0, 3, uavs.begin(), nullptr);
 					}
 
-					virtual bool Download(ID3D11DeviceContext* context, MovieData::VideoFutureData& item) override
+					virtual bool Download
+					(
+						ID3D11DeviceContext* context,
+						MovieData::VideoFutureData& item
+					) override
 					{
 						Profile::ScopedEntry e1(Profile::Types::PushYUV);
 
