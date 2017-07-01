@@ -1548,6 +1548,16 @@ namespace
 			}
 		};
 
+		struct
+		{
+			bool Enabled;
+			float Exposure;
+			
+			double TimePerSample;
+			double TimePerFrame;
+			double Remainder = 0;
+		} SamplingData;
+
 		std::unique_ptr<SDRAudioWriter> Audio;
 		std::vector<std::unique_ptr<VideoStreamBase>> VideoStreams;
 
@@ -2309,11 +2319,23 @@ namespace
 				major recording slowdowns
 			*/
 
-			auto enginerate = Variables::FrameRate.GetInt();
+			auto fps = Variables::FrameRate.GetInt();
+			auto exposure = Variables::Sample::Exposure.GetFloat();
+			auto mult = Variables::Sample::Multiply.GetInt();
 
-			/*
-				The original function sets host_framerate to 30 so we override it
-			*/
+			auto enginerate = fps;
+
+			movie.SamplingData.Enabled = mult > 0 && exposure > 0;
+
+			if (movie.SamplingData.Enabled)
+			{
+				enginerate *= mult;
+
+				movie.SamplingData.Exposure = exposure;
+				movie.SamplingData.TimePerSample = 1.0 / enginerate;
+				movie.SamplingData.TimePerFrame = 1.0 / fps;
+			}
+
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(enginerate);
 
