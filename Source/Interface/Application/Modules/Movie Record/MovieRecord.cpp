@@ -2344,9 +2344,9 @@ namespace
 			hostframerate.SetValue(enginerate);
 
 			/*
-				Make room for 128 entries in this queue
+				Make room for some entries in this queue
 			*/
-			movie.VideoQueue = std::make_unique<MovieData::VideoQueueType>(128);
+			movie.VideoQueue = std::make_unique<MovieData::VideoQueueType>(256);
 
 			movie.IsStarted = true;
 			BufferedFrames = 0;
