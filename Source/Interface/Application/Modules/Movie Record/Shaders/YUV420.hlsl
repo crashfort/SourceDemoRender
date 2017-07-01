@@ -7,7 +7,6 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	int width = Dimensions.x;
 	int height = Dimensions.y;
 	uint2 pos = dtid.xy;
-
 	uint index = CalculateIndex(width, pos);
 
 	float3 pix = WorkBuffer[index];
