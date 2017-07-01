@@ -1548,13 +1548,13 @@ namespace
 
 					ConversionRuleData table[] =
 					{
-						ConversionRuleData(AV_PIX_FMT_YUV420P, "RGB32_To_YUV420", true),
-						ConversionRuleData(AV_PIX_FMT_YUV444P, "RGB32_To_YUV444", true),
+						ConversionRuleData(AV_PIX_FMT_YUV420P, "YUV420", true),
+						ConversionRuleData(AV_PIX_FMT_YUV444P, "YUV444", true),
 
 						/*
 							libx264rgb
 						*/
-						ConversionRuleData(AV_PIX_FMT_BGR0, "RGB32_To_BGR0", false),
+						ConversionRuleData(AV_PIX_FMT_BGR0, "BGR0", false),
 					};
 
 					ConversionRuleData* found = nullptr;

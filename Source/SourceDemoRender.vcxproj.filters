@@ -97,11 +97,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\RGB32_To_YUV420.hlsl" />
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\RGB32_To_YUV444.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Sampling.hlsl" />
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\RGB32_To_BGR0.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\ClearUAV.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\BGR0.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV420.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV444.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl" />
