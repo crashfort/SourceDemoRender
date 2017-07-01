@@ -1601,36 +1601,15 @@ namespace
 
 				void ResetShaderInputs(ID3D11DeviceContext* context)
 				{
-					std::initializer_list<ID3D11ShaderResourceView*> srvs = 
-					{
-						nullptr,
-						nullptr,
-						nullptr,
-						nullptr,
-						nullptr,
-					};
+					const auto count = 4;
 
-					std::initializer_list<ID3D11UnorderedAccessView*> uavs =
-					{
-						nullptr,
-						nullptr,
-						nullptr,
-						nullptr,
-						nullptr,
-					};
+					ID3D11ShaderResourceView* srvs[count] = {};
+					ID3D11UnorderedAccessView* uavs[count] = {};
+					ID3D11Buffer* cbufs[count] = {};
 
-					std::initializer_list<ID3D11Buffer*> cbufs =
-					{
-						nullptr,
-						nullptr,
-						nullptr,
-						nullptr,
-						nullptr,
-					};
-
-					context->CSSetShaderResources(0, srvs.size(), srvs.begin());
-					context->CSSetUnorderedAccessViews(0, uavs.size(), uavs.begin(), nullptr);
-					context->CSSetConstantBuffers(0, cbufs.size(), cbufs.begin());
+					context->CSSetShaderResources(0, count, srvs);
+					context->CSSetUnorderedAccessViews(0, count, uavs, nullptr);
+					context->CSSetConstantBuffers(0, count, cbufs);
 				}
 
 				void ProcessNewFrame
