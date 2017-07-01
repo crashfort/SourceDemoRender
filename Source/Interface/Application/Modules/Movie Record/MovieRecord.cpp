@@ -358,6 +358,23 @@ namespace
 			true, 0, true, 1
 		);
 
+		namespace Sample
+		{
+			ConVar Multiply
+			(
+				"sdr_sample_mult", "32", FCVAR_NEVER_AS_STRING,
+				"Framerate multiplication",
+				true, 1, false, 0
+			);
+
+			ConVar Exposure
+			(
+				"sdr_sample_exposure", "0.5", FCVAR_NEVER_AS_STRING,
+				"Fraction of time per frame that is exposed for sampling",
+				true, 0, true, 1
+			);
+		}
+
 		namespace Audio
 		{
 			ConVar Enable
