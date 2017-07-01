@@ -1065,11 +1065,9 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
-		struct VideoStreamBase;
-
 		struct VideoFutureData
 		{
-			VideoStreamBase* Stream;
+			SDRVideoWriter* Writer;
 			SDRVideoWriter::PlaneType Planes;
 		};
 
@@ -1601,8 +1599,8 @@ namespace
 			{
 				--BufferedFrames;
 
-				item.Stream->Video.SetFrameInput(item.Planes);
-				item.Stream->Video.SendRawFrame();
+				item.Writer->SetFrameInput(item.Planes);
+				item.Writer->SendRawFrame();
 			}
 		}
 	}
@@ -1691,6 +1689,23 @@ namespace
 				auto srvs =
 				{
 					stream->DirectX11.SharedTextureSRV.Get()
+					MovieData::VideoFutureData item;
+					item.Writer = &stream->Video;
+
+					auto res = stream->DirectX11.ProcessConversion
+					(
+						groupsx,
+						groupsy,
+						CurrentMovie.Context.Get(),
+						srv,
+						item
+					);
+
+					if (res)
+					{
+						++BufferedFrames;
+						CurrentMovie.VideoQueue->enqueue(std::move(item));
+					}
 				};
 
 				context->CSSetShaderResources(0, 1, srvs.begin());
