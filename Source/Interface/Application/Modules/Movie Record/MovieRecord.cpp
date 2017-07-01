@@ -1475,6 +1475,7 @@ namespace
 						bool IsYUV;
 					};
 
+					openshader(device, "ClearUAV", ClearShader.GetAddressOf());
 					ConversionRuleData table[] =
 					{
 						ConversionRuleData(AV_PIX_FMT_YUV420P, "RGB32_To_YUV420", true),
@@ -1563,6 +1564,7 @@ namespace
 
 				Microsoft::WRL::ComPtr<ID3D11Buffer> SharedConstantBuffer;
 
+				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ClearShader;
 				Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
 				Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRV;
 
