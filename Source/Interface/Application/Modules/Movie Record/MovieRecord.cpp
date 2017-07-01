@@ -1377,6 +1377,34 @@ namespace
 						)
 					);
 
+						{
+							__declspec(align(16)) struct
+							{
+								int Dimensions[2];
+							} constantbufferdata;
+
+							constantbufferdata.Dimensions[0] = reference->width;
+							constantbufferdata.Dimensions[1] = reference->height;
+
+							D3D11_BUFFER_DESC cbufdesc = {};
+							cbufdesc.ByteWidth = sizeof(constantbufferdata);
+							cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+							cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+							D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
+							cbufsubdesc.pSysMem = &constantbufferdata;
+
+							MS::ThrowIfFailed
+							(
+								device->CreateBuffer
+								(
+									&cbufdesc,
+									&cbufsubdesc,
+									SharedConstantBuffer.GetAddressOf()
+								)
+							);
+						}
+					}
 					auto openshader = []
 					(
 						ID3D11Device* device,
@@ -1533,7 +1561,7 @@ namespace
 					GPUFrameBuffer->Create(device, reference);
 				}
 
-				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ComputeShader;
+				Microsoft::WRL::ComPtr<ID3D11Buffer> SharedConstantBuffer;
 
 				Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
 				Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRV;
