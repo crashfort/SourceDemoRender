@@ -1270,12 +1270,8 @@ namespace
 
 					virtual void DynamicBind(ID3D11DeviceContext* context) override
 					{
-						auto cbufs =
-						{
-							ConstantBuffer.Get()
-						};
-
-						context->CSSetConstantBuffers(0, 1, cbufs.begin());
+						auto cbufs = { ConstantBuffer.Get() };
+						context->CSSetConstantBuffers(1, 1, cbufs.begin());
 
 						auto uavs =
 						{
@@ -1377,6 +1373,77 @@ namespace
 						)
 					);
 
+					{
+						auto px = reference->width * reference->height;
+						auto bpp = 3;
+						auto size = sizeof(float) * bpp;
+
+						D3D11_BUFFER_DESC bufdesc = {};
+						bufdesc.ByteWidth = px * size;
+						bufdesc.Usage = D3D11_USAGE_DEFAULT;
+						bufdesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+						bufdesc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
+						bufdesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+						bufdesc.StructureByteStride = size;
+
+						MS::ThrowIfFailed
+						(
+							device->CreateBuffer
+							(
+								&bufdesc,
+								nullptr,
+								WorkBuffer.GetAddressOf()
+							)
+						);
+
+						D3D11_UNORDERED_ACCESS_VIEW_DESC uavdesc = {};
+						uavdesc.Format = DXGI_FORMAT_UNKNOWN;
+						uavdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+						uavdesc.Buffer.NumElements = px;
+
+						MS::ThrowIfFailed
+						(
+							device->CreateUnorderedAccessView
+							(
+								WorkBuffer.Get(),
+								&uavdesc,
+								WorkBufferUAV.GetAddressOf()
+							)
+						);
+
+						D3D11_SHADER_RESOURCE_VIEW_DESC srvdesc = {};
+						srvdesc.Format = DXGI_FORMAT_UNKNOWN;
+						srvdesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+						srvdesc.Buffer.NumElements = px;
+
+						MS::ThrowIfFailed
+						(
+							device->CreateShaderResourceView
+							(
+								WorkBuffer.Get(),
+								&srvdesc,
+								WorkBufferSRV.GetAddressOf()
+							)
+						);
+
+						{
+							D3D11_BUFFER_DESC cbufdesc = {};
+							cbufdesc.ByteWidth = sizeof(SamplingConstantData);
+							cbufdesc.Usage = D3D11_USAGE_DYNAMIC;
+							cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+							cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+							MS::ThrowIfFailed
+							(
+								device->CreateBuffer
+								(
+									&cbufdesc,
+									nullptr,
+									SamplingConstantBuffer.GetAddressOf()
+								)
+							);
+						}
+
 						{
 							__declspec(align(16)) struct
 							{
@@ -1405,6 +1472,7 @@ namespace
 							);
 						}
 					}
+
 					auto openshader = []
 					(
 						ID3D11Device* device,
@@ -1475,7 +1543,9 @@ namespace
 						bool IsYUV;
 					};
 
+					openshader(device, "Sampling", SamplingShader.GetAddressOf());
 					openshader(device, "ClearUAV", ClearShader.GetAddressOf());
+
 					ConversionRuleData table[] =
 					{
 						ConversionRuleData(AV_PIX_FMT_YUV420P, "RGB32_To_YUV420", true),
@@ -1497,7 +1567,7 @@ namespace
 							(
 								device,
 								entry.ShaderName,
-								ComputeShader.GetAddressOf()
+								ConversionShader.GetAddressOf()
 							);
 
 							found = &entry;
@@ -1518,12 +1588,17 @@ namespace
 
 					if (found->IsYUV)
 					{
-						GPUFrameBuffer = std::make_unique<YUVFrameBuffer>();
+						FrameBuffer = std::make_unique<YUVFrameBuffer>();
 					}
 
 					else
 					{
-						GPUFrameBuffer = std::make_unique<RGBAFrameBuffer>();
+						FrameBuffer = std::make_unique<RGBAFrameBuffer>();
+					}
+
+					FrameBuffer->Create(device, reference);
+				}
+
 				void ResetShaderInputs(ID3D11DeviceContext* context)
 				{
 					std::initializer_list<ID3D11ShaderResourceView*> srvs = 
@@ -1557,18 +1632,142 @@ namespace
 					context->CSSetUnorderedAccessViews(0, uavs.size(), uavs.begin(), nullptr);
 					context->CSSetConstantBuffers(0, cbufs.size(), cbufs.begin());
 				}
+
+				void ProcessNewFrame
+				(
+					int threadgroupsx,
+					int threadgroupsy,
+					ID3D11DeviceContext* context,
+					float weight
+				)
+				{
+					auto srvs = { SharedTextureSRV.Get() };
+					context->CSSetShaderResources(0, 1, srvs.begin());
+
+					auto uavs = { WorkBufferUAV.Get() };
+					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
+
+					if (SamplingConstantData.Weight != weight)
+					{
+						D3D11_MAPPED_SUBRESOURCE mapped;
+
+						auto hr = context->Map
+						(
+							SamplingConstantBuffer.Get(),
+							0,
+							D3D11_MAP_WRITE_DISCARD,
+							0,
+							&mapped
+						);
+
+						if (FAILED(hr))
+						{
+							Warning("SDR: Could not map sampling constant buffer\n");
+						}
+
+						else
+						{
+							SamplingConstantData.Weight = weight;
+
+							std::memcpy
+							(
+								mapped.pData,
+								&SamplingConstantData,
+								sizeof(SamplingConstantData)
+							);
+						}
+
+						context->Unmap(SamplingConstantBuffer.Get(), 0);
 					}
 
-					GPUFrameBuffer->Create(device, reference);
+					auto cbufs =
+					{
+						SharedConstantBuffer.Get(),
+						SamplingConstantBuffer.Get()
+					};
+
+					context->CSSetConstantBuffers(0, 2, cbufs.begin());
+
+					context->CSSetShader(SamplingShader.Get(), nullptr, 0);
+
+					context->Dispatch(threadgroupsx, threadgroupsy, 1);
+
+					ResetShaderInputs(context);
+				}
+
+				void Clear
+				(
+					int threadgroupsx,
+					int threadgroupsy,
+					ID3D11DeviceContext* context,
+					ID3D11UnorderedAccessView* uav
+				)
+				{
+					context->CSSetShader(ClearShader.Get(), nullptr, 0);
+
+					auto uavs = { uav };
+					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
+
+					auto cbufs = { SharedConstantBuffer.Get() };
+					context->CSSetConstantBuffers(0, 1, cbufs.begin());
+
+					context->Dispatch(threadgroupsx, threadgroupsy, 1);
+
+					ResetShaderInputs(context);
+				}
+
+				bool ProcessConversion
+				(
+					int threadgroupsx,
+					int threadgroupsy,
+					ID3D11DeviceContext* context,
+					ID3D11ShaderResourceView* srv,
+					MovieData::VideoFutureData& item
+				)
+				{
+					context->CSSetShader(ConversionShader.Get(), nullptr, 0);
+
+					auto srvs = { srv };
+					context->CSSetShaderResources(0, 1, srvs.begin());
+
+					auto cbufs = { SharedConstantBuffer.Get() };
+					context->CSSetConstantBuffers(0, 1, cbufs.begin());
+					
+					FrameBuffer->DynamicBind(context);
+
+					context->Dispatch(threadgroupsx, threadgroupsy, 1);
+
+					ResetShaderInputs(context);
+
+					return FrameBuffer->Download(context, item);
 				}
 
 				Microsoft::WRL::ComPtr<ID3D11Buffer> SharedConstantBuffer;
 
+				__declspec(align(16)) struct
+				{
+					float Weight;
+				} SamplingConstantData;
+
+				Microsoft::WRL::ComPtr<ID3D11Buffer> SamplingConstantBuffer;
+				Microsoft::WRL::ComPtr<ID3D11ComputeShader> SamplingShader;
+				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ConversionShader;
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ClearShader;
+
+				/*
+					The newest and freshest frame provided by the engine
+				*/
 				Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
 				Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRV;
 
-				std::unique_ptr<FrameBufferBase> GPUFrameBuffer;
+				/*
+					Frame that will be printed
+				*/
+				Microsoft::WRL::ComPtr<ID3D11Buffer> WorkBuffer;
+				Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> WorkBufferUAV;
+				Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> WorkBufferSRV;
+
+				std::unique_ptr<FrameBufferBase> FrameBuffer;
 			} DirectX11;
 
 			SDRVideoWriter Video;
@@ -1582,12 +1781,6 @@ namespace
 			virtual const char* GetSuffix() const
 			{
 				return nullptr;
-			}
-
-			void DynamicBind(ID3D11DeviceContext* context)
-			{
-				context->CSSetShader(DirectX11.ComputeShader.Get(), nullptr, 0);
-				DirectX11.GPUFrameBuffer->DynamicBind(context);
 			}
 
 			virtual void PreRender()
@@ -1760,9 +1953,6 @@ namespace
 				return;
 			}
 
-			/*
-				Convert RGBA32 to wanted format
-			*/
 			if (stream->FirstFrame)
 			{
 				stream->FirstFrame = false;
@@ -1772,12 +1962,13 @@ namespace
 			{
 				Profile::ScopedEntry e1(Profile::Types::DX11Proc);
 
-				HRESULT hr;
-				auto& context = CurrentMovie.Context;
+				auto& sampling = CurrentMovie.SamplingData;
 
-				auto srvs =
+				int groupsx = std::ceil(CurrentMovie.Width / 8.0);
+				int groupsy = std::ceil(CurrentMovie.Height / 8.0);
+
+				auto save = [=](ID3D11ShaderResourceView* srv)
 				{
-					stream->DirectX11.SharedTextureSRV.Get()
 					MovieData::VideoFutureData item;
 					item.Writer = &stream->Video;
 
@@ -1797,26 +1988,60 @@ namespace
 					}
 				};
 
-				context->CSSetShaderResources(0, 1, srvs.begin());
-
-				stream->DynamicBind(context.Get());
-
-				context->Dispatch
-				(
-					std::ceil(CurrentMovie.Width / 8.0),
-					std::ceil(CurrentMovie.Height / 8.0),
-					1
-				);
-
-				MovieData::VideoFutureData item;
-				item.Stream = stream;
-				
-				auto res = stream->DirectX11.GPUFrameBuffer->Download(context.Get(), item);
-
-				if (res)
+				if (sampling.Enabled)
 				{
-					++BufferedFrames;
-					CurrentMovie.VideoQueue->enqueue(std::move(item));
+					auto proc = [=](float weight)
+					{
+						stream->DirectX11.ProcessNewFrame
+						(
+							groupsx,
+							groupsy,
+							CurrentMovie.Context.Get(),
+							weight
+						);
+					};
+
+					auto clear = [=](ID3D11UnorderedAccessView* uav)
+					{
+						stream->DirectX11.Clear
+						(
+							groupsx,
+							groupsy,
+							CurrentMovie.Context.Get(),
+							uav
+						);
+					};
+
+					auto& rem = sampling.Remainder;
+					auto oldrem = rem;
+					auto exposure = sampling.Exposure;
+
+					rem += sampling.TimePerSample / sampling.TimePerFrame;
+
+					if (rem <= (1.0 - exposure))
+					{
+						int a = 5;
+						a = a;
+					}
+
+					else if (rem < 1.0)
+					{
+						auto weight = (rem - std::max(1.0 - exposure, oldrem)) * (1.0 / exposure);
+
+						proc(weight);
+						//save(stream->DirectX11.WorkBufferSRV.Get());
+					}
+
+					else
+					{
+						auto weight = (1.0 - std::max(1.0 - exposure, oldrem)) * (1.0 / exposure);
+
+						rem -= 1.0;
+
+						proc(weight);
+						save(stream->DirectX11.WorkBufferSRV.Get());
+						clear(stream->DirectX11.WorkBufferUAV.Get());
+					}
 				}
 			}
 		}
