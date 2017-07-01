@@ -1510,6 +1510,12 @@ namespace
 
 			SDRVideoWriter Video;
 
+			/*
+				Skip first frame as it will alwys be black
+				when capturing the engine backbuffer
+			*/
+			bool FirstFrame = true;
+
 			virtual const char* GetSuffix() const
 			{
 				return nullptr;
@@ -1694,6 +1700,12 @@ namespace
 			/*
 				Convert RGBA32 to wanted format
 			*/
+			if (stream->FirstFrame)
+			{
+				stream->FirstFrame = false;
+				return;
+			}
+
 			{
 				Profile::ScopedEntry e1(Profile::Types::DX11Proc);
 
