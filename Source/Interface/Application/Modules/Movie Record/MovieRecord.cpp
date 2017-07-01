@@ -1678,13 +1678,21 @@ namespace
 				(
 					int threadgroupsx,
 					int threadgroupsy,
-					ID3D11DeviceContext* context,
-					ID3D11UnorderedAccessView* uav
+					ID3D11DeviceContext* context
 				)
 				{
 					context->CSSetShader(ClearShader.Get(), nullptr, 0);
 
-					auto uavs = { uav };
+					auto uavs = { WorkBufferUAV.Get() };
+					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
+
+					auto cbufs = { SharedConstantBuffer.Get() };
+					context->CSSetConstantBuffers(0, 1, cbufs.begin());
+
+					context->Dispatch(threadgroupsx, threadgroupsy, 1);
+
+					ResetShaderInputs(context);
+				}
 					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 
 					auto cbufs = { SharedConstantBuffer.Get() };
@@ -1980,14 +1988,13 @@ namespace
 						);
 					};
 
-					auto clear = [=](ID3D11UnorderedAccessView* uav)
+					auto clear = [=]()
 					{
 						stream->DirectX11.Clear
 						(
 							groupsx,
 							groupsy,
-							CurrentMovie.Context.Get(),
-							uav
+							CurrentMovie.Context.Get()
 						);
 					};
 
@@ -2016,7 +2023,7 @@ namespace
 
 						proc(weight);
 						save(stream->DirectX11.WorkBufferSRV.Get());
-						clear(stream->DirectX11.WorkBufferUAV.Get());
+						clear();
 					}
 				}
 			}
