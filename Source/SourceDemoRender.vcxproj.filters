@@ -99,7 +99,6 @@
   <ItemGroup>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\RGB32_To_YUV420.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\RGB32_To_YUV444.hlsl" />
-    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\RGB32_To_BGRA.hlsl" />
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\RGB32_To_BGR0.hlsl" />
   </ItemGroup>
   <ItemGroup>
