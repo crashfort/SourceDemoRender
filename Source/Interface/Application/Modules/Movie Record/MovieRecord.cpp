@@ -2608,7 +2608,7 @@ namespace
 
 			auto enginerate = fps;
 
-			movie.SamplingData.Enabled = mult > 0 && exposure > 0;
+			movie.SamplingData.Enabled = mult > 1 && exposure > 0;
 
 			if (movie.SamplingData.Enabled)
 			{
