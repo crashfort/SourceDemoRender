@@ -104,6 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl" />
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\Utility.hlsl" />
     <None Include="Interface\Application\Modules\Movie Record\Shaders\SharedAll.hlsl" />
   </ItemGroup>
 </Project>
