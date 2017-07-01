@@ -1999,16 +1999,13 @@ namespace
 
 					if (rem <= (1.0 - exposure))
 					{
-						int a = 5;
-						a = a;
+						
 					}
 
 					else if (rem < 1.0)
 					{
 						auto weight = (rem - std::max(1.0 - exposure, oldrem)) * (1.0 / exposure);
-
 						proc(weight);
-						//save(stream->DirectX11.WorkBufferSRV.Get());
 					}
 
 					else
