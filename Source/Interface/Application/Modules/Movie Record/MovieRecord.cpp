@@ -1714,9 +1714,9 @@ namespace
 
 				bool Conversion
 				(
+					ID3D11DeviceContext* context,
 					int groupsx,
 					int groupsy,
-					ID3D11DeviceContext* context,
 					ID3D11ShaderResourceView* srv,
 					VideoFutureData& item
 				)
@@ -1994,9 +1994,9 @@ namespace
 
 					auto res = stream->DirectX11.Conversion
 					(
+						CurrentMovie.Context.Get(),
 						groupsx,
 						groupsy,
-						CurrentMovie.Context.Get(),
 						srv,
 						item
 					);
@@ -2014,9 +2014,9 @@ namespace
 					{
 						stream->DirectX11.NewFrame
 						(
+							CurrentMovie.Context.Get(),
 							groupsx,
 							groupsy,
-							CurrentMovie.Context.Get(),
 							weight
 						);
 					};
