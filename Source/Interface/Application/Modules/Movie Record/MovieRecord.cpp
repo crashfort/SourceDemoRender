@@ -1440,47 +1440,51 @@ namespace
 							)
 						);
 
-						D3D11_BUFFER_DESC cbufdesc = {};
-						cbufdesc.ByteWidth = sizeof(SamplingConstantData);
-						cbufdesc.Usage = D3D11_USAGE_DYNAMIC;
-						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-						cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-						MS::ThrowIfFailed
-						(
-							device->CreateBuffer
-							(
-								&cbufdesc,
-								nullptr,
-								SamplingConstantBuffer.GetAddressOf()
-							)
-						);
-
-						__declspec(align(16)) struct
 						{
-							int Dimensions[2];
-						} constantbufferdata;
+							D3D11_BUFFER_DESC cbufdesc = {};
+							cbufdesc.ByteWidth = sizeof(SamplingConstantData);
+							cbufdesc.Usage = D3D11_USAGE_DYNAMIC;
+							cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+							cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-						constantbufferdata.Dimensions[0] = reference->width;
-						constantbufferdata.Dimensions[1] = reference->height;
-
-						D3D11_BUFFER_DESC cbufdesc = {};
-						cbufdesc.ByteWidth = sizeof(constantbufferdata);
-						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
-						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-						cbufsubdesc.pSysMem = &constantbufferdata;
-
-						MS::ThrowIfFailed
-						(
-							device->CreateBuffer
+							MS::ThrowIfFailed
 							(
-								&cbufdesc,
-								&cbufsubdesc,
-								SharedConstantBuffer.GetAddressOf()
-							)
-						);
+								device->CreateBuffer
+								(
+									&cbufdesc,
+									nullptr,
+									SamplingConstantBuffer.GetAddressOf()
+								)
+							);
+						}
+
+						{
+							__declspec(align(16)) struct
+							{
+								int Dimensions[2];
+							} constantbufferdata;
+
+							constantbufferdata.Dimensions[0] = reference->width;
+							constantbufferdata.Dimensions[1] = reference->height;
+
+							D3D11_BUFFER_DESC cbufdesc = {};
+							cbufdesc.ByteWidth = sizeof(constantbufferdata);
+							cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+							cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+							D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
+							cbufsubdesc.pSysMem = &constantbufferdata;
+
+							MS::ThrowIfFailed
+							(
+								device->CreateBuffer
+								(
+									&cbufdesc,
+									&cbufsubdesc,
+									SharedConstantBuffer.GetAddressOf()
+								)
+							);
+						}
 					}
 
 					auto openshader = []
