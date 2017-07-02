@@ -2514,22 +2514,25 @@ namespace
 						flags |= D3D11_CREATE_DEVICE_DEBUG;
 						#endif
 
-						MS::ThrowIfFailed
+						auto hr = D3D11CreateDevice
 						(
-							D3D11CreateDevice
-							(
-								nullptr,
-								D3D_DRIVER_TYPE_HARDWARE,
-								0,
-								flags,
-								nullptr,
-								0,
-								D3D11_SDK_VERSION,
-								movie.Device.GetAddressOf(),
-								0,
-								movie.Context.GetAddressOf()
-							)
+							nullptr,
+							D3D_DRIVER_TYPE_HARDWARE,
+							0,
+							flags,
+							nullptr,
+							0,
+							D3D11_SDK_VERSION,
+							movie.Device.GetAddressOf(),
+							0,
+							movie.Context.GetAddressOf()
 						);
+
+						if (FAILED(hr))
+						{
+							Warning("SRR: Could not create D3D11 device\n");
+							MS::ThrowIfFailed(hr);
+						}
 
 						for (auto& stream : tempstreams)
 						{
