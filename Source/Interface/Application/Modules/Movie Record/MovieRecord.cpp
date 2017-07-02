@@ -1128,9 +1128,9 @@ namespace
 				/*
 					Base for hardware conversion routines.
 				*/
-				struct FrameBufferBase
+				struct ConversionBase
 				{
-					virtual ~FrameBufferBase() = default;
+					virtual ~ConversionBase() = default;
 
 					virtual void Create(ID3D11Device* device, AVFrame* reference) = 0;
 
@@ -1200,7 +1200,7 @@ namespace
 					Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
 				};
 
-				struct RGBAFrameBuffer : FrameBufferBase
+				struct ConversionBGR0 : ConversionBase
 				{
 					virtual void Create(ID3D11Device* device, AVFrame* reference) override
 					{
@@ -1243,7 +1243,7 @@ namespace
 					GPUBuffer Buffer;
 				};
 
-				struct YUVFrameBuffer : FrameBufferBase
+				struct ConversionYUV : ConversionBase
 				{
 					virtual void Create(ID3D11Device* device, AVFrame* reference) override
 					{
@@ -1595,15 +1595,15 @@ namespace
 
 					if (found->IsYUV)
 					{
-						FrameBuffer = std::make_unique<YUVFrameBuffer>();
+						ConversionPtr = std::make_unique<ConversionYUV>();
 					}
 
 					else
 					{
-						FrameBuffer = std::make_unique<RGBAFrameBuffer>();
+						ConversionPtr = std::make_unique<ConversionBGR0>();
 					}
 
-					FrameBuffer->Create(device, reference);
+					ConversionPtr->Create(device, reference);
 				}
 
 				void ResetShaderInputs(ID3D11DeviceContext* context)
@@ -1725,13 +1725,13 @@ namespace
 					auto cbufs = { SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 					
-					FrameBuffer->DynamicBind(context);
+					ConversionPtr->DynamicBind(context);
 
 					context->Dispatch(groupsx, groupsy, 1);
 
 					ResetShaderInputs(context);
 
-					return FrameBuffer->Download(context, item);
+					return ConversionPtr->Download(context, item);
 				}
 
 				/*
@@ -1752,7 +1752,7 @@ namespace
 					Format specific buffer for format conversions. Handles
 					binding shader resources and downloading the finished frame.
 				*/
-				std::unique_ptr<FrameBufferBase> FrameBuffer;
+				std::unique_ptr<ConversionBase> ConversionPtr;
 
 				/*
 					Varying shader, handled by FrameBuffer. Using frame data from WorkBuffer,
