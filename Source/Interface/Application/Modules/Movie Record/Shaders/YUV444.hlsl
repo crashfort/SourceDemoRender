@@ -1,7 +1,7 @@
 #include "YUVShared.hlsl"
 #include "Utility.hlsl"
 
-[numthreads(8, 8, 1)]
+[numthreads(ThreadsX, ThreadsY, 1)]
 void CSMain(uint3 dtid : SV_DispatchThreadID)
 {
 	int width = Dimensions.x;

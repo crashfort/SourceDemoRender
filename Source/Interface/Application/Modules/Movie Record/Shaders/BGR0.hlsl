@@ -33,7 +33,7 @@ inline uint D3DX_FLOAT4_to_B8G8R8A8_UNORM(precise float4 unpacked)
 	return packed;
 }
 
-[numthreads(8, 8, 1)]
+[numthreads(ThreadsX, ThreadsY, 1)]
 void CSMain(uint3 dtid : SV_DispatchThreadID)
 {
 	uint2 pos = dtid.xy;

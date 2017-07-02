@@ -11,3 +11,6 @@ struct WorkBufferData
 	float3 Color;
 	float Padding;
 };
+
+#define ThreadsX 8
+#define ThreadsY 8

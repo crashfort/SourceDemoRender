@@ -4,7 +4,7 @@
 Texture2D<float4> SharedTexture : register(t0);
 RWStructuredBuffer<WorkBufferData> WorkBuffer : register(u0);
 
-[numthreads(8, 8, 1)]
+[numthreads(ThreadsX, ThreadsY, 1)]
 void CSMain(uint3 dtid : SV_DispatchThreadID)
 {
 	uint2 pos = dtid.xy;
