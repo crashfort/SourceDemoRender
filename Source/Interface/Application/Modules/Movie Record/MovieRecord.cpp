@@ -2055,6 +2055,25 @@ namespace
 						rem -= 1.0;
 
 						proc(weight);
+
+						uint32_t additional = rem;
+
+						if (additional > 0)
+						{
+							for (size_t i = 0; i < additional; i++)
+							{
+								save(stream->DirectX11.WorkBufferSRV.Get());
+							}
+
+							rem -= additional;
+						}
+
+						if (rem > (1.0 - exposure))
+						{
+							weight = ((rem - (1.0 - exposure)) * (1.0 / exposure));
+							proc(weight);
+						}
+
 						save(stream->DirectX11.WorkBufferSRV.Get());
 						clear();
 					}
