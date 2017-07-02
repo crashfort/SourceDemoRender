@@ -1374,9 +1374,17 @@ namespace
 					);
 
 					{
+						/*
+							As seen in SharedAll.hlsl
+						*/
+						struct WorkBufferData
+						{
+							float Color[3];
+							float Padding;
+						};
+
 						auto px = reference->width * reference->height;
-						auto bpp = 3;
-						auto size = sizeof(float) * bpp;
+						auto size = sizeof(WorkBufferData);
 
 						D3D11_BUFFER_DESC bufdesc = {};
 						bufdesc.ByteWidth = px * size;

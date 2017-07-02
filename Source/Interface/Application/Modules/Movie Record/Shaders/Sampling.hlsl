@@ -2,7 +2,7 @@
 #include "SharedAll.hlsl"
 
 Texture2D<float4> SharedTexture : register(t0);
-RWStructuredBuffer<float3> WorkBuffer : register(u0);
+RWStructuredBuffer<WorkBufferData> WorkBuffer : register(u0);
 
 cbuffer InputData : register(b1)
 {
@@ -22,5 +22,5 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	uint index = CalculateIndex(Dimensions.x, pos);
 
 	float3 newpix = SharedTexture.Load(dtid);
-	WorkBuffer[index] += Weight * newpix;
+	WorkBuffer[index].Color += Weight * newpix;
 }

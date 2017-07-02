@@ -9,7 +9,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	uint2 pos = dtid.xy;
 	uint index = CalculateIndex(width, pos);
 
-	float3 pix = WorkBuffer[index];
+	float3 pix = WorkBuffer[index].Color;
 
 	float Y = 16 + pix.r * 65.481 + pix.g * 128.553 + pix.b * 24.966;
 	ChannelY[(height - pos.y - 1) * Strides[0] + pos.x] = round(Y);
@@ -25,7 +25,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 
 		if (pos.x + 1 < width)
 		{
-			topright = WorkBuffer.Load(CalculateIndex(width, pos, int2(1, 0)));
+			topright = WorkBuffer.Load(CalculateIndex(width, pos, int2(1, 0))).Color;
 		}
 
 		else
@@ -35,7 +35,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 
 		if (pos.y + 1 < height)
 		{
-			botleft = WorkBuffer.Load(CalculateIndex(width, pos, int2(0, 1)));
+			botleft = WorkBuffer.Load(CalculateIndex(width, pos, int2(0, 1))).Color;
 		}
 
 		else 
@@ -45,7 +45,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 
 		if (pos.x + 1 < width && pos.y + 1 < height)
 		{
-			botright = WorkBuffer.Load(CalculateIndex(width, pos, int2(1, 1)));
+			botright = WorkBuffer.Load(CalculateIndex(width, pos, int2(1, 1))).Color;
 		}
 
 		else 

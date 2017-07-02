@@ -1,7 +1,7 @@
 #include "Utility.hlsl"
 #include "SharedAll.hlsl"
 
-StructuredBuffer<float3> WorkBuffer : register(t0);
+StructuredBuffer<WorkBufferData> WorkBuffer : register(t0);
 RWBuffer<uint> OutTexture : register(u0);
 
 /*
@@ -45,7 +45,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 
 	uint index = CalculateIndex(Dimensions.x, pos);
 
-	float3 pix = WorkBuffer[index];
+	float3 pix = WorkBuffer[index].Color;
 
 	OutTexture[index] = D3DX_FLOAT4_to_B8G8R8A8_UNORM(float4(pix, 1));
 }

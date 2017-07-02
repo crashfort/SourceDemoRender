@@ -9,7 +9,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	uint2 pos = dtid.xy;
 	uint index = CalculateIndex(width, pos);
 
-	float3 pix = WorkBuffer[index];
+	float3 pix = WorkBuffer[index].Color;
 
 	float Y = 16 + pix.r * 65.481 + pix.g * 128.553 + pix.b * 24.966;
 	float U = 128 - pix.r * 37.797 - pix.g * 74.203 + pix.b * 112.0;
