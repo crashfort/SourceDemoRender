@@ -1623,7 +1623,7 @@ namespace
 					context->CSSetConstantBuffers(0, count, cbufs);
 				}
 
-				void ProcessNewFrame(int groupsx, int groupsy, ID3D11DeviceContext* context, float weight)
+				void NewFrame(int groupsx, int groupsy, ID3D11DeviceContext* context, float weight)
 				{
 					auto srvs = { SharedTextureSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
@@ -1712,7 +1712,7 @@ namespace
 					ResetShaderInputs(context);
 				}
 
-				bool ProcessConversion
+				bool Conversion
 				(
 					int groupsx,
 					int groupsy,
@@ -1992,7 +1992,7 @@ namespace
 					MovieData::VideoFutureData item;
 					item.Writer = &stream->Video;
 
-					auto res = stream->DirectX11.ProcessConversion
+					auto res = stream->DirectX11.Conversion
 					(
 						groupsx,
 						groupsy,
@@ -2012,7 +2012,7 @@ namespace
 				{
 					auto proc = [=](float weight)
 					{
-						stream->DirectX11.ProcessNewFrame
+						stream->DirectX11.NewFrame
 						(
 							groupsx,
 							groupsy,
@@ -2062,7 +2062,13 @@ namespace
 
 				else
 				{
-					stream->DirectX11.Pass(groupsx, groupsy, CurrentMovie.Context.Get());
+					stream->DirectX11.Pass
+					(
+						groupsx,
+						groupsy,
+						CurrentMovie.Context.Get()
+					);
+
 					save(stream->DirectX11.WorkBufferSRV.Get());
 				}
 			}
