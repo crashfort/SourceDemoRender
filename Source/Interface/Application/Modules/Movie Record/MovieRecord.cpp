@@ -1623,7 +1623,7 @@ namespace
 					context->CSSetConstantBuffers(0, count, cbufs);
 				}
 
-				void NewFrame(int groupsx, int groupsy, ID3D11DeviceContext* context, float weight)
+				void NewFrame(ID3D11DeviceContext* context, int groupsx, int groupsy, float weight)
 				{
 					auto srvs = { SharedTextureSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
@@ -1679,7 +1679,7 @@ namespace
 					ResetShaderInputs(context);
 				}
 
-				void Clear(int groupsx, int groupsy, ID3D11DeviceContext* context)
+				void Clear(ID3D11DeviceContext* context, int groupsx, int groupsy)
 				{
 					context->CSSetShader(ClearShader.Get(), nullptr, 0);
 
@@ -1694,7 +1694,7 @@ namespace
 					ResetShaderInputs(context);
 				}
 
-				void Pass(int groupsx, int groupsy, ID3D11DeviceContext* context)
+				void Pass(ID3D11DeviceContext* context, int groupsx, int groupsy)
 				{
 					context->CSSetShader(PassShader.Get(), nullptr, 0);
 
@@ -2025,9 +2025,9 @@ namespace
 					{
 						stream->DirectX11.Clear
 						(
+							CurrentMovie.Context.Get(),
 							groupsx,
-							groupsy,
-							CurrentMovie.Context.Get()
+							groupsy
 						);
 					};
 
@@ -2064,9 +2064,9 @@ namespace
 				{
 					stream->DirectX11.Pass
 					(
+						CurrentMovie.Context.Get(),
 						groupsx,
-						groupsy,
-						CurrentMovie.Context.Get()
+						groupsy
 					);
 
 					save(stream->DirectX11.WorkBufferSRV.Get());
