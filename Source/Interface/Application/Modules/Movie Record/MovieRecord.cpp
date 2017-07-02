@@ -1065,12 +1065,19 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
+		/*
+			This structure is sent to the encoder thread
+			from the capture thread
+		*/
 		struct VideoFutureData
 		{
 			SDRVideoWriter* Writer;
 			SDRVideoWriter::PlaneType Planes;
 		};
 
+		/*
+			A lock-free producer/consumer queue
+		*/
 		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureData>;
 
 		struct VideoStreamBase
@@ -1083,6 +1090,10 @@ namespace
 					{
 						MS::ThrowIfFailed
 						(
+							/*
+								Once shared with D3D11, it is interpreted as
+								DXGI_FORMAT_B8G8R8A8_UNORM
+							*/
 							device->CreateOffscreenPlainSurface
 							(
 								width,
@@ -1114,6 +1125,9 @@ namespace
 
 			struct DirectX11Data
 			{
+				/*
+					Base for hardware conversion routines.
+				*/
 				struct FrameBufferBase
 				{
 					virtual ~FrameBufferBase() = default;
@@ -1131,6 +1145,11 @@ namespace
 					virtual bool Download(ID3D11DeviceContext* context, VideoFutureData& item) = 0;
 				};
 
+				/*
+					Hardware conversion shaders will store their data in this type.
+					It's readable by the CPU and the finished frame is expected to be in
+					the right format.
+				*/
 				struct GPUBuffer
 				{
 					void Create(ID3D11Device* device, DXGI_FORMAT viewformat, int size, int numelements)
@@ -1332,12 +1351,7 @@ namespace
 					Microsoft::WRL::ComPtr<ID3D11Buffer> ConstantBuffer;
 				};
 
-				void Create
-				(
-					ID3D11Device* device,
-					HANDLE dx9handle,
-					AVFrame* reference
-				)
+				void Create(ID3D11Device* device, HANDLE dx9handle, AVFrame* reference)
 				{
 					Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
 
@@ -1426,51 +1440,47 @@ namespace
 							)
 						);
 
-						{
-							D3D11_BUFFER_DESC cbufdesc = {};
-							cbufdesc.ByteWidth = sizeof(SamplingConstantData);
-							cbufdesc.Usage = D3D11_USAGE_DYNAMIC;
-							cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-							cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+						D3D11_BUFFER_DESC cbufdesc = {};
+						cbufdesc.ByteWidth = sizeof(SamplingConstantData);
+						cbufdesc.Usage = D3D11_USAGE_DYNAMIC;
+						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+						cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-							MS::ThrowIfFailed
+						MS::ThrowIfFailed
+						(
+							device->CreateBuffer
 							(
-								device->CreateBuffer
-								(
-									&cbufdesc,
-									nullptr,
-									SamplingConstantBuffer.GetAddressOf()
-								)
-							);
-						}
+								&cbufdesc,
+								nullptr,
+								SamplingConstantBuffer.GetAddressOf()
+							)
+						);
 
+						__declspec(align(16)) struct
 						{
-							__declspec(align(16)) struct
-							{
-								int Dimensions[2];
-							} constantbufferdata;
+							int Dimensions[2];
+						} constantbufferdata;
 
-							constantbufferdata.Dimensions[0] = reference->width;
-							constantbufferdata.Dimensions[1] = reference->height;
+						constantbufferdata.Dimensions[0] = reference->width;
+						constantbufferdata.Dimensions[1] = reference->height;
 
-							D3D11_BUFFER_DESC cbufdesc = {};
-							cbufdesc.ByteWidth = sizeof(constantbufferdata);
-							cbufdesc.Usage = D3D11_USAGE_DEFAULT;
-							cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+						D3D11_BUFFER_DESC cbufdesc = {};
+						cbufdesc.ByteWidth = sizeof(constantbufferdata);
+						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
-							D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-							cbufsubdesc.pSysMem = &constantbufferdata;
+						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
+						cbufsubdesc.pSysMem = &constantbufferdata;
 
-							MS::ThrowIfFailed
+						MS::ThrowIfFailed
+						(
+							device->CreateBuffer
 							(
-								device->CreateBuffer
-								(
-									&cbufdesc,
-									&cbufsubdesc,
-									SharedConstantBuffer.GetAddressOf()
-								)
-							);
-						}
+								&cbufdesc,
+								&cbufsubdesc,
+								SharedConstantBuffer.GetAddressOf()
+							)
+						);
 					}
 
 					auto openshader = []
@@ -1499,11 +1509,7 @@ namespace
 						{
 							if (status == Status::CouldNotOpenFile)
 							{
-								Warning
-								(
-									"SDR: Could not open shader \"%s\"\n",
-									path
-								);
+								Warning("SDR: Could not open shader \"%s\"\n", path);
 							}
 
 							throw false;
@@ -1613,13 +1619,7 @@ namespace
 					context->CSSetConstantBuffers(0, count, cbufs);
 				}
 
-				void ProcessNewFrame
-				(
-					int threadgroupsx,
-					int threadgroupsy,
-					ID3D11DeviceContext* context,
-					float weight
-				)
+				void ProcessNewFrame(int groupsx, int groupsy, ID3D11DeviceContext* context, float weight)
 				{
 					auto srvs = { SharedTextureSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
@@ -1670,17 +1670,12 @@ namespace
 
 					context->CSSetShader(SamplingShader.Get(), nullptr, 0);
 
-					context->Dispatch(threadgroupsx, threadgroupsy, 1);
+					context->Dispatch(groupsx, groupsy, 1);
 
 					ResetShaderInputs(context);
 				}
 
-				void Clear
-				(
-					int threadgroupsx,
-					int threadgroupsy,
-					ID3D11DeviceContext* context
-				)
+				void Clear(int groupsx, int groupsy, ID3D11DeviceContext* context)
 				{
 					context->CSSetShader(ClearShader.Get(), nullptr, 0);
 
@@ -1690,17 +1685,12 @@ namespace
 					auto cbufs = { SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
-					context->Dispatch(threadgroupsx, threadgroupsy, 1);
+					context->Dispatch(groupsx, groupsy, 1);
 
 					ResetShaderInputs(context);
 				}
 
-				void Pass
-				(
-					int threadgroupsx,
-					int threadgroupsy,
-					ID3D11DeviceContext* context
-				)
+				void Pass(int groupsx, int groupsy, ID3D11DeviceContext* context)
 				{
 					context->CSSetShader(PassShader.Get(), nullptr, 0);
 
@@ -1713,15 +1703,15 @@ namespace
 					auto cbufs = { SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
-					context->Dispatch(threadgroupsx, threadgroupsy, 1);
+					context->Dispatch(groupsx, groupsy, 1);
 
 					ResetShaderInputs(context);
 				}
 
 				bool ProcessConversion
 				(
-					int threadgroupsx,
-					int threadgroupsy,
+					int groupsx,
+					int groupsy,
 					ID3D11DeviceContext* context,
 					ID3D11ShaderResourceView* srv,
 					VideoFutureData& item
@@ -1737,13 +1727,17 @@ namespace
 					
 					FrameBuffer->DynamicBind(context);
 
-					context->Dispatch(threadgroupsx, threadgroupsy, 1);
+					context->Dispatch(groupsx, groupsy, 1);
 
 					ResetShaderInputs(context);
 
 					return FrameBuffer->Download(context, item);
 				}
 
+				/*
+					Contains the current video frame dimensions. Will always be
+					bound at slot 0.
+				*/
 				Microsoft::WRL::ComPtr<ID3D11Buffer> SharedConstantBuffer;
 
 				__declspec(align(16)) struct
@@ -1753,31 +1747,50 @@ namespace
 
 				Microsoft::WRL::ComPtr<ID3D11Buffer> SamplingConstantBuffer;
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> SamplingShader;
+				
+				/*
+					Format specific buffer for format conversions. Handles
+					binding shader resources and downloading the finished frame.
+				*/
+				std::unique_ptr<FrameBufferBase> FrameBuffer;
+
+				/*
+					Varying shader, handled by FrameBuffer. Using frame data from WorkBuffer,
+					this shader will write into the varying bound resources.
+				*/
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ConversionShader;
+				
+				/*
+					Shader for setting every UAV structure color to 0.
+				*/
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ClearShader;
+
+				/*
+					When no sampling is enabled, this shader just takes the
+					game backbuffer texture and puts it into WorkBuffer.
+				*/
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> PassShader;
 
 				/*
-					The newest and freshest frame provided by the engine
+					The newest and freshest frame provided by the engine.
 				*/
 				Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
 				Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRV;
 
 				/*
-					Frame that will be printed
+					Data that will be sent off for conversion. This buffer is of type
+					WorkBufferData both on the CPU and GPU.
 				*/
 				Microsoft::WRL::ComPtr<ID3D11Buffer> WorkBuffer;
 				Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> WorkBufferUAV;
 				Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> WorkBufferSRV;
-
-				std::unique_ptr<FrameBufferBase> FrameBuffer;
 			} DirectX11;
 
 			SDRVideoWriter Video;
 
 			/*
 				Skip first frame as it will alwys be black
-				when capturing the engine backbuffer
+				when capturing the engine backbuffer.
 			*/
 			bool FirstFrame = true;
 
@@ -2278,11 +2291,7 @@ namespace
 			return {finalname};
 		}
 
-		std::string BuildAudioName
-		(
-			const char* savepath,
-			const char* filename
-		)
+		std::string BuildAudioName(const char* savepath, const char* filename)
 		{
 			char finalname[2048];
 			char finalfilename[1024];
