@@ -5,4 +5,5 @@
 !*.sdrshader
 !/cfg/
 !/SDR/
+!/SDR/GameConfigLatest
 !.gitignore
