@@ -2153,13 +2153,6 @@ namespace
 
 				for (auto& stream : movie.VideoStreams)
 				{
-					if (stream->FirstFrame)
-					{
-						stream->FirstFrame = false;
-						CopyDX9ToDX11(stream.get());
-						continue;
-					}
-
 					stream->PreRender();
 
 					/*
@@ -2196,7 +2189,16 @@ namespace
 						);
 					}
 
-					Pass(stream.get());
+					if (stream->FirstFrame)
+					{
+						stream->FirstFrame = false;
+						CopyDX9ToDX11(stream.get());
+					}
+
+					else
+					{
+						Pass(stream.get());
+					}
 
 					stream->PostRender();
 
