@@ -261,7 +261,6 @@ namespace
 		const char* Names[] =
 		{
 			"ViewRender",
-			"DX11Proc",
 			"PushYUV",
 			"PushRGB",
 			"Encode",
@@ -273,7 +272,6 @@ namespace
 			enum Type
 			{
 				ViewRender,
-				DX11Proc,
 				PushYUV,
 				PushRGB,
 				Encode,
@@ -1990,8 +1988,6 @@ namespace
 			}
 
 			{
-				Profile::ScopedEntry e1(Profile::Types::DX11Proc);
-
 				auto& sampling = CurrentMovie.SamplingData;
 
 				int groupsx = std::ceil(CurrentMovie.Width / 8.0);
