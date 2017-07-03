@@ -1947,7 +1947,7 @@ namespace
 
 		#pragma endregion
 
-		void Pass(MovieData::VideoStreamBase* stream)
+		bool CopyDX9ToDX11(MovieData::VideoStreamBase* stream)
 		{
 			HRESULT hr;
 			Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
@@ -1961,7 +1961,7 @@ namespace
 			if (FAILED(hr))
 			{
 				Warning("SDR: Could not get DX9 RT\n");
-				return;
+				return false;
 			}
 
 			/*
@@ -1979,12 +1979,18 @@ namespace
 			if (FAILED(hr))
 			{
 				Warning("SDR: Could not copy DX9 RT -> DX11 RT\n");
-				return;
+				return false;
 			}
 
-			if (stream->FirstFrame)
+			return true;
+		}
+
+		void Pass(MovieData::VideoStreamBase* stream)
+		{
+			auto res = CopyDX9ToDX11(stream);
+
+			if (!res)
 			{
-				stream->FirstFrame = false;
 				return;
 			}
 
@@ -2143,14 +2149,24 @@ namespace
 			{
 				Profile::ScopedEntry e1(Profile::Types::ViewRender);
 
-				auto count = movie.VideoStreams.size();
+				int index = 0;
 
-				if (count > 1)
+				for (auto& stream : movie.VideoStreams)
 				{
-					for (auto& stream : movie.VideoStreams)
+					if (stream->FirstFrame)
 					{
-						stream->PreRender();
+						stream->FirstFrame = false;
+						CopyDX9ToDX11(stream.get());
+						continue;
+					}
 
+					stream->PreRender();
+
+					/*
+						Every stream after the first requires a scene redraw
+					*/
+					if (index > 0)
+					{
 						ModuleMaterialSystem::EndFrame
 						(
 							ModuleMaterialSystem::MaterialsPtr,
@@ -2178,20 +2194,13 @@ namespace
 							0,
 							RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD
 						);
-
-						Pass(stream.get());
-
-						stream->PostRender();
 					}
-				}
 
-				else if (count == 1)
-				{
-					auto& stream = movie.VideoStreams[0];
-					
-					stream->PreRender();
 					Pass(stream.get());
+
 					stream->PostRender();
+
+					++index;
 				}
 			}
 		}
