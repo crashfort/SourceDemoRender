@@ -1625,6 +1625,11 @@ namespace
 
 				void NewFrame(ID3D11DeviceContext* context, int groupsx, int groupsy, float weight)
 				{
+					if (weight < FLT_EPSILON)
+					{
+						return;
+					}
+
 					auto srvs = { SharedTextureSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
 
@@ -2039,7 +2044,7 @@ namespace
 
 					if (rem <= (1.0 - exposure))
 					{
-						
+
 					}
 
 					else if (rem < 1.0)
@@ -2052,15 +2057,16 @@ namespace
 					{
 						auto weight = (1.0 - std::max(1.0 - exposure, oldrem)) * (1.0 / exposure);
 
-						rem -= 1.0;
-
 						proc(weight);
+						save(stream->DirectX11.WorkBufferSRV.Get());
+
+						rem -= 1.0;
 
 						uint32_t additional = rem;
 
 						if (additional > 0)
 						{
-							for (size_t i = 0; i < additional; i++)
+							for (int i = 0; i < additional; i++)
 							{
 								save(stream->DirectX11.WorkBufferSRV.Get());
 							}
@@ -2068,14 +2074,13 @@ namespace
 							rem -= additional;
 						}
 
+						clear();
+
 						if (rem > (1.0 - exposure))
 						{
 							weight = ((rem - (1.0 - exposure)) * (1.0 / exposure));
 							proc(weight);
 						}
-
-						save(stream->DirectX11.WorkBufferSRV.Get());
-						clear();
 					}
 				}
 
