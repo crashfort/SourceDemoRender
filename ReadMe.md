@@ -1,8 +1,8 @@
-## Source Demo Render
+# Source Demo Render
 
 The program can be downloaded [here](https://github.com/crashfort/SourceDemoRender/releases). Visit [here](https://twitch.streamlabs.com/crashfort/) if you wish to support the development.
 
-### Installing
+## Installing
 SDR comes in separate singleplayer and multiplayer versions which will only work with whatever SDK the game was built with. `SourceDemoRender.Multiplayer.dll` is for games such as Counter-Strike: Source and `SourceDemoRender.Singleplayer.dll` targets for example Half-Life 2.
 
 The DLL of either SP or MP variant should go in the root game directory. Examples:
@@ -19,8 +19,8 @@ The plugin can be loaded at the main menu or in demo playback, but must be befor
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
-### Instructions
-**sdr_outputdir must be set before starting movie!** When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. There's no need to change host_framerate as that is done automatically. **Do not exit the game until you see a message that says the movie is completed.**
+## Instructions
+When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. There's no need to change host_framerate as that is done automatically. **Do not exit the game until you see a gren message that says the movie is completed.**
 
 Example of supported video containers:
 
@@ -29,9 +29,9 @@ Example of supported video containers:
 * `startmovie test.mov`
 * `startmovie test.mkv`
 
-If not specified, the default video encoder is x264. Other available is ``libx264rgb`` which will produce an RGB video with no color loss.
+The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slightly slower than ``libx264``.
 
-### General commands
+## General commands
 
 <table>
 	<thead>
@@ -42,19 +42,19 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	<tr>
 		<td>sdr_update</td>
 		<td>
-			Check to see if there is an update available. If there is a newer version, you will see a link where to get it. Nothing is downloaded.
+			Check to see if there are any updates available. Library updates need to be manual but game configurations and shaders are updated automatically with this command.
 		</td>
 	</tr>
 	<tr>
 		<td>sdr_version</td>
 		<td>
-			Displays the current version.
+			Displays the current library, config and shader versions.
 		</td>
 	</tr>
 	</tbody>
 </table>
 
-### General variables
+## General variables
 
 <table>
 	<thead>
@@ -65,7 +65,7 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	<tr>
 		<td>sdr_outputdir</td>
 		<td>
-			Path where to save the video. The directory structure will be created if it doesn't already exist. This cannot be the root of a drive, it must be a in at least one directory.
+			Path where to save the video. The directory structure will be created if it doesn't already exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the game root.
 		</td>
 	</tr>
 	<tr>
@@ -73,7 +73,7 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 		<td>
 			Movie output framerate.
             <br/><br/>
-            <b>Values:</b> Minimum 30 <br/>
+            <b>Values:</b> 30 to 1000 <br/>
             <b>Default:</b> 60 <br/>
 		</td>
 	</tr>
@@ -89,7 +89,7 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	<tr>
 		<td>sdr_endmoviequit</td>
 		<td>
-			Quits the game after all endmovie processing is done.
+			Quits the game after all processing is done.
 			<br/><br/>
 			<b>Values:</b> 0 or 1 <br/>
             <b>Default:</b> 0 <br/>
@@ -107,7 +107,7 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	</tbody>
 </table>
 
-### Audio variables
+## Audio variables
 
 <table>
 	<thead>
@@ -127,7 +127,7 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	</tbody>
 </table>
 
-### Video variables
+## Video variables
 
 <table>
 	<thead>
@@ -186,7 +186,7 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	<tr>
 		<td>sdr_x264_crf</td>
 		<td>
-			Constant rate factor quality value. Note that using 0 (lossless) can produce a video with a 4:4:4 profile which your media player might not support. Only available for x264.
+			Constant rate factor quality value. Note that using 0 (lossless) can produce a video with a 4:4:4 profile which your media player might not support.
 			<br/><br/>
             <b>Values:</b> 0 to 51 <br/>
             <b>Default:</b> 0 <br/>
@@ -196,7 +196,7 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	<tr>
 		<td>sdr_x264_preset</td>
 		<td>
-			Encoding preset. If you can, prefer not to use a slow encoding preset as the encoding may fall behind and the game will have to wait for it to catch up. Only available for x264.
+			Encoding preset. If you can, prefer not to use a slow encoding preset as the encoding may fall behind and the game will have to wait for it to catch up.
 			<br/><br/>
             <b>Default:</b> ultrafast <br/>
 			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
@@ -205,7 +205,7 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	<tr>
 		<td>sdr_x264_intra</td>
 		<td>
-			Whether to produce a video of only keyframes. Only available for x264.
+			Whether to produce a video of only keyframes.
 			<br/><br/>
             <b>Values:</b> 0 or 1 <br/>
             <b>Default:</b> 1 <br/>
@@ -213,3 +213,32 @@ If not specified, the default video encoder is x264. Other available is ``libx26
 	</tr>
 	</tbody>
 </table>
+
+## Sampling variables
+
+<table>
+	<thead>
+		<th>Name</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
+	<tr>
+		<td>sdr_sample_mult</td>
+		<td>
+			Value to multiply with **sdr_render_framerate**. This is how many frames will be put together to form a final frame.
+            <br/><br/>
+            <b>Values:</b> Over 2 <br/>
+            <b>Default:</b> 32 <br/>
+		</td>
+	</tr>
+	<tr>
+		<td>sdr_sample_exposure</td>
+		<td>
+			Fraction of time per frame that is exposed for sampling
+            <br/><br/>
+            <b>Values:</b> 0 to 1 <br/>
+            <b>Default:</b> 0.5 <br/>
+		</td>
+	</tr>
+</table>
+	</tbody>
