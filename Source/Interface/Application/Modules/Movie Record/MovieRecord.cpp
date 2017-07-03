@@ -2024,6 +2024,8 @@ namespace
 							groupsy,
 							weight
 						);
+
+						CurrentMovie.Context->Flush();
 					};
 
 					auto clear = [=]()
