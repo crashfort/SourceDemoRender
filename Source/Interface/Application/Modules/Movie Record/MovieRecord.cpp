@@ -1817,6 +1817,11 @@ namespace
 			{
 
 			}
+
+			struct
+			{
+				double Remainder = 0;
+			} SamplingData;
 		};
 
 		struct FullbrightVideoStream : VideoStreamBase
@@ -1846,7 +1851,6 @@ namespace
 			
 			double TimePerSample;
 			double TimePerFrame;
-			double Remainder = 0;
 		} SamplingData;
 
 		std::unique_ptr<SDRAudioWriter> Audio;
@@ -2038,7 +2042,7 @@ namespace
 						);
 					};
 
-					auto& rem = sampling.Remainder;
+					auto& rem = stream->SamplingData.Remainder;
 					auto oldrem = rem;
 					auto exposure = sampling.Exposure;
 
