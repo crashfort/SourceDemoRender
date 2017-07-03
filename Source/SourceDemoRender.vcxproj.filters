@@ -48,12 +48,6 @@
     <ClInclude Include="3rd Party Libraries\MinHook\src\trampoline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interface\Application\Modules\Movie Record\HLAE\Sampler.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -92,12 +86,6 @@
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Movie Record\HLAE\Sampler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -109,6 +97,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Interface\Application\Modules\Movie Record\HLAE\Readme.txt" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Sampling.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\ClearUAV.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\BGR0.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV420.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV444.hlsl" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\PassUAV.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl" />
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\Utility.hlsl" />
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\SharedAll.hlsl" />
   </ItemGroup>
 </Project>

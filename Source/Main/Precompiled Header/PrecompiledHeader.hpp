@@ -32,6 +32,8 @@ using namespace std::chrono_literals;
 #include "convar.h"
 #include "materialsystem\imaterialsystem.h"
 
+#include "valve_minmax_off.h"
+
 #include "Interface\Application\Shared\Shared.hpp"
 
 #undef Verify
