@@ -225,9 +225,9 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 	<tr>
 		<td>sdr_sample_mult</td>
 		<td>
-			Value to multiply with <b>sdr_render_framerate</b>. This is how many frames will be put together to form a final frame.
+			Value to multiply with <b>sdr_render_framerate</b>. This is how many frames will be put together to form a final frame multiplied by exposure. Less than 2 will disable sampling.
             <br/><br/>
-            <b>Values:</b> Over 2 <br/>
+            <b>Values:</b> Over 0 <br/>
             <b>Default:</b> 32 <br/>
 		</td>
 	</tr>

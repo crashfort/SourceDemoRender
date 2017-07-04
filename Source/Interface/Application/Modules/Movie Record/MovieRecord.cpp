@@ -362,7 +362,7 @@ namespace
 			(
 				"sdr_sample_mult", "32", FCVAR_NEVER_AS_STRING,
 				"Framerate multiplication",
-				true, 2, false, 0
+				true, 0, false, 0
 			);
 
 			ConVar Exposure
