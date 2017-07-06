@@ -1613,6 +1613,15 @@ namespace
 						1
 					);
 
+					/*
+						Force processing right now. If this flush is not here
+						then the queue will clear and only transmit the latest frame
+						at the GPU -> CPU sync point which effectively disables the entire
+						sampling effect.
+					*/
+
+					context->Flush();
+
 					ResetShaderInputs(context);
 				}
 
@@ -1663,11 +1672,7 @@ namespace
 					ResetShaderInputs(context);
 				}
 
-				bool Conversion
-				(
-					VideoStreamSharedData* shared,
-					VideoFutureData& item
-				)
+				bool Conversion(VideoStreamSharedData* shared, VideoFutureData& item)
 				{
 					auto context = shared->DirectX11.Context.Get();
 
@@ -1952,16 +1957,6 @@ namespace
 				{
 					auto& shared = CurrentMovie.VideoStreamShared;
 					stream->DirectX11.NewFrame(&shared, weight);
-
-					/*
-						Force processing right now. If this flush is not here
-						then the queue will clear and only transmit the latest frame
-						at the GPU -> CPU sync point which effectively disables the entire
-						sampling effect.
-					*/
-
-					auto context = shared.DirectX11.Context.Get();
-					context->Flush();
 				};
 
 				auto clear = [=]()
