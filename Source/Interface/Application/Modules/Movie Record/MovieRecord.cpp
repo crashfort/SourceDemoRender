@@ -493,7 +493,7 @@ namespace
 	{
 		SDRAudioWriter()
 		{
-			SamplesToWrite.reserve(1024);
+			
 		}
 
 		~SDRAudioWriter()
@@ -556,11 +556,6 @@ namespace
 				return;
 			}
 
-			for (auto& samples : SamplesToWrite)
-			{
-				WritePCM16Samples(samples);
-			}
-
 			WaveFile.SeekAbsolute(HeaderPosition);
 			WaveFile.WriteSimple(FileLength - sizeof(int) * 2);
 
@@ -568,11 +563,6 @@ namespace
 			WaveFile.WriteSimple(DataLength);
 
 			WaveFile.Close();
-		}
-
-		void AddPCM16Samples(std::vector<int16_t>&& samples)
-		{
-			SamplesToWrite.emplace_back(std::move(samples));
 		}
 
 		void WritePCM16Samples(const std::vector<int16_t>& samples)
@@ -594,11 +584,19 @@ namespace
 		*/
 		int32_t HeaderPosition;
 		int32_t DataPosition;
+
+		double Remainder = 0.0;
 		
 		int32_t DataLength = 0;
 		int32_t FileLength = 0;
 
-		std::vector<std::vector<int16_t>> SamplesToWrite;
+		enum class RoundingType
+		{
+			Normal,
+			Remaining
+		};
+
+		RoundingType TimeRounding = RoundingType::Normal;
 	};
 
 	struct SDRVideoWriter
@@ -1004,6 +1002,8 @@ namespace
 	{
 		IDirect3DDevice9* DX9Device;
 		bool* DrawLoading;
+		char* MovieInfoName;
+		float* FrameTime;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -1020,13 +1020,6 @@ namespace
 					}
 
 					DX9Device = **(IDirect3DDevice9***)(address);
-
-					SDR::ModuleShared::Registry::SetKeyValue
-					(
-						name,
-						DX9Device
-					);
-
 					return true;
 				}
 			),
@@ -1043,13 +1036,38 @@ namespace
 					}
 
 					DrawLoading = *(bool**)(address);
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"MovieInfoName",
+				[](const char* name, rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
 
-					SDR::ModuleShared::Registry::SetKeyValue
-					(
-						name,
-						DrawLoading
-					);
+					if (!address)
+					{
+						return false;
+					}
 
+					MovieInfoName = *(char**)(address);
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"FrameTime",
+				[](const char* name, rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					FrameTime = *(float**)(address);
 					return true;
 				}
 			)
@@ -1063,6 +1081,8 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
+		double EngineRate;
+
 		/*
 			This structure is sent to the encoder thread
 			from the capture thread
@@ -1071,6 +1091,11 @@ namespace
 		{
 			SDRVideoWriter* Writer;
 			SDRVideoWriter::PlaneType Planes;
+		};
+
+		struct AudioFutureData
+		{
+			std::vector<int16_t> Samples;
 		};
 
 		/*
@@ -1851,6 +1876,7 @@ namespace
 
 		std::thread FrameBufferThreadHandle;
 		std::unique_ptr<VideoQueueType> VideoQueue;
+		std::vector<AudioFutureData> AudioQueue;
 
 		Microsoft::WRL::ComPtr<ID3D11Device> Device;
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
@@ -1879,6 +1905,29 @@ namespace
 		movie = MovieData();
 	}
 
+	bool SDR_ShouldRecord()
+	{
+		auto& interfaces = SDR::GetEngineInterfaces();
+		auto client = interfaces.EngineClient;
+
+		if (!CurrentMovie.IsStarted)
+		{
+			return false;
+		}
+
+		if (*ModuleSourceGlobals::DrawLoading)
+		{
+			return false;
+		}
+
+		if (client->Con_IsVisible())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	/*
 		In case endmovie never gets called,
 		this handles the plugin_unload
@@ -1905,7 +1954,8 @@ namespace
 }
 
 namespace
-{	
+{
+	#if 1
 	namespace ModuleView_Render
 	{
 		#pragma region Init
@@ -2115,26 +2165,8 @@ namespace
 				rect
 			);
 
-			bool dopasses = true;
-
 			auto& movie = CurrentMovie;
-			auto& interfaces = SDR::GetEngineInterfaces();
-			auto client = interfaces.EngineClient;
-
-			if (!CurrentMovie.IsStarted)
-			{
-				dopasses = false;
-			}
-
-			if (*ModuleSourceGlobals::DrawLoading)
-			{
-				dopasses = false;
-			}
-
-			if (client->Con_IsVisible())
-			{
-				dopasses = false;
-			}
+			bool dopasses = SDR_ShouldRecord();
 
 			if (dopasses)
 			{
@@ -2197,6 +2229,99 @@ namespace
 				}
 			}
 		}
+	}
+
+	namespace ModuleSound
+	{
+		int* SoundPtr;
+		int* SoundLinearCount;
+		int* SoundVolume;
+		int* SoundPaintedTime;
+		int* SoundTime;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"SoundPtr",
+				[](const char* name, rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					SoundPtr = **(int***)(address);
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"SoundLinearCount",
+				[](const char* name, rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					SoundLinearCount = *(int**)(address);
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"SoundVolume",
+				[](const char* name, rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					SoundVolume = *(int**)(address);
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"SoundPaintedTime",
+				[](const char* name, rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					SoundPaintedTime = *(int**)(address);
+					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"SoundTime",
+				[](const char* name, rapidjson::Value& value)
+				{
+					auto address = SDR::GetAddressFromJsonPattern(value);
+
+					if (!address)
+					{
+						return false;
+					}
+
+					SoundTime = *(int**)(address);
+					return true;
+				}
+			)
+		);
 	}
 
 	namespace ModuleStartMovie
@@ -2626,6 +2751,9 @@ namespace
 							This is the only supported audio output format
 						*/
 						audiowriter->Open(name.c_str(), 44'100, 16, 2);
+
+						*ModuleSound::SoundPaintedTime = 0;
+						*ModuleSound::SoundTime = 0;
 					}
 				}
 
@@ -2702,10 +2830,17 @@ namespace
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(enginerate);
 
+			movie.EngineRate = 1.0 / enginerate;
+
 			/*
-				Make room for some entries in this queue
+				Make room for some entries in the queues
 			*/
 			movie.VideoQueue = std::make_unique<MovieData::VideoQueueType>(256);
+
+			if (movie.Audio)
+			{
+				//movie.AudioQueue = std::make_unique<MovieData::AudioQueueType>(1024);
+			}
 
 			movie.IsStarted = true;
 			BufferedFrames = 0;
@@ -2798,7 +2933,83 @@ namespace
 			);
 		}
 	}
+	#endif
 
+	#if 0
+	namespace ModuleMIXPaintChannels
+	{
+		#pragma region Init
+
+		void __cdecl Override(int endtime, bool underwater);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"MIXPaintChannels",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
+
+		#pragma endregion
+
+		void __cdecl Override(int endtime, bool underwater)
+		{
+			if (!CurrentMovie.Audio)
+			{
+				ThisHook.GetOriginal()(endtime, underwater);
+				return;
+			}
+
+			auto audio = CurrentMovie.Audio.get();
+
+			auto paintedtime = *ModuleSound::SoundPaintedTime;
+			double frametime;
+
+			if (audio->TimeRounding == SDRAudioWriter::RoundingType::Normal)
+			{
+				frametime = *ModuleSourceGlobals::FrameTime;
+			}
+
+			else if (audio->TimeRounding == SDRAudioWriter::RoundingType::Remaining)
+			{
+				frametime = 0;
+			}
+
+			double speed = 44'100;
+			auto samples = frametime * speed + audio->Remainder;
+			int rounded;
+
+			if (audio->TimeRounding == SDRAudioWriter::RoundingType::Normal)
+			{
+				rounded = std::floor(samples);
+			}
+
+			else if (audio->TimeRounding == SDRAudioWriter::RoundingType::Remaining)
+			{
+				rounded = std::ceil(samples);
+			}
+
+			audio->Remainder = samples - rounded;
+
+			ThisHook.GetOriginal()(paintedtime + rounded, underwater);
+		}
+	}
+	#endif
+
+	#if 1
 	namespace ModuleEndMovie
 	{
 		#pragma region Init
@@ -2836,6 +3047,17 @@ namespace
 				return;
 			}
 
+			if (CurrentMovie.Audio)
+			{
+				CurrentMovie.Audio->TimeRounding = SDRAudioWriter::RoundingType::Remaining;
+
+				//ModuleMIXPaintChannels::Override(0, false);
+
+				CurrentMovie.Audio->TimeRounding = SDRAudioWriter::RoundingType::Normal;
+			}
+
+			CurrentMovie.IsStarted = false;
+
 			/*
 				Don't call original function as we don't
 				call the engine's startmovie
@@ -2860,6 +3082,11 @@ namespace
 
 				if (CurrentMovie.Audio)
 				{
+					for (const auto& item : CurrentMovie.AudioQueue)
+					{
+						CurrentMovie.Audio->WritePCM16Samples(item.Samples);
+					}
+
 					CurrentMovie.Audio->Finish();
 				}
 
@@ -2964,7 +3191,336 @@ namespace
 			ModuleEndMovie::Override();
 		}
 	}
+	#endif
 
+	#if 0
+	namespace ModuleSoundWriteLinearBlastStereo16
+	{
+		#pragma region Init
+
+		void __cdecl Override();
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"SoundWriteLinearBlastStereo16",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
+
+		#pragma endregion
+
+		void __cdecl Override()
+		{
+			if (!CurrentMovie.Audio)
+			{
+				return;
+			}
+
+			auto linear = *ModuleSound::SoundLinearCount;
+			auto vol = *ModuleSound::SoundVolume;
+			auto ptr = ModuleSound::SoundPtr;
+			
+			std::vector<int16_t> buf;
+			buf.reserve(linear * sizeof(int16_t));
+
+			auto clip = [](int value) -> int16_t
+			{
+				const int16_t max = INT16_MAX;
+				const int16_t min = -max;
+
+				if (value < min)
+				{
+					return min;
+				}
+
+				else if (value > max)
+				{
+					return max;
+				}
+
+				return value;
+			};
+
+			for (size_t i = 0; i < linear; i++)
+			{
+				int val;
+
+				val = (ptr[i] * vol) >> 8;
+				buf.emplace_back(clip(val));
+
+				val = (ptr[i + 1] * vol) >> 8;
+				buf.emplace_back(clip(val));
+			}
+
+			CurrentMovie.Audio->AddPCM16Samples(std::move(buf));
+		}
+	}
+	#endif
+
+	#if 0
+	namespace ModuleHostAccumulateTime
+	{
+		#pragma region Init
+
+		void __cdecl Override(float dt);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"HostAccumulateTime",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
+
+		#pragma endregion
+
+		void __cdecl Override(float dt)
+		{
+			ModuleSourceGlobals::FrameTime = dt;
+			ThisHook.GetOriginal()(dt);
+		}
+	}
+	#endif
+
+	#if 1
+	namespace ModuleSUpdateGuts
+	{
+		#pragma region Init
+
+		void __cdecl Override(float mixahead);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"SUpdateGuts",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
+
+		#pragma endregion
+
+		void __cdecl Override(float mixahead)
+		{
+			ThisHook.GetOriginal()(mixahead);
+		}
+	}
+	#endif
+
+	#if 0
+	namespace ModuleGetSoundTime
+	{
+		#pragma region Init
+
+		void __cdecl Override();
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"GetSoundTime",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
+
+		#pragma endregion
+
+		void __cdecl Override()
+		{
+			if (!SDR_ShouldRecordAudio())
+			{
+				ThisHook.GetOriginal()();
+			}
+		}
+	}
+	#endif
+
+	#if 0
+	namespace ModuleSTransferStereo16
+	{
+		struct portable_samplepair_t
+		{
+			int left;
+			int right;
+		};
+
+		#pragma region Init
+
+		void __cdecl Override(void* output, const portable_samplepair_t* front, int paintedtime, int endtime);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"STransferStereo16",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
+
+		#pragma endregion
+
+		void __cdecl Override(void* output, const portable_samplepair_t* front, int paintedtime, int endtime)
+		{
+			if (CurrentMovie.Audio)
+			{
+				#if 0
+				auto clip = [](int value) -> int16_t
+				{
+					const int16_t max = INT16_MAX;
+					const int16_t min = INT16_MIN;
+
+					if (value < min)
+					{
+						return min;
+					}
+
+					else if (value > max)
+					{
+						return max;
+					}
+
+					return value;
+				};
+
+				std::vector<int16_t> buf;
+				auto vol = 256;
+
+				for (size_t i = 0; i < (endtime - paintedtime) * 2; i++)
+				{
+					auto l16 = clip((front[i].left * vol) >> 8);
+					auto r16 = clip((front[i].right * vol) >> 8);
+
+					buf.emplace_back(l16);
+					buf.emplace_back(r16);
+				}
+
+				MovieData::AudioFutureData item;
+				item.Samples = std::move(buf);
+
+				CurrentMovie.AudioQueue.emplace_back(std::move(item));
+				#endif
+			}
+
+			ThisHook.GetOriginal()(output, front, paintedtime, endtime);
+		}
+	}
+	#endif
+
+	#if 0
+	namespace ModuleWriteMovieFrame
+	{
+		#pragma region Init
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			void* info
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WriteMovieFrame",
+				[]
+				(
+					const char* name,
+					rapidjson::Value& value
+				)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
+
+		#pragma endregion
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			void* info
+		)
+		{
+			
+		}
+	}
+	#endif
+
+	#if 1
 	namespace ModuleSNDRecordBuffer
 	{
 		#pragma region Init
@@ -2996,13 +3552,80 @@ namespace
 
 		void __cdecl Override()
 		{
-			if (CurrentMovie.Audio)
+			if (!CurrentMovie.Audio)
 			{
-				ThisHook.GetOriginal()();
+				return;
+			}
+
+			ModuleSourceGlobals::MovieInfoName[0] = 'x';
+			ThisHook.GetOriginal()();
+			ModuleSourceGlobals::MovieInfoName[0] = 0;
+		}
+	}
+	#endif
+
+	#if 0
+	namespace ModuleSetSoundFrametime
+	{
+		#pragma region Init
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			float realdt,
+			float hostdt
+		);
+
+		using ThisFunction = decltype(Override)*;
+
+		SDR::HookModule<ThisFunction> ThisHook;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"SetSoundFrametime",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::CreateHookShort
+					(
+						ThisHook,
+						Override,
+						value
+					);
+				}
+			)
+		);
+
+		#pragma endregion
+
+		void __fastcall Override
+		(
+			void* thisptr,
+			void* edx,
+			float realdt,
+			float hostdt
+		)
+		{
+			auto started = CurrentMovie.IsStarted;
+
+			if (started)
+			{
+				ModuleSourceGlobals::MovieInfoName[0] = 'x';
+			}
+
+			ThisHook.GetOriginal()(thisptr, edx, realdt, hostdt);
+
+			if (started)
+			{
+				ModuleSourceGlobals::MovieInfoName[0] = 0;
 			}
 		}
 	}
+	#endif
 
+	#if 1
 	namespace ModuleWaveCreateTmpFile
 	{
 		#pragma region Init
@@ -3108,7 +3731,10 @@ namespace
 			auto bufstart = static_cast<int16_t*>(buffer);
 			auto length = samplecount * samplebits / 8;
 
-			CurrentMovie.Audio->AddPCM16Samples({bufstart, bufstart + length});
+			MovieData::AudioFutureData item;
+			item.Samples = {bufstart, bufstart + length};
+
+			CurrentMovie.AudioQueue.emplace_back(std::move(item));
 		}
 	}
 
@@ -3155,4 +3781,5 @@ namespace
 			
 		}
 	}
+	#endif
 }
