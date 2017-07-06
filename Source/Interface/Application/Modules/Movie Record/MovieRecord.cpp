@@ -2443,7 +2443,7 @@ namespace
 							0,
 							D3D11_SDK_VERSION,
 							movie.Device.GetAddressOf(),
-							0,
+							nullptr,
 							movie.Context.GetAddressOf()
 						);
 
