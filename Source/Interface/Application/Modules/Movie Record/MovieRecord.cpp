@@ -994,6 +994,9 @@ namespace
 			{
 				void Create(ID3D11Device* device, int width, int height)
 				{
+					GroupsX = std::ceil(width / 8.0);
+					GroupsY = std::ceil(height / 8.0);
+
 					{
 						D3D11_BUFFER_DESC cbufdesc = {};
 						cbufdesc.ByteWidth = sizeof(SamplingConstantData);
@@ -1044,6 +1047,9 @@ namespace
 					OpenShader(device, "ClearUAV", ClearShader.GetAddressOf());
 					OpenShader(device, "PassUAV", PassShader.GetAddressOf());
 				}
+
+				int GroupsX;
+				int GroupsY;
 
 				/*
 					Contains the current video frame dimensions. Will always be
@@ -1523,8 +1529,6 @@ namespace
 				(
 					VideoStreamSharedData* shared,
 					ID3D11DeviceContext* context,
-					int groupsx,
-					int groupsy,
 					float weight
 				)
 				{
@@ -1577,7 +1581,12 @@ namespace
 
 					context->CSSetShader(shared->DirectX11.SamplingShader.Get(), nullptr, 0);
 
-					context->Dispatch(groupsx, groupsy, 1);
+					context->Dispatch
+					(
+						shared->DirectX11.GroupsX,
+						shared->DirectX11.GroupsY,
+						1
+					);
 
 					ResetShaderInputs(context);
 				}
@@ -1585,9 +1594,7 @@ namespace
 				void Clear
 				(
 					VideoStreamSharedData* shared,
-					ID3D11DeviceContext* context,
-					int groupsx,
-					int groupsy
+					ID3D11DeviceContext* context
 				)
 				{
 					context->CSSetShader(shared->DirectX11.ClearShader.Get(), nullptr, 0);
@@ -1598,7 +1605,12 @@ namespace
 					auto cbufs = { shared->DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
-					context->Dispatch(groupsx, groupsy, 1);
+					context->Dispatch
+					(
+						shared->DirectX11.GroupsX,
+						shared->DirectX11.GroupsY,
+						1
+					);
 
 					ResetShaderInputs(context);
 				}
@@ -1606,9 +1618,7 @@ namespace
 				void Pass
 				(
 					VideoStreamSharedData* shared,
-					ID3D11DeviceContext* context,
-					int groupsx,
-					int groupsy
+					ID3D11DeviceContext* context
 				)
 				{
 					context->CSSetShader(shared->DirectX11.PassShader.Get(), nullptr, 0);
@@ -1622,7 +1632,12 @@ namespace
 					auto cbufs = { shared->DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
-					context->Dispatch(groupsx, groupsy, 1);
+					context->Dispatch
+					(
+						shared->DirectX11.GroupsX,
+						shared->DirectX11.GroupsY,
+						1
+					);
 
 					ResetShaderInputs(context);
 				}
@@ -1631,8 +1646,6 @@ namespace
 				(
 					VideoStreamSharedData* shared,
 					ID3D11DeviceContext* context,
-					int groupsx,
-					int groupsy,
 					ID3D11ShaderResourceView* srv,
 					VideoFutureData& item
 				)
@@ -1647,7 +1660,12 @@ namespace
 					
 					ConversionPtr->DynamicBind(context);
 
-					context->Dispatch(groupsx, groupsy, 1);
+					context->Dispatch
+					(
+						shared->DirectX11.GroupsX,
+						shared->DirectX11.GroupsY,
+						1
+					);
 
 					ResetShaderInputs(context);
 
@@ -1892,9 +1910,6 @@ namespace
 
 			auto& sampling = CurrentMovie.SamplingData;
 
-			int groupsx = std::ceil(CurrentMovie.Width / 8.0);
-			int groupsy = std::ceil(CurrentMovie.Height / 8.0);
-
 			auto save = [=](ID3D11ShaderResourceView* srv)
 			{
 				MovieData::VideoFutureData item;
@@ -1904,8 +1919,6 @@ namespace
 				(
 					&CurrentMovie.VideoStreamShared,
 					CurrentMovie.Context.Get(),
-					groupsx,
-					groupsy,
 					srv,
 					item
 				);
@@ -1925,8 +1938,6 @@ namespace
 					(
 						&CurrentMovie.VideoStreamShared,
 						CurrentMovie.Context.Get(),
-						groupsx,
-						groupsy,
 						weight
 					);
 
@@ -1938,9 +1949,7 @@ namespace
 					stream->DirectX11.Clear
 					(
 						&CurrentMovie.VideoStreamShared,
-						CurrentMovie.Context.Get(),
-						groupsx,
-						groupsy
+						CurrentMovie.Context.Get()
 					);
 				};
 
@@ -1997,9 +2006,7 @@ namespace
 				stream->DirectX11.Pass
 				(
 					&CurrentMovie.VideoStreamShared,
-					CurrentMovie.Context.Get(),
-					groupsx,
-					groupsy
+					CurrentMovie.Context.Get()
 				);
 
 				save(stream->DirectX11.WorkBufferSRV.Get());
