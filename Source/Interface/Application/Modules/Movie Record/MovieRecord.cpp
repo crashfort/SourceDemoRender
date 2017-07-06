@@ -882,8 +882,6 @@ namespace
 	{
 		IDirect3DDevice9* DX9Device;
 		bool* DrawLoading;
-		char* MovieInfoName;
-		float* FrameTime;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -916,38 +914,6 @@ namespace
 					}
 
 					DrawLoading = *(bool**)(address);
-					return true;
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"MovieInfoName",
-				[](const char* name, rapidjson::Value& value)
-				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
-
-					if (!address)
-					{
-						return false;
-					}
-
-					MovieInfoName = *(char**)(address);
-					return true;
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"FrameTime",
-				[](const char* name, rapidjson::Value& value)
-				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
-
-					if (!address)
-					{
-						return false;
-					}
-
-					FrameTime = *(float**)(address);
 					return true;
 				}
 			)
