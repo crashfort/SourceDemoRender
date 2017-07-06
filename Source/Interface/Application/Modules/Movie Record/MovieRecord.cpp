@@ -927,7 +927,51 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
-		double EngineRate;
+		static void OpenShader
+		(
+			ID3D11Device* device,
+			const char* name,
+			ID3D11ComputeShader** shader
+		)
+		{
+			using Status = SDR::Shared::ScopedFile::ExceptionType;
+
+			SDR::Shared::ScopedFile file;
+
+			char path[1024];
+			strcpy_s(path, SDR::GetGamePath());
+			strcat(path, R"(SDR\)");
+			strcat_s(path, name);
+			strcat_s(path, ".sdrshader");
+
+			try
+			{
+				file.Assign(path, "rb");
+			}
+
+			catch (Status status)
+			{
+				if (status == Status::CouldNotOpenFile)
+				{
+					Warning("SDR: Could not open shader \"%s\"\n", path);
+				}
+
+				throw false;
+			}
+
+			auto data = file.ReadAll();
+
+			MS::ThrowIfFailed
+			(
+				device->CreateComputeShader
+				(
+					data.data(),
+					data.size(),
+					nullptr,
+					shader
+				)
+			);
+		}
 
 		/*
 			This structure is sent to the encoder thread
@@ -943,6 +987,90 @@ namespace
 			A lock-free producer/consumer queue
 		*/
 		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureData>;
+
+		struct VideoStreamSharedData
+		{
+			struct DirectX11Data
+			{
+				void Create(ID3D11Device* device, int width, int height)
+				{
+					{
+						D3D11_BUFFER_DESC cbufdesc = {};
+						cbufdesc.ByteWidth = sizeof(SamplingConstantData);
+						cbufdesc.Usage = D3D11_USAGE_DYNAMIC;
+						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+						cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+						MS::ThrowIfFailed
+						(
+							device->CreateBuffer
+							(
+								&cbufdesc,
+								nullptr,
+								SamplingConstantBuffer.GetAddressOf()
+							)
+						);
+					}
+
+					{
+						__declspec(align(16)) struct
+						{
+							int Dimensions[2];
+						} constantbufferdata;
+
+						constantbufferdata.Dimensions[0] = width;
+						constantbufferdata.Dimensions[1] = height;
+
+						D3D11_BUFFER_DESC cbufdesc = {};
+						cbufdesc.ByteWidth = sizeof(constantbufferdata);
+						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
+						cbufsubdesc.pSysMem = &constantbufferdata;
+
+						MS::ThrowIfFailed
+						(
+							device->CreateBuffer
+							(
+								&cbufdesc,
+								&cbufsubdesc,
+								SharedConstantBuffer.GetAddressOf()
+							)
+						);
+					}
+
+					OpenShader(device, "Sampling", SamplingShader.GetAddressOf());
+					OpenShader(device, "ClearUAV", ClearShader.GetAddressOf());
+					OpenShader(device, "PassUAV", PassShader.GetAddressOf());
+				}
+
+				/*
+					Contains the current video frame dimensions. Will always be
+					bound at slot 0.
+				*/
+				Microsoft::WRL::ComPtr<ID3D11Buffer> SharedConstantBuffer;
+
+				__declspec(align(16)) struct
+				{
+					float Weight;
+				} SamplingConstantData;
+
+				Microsoft::WRL::ComPtr<ID3D11Buffer> SamplingConstantBuffer;
+				Microsoft::WRL::ComPtr<ID3D11ComputeShader> SamplingShader;
+				
+				/*
+					Shader for setting every UAV structure color to 0.
+				*/
+				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ClearShader;
+
+				/*
+					When no sampling is enabled, this shader just takes the
+					game backbuffer texture and puts it into WorkBuffer.
+				*/
+				Microsoft::WRL::ComPtr<ID3D11ComputeShader> PassShader;
+			} DirectX11;
+		} VideoStreamShared;
 
 		struct VideoStreamBase
 		{
@@ -1303,99 +1431,7 @@ namespace
 								WorkBufferSRV.GetAddressOf()
 							)
 						);
-
-						{
-							D3D11_BUFFER_DESC cbufdesc = {};
-							cbufdesc.ByteWidth = sizeof(SamplingConstantData);
-							cbufdesc.Usage = D3D11_USAGE_DYNAMIC;
-							cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-							cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-							MS::ThrowIfFailed
-							(
-								device->CreateBuffer
-								(
-									&cbufdesc,
-									nullptr,
-									SamplingConstantBuffer.GetAddressOf()
-								)
-							);
-						}
-
-						{
-							__declspec(align(16)) struct
-							{
-								int Dimensions[2];
-							} constantbufferdata;
-
-							constantbufferdata.Dimensions[0] = reference->width;
-							constantbufferdata.Dimensions[1] = reference->height;
-
-							D3D11_BUFFER_DESC cbufdesc = {};
-							cbufdesc.ByteWidth = sizeof(constantbufferdata);
-							cbufdesc.Usage = D3D11_USAGE_DEFAULT;
-							cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-							D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-							cbufsubdesc.pSysMem = &constantbufferdata;
-
-							MS::ThrowIfFailed
-							(
-								device->CreateBuffer
-								(
-									&cbufdesc,
-									&cbufsubdesc,
-									SharedConstantBuffer.GetAddressOf()
-								)
-							);
-						}
 					}
-
-					auto openshader = []
-					(
-						ID3D11Device* device,
-						const char* name,
-						ID3D11ComputeShader** shader
-					)
-					{
-						using Status = SDR::Shared::ScopedFile::ExceptionType;
-
-						SDR::Shared::ScopedFile file;
-
-						char path[1024];
-						strcpy_s(path, SDR::GetGamePath());
-						strcat(path, R"(SDR\)");
-						strcat_s(path, name);
-						strcat_s(path, ".sdrshader");
-
-						try
-						{
-							file.Assign(path, "rb");
-						}
-
-						catch (Status status)
-						{
-							if (status == Status::CouldNotOpenFile)
-							{
-								Warning("SDR: Could not open shader \"%s\"\n", path);
-							}
-
-							throw false;
-						}
-
-						auto data = file.ReadAll();
-
-						MS::ThrowIfFailed
-						(
-							device->CreateComputeShader
-							(
-								data.data(),
-								data.size(),
-								nullptr,
-								shader
-							)
-						);
-					};
 
 					struct ConversionRuleData
 					{
@@ -1417,10 +1453,6 @@ namespace
 						bool IsYUV;
 					};
 
-					openshader(device, "Sampling", SamplingShader.GetAddressOf());
-					openshader(device, "ClearUAV", ClearShader.GetAddressOf());
-					openshader(device, "PassUAV", PassShader.GetAddressOf());
-
 					ConversionRuleData table[] =
 					{
 						ConversionRuleData(AV_PIX_FMT_YUV420P, "YUV420", true),
@@ -1438,7 +1470,7 @@ namespace
 					{
 						if (entry.Format == reference->format)
 						{
-							openshader
+							OpenShader
 							(
 								device,
 								entry.ShaderName,
@@ -1487,7 +1519,14 @@ namespace
 					context->CSSetConstantBuffers(0, count, cbufs);
 				}
 
-				void NewFrame(ID3D11DeviceContext* context, int groupsx, int groupsy, float weight)
+				void NewFrame
+				(
+					VideoStreamSharedData* shared,
+					ID3D11DeviceContext* context,
+					int groupsx,
+					int groupsy,
+					float weight
+				)
 				{
 					auto srvs = { SharedTextureSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
@@ -1495,13 +1534,13 @@ namespace
 					auto uavs = { WorkBufferUAV.Get() };
 					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 
-					if (SamplingConstantData.Weight != weight)
+					if (shared->DirectX11.SamplingConstantData.Weight != weight)
 					{
 						D3D11_MAPPED_SUBRESOURCE mapped;
 
 						auto hr = context->Map
 						(
-							SamplingConstantBuffer.Get(),
+							shared->DirectX11.SamplingConstantBuffer.Get(),
 							0,
 							D3D11_MAP_WRITE_DISCARD,
 							0,
@@ -1515,42 +1554,48 @@ namespace
 
 						else
 						{
-							SamplingConstantData.Weight = weight;
+							shared->DirectX11.SamplingConstantData.Weight = weight;
 
 							std::memcpy
 							(
 								mapped.pData,
-								&SamplingConstantData,
-								sizeof(SamplingConstantData)
+								&shared->DirectX11.SamplingConstantData,
+								sizeof(shared->DirectX11.SamplingConstantData)
 							);
 						}
 
-						context->Unmap(SamplingConstantBuffer.Get(), 0);
+						context->Unmap(shared->DirectX11.SamplingConstantBuffer.Get(), 0);
 					}
 
 					auto cbufs =
 					{
-						SharedConstantBuffer.Get(),
-						SamplingConstantBuffer.Get()
+						shared->DirectX11.SharedConstantBuffer.Get(),
+						shared->DirectX11.SamplingConstantBuffer.Get()
 					};
 
 					context->CSSetConstantBuffers(0, 2, cbufs.begin());
 
-					context->CSSetShader(SamplingShader.Get(), nullptr, 0);
+					context->CSSetShader(shared->DirectX11.SamplingShader.Get(), nullptr, 0);
 
 					context->Dispatch(groupsx, groupsy, 1);
 
 					ResetShaderInputs(context);
 				}
 
-				void Clear(ID3D11DeviceContext* context, int groupsx, int groupsy)
+				void Clear
+				(
+					VideoStreamSharedData* shared,
+					ID3D11DeviceContext* context,
+					int groupsx,
+					int groupsy
+				)
 				{
-					context->CSSetShader(ClearShader.Get(), nullptr, 0);
+					context->CSSetShader(shared->DirectX11.ClearShader.Get(), nullptr, 0);
 
 					auto uavs = { WorkBufferUAV.Get() };
 					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 
-					auto cbufs = { SharedConstantBuffer.Get() };
+					auto cbufs = { shared->DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
 					context->Dispatch(groupsx, groupsy, 1);
@@ -1558,9 +1603,15 @@ namespace
 					ResetShaderInputs(context);
 				}
 
-				void Pass(ID3D11DeviceContext* context, int groupsx, int groupsy)
+				void Pass
+				(
+					VideoStreamSharedData* shared,
+					ID3D11DeviceContext* context,
+					int groupsx,
+					int groupsy
+				)
 				{
-					context->CSSetShader(PassShader.Get(), nullptr, 0);
+					context->CSSetShader(shared->DirectX11.PassShader.Get(), nullptr, 0);
 
 					auto srvs = { SharedTextureSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
@@ -1568,7 +1619,7 @@ namespace
 					auto uavs = { WorkBufferUAV.Get() };
 					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 
-					auto cbufs = { SharedConstantBuffer.Get() };
+					auto cbufs = { shared->DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
 					context->Dispatch(groupsx, groupsy, 1);
@@ -1578,6 +1629,7 @@ namespace
 
 				bool Conversion
 				(
+					VideoStreamSharedData* shared,
 					ID3D11DeviceContext* context,
 					int groupsx,
 					int groupsy,
@@ -1590,7 +1642,7 @@ namespace
 					auto srvs = { srv };
 					context->CSSetShaderResources(0, 1, srvs.begin());
 
-					auto cbufs = { SharedConstantBuffer.Get() };
+					auto cbufs = { shared->DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 					
 					ConversionPtr->DynamicBind(context);
@@ -1603,19 +1655,11 @@ namespace
 				}
 
 				/*
-					Contains the current video frame dimensions. Will always be
-					bound at slot 0.
+					The newest and freshest frame provided by the engine.
 				*/
-				Microsoft::WRL::ComPtr<ID3D11Buffer> SharedConstantBuffer;
+				Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
+				Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRV;
 
-				__declspec(align(16)) struct
-				{
-					float Weight;
-				} SamplingConstantData;
-
-				Microsoft::WRL::ComPtr<ID3D11Buffer> SamplingConstantBuffer;
-				Microsoft::WRL::ComPtr<ID3D11ComputeShader> SamplingShader;
-				
 				/*
 					Format specific buffer for format conversions. Handles
 					binding shader resources and downloading the finished frame.
@@ -1627,23 +1671,6 @@ namespace
 					this shader will write into the varying bound resources.
 				*/
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ConversionShader;
-				
-				/*
-					Shader for setting every UAV structure color to 0.
-				*/
-				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ClearShader;
-
-				/*
-					When no sampling is enabled, this shader just takes the
-					game backbuffer texture and puts it into WorkBuffer.
-				*/
-				Microsoft::WRL::ComPtr<ID3D11ComputeShader> PassShader;
-
-				/*
-					The newest and freshest frame provided by the engine.
-				*/
-				Microsoft::WRL::ComPtr<ID3D11Texture2D> SharedTexture;
-				Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SharedTextureSRV;
 
 				/*
 					Data that will be sent off for conversion. This buffer is of type
@@ -1875,6 +1902,7 @@ namespace
 
 				auto res = stream->DirectX11.Conversion
 				(
+					&CurrentMovie.VideoStreamShared,
 					CurrentMovie.Context.Get(),
 					groupsx,
 					groupsy,
@@ -1895,6 +1923,7 @@ namespace
 				{
 					stream->DirectX11.NewFrame
 					(
+						&CurrentMovie.VideoStreamShared,
 						CurrentMovie.Context.Get(),
 						groupsx,
 						groupsy,
@@ -1908,6 +1937,7 @@ namespace
 				{
 					stream->DirectX11.Clear
 					(
+						&CurrentMovie.VideoStreamShared,
 						CurrentMovie.Context.Get(),
 						groupsx,
 						groupsy
@@ -1966,6 +1996,7 @@ namespace
 			{
 				stream->DirectX11.Pass
 				(
+					&CurrentMovie.VideoStreamShared,
 					CurrentMovie.Context.Get(),
 					groupsx,
 					groupsy
@@ -2390,6 +2421,13 @@ namespace
 							MS::ThrowIfFailed(hr);
 						}
 
+						movie.VideoStreamShared.DirectX11.Create
+						(
+							movie.Device.Get(),
+							width,
+							height
+						);
+
 						for (auto& stream : tempstreams)
 						{
 							stream->DirectX9.Create
@@ -2503,8 +2541,6 @@ namespace
 
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(enginerate);
-
-			movie.EngineRate = 1.0 / enginerate;
 
 			/*
 				Make room for some entries in the queues
