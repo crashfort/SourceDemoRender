@@ -1953,6 +1953,13 @@ namespace
 					auto& shared = CurrentMovie.VideoStreamShared;
 					stream->DirectX11.NewFrame(&shared, weight);
 
+					/*
+						Force processing right now. If this flush is not here
+						then the queue will clear and only transmit the latest frame
+						at the GPU -> CPU sync point which effectively disables the entire
+						sampling effect.
+					*/
+
 					auto context = shared.DirectX11.Context.Get();
 					context->Flush();
 				};
