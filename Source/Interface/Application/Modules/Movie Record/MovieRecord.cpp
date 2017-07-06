@@ -1666,7 +1666,6 @@ namespace
 				bool Conversion
 				(
 					VideoStreamSharedData* shared,
-					ID3D11ShaderResourceView* srv,
 					VideoFutureData& item
 				)
 				{
@@ -1674,7 +1673,7 @@ namespace
 
 					context->CSSetShader(ConversionShader.Get(), nullptr, 0);
 
-					auto srvs = { srv };
+					auto srvs = { WorkBufferSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
 
 					auto cbufs = { shared->DirectX11.SharedConstantBuffer.Get() };
@@ -1929,7 +1928,7 @@ namespace
 
 			auto& sampling = CurrentMovie.SamplingData;
 
-			auto save = [=](ID3D11ShaderResourceView* srv)
+			auto save = [=]()
 			{
 				MovieData::VideoFutureData item;
 				item.Writer = &stream->Video;
@@ -1937,7 +1936,6 @@ namespace
 				auto res = stream->DirectX11.Conversion
 				(
 					&CurrentMovie.VideoStreamShared,
-					srv,
 					item
 				);
 
@@ -1986,7 +1984,7 @@ namespace
 					auto weight = (1.0 - std::max(1.0 - exposure, oldrem)) * (1.0 / exposure);
 
 					proc(weight);
-					save(stream->DirectX11.WorkBufferSRV.Get());
+					save();
 
 					rem -= 1.0;
 
@@ -1996,7 +1994,7 @@ namespace
 					{
 						for (int i = 0; i < additional; i++)
 						{
-							save(stream->DirectX11.WorkBufferSRV.Get());
+							save();
 						}
 
 						rem -= additional;
@@ -2015,7 +2013,7 @@ namespace
 			else
 			{
 				stream->DirectX11.Pass(&CurrentMovie.VideoStreamShared);
-				save(stream->DirectX11.WorkBufferSRV.Get());
+				save();
 			}
 		}
 
