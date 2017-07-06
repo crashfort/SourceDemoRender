@@ -101,27 +101,7 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 			Prevents engine output debug messages to reach the operating system.
 			<br/><br/>
 			<b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 0 <br/>
-		</td>
-	</tr>
-	</tbody>
-</table>
-
-## Audio variables
-
-<table>
-	<thead>
-		<th>Name</th>
-		<th>Description</th>
-	</thead>
-	<tbody>
-	<tr>
-		<td>sdr_audio_enable</td>
-		<td>
-			Enable to process audio. Currently it does not include in a video file, but is placed as a separate wave file.
-            <br/><br/>
-            <b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 0 <br/>
+            <b>Default:</b> 1 <br/>
 		</td>
 	</tr>
 	</tbody>
@@ -141,7 +121,7 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 			Enable or disable log output from LAV.
             <br/><br/>
             <b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 0 <br/>
+            <b>Default:</b> 1 <br/>
 		</td>
 	</tr>
 	<tr>
