@@ -1606,12 +1606,7 @@ namespace
 
 					context->CSSetShader(shared.DirectX11.SamplingShader.Get(), nullptr, 0);
 
-					context->Dispatch
-					(
-						shared.DirectX11.GroupsX,
-						shared.DirectX11.GroupsY,
-						1
-					);
+					Dispatch(shared);
 
 					/*
 						Force processing right now. If this flush is not here
@@ -1637,12 +1632,7 @@ namespace
 					auto cbufs = { shared.DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
-					context->Dispatch
-					(
-						shared.DirectX11.GroupsX,
-						shared.DirectX11.GroupsY,
-						1
-					);
+					Dispatch(shared);
 
 					ResetShaderInputs(context);
 				}
@@ -1662,12 +1652,7 @@ namespace
 					auto cbufs = { shared.DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
-					context->Dispatch
-					(
-						shared.DirectX11.GroupsX,
-						shared.DirectX11.GroupsY,
-						1
-					);
+					Dispatch(shared);
 
 					ResetShaderInputs(context);
 				}
@@ -1686,16 +1671,21 @@ namespace
 					
 					ConversionPtr->DynamicBind(context);
 
-					context->Dispatch
+					Dispatch(shared);
+
+					ResetShaderInputs(context);
+
+					return ConversionPtr->Download(context, item);
+				}
+
+				void Dispatch(const VideoStreamSharedData& shared)
+				{
+					shared.DirectX11.Context->Dispatch
 					(
 						shared.DirectX11.GroupsX,
 						shared.DirectX11.GroupsY,
 						1
 					);
-
-					ResetShaderInputs(context);
-
-					return ConversionPtr->Download(context, item);
 				}
 
 				/*
