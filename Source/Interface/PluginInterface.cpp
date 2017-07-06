@@ -15,11 +15,7 @@ namespace
 	{
 		namespace Types
 		{
-			using GetGameDir = void(__cdecl*)
-			(
-				char* dest,
-				int length
-			);
+			using GetGameDir = void(__cdecl*)(char* dest, int length);
 		}
 
 		char FullPath[1024];
@@ -32,24 +28,10 @@ namespace
 			auto patternstr = "55 8B EC 8B 45 08 85 C0 74 11 FF 75 0C 68 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 0C 5D C3";
 			auto pattern = SDR::GetPatternFromString(patternstr);
 
-			auto address = SDR::GetAddressFromPattern
-			(
-				"engine.dll",
-				pattern
-			);
+			auto address = SDR::GetAddressFromPattern("engine.dll", pattern);
+			SDR::ModuleShared::SetFromAddress(GetGameDir, address);
 
-			SDR::ModuleShared::SetFromAddress
-			(
-				GetGameDir,
-				address
-			);
-
-			SDR::ModuleShared::Verify
-			(
-				GetGameDir,
-				"engine.dll",
-				"GetGameDir"
-			);
+			SDR::ModuleShared::Verify(GetGameDir, "engine.dll", "GetGameDir");
 		}
 	}
 }
@@ -209,11 +191,7 @@ namespace
 
 		catch (SDR::Shared::ScopedFile::ExceptionType status)
 		{
-			Warning
-			(
-				"SDR: Could not get GameConfig version\n"
-			);
-
+			Warning("SDR: Could not get GameConfig version\n");
 			throw false;
 		}
 
@@ -242,25 +220,14 @@ namespace
 				return;
 			}
 
-			Msg
-			(
-				"SDR: GameConfig version: %d\n",
-				gameconfigversion
-			);
+			Msg("SDR: GameConfig version: %d\n", gameconfigversion);
 		}
 
 		CON_COMMAND(sdr_update, "Check for any available updates")
 		{
-			Msg
-			(
-				"SDR: Checking for any available updates\n"
-			);
+			Msg("SDR: Checking for any available updates\n");
 
-			auto webrequest = []
-			(
-				const wchar_t* path,
-				auto callback
-			)
+			auto webrequest = [](const wchar_t* path, auto callback)
 			{
 				auto task = concurrency::create_task([path]()
 				{
@@ -412,11 +379,7 @@ namespace
 
 								catch (Status status)
 								{
-									Warning
-									(
-										"SDR: Could not write GameConfig.json\n"
-									);
-
+									Warning("SDR: Could not write GameConfig.json\n");
 									return;
 								}
 
@@ -433,11 +396,7 @@ namespace
 
 								catch (Status status)
 								{
-									Warning
-									(
-										"SDR: Could not write GameConfigLatest\n"
-									);
-
+									Warning("SDR: Could not write GameConfigLatest\n");
 									return;
 								}
 
@@ -452,10 +411,7 @@ namespace
 
 					else if (localversion > webversion)
 					{
-						Msg
-						(
-							"SDR: Local game config newer than update repository?\n"
-						);
+						Msg("SDR: Local game config newer than update repository?\n");
 					}
 				}
 			);
@@ -521,11 +477,7 @@ namespace
 
 		Commands::sdr_version({});
 
-		Msg
-		(
-			"SDR: Current game: %s\n",
-			ModuleGameDir::GameName
-		);
+		Msg("SDR: Current game: %s\n", ModuleGameDir::GameName);
 
 		avcodec_register_all();
 		av_register_all();
@@ -546,22 +498,13 @@ namespace
 
 		catch (const char* name)
 		{
-			Warning
-			(
-				"SDR: Failed to get the \"%s\" interface\n",
-				name
-			);
-
+			Warning("SDR: Failed to get the \"%s\" interface\n", name);
 			return false;
 		}
 
 		try
 		{
-			SDR::Setup
-			(
-				ModuleGameDir::FullPath,
-				ModuleGameDir::GameName
-			);
+			SDR::Setup(ModuleGameDir::FullPath, ModuleGameDir::GameName);
 		}
 
 		catch (bool status)
@@ -576,20 +519,11 @@ namespace
 
 		catch (const char* name)
 		{
-			Warning
-			(
-				"SDR: Setup procedure \"%s\" failed\n",
-				name
-			);
-
+			Warning("SDR: Setup procedure \"%s\" failed\n", name);
 			return false;
 		}
 
-		Msg
-		(
-			"SDR: Source Demo Render loaded\n"
-		);
-
+		Msg("SDR: Source Demo Render loaded\n");
 		return true;
 	}
 
