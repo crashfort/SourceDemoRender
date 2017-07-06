@@ -1828,7 +1828,6 @@ namespace
 
 namespace
 {
-	#if 1
 	namespace ModuleView_Render
 	{
 		#pragma region Init
@@ -2666,9 +2665,7 @@ namespace
 			);
 		}
 	}
-	#endif
 
-	#if 1
 	namespace ModuleEndMovie
 	{
 		#pragma region Init
@@ -2831,7 +2828,6 @@ namespace
 			ModuleEndMovie::Override();
 		}
 	}
-	#endif
 
 	namespace ModuleSUpdateGuts
 	{
