@@ -2640,7 +2640,7 @@ namespace
 				"if there are buffered frames this might take a moment\n"
 			);
 
-			auto task = concurrency::create_task([]()
+			concurrency::create_task([]()
 			{
 				if (!ShouldStopFrameThread)
 				{
@@ -2655,10 +2655,7 @@ namespace
 				{
 					stream->Video.Finish();
 				}
-			});
 
-			task.then([]()
-			{
 				SDR_MovieShutdown();
 
 				if (Variables::ExitOnFinish.GetBool())
