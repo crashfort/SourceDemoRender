@@ -992,8 +992,33 @@ namespace
 		{
 			struct DirectX11Data
 			{
-				void Create(ID3D11Device* device, int width, int height)
+				void Create(int width, int height)
 				{
+					uint32_t flags = 0;
+					#ifdef _DEBUG
+					flags |= D3D11_CREATE_DEVICE_DEBUG;
+					#endif
+
+					auto hr = D3D11CreateDevice
+					(
+						nullptr,
+						D3D_DRIVER_TYPE_HARDWARE,
+						0,
+						flags,
+						nullptr,
+						0,
+						D3D11_SDK_VERSION,
+						Device.GetAddressOf(),
+						nullptr,
+						Context.GetAddressOf()
+					);
+
+					if (FAILED(hr))
+					{
+						Warning("SRR: Could not create D3D11 device\n");
+						MS::ThrowIfFailed(hr);
+					}
+
 					GroupsX = std::ceil(width / 8.0);
 					GroupsY = std::ceil(height / 8.0);
 
@@ -1006,7 +1031,7 @@ namespace
 
 						MS::ThrowIfFailed
 						(
-							device->CreateBuffer
+							Device->CreateBuffer
 							(
 								&cbufdesc,
 								nullptr,
@@ -1034,7 +1059,7 @@ namespace
 
 						MS::ThrowIfFailed
 						(
-							device->CreateBuffer
+							Device->CreateBuffer
 							(
 								&cbufdesc,
 								&cbufsubdesc,
@@ -1043,10 +1068,13 @@ namespace
 						);
 					}
 
-					OpenShader(device, "Sampling", SamplingShader.GetAddressOf());
-					OpenShader(device, "ClearUAV", ClearShader.GetAddressOf());
-					OpenShader(device, "PassUAV", PassShader.GetAddressOf());
+					OpenShader(Device.Get(), "Sampling", SamplingShader.GetAddressOf());
+					OpenShader(Device.Get(), "ClearUAV", ClearShader.GetAddressOf());
+					OpenShader(Device.Get(), "PassUAV", PassShader.GetAddressOf());
 				}
+
+				Microsoft::WRL::ComPtr<ID3D11Device> Device;
+				Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
 
 				int GroupsX;
 				int GroupsY;
@@ -1525,13 +1553,10 @@ namespace
 					context->CSSetConstantBuffers(0, count, cbufs);
 				}
 
-				void NewFrame
-				(
-					VideoStreamSharedData* shared,
-					ID3D11DeviceContext* context,
-					float weight
-				)
+				void NewFrame(VideoStreamSharedData* shared, float weight)
 				{
+					auto context = shared->DirectX11.Context.Get();
+
 					auto srvs = { SharedTextureSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
 
@@ -1591,12 +1616,10 @@ namespace
 					ResetShaderInputs(context);
 				}
 
-				void Clear
-				(
-					VideoStreamSharedData* shared,
-					ID3D11DeviceContext* context
-				)
+				void Clear(VideoStreamSharedData* shared)
 				{
+					auto context = shared->DirectX11.Context.Get();
+
 					context->CSSetShader(shared->DirectX11.ClearShader.Get(), nullptr, 0);
 
 					auto uavs = { WorkBufferUAV.Get() };
@@ -1615,12 +1638,10 @@ namespace
 					ResetShaderInputs(context);
 				}
 
-				void Pass
-				(
-					VideoStreamSharedData* shared,
-					ID3D11DeviceContext* context
-				)
+				void Pass(VideoStreamSharedData* shared)
 				{
+					auto context = shared->DirectX11.Context.Get();
+
 					context->CSSetShader(shared->DirectX11.PassShader.Get(), nullptr, 0);
 
 					auto srvs = { SharedTextureSRV.Get() };
@@ -1645,11 +1666,12 @@ namespace
 				bool Conversion
 				(
 					VideoStreamSharedData* shared,
-					ID3D11DeviceContext* context,
 					ID3D11ShaderResourceView* srv,
 					VideoFutureData& item
 				)
 				{
+					auto context = shared->DirectX11.Context.Get();
+
 					context->CSSetShader(ConversionShader.Get(), nullptr, 0);
 
 					auto srvs = { srv };
@@ -1761,9 +1783,6 @@ namespace
 
 		std::thread FrameBufferThreadHandle;
 		std::unique_ptr<VideoQueueType> VideoQueue;
-
-		Microsoft::WRL::ComPtr<ID3D11Device> Device;
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
 	};
 
 	MovieData CurrentMovie;
@@ -1918,7 +1937,6 @@ namespace
 				auto res = stream->DirectX11.Conversion
 				(
 					&CurrentMovie.VideoStreamShared,
-					CurrentMovie.Context.Get(),
 					srv,
 					item
 				);
@@ -1934,23 +1952,16 @@ namespace
 			{
 				auto proc = [=](float weight)
 				{
-					stream->DirectX11.NewFrame
-					(
-						&CurrentMovie.VideoStreamShared,
-						CurrentMovie.Context.Get(),
-						weight
-					);
+					auto& shared = CurrentMovie.VideoStreamShared;
+					stream->DirectX11.NewFrame(&shared, weight);
 
-					CurrentMovie.Context->Flush();
+					auto context = shared.DirectX11.Context.Get();
+					context->Flush();
 				};
 
 				auto clear = [=]()
 				{
-					stream->DirectX11.Clear
-					(
-						&CurrentMovie.VideoStreamShared,
-						CurrentMovie.Context.Get()
-					);
+					stream->DirectX11.Clear(&CurrentMovie.VideoStreamShared);
 				};
 
 				auto& rem = stream->SamplingData.Remainder;
@@ -2003,12 +2014,7 @@ namespace
 
 			else
 			{
-				stream->DirectX11.Pass
-				(
-					&CurrentMovie.VideoStreamShared,
-					CurrentMovie.Context.Get()
-				);
-
+				stream->DirectX11.Pass(&CurrentMovie.VideoStreamShared);
 				save(stream->DirectX11.WorkBufferSRV.Get());
 			}
 		}
@@ -2403,37 +2409,7 @@ namespace
 
 					try
 					{
-						uint32_t flags = 0;
-						#ifdef _DEBUG
-						flags |= D3D11_CREATE_DEVICE_DEBUG;
-						#endif
-
-						auto hr = D3D11CreateDevice
-						(
-							nullptr,
-							D3D_DRIVER_TYPE_HARDWARE,
-							0,
-							flags,
-							nullptr,
-							0,
-							D3D11_SDK_VERSION,
-							movie.Device.GetAddressOf(),
-							nullptr,
-							movie.Context.GetAddressOf()
-						);
-
-						if (FAILED(hr))
-						{
-							Warning("SRR: Could not create D3D11 device\n");
-							MS::ThrowIfFailed(hr);
-						}
-
-						movie.VideoStreamShared.DirectX11.Create
-						(
-							movie.Device.Get(),
-							width,
-							height
-						);
+						movie.VideoStreamShared.DirectX11.Create(width, height);
 
 						for (auto& stream : tempstreams)
 						{
@@ -2446,7 +2422,7 @@ namespace
 
 							stream->DirectX11.Create
 							(
-								movie.Device.Get(),
+								movie.VideoStreamShared.DirectX11.Device.Get(),
 								stream->DirectX9.SharedSurface.SharedHandle,
 								stream->Video.Frame.Get()
 							);
