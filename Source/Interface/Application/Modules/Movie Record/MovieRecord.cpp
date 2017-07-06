@@ -1553,9 +1553,9 @@ namespace
 					context->CSSetConstantBuffers(0, count, cbufs);
 				}
 
-				void NewFrame(VideoStreamSharedData* shared, float weight)
+				void NewFrame(VideoStreamSharedData& shared, float weight)
 				{
-					auto context = shared->DirectX11.Context.Get();
+					auto context = shared.DirectX11.Context.Get();
 
 					auto srvs = { SharedTextureSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
@@ -1563,13 +1563,13 @@ namespace
 					auto uavs = { WorkBufferUAV.Get() };
 					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 
-					if (shared->DirectX11.SamplingConstantData.Weight != weight)
+					if (shared.DirectX11.SamplingConstantData.Weight != weight)
 					{
 						D3D11_MAPPED_SUBRESOURCE mapped;
 
 						auto hr = context->Map
 						(
-							shared->DirectX11.SamplingConstantBuffer.Get(),
+							shared.DirectX11.SamplingConstantBuffer.Get(),
 							0,
 							D3D11_MAP_WRITE_DISCARD,
 							0,
@@ -1583,33 +1583,33 @@ namespace
 
 						else
 						{
-							shared->DirectX11.SamplingConstantData.Weight = weight;
+							shared.DirectX11.SamplingConstantData.Weight = weight;
 
 							std::memcpy
 							(
 								mapped.pData,
-								&shared->DirectX11.SamplingConstantData,
-								sizeof(shared->DirectX11.SamplingConstantData)
+								&shared.DirectX11.SamplingConstantData,
+								sizeof(shared.DirectX11.SamplingConstantData)
 							);
 						}
 
-						context->Unmap(shared->DirectX11.SamplingConstantBuffer.Get(), 0);
+						context->Unmap(shared.DirectX11.SamplingConstantBuffer.Get(), 0);
 					}
 
 					auto cbufs =
 					{
-						shared->DirectX11.SharedConstantBuffer.Get(),
-						shared->DirectX11.SamplingConstantBuffer.Get()
+						shared.DirectX11.SharedConstantBuffer.Get(),
+						shared.DirectX11.SamplingConstantBuffer.Get()
 					};
 
 					context->CSSetConstantBuffers(0, 2, cbufs.begin());
 
-					context->CSSetShader(shared->DirectX11.SamplingShader.Get(), nullptr, 0);
+					context->CSSetShader(shared.DirectX11.SamplingShader.Get(), nullptr, 0);
 
 					context->Dispatch
 					(
-						shared->DirectX11.GroupsX,
-						shared->DirectX11.GroupsY,
+						shared.DirectX11.GroupsX,
+						shared.DirectX11.GroupsY,
 						1
 					);
 
@@ -1625,33 +1625,33 @@ namespace
 					ResetShaderInputs(context);
 				}
 
-				void Clear(VideoStreamSharedData* shared)
+				void Clear(VideoStreamSharedData& shared)
 				{
-					auto context = shared->DirectX11.Context.Get();
+					auto context = shared.DirectX11.Context.Get();
 
-					context->CSSetShader(shared->DirectX11.ClearShader.Get(), nullptr, 0);
+					context->CSSetShader(shared.DirectX11.ClearShader.Get(), nullptr, 0);
 
 					auto uavs = { WorkBufferUAV.Get() };
 					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 
-					auto cbufs = { shared->DirectX11.SharedConstantBuffer.Get() };
+					auto cbufs = { shared.DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
 					context->Dispatch
 					(
-						shared->DirectX11.GroupsX,
-						shared->DirectX11.GroupsY,
+						shared.DirectX11.GroupsX,
+						shared.DirectX11.GroupsY,
 						1
 					);
 
 					ResetShaderInputs(context);
 				}
 
-				void Pass(VideoStreamSharedData* shared)
+				void Pass(VideoStreamSharedData& shared)
 				{
-					auto context = shared->DirectX11.Context.Get();
+					auto context = shared.DirectX11.Context.Get();
 
-					context->CSSetShader(shared->DirectX11.PassShader.Get(), nullptr, 0);
+					context->CSSetShader(shared.DirectX11.PassShader.Get(), nullptr, 0);
 
 					auto srvs = { SharedTextureSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
@@ -1659,37 +1659,37 @@ namespace
 					auto uavs = { WorkBufferUAV.Get() };
 					context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 
-					auto cbufs = { shared->DirectX11.SharedConstantBuffer.Get() };
+					auto cbufs = { shared.DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 
 					context->Dispatch
 					(
-						shared->DirectX11.GroupsX,
-						shared->DirectX11.GroupsY,
+						shared.DirectX11.GroupsX,
+						shared.DirectX11.GroupsY,
 						1
 					);
 
 					ResetShaderInputs(context);
 				}
 
-				bool Conversion(VideoStreamSharedData* shared, VideoFutureData& item)
+				bool Conversion(VideoStreamSharedData& shared, VideoFutureData& item)
 				{
-					auto context = shared->DirectX11.Context.Get();
+					auto context = shared.DirectX11.Context.Get();
 
 					context->CSSetShader(ConversionShader.Get(), nullptr, 0);
 
 					auto srvs = { WorkBufferSRV.Get() };
 					context->CSSetShaderResources(0, 1, srvs.begin());
 
-					auto cbufs = { shared->DirectX11.SharedConstantBuffer.Get() };
+					auto cbufs = { shared.DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
 					
 					ConversionPtr->DynamicBind(context);
 
 					context->Dispatch
 					(
-						shared->DirectX11.GroupsX,
-						shared->DirectX11.GroupsY,
+						shared.DirectX11.GroupsX,
+						shared.DirectX11.GroupsY,
 						1
 					);
 
@@ -1940,7 +1940,7 @@ namespace
 
 				auto res = stream->DirectX11.Conversion
 				(
-					&CurrentMovie.VideoStreamShared,
+					CurrentMovie.VideoStreamShared,
 					item
 				);
 
@@ -1956,12 +1956,12 @@ namespace
 				auto proc = [=](float weight)
 				{
 					auto& shared = CurrentMovie.VideoStreamShared;
-					stream->DirectX11.NewFrame(&shared, weight);
+					stream->DirectX11.NewFrame(shared, weight);
 				};
 
 				auto clear = [=]()
 				{
-					stream->DirectX11.Clear(&CurrentMovie.VideoStreamShared);
+					stream->DirectX11.Clear(CurrentMovie.VideoStreamShared);
 				};
 
 				auto& rem = stream->SamplingData.Remainder;
@@ -2014,7 +2014,7 @@ namespace
 
 			else
 			{
-				stream->DirectX11.Pass(&CurrentMovie.VideoStreamShared);
+				stream->DirectX11.Pass(CurrentMovie.VideoStreamShared);
 				save();
 			}
 		}
