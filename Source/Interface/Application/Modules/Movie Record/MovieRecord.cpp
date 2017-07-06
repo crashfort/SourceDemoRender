@@ -1798,12 +1798,7 @@ namespace
 	{
 		#pragma region Init
 
-		void __fastcall Override
-		(
-			void* thisptr,
-			void* edx,
-			void* rect
-		);
+		void __fastcall Override(void* thisptr, void* edx, void* rect);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -1816,12 +1811,7 @@ namespace
 				"View_Render",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);
@@ -1868,140 +1858,126 @@ namespace
 
 		void Pass(MovieData::VideoStreamBase* stream)
 		{
-			auto res = CopyDX9ToDX11(stream);
-
-			if (!res)
+			if (!CopyDX9ToDX11(stream))
 			{
 				return;
 			}
 
+			auto& sampling = CurrentMovie.SamplingData;
+
+			int groupsx = std::ceil(CurrentMovie.Width / 8.0);
+			int groupsy = std::ceil(CurrentMovie.Height / 8.0);
+
+			auto save = [=](ID3D11ShaderResourceView* srv)
 			{
-				auto& sampling = CurrentMovie.SamplingData;
+				MovieData::VideoFutureData item;
+				item.Writer = &stream->Video;
 
-				int groupsx = std::ceil(CurrentMovie.Width / 8.0);
-				int groupsy = std::ceil(CurrentMovie.Height / 8.0);
+				auto res = stream->DirectX11.Conversion
+				(
+					CurrentMovie.Context.Get(),
+					groupsx,
+					groupsy,
+					srv,
+					item
+				);
 
-				auto save = [=](ID3D11ShaderResourceView* srv)
+				if (res)
 				{
-					MovieData::VideoFutureData item;
-					item.Writer = &stream->Video;
+					++BufferedFrames;
+					CurrentMovie.VideoQueue->enqueue(std::move(item));
+				}
+			};
 
-					auto res = stream->DirectX11.Conversion
+			if (sampling.Enabled)
+			{
+				auto proc = [=](float weight)
+				{
+					stream->DirectX11.NewFrame
 					(
 						CurrentMovie.Context.Get(),
 						groupsx,
 						groupsy,
-						srv,
-						item
+						weight
 					);
 
-					if (res)
-					{
-						++BufferedFrames;
-						CurrentMovie.VideoQueue->enqueue(std::move(item));
-					}
+					CurrentMovie.Context->Flush();
 				};
 
-				if (sampling.Enabled)
+				auto clear = [=]()
 				{
-					auto proc = [=](float weight)
-					{
-						stream->DirectX11.NewFrame
-						(
-							CurrentMovie.Context.Get(),
-							groupsx,
-							groupsy,
-							weight
-						);
-
-						CurrentMovie.Context->Flush();
-					};
-
-					auto clear = [=]()
-					{
-						stream->DirectX11.Clear
-						(
-							CurrentMovie.Context.Get(),
-							groupsx,
-							groupsy
-						);
-					};
-
-					auto& rem = stream->SamplingData.Remainder;
-					auto oldrem = rem;
-					auto exposure = sampling.Exposure;
-
-					rem += sampling.TimePerSample / sampling.TimePerFrame;
-
-					if ((float)rem <= (1.0 - exposure))
-					{
-
-					}
-
-					else if ((float)rem < 1.0)
-					{
-						auto weight = (rem - std::max(1.0 - exposure, oldrem)) * (1.0 / exposure);
-						proc(weight);
-					}
-
-					else
-					{
-						auto weight = (1.0 - std::max(1.0 - exposure, oldrem)) * (1.0 / exposure);
-
-						proc(weight);
-						save(stream->DirectX11.WorkBufferSRV.Get());
-
-						rem -= 1.0;
-
-						uint32_t additional = rem;
-
-						if (additional > 0)
-						{
-							for (int i = 0; i < additional; i++)
-							{
-								save(stream->DirectX11.WorkBufferSRV.Get());
-							}
-
-							rem -= additional;
-						}
-
-						clear();
-
-						if (rem > FLT_EPSILON && rem > (1.0 - exposure))
-						{
-							weight = ((rem - (1.0 - exposure)) * (1.0 / exposure));
-							proc(weight);
-						}
-					}
-				}
-
-				else
-				{
-					stream->DirectX11.Pass
+					stream->DirectX11.Clear
 					(
 						CurrentMovie.Context.Get(),
 						groupsx,
 						groupsy
 					);
+				};
 
-					save(stream->DirectX11.WorkBufferSRV.Get());
+				auto& rem = stream->SamplingData.Remainder;
+				auto oldrem = rem;
+				auto exposure = sampling.Exposure;
+
+				rem += sampling.TimePerSample / sampling.TimePerFrame;
+
+				if ((float)rem <= (1.0 - exposure))
+				{
+
 				}
+
+				else if ((float)rem < 1.0)
+				{
+					auto weight = (rem - std::max(1.0 - exposure, oldrem)) * (1.0 / exposure);
+					proc(weight);
+				}
+
+				else
+				{
+					auto weight = (1.0 - std::max(1.0 - exposure, oldrem)) * (1.0 / exposure);
+
+					proc(weight);
+					save(stream->DirectX11.WorkBufferSRV.Get());
+
+					rem -= 1.0;
+
+					uint32_t additional = rem;
+
+					if (additional > 0)
+					{
+						for (int i = 0; i < additional; i++)
+						{
+							save(stream->DirectX11.WorkBufferSRV.Get());
+						}
+
+						rem -= additional;
+					}
+
+					clear();
+
+					if (rem > FLT_EPSILON && rem > (1.0 - exposure))
+					{
+						weight = ((rem - (1.0 - exposure)) * (1.0 / exposure));
+						proc(weight);
+					}
+				}
+			}
+
+			else
+			{
+				stream->DirectX11.Pass
+				(
+					CurrentMovie.Context.Get(),
+					groupsx,
+					groupsy
+				);
+
+				save(stream->DirectX11.WorkBufferSRV.Get());
 			}
 		}
 
-		void __fastcall Override
-		(
-			void* thisptr,
-			void* edx,
-			void* rect
-		)
+		void __fastcall Override(void* thisptr, void* edx, void* rect)
 		{
-			ThisHook.GetOriginal()
-			(
-				thisptr,
-				edx,
-				rect
-			);
+			ThisHook.GetOriginal()(thisptr, edx, rect);
 
 			auto& movie = CurrentMovie;
 			bool dopasses = SDR_ShouldRecord();
@@ -2095,12 +2071,7 @@ namespace
 				"StartMovie",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);
@@ -2551,10 +2522,7 @@ namespace
 	{
 		#pragma region Init
 
-		void __cdecl Override
-		(
-			const CCommand& args
-		);
+		void __cdecl Override(const CCommand& args);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -2567,12 +2535,7 @@ namespace
 				"StartMovieCommand",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);
@@ -2582,10 +2545,7 @@ namespace
 		/*
 			This command is overriden to remove the incorrect description
 		*/
-		void __cdecl Override
-		(
-			const CCommand& args
-		)
+		void __cdecl Override(const CCommand& args)
 		{
 			if (CurrentMovie.IsStarted)
 			{
@@ -2649,12 +2609,7 @@ namespace
 				"EndMovie",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);
@@ -2755,10 +2710,7 @@ namespace
 	{
 		#pragma region Init
 
-		void __cdecl Override
-		(
-			const CCommand& args
-		);
+		void __cdecl Override(const CCommand& args);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -2771,12 +2723,7 @@ namespace
 				"EndMovieCommand",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);
@@ -2786,10 +2733,7 @@ namespace
 		/*
 			Always allow ending movie
 		*/
-		void __cdecl Override
-		(
-			const CCommand& args
-		)
+		void __cdecl Override(const CCommand& args)
 		{
 			ModuleEndMovie::Override();
 		}
@@ -2812,12 +2756,7 @@ namespace
 				"SUpdateGuts",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);

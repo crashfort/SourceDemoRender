@@ -75,12 +75,7 @@ namespace
 				"ActivateMouse",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);
@@ -134,12 +129,7 @@ namespace
 				"AppActivate",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);
