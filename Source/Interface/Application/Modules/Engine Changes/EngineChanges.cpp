@@ -7,7 +7,7 @@ namespace
 	{
 		ConVar SuppressDebugLog
 		(
-			"sdr_game_suppressdebug", "0", 0,
+			"sdr_game_suppressdebug", "1", 0,
 			"Disable slow game debug output logging"
 		);
 	}

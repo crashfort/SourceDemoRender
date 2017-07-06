@@ -219,7 +219,7 @@ namespace
 		{
 			ConVar SuppressLog
 			(
-				"sdr_movie_suppresslog", "0", FCVAR_NEVER_AS_STRING,
+				"sdr_movie_suppresslog", "1", FCVAR_NEVER_AS_STRING,
 				"Disable logging output from LAV",
 				true, 0, true, 1
 			);
