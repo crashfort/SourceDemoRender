@@ -112,16 +112,7 @@ namespace
 
 			void Assign(const char* filename)
 			{
-				ThrowIfFailed
-				(
-					avformat_alloc_output_context2
-					(
-						&Context,
-						nullptr,
-						nullptr,
-						filename
-					)
-				);
+				ThrowIfFailed(avformat_alloc_output_context2(&Context, nullptr, nullptr, filename));
 			}
 
 			AVFormatContext* Get() const
@@ -198,18 +189,12 @@ namespace
 
 			void Set(const char* key, const char* value, int flags = 0)
 			{
-				ThrowIfFailed
-				(
-					av_dict_set(Get(), key, value, flags)
-				);
+				ThrowIfFailed(av_dict_set(Get(), key, value, flags));
 			}
 
 			void ParseString(const char* string)
 			{
-				ThrowIfFailed
-				(
-					av_dict_parse_string(Get(), string, "=", " ", 0)
-				);
+				ThrowIfFailed(av_dict_parse_string(Get(), string, "=", " ", 0));
 			}
 
 			AVDictionary* Options = nullptr;
@@ -492,15 +477,7 @@ namespace
 
 			if ((FormatContext->oformat->flags & AVFMT_NOFILE) == 0)
 			{
-				LAV::ThrowIfFailed
-				(
-					avio_open
-					(
-						&FormatContext->pb,
-						path,
-						AVIO_FLAG_WRITE
-					)
-				);
+				LAV::ThrowIfFailed(avio_open(&FormatContext->pb, path, AVIO_FLAG_WRITE));
 			}
 		}
 
@@ -540,24 +517,8 @@ namespace
 			CodecContext->time_base = timebase;
 			CodecContext->framerate = inversetime;
 
-			LAV::ThrowIfFailed
-			(
-				avcodec_open2
-				(
-					CodecContext,
-					Encoder,
-					options
-				)
-			);
-
-			LAV::ThrowIfFailed
-			(
-				avcodec_parameters_from_context
-				(
-					Stream->codecpar,
-					CodecContext
-				)
-			);
+			LAV::ThrowIfFailed(avcodec_open2(CodecContext, Encoder, options));
+			LAV::ThrowIfFailed(avcodec_parameters_from_context(Stream->codecpar, CodecContext));
 
 			Stream->time_base = timebase;
 			Stream->avg_frame_rate = inversetime;
@@ -565,25 +526,12 @@ namespace
 
 		void WriteHeader()
 		{
-			LAV::ThrowIfFailed
-			(
-				avformat_write_header
-				(
-					FormatContext.Get(),
-					nullptr
-				)
-			);
+			LAV::ThrowIfFailed(avformat_write_header(FormatContext.Get(), nullptr));
 		}
 
 		void WriteTrailer()
 		{
-			LAV::ThrowIfFailed
-			(
-				av_write_trailer
-				(
-					FormatContext.Get()
-				)
-			);
+			LAV::ThrowIfFailed(av_write_trailer(FormatContext.Get()));
 		}
 
 		void SetFrameInput(PlaneType& planes)
@@ -622,12 +570,7 @@ namespace
 
 		void SendFlushFrame()
 		{
-			auto ret = avcodec_send_frame
-			(
-				CodecContext,
-				nullptr
-			);
-
+			auto ret = avcodec_send_frame(CodecContext, nullptr);
 			ReceivePacketFrame();
 		}
 
@@ -646,11 +589,7 @@ namespace
 
 			while (status == 0)
 			{
-				status = avcodec_receive_packet
-				(
-					CodecContext,
-					&packet
-				);
+				status = avcodec_receive_packet(CodecContext, &packet);
 
 				if (status < 0)
 				{
@@ -665,20 +604,11 @@ namespace
 		{
 			Profile::ScopedEntry e1(Profile::Types::WriteEncodedPacket);
 
-			av_packet_rescale_ts
-			(
-				&packet,
-				CodecContext->time_base,
-				Stream->time_base
-			);
+			av_packet_rescale_ts(&packet, CodecContext->time_base, Stream->time_base);
 
 			packet.stream_index = Stream->index;
 
-			av_interleaved_write_frame
-			(
-				FormatContext.Get(),
-				&packet
-			);
+			av_interleaved_write_frame(FormatContext.Get(), &packet);
 		}
 
 		LAV::ScopedFormatContext FormatContext;
@@ -2357,12 +2287,7 @@ namespace
 
 					if (!vidconfig)
 					{
-						Warning
-						(
-							"SDR: Encoder %s not found\n",
-							encoderstr
-						);
-
+						Warning("SDR: Encoder %s not found\n", encoderstr);
 						LAV::ThrowIfNull(vidconfig, LAV::ExceptionType::VideoEncoderNotFound);
 					}
 
@@ -2455,12 +2380,7 @@ namespace
 
 					for (auto& stream : tempstreams)
 					{
-						auto name = BuildVideoStreamName
-						(
-							sdrpath,
-							filename,
-							stream.get()
-						);
+						auto name = BuildVideoStreamName(sdrpath, filename, stream.get());
 
 						stream->Video.OpenFileForWrite(name.c_str());
 						stream->Video.SetEncoder(vidconfig->Encoder);
@@ -2667,11 +2587,7 @@ namespace
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(0);
 
-			Msg
-			(
-				"SDR: Ending movie, "
-				"if there are buffered frames this might take a moment\n"
-			);
+			Msg("SDR: Ending movie, if there are buffered frames this might take a moment\n");
 
 			concurrency::create_task([]()
 			{
