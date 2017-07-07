@@ -973,6 +973,20 @@ namespace
 			);
 		}
 
+		static bool WouldNewFrameOverflow()
+		{
+			PROCESS_MEMORY_COUNTERS desc = {};
+			
+			K32GetProcessMemoryInfo
+			(
+				GetCurrentProcess(),
+				&desc,
+				sizeof(desc)
+			);
+
+			return desc.WorkingSetSize > INT32_MAX;
+		}
+
 		/*
 			This structure is sent to the encoder thread
 			from the capture thread
@@ -2018,6 +2032,14 @@ namespace
 
 			if (dopasses)
 			{
+				if (MovieData::WouldNewFrameOverflow())
+				{
+					while (BufferedFrames)
+					{
+						std::this_thread::sleep_for(1ms);
+					}
+				}
+
 				Profile::ScopedEntry e1(Profile::Types::ViewRender);
 
 				int index = 0;
