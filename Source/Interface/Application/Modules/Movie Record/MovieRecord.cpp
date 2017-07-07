@@ -1797,6 +1797,15 @@ namespace
 	std::atomic_int32_t BufferedFrames;
 	std::atomic_bool ShouldStopFrameThread;
 
+	void SDR_TryJoinFrameThread()
+	{
+		if (!ShouldStopFrameThread)
+		{
+			ShouldStopFrameThread = true;
+			CurrentMovie.FrameBufferThreadHandle.join();
+		}
+	}
+
 	void SDR_MovieShutdown()
 	{
 		auto& movie = CurrentMovie;
@@ -1807,11 +1816,7 @@ namespace
 			return;
 		}
 
-		if (!ShouldStopFrameThread)
-		{
-			ShouldStopFrameThread = true;
-			movie.FrameBufferThreadHandle.join();
-		}
+		SDR_TryJoinFrameThread();
 
 		movie = MovieData();
 	}
@@ -2673,11 +2678,7 @@ namespace
 
 			concurrency::create_task([]()
 			{
-				if (!ShouldStopFrameThread)
-				{
-					ShouldStopFrameThread = true;
-					CurrentMovie.FrameBufferThreadHandle.join();
-				}
+				SDR_TryJoinFrameThread();
 
 				/*
 					Let the encoders finish all the delayed frames
