@@ -2381,8 +2381,8 @@ namespace
 
 					if (isrgbtype(pxformat))
 					{
-						colorrange = AVCOL_RANGE_UNSPECIFIED;
 						colorspace = AVCOL_SPC_RGB;
+						colorrange = AVCOL_RANGE_UNSPECIFIED;
 					}
 
 					for (auto& stream : tempstreams)
