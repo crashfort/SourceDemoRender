@@ -1810,13 +1810,10 @@ namespace
 	{
 		auto& movie = CurrentMovie;
 
-		if (!movie.IsStarted)
+		if (movie.IsStarted)
 		{
-			movie = MovieData();
-			return;
+			SDR_TryJoinFrameThread();
 		}
-
-		SDR_TryJoinFrameThread();
 
 		movie = MovieData();
 	}
