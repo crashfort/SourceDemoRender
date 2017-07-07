@@ -240,11 +240,7 @@ namespace
 
 					web::http::uri_builder pathbuilder(path);
 
-					return webclient.request
-					(
-						web::http::methods::GET,
-						pathbuilder.to_string()
-					);
+					return webclient.request(web::http::methods::GET, pathbuilder.to_string());
 				});
 
 				task.then([callback](web::http::http_response response)
@@ -253,11 +249,7 @@ namespace
 
 					if (status != web::http::status_codes::OK)
 					{
-						Msg
-						(
-							"SDR: Could not reach update repository\n"
-						);
-
+						Msg("SDR: Could not reach update repository\n");
 						return;
 					}
 
@@ -306,10 +298,7 @@ namespace
 
 					else if (curversion > webversion)
 					{
-						Msg
-						(
-							"SDR: Local library newer than update repository?\n"
-						);
+						Msg("SDR: Local library newer than update repository?\n");
 					}
 				}
 			);
@@ -422,12 +411,7 @@ namespace
 	SDR::EngineInterfaces Interfaces;
 
 	template <typename T>
-	void CreateInterface
-	(
-		CreateInterfaceFn interfacefactory,
-		const char* name,
-		T*& outptr
-	)
+	void CreateInterface(CreateInterfaceFn interfacefactory, const char* name, T*& outptr)
 	{
 		auto ptr = static_cast<T*>(interfacefactory(name, nullptr));
 
