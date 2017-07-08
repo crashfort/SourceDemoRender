@@ -111,12 +111,7 @@ namespace
 
 		#pragma region Init
 
-		void __fastcall Override
-		(
-			void* thisptr,
-			void* edx,
-			const InputEvent_t& event
-		);
+		void __fastcall Override(void* thisptr, void* edx, const InputEvent_t& event);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -136,12 +131,7 @@ namespace
 
 		#pragma endregion
 
-		void __fastcall Override
-		(
-			void* thisptr,
-			void* edx,
-			const InputEvent_t& event
-		)
+		void __fastcall Override(void* thisptr, void* edx, const InputEvent_t& event)
 		{
 			auto& interfaces = SDR::GetEngineInterfaces();
 

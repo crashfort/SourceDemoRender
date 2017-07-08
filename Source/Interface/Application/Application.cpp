@@ -20,12 +20,7 @@ namespace
 			makes this run >10x faster, less sitting around
 			waiting for nothing.
 		*/
-		inline bool DataCompare
-		(
-			const uint8_t* data,
-			const SDR::BytePattern::Entry* pattern,
-			size_t patternlength
-		)
+		inline bool DataCompare(const uint8_t* data, const SDR::BytePattern::Entry* pattern, size_t patternlength)
 		{
 			int index = 0;
 
@@ -46,12 +41,7 @@ namespace
 			return index == patternlength;
 		}
 
-		void* FindPattern
-		(
-			void* start,
-			size_t searchlength,
-			const SDR::BytePattern& pattern
-		)
+		void* FindPattern(void* start, size_t searchlength, const SDR::BytePattern& pattern)
 		{
 			auto patternstart = pattern.Bytes.data();
 			auto length = pattern.Bytes.size();
@@ -189,11 +179,7 @@ namespace
 
 		std::vector<GameData> Configs;
 
-		void ResolveInherit
-		(
-			GameData* targetgame,
-			rapidjson::Document::AllocatorType& alloc
-		)
+		void ResolveInherit(GameData* targetgame, rapidjson::Document::AllocatorType& alloc)
 		{
 			auto begin = targetgame->Properties.begin();
 			auto end = targetgame->Properties.end();
@@ -355,11 +341,7 @@ namespace
 						{
 							curgame.Properties.emplace_back
 							(
-								std::make_pair
-								(
-									gamedata->name.GetString(),
-									std::move(gamedata->value)
-								)
+								std::make_pair(gamedata->name.GetString(), std::move(gamedata->value))
 							);
 						}
 					);
@@ -558,11 +540,7 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 		{
 			if (!iter->value.IsNumber())
 			{
-				Warning
-				(
-					"SDR: Offset field not a number\n"
-				);
-
+				Warning("SDR: Offset field not a number\n");
 				return nullptr;
 			}
 

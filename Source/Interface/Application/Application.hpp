@@ -75,9 +75,7 @@ namespace SDR
 	{
 		return std::array<ModuleHandlerAdder, sizeof...(Types)>
 		{
-			{
-				std::forward<Types>(types)...
-			}
+			{ std::forward<Types>(types)... }
 		};
 	}
 
@@ -232,13 +230,7 @@ namespace SDR
 	}
 
 	template <typename FuncType>
-	bool CreateHook
-	(
-		HookModule<FuncType>& hook,
-		FuncType override,
-		const char* module,
-		const BytePattern& pattern
-	)
+	bool CreateHook(HookModule<FuncType>& hook, FuncType override, const char* module, const BytePattern& pattern)
 	{
 		auto address = GetAddressFromPattern(module, pattern);
 		return CreateHook(hook, override, address);

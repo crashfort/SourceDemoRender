@@ -501,11 +501,7 @@ namespace
 				Frame->pts = PresentationIndex;
 				PresentationIndex++;
 
-				avcodec_send_frame
-				(
-					CodecContext,
-					Frame.Get()
-				);
+				avcodec_send_frame(CodecContext, Frame.Get());
 			}
 
 			ReceivePacketFrame();
@@ -798,12 +794,7 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
-		static void OpenShader
-		(
-			ID3D11Device* device,
-			const char* name,
-			ID3D11ComputeShader** shader
-		)
+		static void OpenShader(ID3D11Device* device, const char* name, ID3D11ComputeShader** shader)
 		{
 			using Status = SDR::Shared::ScopedFile::ExceptionType;
 
@@ -832,13 +823,7 @@ namespace
 
 			SDR::Error::MS::ThrowIfFailed
 			(
-				device->CreateComputeShader
-				(
-					data.data(),
-					data.size(),
-					nullptr,
-					shader
-				),
+				device->CreateComputeShader(data.data(), data.size(), nullptr, shader),
 				"Could not create compute shader %s",
 				name
 			);
@@ -943,12 +928,7 @@ namespace
 
 						SDR::Error::MS::ThrowIfFailed
 						(
-							Device->CreateBuffer
-							(
-								&cbufdesc,
-								&cbufsubdesc,
-								SharedConstantBuffer.GetAddressOf()
-							),
+							Device->CreateBuffer(&cbufdesc, &cbufsubdesc, SharedConstantBuffer.GetAddressOf()),
 							"Could not create constant buffer for shared shader data"
 						);
 					}
@@ -1188,12 +1168,7 @@ namespace
 
 						SDR::Error::MS::ThrowIfFailed
 						(
-							device->CreateBuffer
-							(
-								&cbufdesc,
-								&cbufsubdesc,
-								ConstantBuffer.GetAddressOf()
-							),
+							device->CreateBuffer(&cbufdesc, &cbufsubdesc, ConstantBuffer.GetAddressOf()),
 							"Could not create constant buffer for YUV GPU buffer"
 						);
 					}
@@ -1203,13 +1178,7 @@ namespace
 						auto cbufs = { ConstantBuffer.Get() };
 						context->CSSetConstantBuffers(1, 1, cbufs.begin());
 
-						auto uavs =
-						{
-							Y.View.Get(),
-							U.View.Get(),
-							V.View.Get(),
-						};
-
+						auto uavs = { Y.View.Get(), U.View.Get(), V.View.Get() };
 						context->CSSetUnorderedAccessViews(0, 3, uavs.begin(), nullptr);
 					}
 
@@ -1272,11 +1241,7 @@ namespace
 
 					SDR::Error::MS::ThrowIfFailed
 					(
-						device->OpenSharedResource
-						(
-							dx9handle,
-							IID_PPV_ARGS(tempresource.GetAddressOf())
-						),
+						device->OpenSharedResource(dx9handle, IID_PPV_ARGS(tempresource.GetAddressOf())),
 						"Could not open shared D3D9 resource"
 					);
 
@@ -1288,12 +1253,7 @@ namespace
 
 					SDR::Error::MS::ThrowIfFailed
 					(
-						device->CreateShaderResourceView
-						(
-							SharedTexture.Get(),
-							nullptr,
-							SharedTextureSRV.GetAddressOf()
-						),
+						device->CreateShaderResourceView(SharedTexture.Get(), nullptr, SharedTextureSRV.GetAddressOf()),
 						"Could not create SRV for D3D11 backbuffer texture"
 					);
 
@@ -1320,12 +1280,7 @@ namespace
 
 						SDR::Error::MS::ThrowIfFailed
 						(
-							device->CreateBuffer
-							(
-								&bufdesc,
-								nullptr,
-								WorkBuffer.GetAddressOf()
-							),
+							device->CreateBuffer(&bufdesc, nullptr, WorkBuffer.GetAddressOf()),
 							"Could not create GPU work buffer"
 						);
 
@@ -1336,12 +1291,7 @@ namespace
 
 						SDR::Error::MS::ThrowIfFailed
 						(
-							device->CreateUnorderedAccessView
-							(
-								WorkBuffer.Get(),
-								&uavdesc,
-								WorkBufferUAV.GetAddressOf()
-							),
+							device->CreateUnorderedAccessView(WorkBuffer.Get(), &uavdesc, WorkBufferUAV.GetAddressOf()),
 							"Could not create UAV for GPU work buffer"
 						);
 
@@ -1352,12 +1302,7 @@ namespace
 
 						SDR::Error::MS::ThrowIfFailed
 						(
-							device->CreateShaderResourceView
-							(
-								WorkBuffer.Get(),
-								&srvdesc,
-								WorkBufferSRV.GetAddressOf()
-							),
+							device->CreateShaderResourceView(WorkBuffer.Get(), &srvdesc, WorkBufferSRV.GetAddressOf()),
 							"Could not create SRV for GPU work buffer"
 						);
 					}
@@ -1399,12 +1344,7 @@ namespace
 					{
 						if (entry.Format == reference->format)
 						{
-							OpenShader
-							(
-								device,
-								entry.ShaderName,
-								ConversionShader.GetAddressOf()
-							);
+							OpenShader(device, entry.ShaderName, ConversionShader.GetAddressOf());
 
 							found = &entry;
 							break;
@@ -1573,12 +1513,8 @@ namespace
 
 				void Dispatch(const VideoStreamSharedData& shared)
 				{
-					shared.DirectX11.Context->Dispatch
-					(
-						shared.DirectX11.GroupsX,
-						shared.DirectX11.GroupsY,
-						1
-					);
+					auto& dx11 = shared.DirectX11;
+					dx11.Context->Dispatch(dx11.GroupsX, dx11.GroupsY, 1);
 				}
 
 				/*
@@ -1774,11 +1710,7 @@ namespace
 			HRESULT hr;
 			Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
 
-			hr = ModuleSourceGlobals::DX9Device->GetRenderTarget
-			(
-				0,
-				surface.GetAddressOf()
-			);
+			hr = ModuleSourceGlobals::DX9Device->GetRenderTarget(0, surface.GetAddressOf());
 
 			if (FAILED(hr))
 			{
@@ -1821,11 +1753,7 @@ namespace
 				MovieData::VideoFutureData item;
 				item.Writer = &stream->Video;
 
-				auto res = stream->DirectX11.Conversion
-				(
-					CurrentMovie.VideoStreamShared,
-					item
-				);
+				auto res = stream->DirectX11.Conversion(CurrentMovie.VideoStreamShared, item);
 
 				if (res)
 				{
@@ -2241,14 +2169,7 @@ namespace
 
 					for (auto& stream : tempstreams)
 					{
-						stream->Video.Frame.Assign
-						(
-							width,
-							height,
-							pxformat,
-							colorspace,
-							colorrange
-						);
+						stream->Video.Frame.Assign(width, height, pxformat, colorspace, colorrange);
 					}
 
 					movie.VideoStreamShared.DirectX11.Create(width, height);
@@ -2504,11 +2425,7 @@ namespace
 					interfaces.EngineClient->FlashWindow();
 				}
 
-				ConColorMsg
-				(
-					Color(88, 255, 39, 255),
-					"SDR: Movie is now complete\n"
-				);
+				ConColorMsg(Color(88, 255, 39, 255), "SDR: Movie is now complete\n");
 
 				int index = 0;
 
@@ -2520,13 +2437,7 @@ namespace
 						auto avg = entry.TotalTime / entry.Calls;
 						auto ms = avg / 1.0ms;
 
-						Msg
-						(
-							"SDR: %s (%u): avg %0.4f ms\n",
-							name,
-							entry.Calls,
-							ms
-						);
+						Msg("SDR: %s (%u): avg %0.4f ms\n", name, entry.Calls, ms);
 					}
 
 					++index;
