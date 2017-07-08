@@ -28,73 +28,6 @@ namespace
 {
 	namespace LAV
 	{
-		enum class ExceptionType
-		{
-			AllocSWSContext,
-			AllocAVFrame,
-			AllocVideoStream,
-			VideoEncoderNotFound,
-			OpenWaveFile,
-		};
-
-		const char* ExceptionTypeToString(ExceptionType code)
-		{
-			auto index = static_cast<int>(code);
-
-			static const char* names[] =
-			{
-				"Could not allocate video conversion context",
-				"Could not allocate video frame",
-				"Could not allocate video stream",
-				"Video encoder not found",
-				"Could not create file",
-			};
-
-			auto retstr = names[index];
-
-			return retstr;
-		}
-
-		struct ExceptionNullPtr
-		{
-			ExceptionType Code;
-			const char* Description;
-		};
-
-		struct Exception
-		{
-			int Code;
-		};
-
-		inline void ThrowIfNull(const void* ptr, ExceptionType code)
-		{
-			if (!ptr)
-			{
-				auto desc = ExceptionTypeToString(code);
-
-				Warning("SDR LAV: %s\n", desc);
-
-				ExceptionNullPtr info;
-				info.Code = code;
-				info.Description = desc;
-
-				throw info;
-			}
-		}
-
-		inline void ThrowIfFailed(int code)
-		{
-			if (code < 0)
-			{
-				Warning("SDR LAV: %d\n", code);
-
-				Exception info;
-				info.Code = code;
-
-				throw info;
-			}
-		}
-
 		struct ScopedFormatContext
 		{
 			~ScopedFormatContext()
@@ -112,7 +45,12 @@ namespace
 
 			void Assign(const char* filename)
 			{
-				ThrowIfFailed(avformat_alloc_output_context2(&Context, nullptr, nullptr, filename));
+				SDR::Error::LAV::ThrowIfFailed
+				(
+					avformat_alloc_output_context2(&Context, nullptr, nullptr, filename),
+					"Could not allocate output context (%s)",
+					filename
+				);
 			}
 
 			AVFormatContext* Get() const
@@ -149,7 +87,7 @@ namespace
 			{
 				Frame = av_frame_alloc();
 
-				ThrowIfNull(Frame, ExceptionType::AllocAVFrame);
+				SDR::Error::ThrowIfNull(Frame, "Could not allocate video frame");
 
 				Frame->format = format;
 				Frame->width = width;
@@ -189,12 +127,12 @@ namespace
 
 			void Set(const char* key, const char* value, int flags = 0)
 			{
-				ThrowIfFailed(av_dict_set(Get(), key, value, flags));
-			}
-
-			void ParseString(const char* string)
-			{
-				ThrowIfFailed(av_dict_parse_string(Get(), string, "=", " ", 0));
+				SDR::Error::LAV::ThrowIfFailed
+				(
+					av_dict_set(Get(), key, value, flags),
+					"Could not set dictionary value \"%s\" = \"%s\"",
+					key, value
+				);
 			}
 
 			AVDictionary* Options = nullptr;
@@ -210,13 +148,7 @@ namespace
 			);
 		}
 
-		void LogFunction
-		(
-			void* avcl,
-			int level,
-			const char* fmt,
-			va_list vl
-		)
+		void LogFunction(void* avcl, int level, const char* fmt, va_list vl)
 		{
 			if (!Variables::SuppressLog.GetBool())
 			{
@@ -477,17 +409,21 @@ namespace
 
 			if ((FormatContext->oformat->flags & AVFMT_NOFILE) == 0)
 			{
-				LAV::ThrowIfFailed(avio_open(&FormatContext->pb, path, AVIO_FLAG_WRITE));
+				SDR::Error::LAV::ThrowIfFailed
+				(
+					avio_open(&FormatContext->pb, path, AVIO_FLAG_WRITE),
+					"Could not open output format context (%s)",
+					path
+				);
 			}
 		}
 
 		void SetEncoder(AVCodec* encoder)
 		{
 			Encoder = encoder;
-			LAV::ThrowIfNull(Encoder, LAV::ExceptionType::VideoEncoderNotFound);
 
 			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
-			LAV::ThrowIfNull(Stream, LAV::ExceptionType::AllocVideoStream);
+			SDR::Error::ThrowIfNull(Stream, "Could not create video stream");
 
 			/*
 				Against what the new ffmpeg API incorrectly suggests, but is the right way.
@@ -517,8 +453,17 @@ namespace
 			CodecContext->time_base = timebase;
 			CodecContext->framerate = inversetime;
 
-			LAV::ThrowIfFailed(avcodec_open2(CodecContext, Encoder, options));
-			LAV::ThrowIfFailed(avcodec_parameters_from_context(Stream->codecpar, CodecContext));
+			SDR::Error::LAV::ThrowIfFailed
+			(
+				avcodec_open2(CodecContext, Encoder, options),
+				"Could not open video encoder"
+			);
+
+			SDR::Error::LAV::ThrowIfFailed
+			(
+				avcodec_parameters_from_context(Stream->codecpar, CodecContext),
+				"Could not transfer encoder parameters to stream"
+			);
 
 			Stream->time_base = timebase;
 			Stream->avg_frame_rate = inversetime;
@@ -526,12 +471,16 @@ namespace
 
 		void WriteHeader()
 		{
-			LAV::ThrowIfFailed(avformat_write_header(FormatContext.Get(), nullptr));
+			SDR::Error::LAV::ThrowIfFailed
+			(
+				avformat_write_header(FormatContext.Get(), nullptr),
+				"Could not write container header"
+			);
 		}
 
 		void WriteTrailer()
 		{
-			LAV::ThrowIfFailed(av_write_trailer(FormatContext.Get()));
+			av_write_trailer(FormatContext.Get());
 		}
 
 		void SetFrameInput(PlaneType& planes)
@@ -558,7 +507,7 @@ namespace
 				Frame->pts = PresentationIndex;
 				PresentationIndex++;
 
-				auto ret = avcodec_send_frame
+				avcodec_send_frame
 				(
 					CodecContext,
 					Frame.Get()
@@ -570,7 +519,7 @@ namespace
 
 		void SendFlushFrame()
 		{
-			auto ret = avcodec_send_frame(CodecContext, nullptr);
+			avcodec_send_frame(CodecContext, nullptr);
 			ReceivePacketFrame();
 		}
 
@@ -883,15 +832,13 @@ namespace
 			{
 				if (status == Status::CouldNotOpenFile)
 				{
-					Warning("SDR: Could not open shader \"%s\"\n", path);
+					SDR::Error::Make("SDR: Could not open shader \"%s\"\n", path);
 				}
-
-				throw false;
 			}
 
 			auto data = file.ReadAll();
 
-			MS::ThrowIfFailed
+			SDR::Error::MS::ThrowIfFailed
 			(
 				device->CreateComputeShader
 				(
@@ -899,7 +846,9 @@ namespace
 					data.size(),
 					nullptr,
 					shader
-				)
+				),
+				"Could not create compute shader %s",
+				name
 			);
 		}
 
@@ -943,25 +892,23 @@ namespace
 					flags |= D3D11_CREATE_DEVICE_DEBUG;
 					#endif
 
-					auto hr = D3D11CreateDevice
+					SDR::Error::MS::ThrowIfFailed
 					(
-						nullptr,
-						D3D_DRIVER_TYPE_HARDWARE,
-						0,
-						flags,
-						nullptr,
-						0,
-						D3D11_SDK_VERSION,
-						Device.GetAddressOf(),
-						nullptr,
-						Context.GetAddressOf()
+						D3D11CreateDevice
+						(
+							nullptr,
+							D3D_DRIVER_TYPE_HARDWARE,
+							0,
+							flags,
+							nullptr,
+							0,
+							D3D11_SDK_VERSION,
+							Device.GetAddressOf(),
+							nullptr,
+							Context.GetAddressOf()
+						),
+						"Could not create D3D11 device"
 					);
-
-					if (FAILED(hr))
-					{
-						Warning("SRR: Could not create D3D11 device\n");
-						MS::ThrowIfFailed(hr);
-					}
 
 					GroupsX = std::ceil(width / 8.0);
 					GroupsY = std::ceil(height / 8.0);
@@ -973,14 +920,15 @@ namespace
 						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 						cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-						MS::ThrowIfFailed
+						SDR::Error::MS::ThrowIfFailed
 						(
 							Device->CreateBuffer
 							(
 								&cbufdesc,
 								nullptr,
 								SamplingConstantBuffer.GetAddressOf()
-							)
+							),
+							"Could not create sampling constant buffer"
 						);
 					}
 
@@ -1001,14 +949,15 @@ namespace
 						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
 						cbufsubdesc.pSysMem = &constantbufferdata;
 
-						MS::ThrowIfFailed
+						SDR::Error::MS::ThrowIfFailed
 						(
 							Device->CreateBuffer
 							(
 								&cbufdesc,
 								&cbufsubdesc,
 								SharedConstantBuffer.GetAddressOf()
-							)
+							),
+							"Could not create constant buffer for shared shader data"
 						);
 					}
 
@@ -1058,7 +1007,7 @@ namespace
 				{
 					void Create(IDirect3DDevice9* device, int width, int height)
 					{
-						MS::ThrowIfFailed
+						SDR::Error::MS::ThrowIfFailed
 						(
 							/*
 								Once shared with D3D11, it is interpreted as
@@ -1072,7 +1021,8 @@ namespace
 								D3DPOOL_DEFAULT,
 								Surface.GetAddressOf(),
 								&SharedHandle
-							)
+							),
+							"Could not create D3D9 shared surface"
 						);
 					}
 
@@ -1130,14 +1080,15 @@ namespace
 						desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 						desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 
-						MS::ThrowIfFailed
+						SDR::Error::MS::ThrowIfFailed
 						(
 							device->CreateBuffer
 							(
 								&desc,
 								nullptr,
 								Buffer.GetAddressOf()
-							)
+							),
+							"Could not create generic GPU read buffer"
 						);
 
 						D3D11_UNORDERED_ACCESS_VIEW_DESC viewdesc = {};
@@ -1145,14 +1096,15 @@ namespace
 						viewdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 						viewdesc.Buffer.NumElements = numelements;
 
-						MS::ThrowIfFailed
+						SDR::Error::MS::ThrowIfFailed
 						(
 							device->CreateUnorderedAccessView
 							(
 								Buffer.Get(),
 								&viewdesc,
 								View.GetAddressOf()
-							)
+							),
+							"Could not create UAV for generic GPU read buffer"
 						);
 					}
 
@@ -1242,14 +1194,15 @@ namespace
 						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
 						cbufsubdesc.pSysMem = &constantbufferdata;
 
-						MS::ThrowIfFailed
+						SDR::Error::MS::ThrowIfFailed
 						(
 							device->CreateBuffer
 							(
 								&cbufdesc,
 								&cbufsubdesc,
 								ConstantBuffer.GetAddressOf()
-							)
+							),
+							"Could not create constant buffer for YUV GPU buffer"
 						);
 					}
 
@@ -1325,28 +1278,31 @@ namespace
 				{
 					Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
 
-					MS::ThrowIfFailed
+					SDR::Error::MS::ThrowIfFailed
 					(
 						device->OpenSharedResource
 						(
 							dx9handle,
 							IID_PPV_ARGS(tempresource.GetAddressOf())
-						)
+						),
+						"Could not open shared D3D9 resource"
 					);
 
-					MS::ThrowIfFailed
+					SDR::Error::MS::ThrowIfFailed
 					(
-						tempresource.As(&SharedTexture)
+						tempresource.As(&SharedTexture),
+						"Could not query shared D3D9 resource as a D3D11 2D texture"
 					);
 
-					MS::ThrowIfFailed
+					SDR::Error::MS::ThrowIfFailed
 					(
 						device->CreateShaderResourceView
 						(
 							SharedTexture.Get(),
 							nullptr,
 							SharedTextureSRV.GetAddressOf()
-						)
+						),
+						"Could not create SRV for D3D11 backbuffer texture"
 					);
 
 					{
@@ -1370,14 +1326,15 @@ namespace
 						bufdesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 						bufdesc.StructureByteStride = size;
 
-						MS::ThrowIfFailed
+						SDR::Error::MS::ThrowIfFailed
 						(
 							device->CreateBuffer
 							(
 								&bufdesc,
 								nullptr,
 								WorkBuffer.GetAddressOf()
-							)
+							),
+							"Could not create GPU work buffer"
 						);
 
 						D3D11_UNORDERED_ACCESS_VIEW_DESC uavdesc = {};
@@ -1385,14 +1342,15 @@ namespace
 						uavdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 						uavdesc.Buffer.NumElements = px;
 
-						MS::ThrowIfFailed
+						SDR::Error::MS::ThrowIfFailed
 						(
 							device->CreateUnorderedAccessView
 							(
 								WorkBuffer.Get(),
 								&uavdesc,
 								WorkBufferUAV.GetAddressOf()
-							)
+							),
+							"Could not create UAV for GPU work buffer"
 						);
 
 						D3D11_SHADER_RESOURCE_VIEW_DESC srvdesc = {};
@@ -1400,14 +1358,15 @@ namespace
 						srvdesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 						srvdesc.Buffer.NumElements = px;
 
-						MS::ThrowIfFailed
+						SDR::Error::MS::ThrowIfFailed
 						(
 							device->CreateShaderResourceView
 							(
 								WorkBuffer.Get(),
 								&srvdesc,
 								WorkBufferSRV.GetAddressOf()
-							)
+							),
+							"Could not create SRV for GPU work buffer"
 						);
 					}
 
@@ -1462,13 +1421,11 @@ namespace
 
 					if (!found)
 					{
-						Warning
+						SDR::Error::Make
 						(
 							"SDR: No conversion rule found for %s\n",
 							av_get_pix_fmt_name((AVPixelFormat)reference->format)
 						);
-
-						throw false;
 					}
 
 					if (found->IsYUV)
@@ -1738,14 +1695,12 @@ namespace
 
 	void SDR_MovieShutdown()
 	{
-		auto& movie = CurrentMovie;
-
-		if (movie.IsStarted)
+		if (CurrentMovie.IsStarted)
 		{
 			SDR_TryJoinFrameThread();
 		}
 
-		movie = MovieData();
+		CurrentMovie = MovieData();
 	}
 
 	bool SDR_ShouldRecord()
@@ -2088,33 +2043,21 @@ namespace
 				case ERROR_PATH_NOT_FOUND:
 				case ERROR_FILENAME_EXCED_RANGE:
 				{
-					Warning
-					(
-						"SDR: Movie output path is invalid\n"
-					);
-
-					throw false;
+					SDR::Error::Make("SDR: Movie output path is invalid\n");
 				}
 
 				case ERROR_CANCELLED:
 				{
-					Warning
-					(
-						"SDR: Extra directories were created but are hidden, aborting\n"
-					);
-
-					throw false;
+					SDR::Error::Make("SDR: Extra directories were created but are hidden, aborting\n");
 				}
 
 				default:
 				{
-					Warning
+					SDR::Error::Make
 					(
 						"SDR: Some unknown error happened when starting movie, "
 						"related to sdr_outputdir\n"
 					);
-
-					throw false;
 				}
 			}
 		}
@@ -2196,7 +2139,7 @@ namespace
 					CreateOutputDirectory(sdrpath);
 				}
 
-				catch (bool value)
+				catch (SDR::Error::Exception value)
 				{
 					return;
 				}
@@ -2221,12 +2164,7 @@ namespace
 					tempstreams.emplace_back(std::make_unique<MovieData::FullbrightVideoStream>());
 				}
 
-				auto linktabletovariable = []
-				(
-					const char* key,
-					const auto& table,
-					auto& variable
-				)
+				auto linktabletovariable = [](const char* key, const auto& table, auto& variable)
 				{
 					for (const auto& entry : table)
 					{
@@ -2255,26 +2193,19 @@ namespace
 					videoconfigs.emplace_back();
 					auto& x264 = videoconfigs.back();
 					x264.Encoder = avcodec_find_encoder_by_name("libx264");
-					x264.PixelFormats =
-					{
-						i420,
-						i444,
-					};
+					x264.PixelFormats = { i420, i444 };
 
 					videoconfigs.emplace_back();
 					auto& x264rgb = videoconfigs.back();
 					x264rgb.Encoder = avcodec_find_encoder_by_name("libx264rgb");
-					x264rgb.PixelFormats =
-					{
-						bgr0,
-					};
+					x264rgb.PixelFormats = { bgr0 };
 				}
 
 				{
 					auto encoderstr = Variables::Video::Encoder.GetString();
 
 					auto encoder = avcodec_find_encoder_by_name(encoderstr);
-					LAV::ThrowIfNull(encoder, LAV::ExceptionType::VideoEncoderNotFound);
+					SDR::Error::ThrowIfNull(encoder, "Video encoder not found");
 
 					for (const auto& config : videoconfigs)
 					{
@@ -2283,12 +2214,6 @@ namespace
 							vidconfig = &config;
 							break;
 						}
-					}
-
-					if (!vidconfig)
-					{
-						Warning("SDR: Encoder %s not found\n", encoderstr);
-						LAV::ThrowIfNull(vidconfig, LAV::ExceptionType::VideoEncoderNotFound);
 					}
 
 					auto pxformatstr = Variables::Video::PixelFormat.GetString();
@@ -2373,11 +2298,6 @@ namespace
 						return;
 					}
 
-					catch (bool value)
-					{
-						return;
-					}
-
 					for (auto& stream : tempstreams)
 					{
 						auto name = BuildVideoStreamName(sdrpath, filename, stream.get());
@@ -2424,12 +2344,7 @@ namespace
 				movie.VideoStreams = std::move(tempstreams);
 			}
 					
-			catch (const LAV::Exception& error)
-			{
-				return;
-			}
-
-			catch (const LAV::ExceptionNullPtr& error)
+			catch (const SDR::Error::Exception& error)
 			{
 				return;
 			}

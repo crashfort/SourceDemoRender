@@ -191,8 +191,7 @@ namespace
 
 		catch (SDR::Shared::ScopedFile::ExceptionType status)
 		{
-			Warning("SDR: Could not get GameConfig version\n");
-			throw false;
+			SDR::Error::Make("SDR: Could not get GameConfig version\n");
 		}
 
 		return ret;
@@ -202,25 +201,18 @@ namespace
 	{
 		CON_COMMAND(sdr_version, "Show the current version")
 		{
-			Msg
-			(
-				"SDR: Library version: %d\n",
-				SourceDemoRenderPlugin::PluginVersion
-			);
-
-			int gameconfigversion;
+			Msg("SDR: Library version: %d\n", SourceDemoRenderPlugin::PluginVersion);
 
 			try
 			{
-				gameconfigversion = GetGameConfigVersion();
+				auto gcversion = GetGameConfigVersion();
+				Msg("SDR: Game config version: %d\n", gcversion);
 			}
 
-			catch (bool value)
+			catch (const SDR::Error::Exception& error)
 			{
 				return;
 			}
-
-			Msg("SDR: GameConfig version: %d\n", gameconfigversion);
 		}
 
 		CON_COMMAND(sdr_update, "Check for any available updates")
@@ -315,9 +307,9 @@ namespace
 						localversion = GetGameConfigVersion();
 					}
 
-					catch (bool value)
+					catch (const SDR::Error::Exception& error)
 					{
-						return;
+						localversion = 0;
 					}
 
 					/*
@@ -391,7 +383,7 @@ namespace
 
 								ConColorMsg
 								(
-									Color(51, 167, 255, 255),
+									Color(88, 255, 39, 255),
 									"SDR: Game config download complete\n"
 								);
 							}
@@ -417,7 +409,7 @@ namespace
 
 		if (!ptr)
 		{
-			throw name;
+			SDR::Error::Make("Could not get the %s interface");
 		}
 
 		outptr = ptr;
@@ -472,38 +464,14 @@ namespace
 
 		try
 		{
-			CreateInterface
-			(
-				interfacefactory,
-				VENGINE_CLIENT_INTERFACE_VERSION,
-				Interfaces.EngineClient
-			);
-		}
+			CreateInterface(interfacefactory, VENGINE_CLIENT_INTERFACE_VERSION, Interfaces.EngineClient);
 
-		catch (const char* name)
-		{
-			Warning("SDR: Failed to get the \"%s\" interface\n", name);
-			return false;
-		}
-
-		try
-		{
 			SDR::Setup(ModuleGameDir::FullPath, ModuleGameDir::GameName);
-		}
-
-		catch (bool status)
-		{
-			return false;
-		}
-
-		try
-		{
 			SDR::CallPluginStartupFunctions();
 		}
 
-		catch (const char* name)
+		catch (const SDR::Error::Exception& error)
 		{
-			Warning("SDR: Setup procedure \"%s\" failed\n", name);
 			return false;
 		}
 

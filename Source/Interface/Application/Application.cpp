@@ -166,39 +166,6 @@ namespace
 			}
 		}
 
-		enum class Status
-		{
-			CouldNotFindConfig,
-			CouldNotFindGame,
-
-			InheritTargetWrong,
-			HandlerNotFound,
-
-			CouldNotCreateModule,
-		};
-
-		const char* StatusNames[] =
-		{
-			"Could not find config",
-			"Could not find game",
-			"Inherit target not found",
-			"Module handler not found",
-			"Could not create module",
-		};
-
-		template <typename NodeType>
-		auto SafeFindMember(NodeType& node, const char* name, Status code)
-		{
-			auto it = node.FindMember(name);
-
-			if (it == node.MemberEnd())
-			{
-				throw code;
-			}
-
-			return it;
-		}
-
 		template <typename NodeType, typename FuncType>
 		void MemberLoop(NodeType& node, FuncType callback)
 		{
@@ -290,14 +257,12 @@ namespace
 
 						if (!foundgame)
 						{
-							Warning
+							SDR::Error::Make
 							(
 								"SDR: %s inherit target %s not found\n",
 								targetgame->Name.c_str(),
 								from.c_str()
 							);
-
-							throw Status::InheritTargetWrong;
 						}
 					}
 
@@ -333,8 +298,7 @@ namespace
 
 						if (!res)
 						{
-							Warning("SDR: Could not enable module %s\n", handler.Name);
-							throw Status::CouldNotCreateModule;
+							SDR::Error::Make("SDR: Could not enable module %s\n", handler.Name);
 						}
 
 						Msg("SDR: Enabled module %s\n", handler.Name);
@@ -365,7 +329,7 @@ namespace
 
 			catch (SDR::Shared::ScopedFile::ExceptionType status)
 			{
-				throw Status::CouldNotFindConfig;
+				SDR::Error::Make("Could not find game config");
 			}
 
 			auto data = config.ReadAll();
@@ -413,7 +377,7 @@ namespace
 
 			if (!currentgame)
 			{
-				throw Status::CouldNotFindGame;
+				SDR::Error::Make("Could not find current game in game config");
 			}
 
 			ResolveInherit(currentgame, document.GetAllocator());
@@ -430,27 +394,10 @@ void SDR::Setup(const char* gamepath, const char* gamename)
 
 	if (res != MH_OK)
 	{
-		Warning
-		(
-			"SDR: Failed to initialize hooks\n"
-		);
-
-		throw false;
+		SDR::Error::Make("SDR: Failed to initialize hooks\n");
 	}
 
-	try
-	{
-		Config::SetupGame(gamepath, gamename);
-	}
-
-	catch (Config::Status status)
-	{
-		auto index = static_cast<int>(status);
-		auto name = Config::StatusNames[index];
-
-		Warning("SDR: GameConfig: %s\n", name);
-		throw false;
-	}
+	Config::SetupGame(gamepath, gamename);
 }
 
 void SDR::Close()
@@ -495,7 +442,7 @@ void SDR::CallPluginStartupFunctions()
 
 		if (!res)
 		{
-			throw entry.Name;
+			SDR::Error::Make("Startup procedure %s failed");
 		}
 
 		++index;

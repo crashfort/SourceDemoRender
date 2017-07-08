@@ -203,45 +203,36 @@ namespace SDR
 		{
 			if (!address)
 			{
-				Warning
-				(
-					"SDR: Could not enable module \"%s\"\n",
-					name
-				);
-
-				throw name;
+				Error::Make("SDR: Could not enable module \"%s\"\n", name);
 			}
 		}
 	}
 
 	template <typename FuncType>
-	void CreateHook(HookModule<FuncType>& hook, FuncType override, void* address)
+	bool CreateHook(HookModule<FuncType>& hook, FuncType override, void* address)
 	{
 		hook.TargetFunction = address;
 		hook.NewFunction = override;
 
-		auto res = MH_CreateHookEx
-		(
-			hook.TargetFunction,
-			hook.NewFunction,
-			&hook.OriginalFunction
-		);
+		auto res = MH_CreateHookEx(hook.TargetFunction, hook.NewFunction, &hook.OriginalFunction);
 
 		if (res != MH_OK)
 		{
-			throw res;
+			return false;
 		}
 
 		res = MH_EnableHook(hook.TargetFunction);
 
 		if (res != MH_OK)
 		{
-			throw res;
+			return false;
 		}
+
+		return true;
 	}
 
 	template <typename FuncType>
-	void CreateHook
+	bool CreateHook
 	(
 		HookModule<FuncType>& hook,
 		FuncType override,
@@ -250,32 +241,20 @@ namespace SDR
 	)
 	{
 		auto address = GetAddressFromPattern(module, pattern);
-
-		CreateHook(hook, override, address);
+		return CreateHook(hook, override, address);
 	}
 
 	template <typename FuncType>
-	void CreateHook(HookModule<FuncType>& hook, FuncType override, rapidjson::Value& value)
+	bool CreateHook(HookModule<FuncType>& hook, FuncType override, rapidjson::Value& value)
 	{
 		auto address = GetAddressFromJsonPattern(value);
-
-		CreateHook(hook, override, address);
+		return CreateHook(hook, override, address);
 	}
 
 	template <typename FuncType>
 	bool CreateHookShort(HookModule<FuncType>& hook, FuncType override, rapidjson::Value& value)
 	{
-		try
-		{
-			CreateHook(hook, override, value);
-		}
-
-		catch (MH_STATUS status)
-		{
-			return false;
-		}
-
-		return true;
+		return CreateHook(hook, override, value);;
 	}
 
 	struct AddressFinder

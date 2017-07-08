@@ -26,6 +26,7 @@
 
 #include <Psapi.h>
 #include <ShlObj.h>
+#include <comdef.h>
 
 #include <wrl.h>
 
@@ -71,14 +72,63 @@ namespace SDR
 	const EngineInterfaces& GetEngineInterfaces();
 }
 
-namespace MS
+namespace SDR::Error
 {
-	inline void ThrowIfFailed(HRESULT hr)
+	struct Exception
 	{
-		if (FAILED(hr))
+		char Description[256];
+	};
+
+	template <typename... Args>
+	inline Exception Make(const char* format, Args&&... args)
+	{
+		Exception info;
+		sprintf_s(info.Description, format, std::forward<Args>(args)...);
+
+		throw info;
+	}
+
+	template <typename T, typename... Args>
+	inline void ThrowIfNull(const T* ptr, const char* format, Args&&... args)
+	{
+		if (!ptr)
 		{
-			Warning("SDR: ThrowIfFailed: %08X\n", hr);
-			throw hr;
+			Make(format, std::forward<Args>(args)...);
+		}
+	}
+
+	namespace LAV
+	{
+		template <typename T, typename... Args>
+		inline void ThrowIfFailed(T code, const char* format, Args&&... args)
+		{
+			if (code < 0)
+			{
+				Make(format, std::forward<Args>(args)...);
+			}
+		}
+	}
+
+	namespace MS
+	{
+		template <typename... Args>
+		inline void ThrowIfFailed(HRESULT hr, const char* format, Args&&...args)
+		{
+			if (FAILED(hr))
+			{
+				_com_error error(hr);
+				auto message = error.ErrorMessage();
+
+				char start[sizeof(Exception::Description)];
+				char end[sizeof(Exception::Description)];
+
+				sprintf_s(end, format, std::forward<Args>(args)...);
+				sprintf_s(start, "%08X (%s) -> ", hr, message);
+				strcat_s(end, start);
+
+				Make(end);
+			}
 		}
 	}
 }
+
