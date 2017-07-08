@@ -191,7 +191,7 @@ namespace
 
 		catch (SDR::Shared::ScopedFile::ExceptionType status)
 		{
-			SDR::Error::Make("SDR: Could not get GameConfig version\n");
+			SDR::Error::Make("Could not get GameConfig version");
 		}
 
 		return ret;
@@ -426,29 +426,17 @@ namespace
 			ModuleGameDir::Set();
 		}
 
-		catch (const char* name)
+		catch (const SDR::Error::Exception& error)
 		{
-			Warning
-			(
-				"SDR: Could not get game name. Version: %d\n",
-				SourceDemoRenderPlugin::PluginVersion
-			);
+			auto version = SourceDemoRenderPlugin::PluginVersion;
 
+			Warning("SDR: Could not get game name. Version: %d\n", version);
 			return false;
 		}
 
-		ModuleGameDir::GetGameDir
-		(
-			ModuleGameDir::FullPath,
-			sizeof(ModuleGameDir::FullPath)
-		);
+		ModuleGameDir::GetGameDir(ModuleGameDir::FullPath, sizeof(ModuleGameDir::FullPath));
 
-		strcpy_s
-		(
-			ModuleGameDir::GameName,
-			V_GetFileName(ModuleGameDir::FullPath)
-		);
-
+		strcpy_s(ModuleGameDir::GameName, V_GetFileName(ModuleGameDir::FullPath));
 		strcat_s(ModuleGameDir::FullPath, "\\");
 
 		Commands::sdr_version({});

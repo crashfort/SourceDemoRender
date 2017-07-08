@@ -315,11 +315,7 @@ namespace
 
 					if (!encoder)
 					{
-						Warning
-						(
-							"SDR: Encoder %s not found\n",
-							newstr
-						);
+						Warning("SDR: Encoder %s not found\n", newstr);
 
 						Msg("SDR: Available encoders: \n");
 
@@ -832,7 +828,7 @@ namespace
 			{
 				if (status == Status::CouldNotOpenFile)
 				{
-					SDR::Error::Make("SDR: Could not open shader \"%s\"\n", path);
+					SDR::Error::Make("Could not open shader \"%s\"\n", path);
 				}
 			}
 
@@ -1423,7 +1419,7 @@ namespace
 					{
 						SDR::Error::Make
 						(
-							"SDR: No conversion rule found for %s\n",
+							"No conversion rule found for %s",
 							av_get_pix_fmt_name((AVPixelFormat)reference->format)
 						);
 					}
@@ -2043,21 +2039,17 @@ namespace
 				case ERROR_PATH_NOT_FOUND:
 				case ERROR_FILENAME_EXCED_RANGE:
 				{
-					SDR::Error::Make("SDR: Movie output path is invalid\n");
+					SDR::Error::Make("Movie output path is invalid");
 				}
 
 				case ERROR_CANCELLED:
 				{
-					SDR::Error::Make("SDR: Extra directories were created but are hidden, aborting\n");
+					SDR::Error::Make("Extra directories were created but are hidden, aborting");
 				}
 
 				default:
 				{
-					SDR::Error::Make
-					(
-						"SDR: Some unknown error happened when starting movie, "
-						"related to sdr_outputdir\n"
-					);
+					SDR::Error::Make("Some unknown error happened when starting movie, related to sdr_outputdir");
 				}
 			}
 		}
@@ -2122,38 +2114,30 @@ namespace
 		{
 			auto& movie = CurrentMovie;
 
-			auto sdrpath = Variables::OutputDirectory.GetString();
-
-			/*
-				No desired path, use game root
-			*/
-			if (strlen(sdrpath) == 0)
+			try
 			{
-				sdrpath = SDR::GetGamePath();
-			}
+				auto sdrpath = Variables::OutputDirectory.GetString();
 
-			else
-			{
-				try
+				/*
+					No desired path, use game root
+				*/
+				if (strlen(sdrpath) == 0)
+				{
+					sdrpath = SDR::GetGamePath();
+				}
+
+				else
 				{
 					CreateOutputDirectory(sdrpath);
 				}
 
-				catch (SDR::Error::Exception value)
-				{
-					return;
-				}
-			}
-
-			auto colorspace = AVCOL_SPC_BT470BG;
-			auto colorrange = AVCOL_RANGE_MPEG;
-			auto pxformat = AV_PIX_FMT_NONE;
+				auto colorspace = AVCOL_SPC_BT470BG;
+				auto colorrange = AVCOL_RANGE_MPEG;
+				auto pxformat = AV_PIX_FMT_NONE;
 				
-			movie.Width = width;
-			movie.Height = height;
+				movie.Width = width;
+				movie.Height = height;
 
-			try
-			{
 				av_log_set_callback(LAV::LogFunction);
 
 				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
@@ -2271,31 +2255,23 @@ namespace
 						);
 					}
 
-					try
+					movie.VideoStreamShared.DirectX11.Create(width, height);
+
+					for (auto& stream : tempstreams)
 					{
-						movie.VideoStreamShared.DirectX11.Create(width, height);
+						stream->DirectX9.Create
+						(
+							ModuleSourceGlobals::DX9Device,
+							width,
+							height
+						);
 
-						for (auto& stream : tempstreams)
-						{
-							stream->DirectX9.Create
-							(
-								ModuleSourceGlobals::DX9Device,
-								width,
-								height
-							);
-
-							stream->DirectX11.Create
-							(
-								movie.VideoStreamShared.DirectX11.Device.Get(),
-								stream->DirectX9.SharedSurface.SharedHandle,
-								stream->Video.Frame.Get()
-							);
-						}
-					}
-
-					catch (HRESULT status)
-					{
-						return;
+						stream->DirectX11.Create
+						(
+							movie.VideoStreamShared.DirectX11.Device.Get(),
+							stream->DirectX9.SharedSurface.SharedHandle,
+							stream->Video.Frame.Get()
+						);
 					}
 
 					for (auto& stream : tempstreams)

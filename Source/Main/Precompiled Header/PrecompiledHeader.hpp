@@ -79,19 +79,31 @@ namespace SDR::Error
 		char Description[256];
 	};
 
+	inline void Print(const Exception& error)
+	{
+		Warning("SDR: %s\n", error.Description);
+	}
+
+	/*
+		For use with unrecoverable errors
+	*/
 	template <typename... Args>
 	inline Exception Make(const char* format, Args&&... args)
 	{
 		Exception info;
 		sprintf_s(info.Description, format, std::forward<Args>(args)...);
 
+		Print(info);
 		throw info;
 	}
 
+	/*
+		For use with unrecoverable errors
+	*/
 	template <typename T, typename... Args>
 	inline void ThrowIfNull(const T* ptr, const char* format, Args&&... args)
 	{
-		if (!ptr)
+		if (ptr == nullptr)
 		{
 			Make(format, std::forward<Args>(args)...);
 		}
@@ -99,6 +111,9 @@ namespace SDR::Error
 
 	namespace LAV
 	{
+		/*
+			For use with unrecoverable errors
+		*/
 		template <typename T, typename... Args>
 		inline void ThrowIfFailed(T code, const char* format, Args&&... args)
 		{
@@ -111,6 +126,9 @@ namespace SDR::Error
 
 	namespace MS
 	{
+		/*
+			For use with unrecoverable errors
+		*/
 		template <typename... Args>
 		inline void ThrowIfFailed(HRESULT hr, const char* format, Args&&...args)
 		{

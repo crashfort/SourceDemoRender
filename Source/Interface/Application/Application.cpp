@@ -259,7 +259,7 @@ namespace
 						{
 							SDR::Error::Make
 							(
-								"SDR: %s inherit target %s not found\n",
+								"%s inherit target %s not found",
 								targetgame->Name.c_str(),
 								from.c_str()
 							);
@@ -298,7 +298,7 @@ namespace
 
 						if (!res)
 						{
-							SDR::Error::Make("SDR: Could not enable module %s\n", handler.Name);
+							SDR::Error::Make("Could not enable module %s", handler.Name);
 						}
 
 						Msg("SDR: Enabled module %s\n", handler.Name);
@@ -394,7 +394,7 @@ void SDR::Setup(const char* gamepath, const char* gamename)
 
 	if (res != MH_OK)
 	{
-		SDR::Error::Make("SDR: Failed to initialize hooks\n");
+		SDR::Error::Make("Failed to initialize hooks");
 	}
 
 	Config::SetupGame(gamepath, gamename);
@@ -410,10 +410,7 @@ void SDR::Close()
 	MH_Uninitialize();
 }
 
-void SDR::AddPluginStartupFunction
-(
-	const StartupFuncData& data
-)
+void SDR::AddPluginStartupFunction(const StartupFuncData& data)
 {
 	MainApplication.StartupFunctions.emplace_back(data);
 }
