@@ -181,7 +181,6 @@ namespace
 			"PushYUV",
 			"PushRGB",
 			"Encode",
-			"WriteEncodedPacket",
 		};
 
 		namespace Types
@@ -192,7 +191,6 @@ namespace
 				PushYUV,
 				PushRGB,
 				Encode,
-				WriteEncodedPacket,
 
 				Count
 			};
@@ -547,8 +545,6 @@ namespace
 
 		void WriteEncodedPacket(AVPacket& packet)
 		{
-			Profile::ScopedEntry e1(Profile::Types::WriteEncodedPacket);
-
 			av_packet_rescale_ts(&packet, CodecContext->time_base, Stream->time_base);
 
 			packet.stream_index = Stream->index;
