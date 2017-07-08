@@ -142,8 +142,7 @@ namespace
 		{
 			ConVar SuppressLog
 			(
-				"sdr_movie_suppresslog", "1", FCVAR_NEVER_AS_STRING,
-				"Disable logging output from LAV",
+				"sdr_movie_suppresslog", "1", FCVAR_NEVER_AS_STRING, "",
 				true, 0, true, 1
 			);
 		}
@@ -246,28 +245,24 @@ namespace
 	{
 		ConVar FrameRate
 		(
-			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING,
-			"Movie output framerate",
+			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING, "",
 			true, 30, true, 1000
 		);
 
 		ConVar OutputDirectory
 		(
-			"sdr_outputdir", "", 0,
-			"Where to save the output frames."
+			"sdr_outputdir", "", 0,  ""
 		);
 
 		ConVar FlashWindow
 		(
-			"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING,
-			"Flash window when endmovie is called",
+			"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "",
 			true, 0, true, 1
 		);
 
 		ConVar ExitOnFinish
 		(
-			"sdr_endmoviequit", "0", FCVAR_NEVER_AS_STRING,
-			"Quit game when endmovie is called",
+			"sdr_endmoviequit", "0", FCVAR_NEVER_AS_STRING, "",
 			true, 0, true, 1
 		);
 
@@ -275,15 +270,13 @@ namespace
 		{
 			ConVar Multiply
 			(
-				"sdr_sample_mult", "32", FCVAR_NEVER_AS_STRING,
-				"Framerate multiplication",
+				"sdr_sample_mult", "32", FCVAR_NEVER_AS_STRING, "",
 				true, 0, false, 0
 			);
 
 			ConVar Exposure
 			(
-				"sdr_sample_exposure", "0.5", FCVAR_NEVER_AS_STRING,
-				"Fraction of time per frame that is exposed for sampling",
+				"sdr_sample_exposure", "0.5", FCVAR_NEVER_AS_STRING, "",
 				true, 0, true, 1
 			);
 		}
@@ -292,8 +285,7 @@ namespace
 		{
 			ConVar Fullbright
 			(
-				"sdr_pass_fullbright", "0", FCVAR_NEVER_AS_STRING,
-				"Perform extra fullbright pass to separate video",
+				"sdr_pass_fullbright", "0", FCVAR_NEVER_AS_STRING, "",
 				true, 0, true, 1
 			);
 		}
@@ -302,9 +294,7 @@ namespace
 		{
 			ConVar Encoder
 			{
-				"sdr_movie_encoder", "libx264", 0,
-				"Video encoder"
-				"Values: libx264, libx264rgb",
+				"sdr_movie_encoder", "libx264", 0, "",
 				[](IConVar* var, const char* oldstr, float oldfloat)
 				{
 					auto newstr = Encoder.GetString();
@@ -331,27 +321,20 @@ namespace
 
 			ConVar PixelFormat
 			(
-				"sdr_movie_encoder_pxformat", "", 0,
-				"Video pixel format"
-				"Values: Depends on encoder, view Github page"
+				"sdr_movie_encoder_pxformat", "", 0, ""
 			);
 
 			namespace X264
 			{
 				ConVar CRF
 				(
-					"sdr_x264_crf", "0", 0,
-					"Constant rate factor value. Values: 0 (best) - 51 (worst). "
-					"See https://trac.ffmpeg.org/wiki/Encode/H.264",
+					"sdr_x264_crf", "0", 0, "",
 					true, 0, true, 51
 				);
 
 				ConVar Preset
 				{
-					"sdr_x264_preset", "ultrafast", 0,
-					"X264 encoder preset. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
-					"Important note: Optimally, do not use a too low of a preset as the streaming "
-					"needs to be somewhat realtime.",
+					"sdr_x264_preset", "ultrafast", 0, "",
 					[](IConVar* var, const char* oldstr, float oldfloat)
 					{
 						auto newstr = Preset.GetString();
@@ -382,8 +365,7 @@ namespace
 
 				ConVar Intra
 				(
-					"sdr_x264_intra", "1", 0,
-					"Whether to produce a video of only keyframes",
+					"sdr_x264_intra", "1", 0, "",
 					true, 0, true, 1
 				);
 			}
