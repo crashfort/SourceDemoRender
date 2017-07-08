@@ -463,12 +463,7 @@ namespace
 			return false;
 		}
 
-		ConColorMsg
-		(
-			Color(88, 255, 39, 255),
-			"SDR: Source Demo Render loaded\n"
-		);
-
+		ConColorMsg(Color(88, 255, 39, 255), "SDR: Source Demo Render loaded\n");
 		return true;
 	}
 

@@ -194,12 +194,7 @@ namespace
 
 					if (!it->second.IsString())
 					{
-						Warning
-						(
-							"SDR: %s inherit field not a string\n",
-							targetgame->Name.c_str()
-						);
-
+						Warning("SDR: %s inherit field not a string\n", targetgame->Name.c_str());
 						return;
 					}
 
@@ -341,7 +336,8 @@ namespace
 						{
 							curgame.Properties.emplace_back
 							(
-								std::make_pair(gamedata->name.GetString(), std::move(gamedata->value))
+								gamedata->name.GetString(),
+								std::move(gamedata->value)
 							);
 						}
 					);

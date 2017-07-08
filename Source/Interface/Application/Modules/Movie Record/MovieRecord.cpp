@@ -48,8 +48,7 @@ namespace
 				SDR::Error::LAV::ThrowIfFailed
 				(
 					avformat_alloc_output_context2(&Context, nullptr, nullptr, filename),
-					"Could not allocate output context (%s)",
-					filename
+					"Could not allocate output context for %s", filename
 				);
 			}
 
@@ -130,8 +129,7 @@ namespace
 				SDR::Error::LAV::ThrowIfFailed
 				(
 					av_dict_set(Get(), key, value, flags),
-					"Could not set dictionary value \"%s\" = \"%s\"",
-					key, value
+					"Could not set dictionary value { \"%s\" = \"%s\" }", key, value
 				);
 			}
 
@@ -388,8 +386,7 @@ namespace
 				SDR::Error::LAV::ThrowIfFailed
 				(
 					avio_open(&FormatContext->pb, path, AVIO_FLAG_WRITE),
-					"Could not open output format context (%s)",
-					path
+					"Could not open output file for %s", path
 				);
 			}
 		}
@@ -806,8 +803,7 @@ namespace
 			SDR::Error::MS::ThrowIfFailed
 			(
 				device->CreateComputeShader(data.data(), data.size(), nullptr, shader),
-				"Could not create compute shader %s",
-				name
+				"Could not create compute shader %s", name
 			);
 		}
 
@@ -1335,11 +1331,8 @@ namespace
 
 					if (!found)
 					{
-						SDR::Error::Make
-						(
-							"No conversion rule found for %s",
-							av_get_pix_fmt_name((AVPixelFormat)reference->format)
-						);
+						auto name = av_get_pix_fmt_name((AVPixelFormat)reference->format);
+						SDR::Error::Make("No conversion rule found for %s", name);
 					}
 
 					if (found->IsYUV)
@@ -2093,9 +2086,9 @@ namespace
 
 				{
 					auto encoderstr = Variables::Video::Encoder.GetString();
-
 					auto encoder = avcodec_find_encoder_by_name(encoderstr);
-					SDR::Error::ThrowIfNull(encoder, "Video encoder not found");
+
+					SDR::Error::ThrowIfNull(encoder, "Video encoder %s not found", encoderstr);
 
 					for (const auto& config : videoconfigs)
 					{
