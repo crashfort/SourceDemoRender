@@ -142,9 +142,9 @@ namespace SDR::Error
 
 				sprintf_s(end, format, std::forward<Args>(args)...);
 				sprintf_s(start, "%08X (%s) -> ", hr, message);
-				strcat_s(end, start);
+				strcat_s(start, end);
 
-				Make(end);
+				Make(start);
 			}
 		}
 	}
