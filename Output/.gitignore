@@ -2,7 +2,6 @@
 !*.txt
 !*.cfg
 !*.json
-!*.sdrshader
 !/cfg/
 !/SDR/
 !/SDR/GameConfigLatest
