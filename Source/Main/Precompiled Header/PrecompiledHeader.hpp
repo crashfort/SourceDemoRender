@@ -3,6 +3,25 @@
 #define _WIN32_WINNT 0x0601
 #include "TargetVersion.hpp"
 
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#define NOATOM
+#define NOGDICAPMASKS
+#define NOMETAFILE
+#define NOBITMAP
+#define NOMINMAX
+#define NOOPENFILE
+#define NORASTEROPS
+#define NOSCROLL
+#define NOSOUND
+#define NOSYSMETRICS
+#define NOTEXTMETRIC
+#define NOWH
+#define NOCOMM
+#define NOKANJI
+#define NOCRYPT
+#define NOMCX
+
 #include <Windows.h>
 
 #include <Psapi.h>
