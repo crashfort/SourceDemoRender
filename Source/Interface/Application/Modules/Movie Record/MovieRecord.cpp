@@ -811,12 +811,7 @@ namespace
 		{
 			PROCESS_MEMORY_COUNTERS desc = {};
 			
-			K32GetProcessMemoryInfo
-			(
-				GetCurrentProcess(),
-				&desc,
-				sizeof(desc)
-			);
+			K32GetProcessMemoryInfo(GetCurrentProcess(), &desc, sizeof(desc));
 
 			return desc.WorkingSetSize > INT32_MAX;
 		}
@@ -2291,12 +2286,7 @@ namespace
 
 			if (args.ArgC() < 2)
 			{
-				Msg
-				(
-					"SDR: Name is required for startmovie, "
-					"see Github page for help\n"
-				);
-
+				Msg("SDR: Name is required for startmovie, see Github page for help\n");
 				return;
 			}
 
