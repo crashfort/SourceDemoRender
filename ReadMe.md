@@ -164,6 +164,15 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 		</td>
 	</tr>
 	<tr>
+		<td>sdr_d3d11_staging</td>
+		<td>
+			Use extra intermediate buffer when retreiving data from the GPU. On modern hardware this should increase performance.
+			<br/><br/>
+            <b>Values:</b> 0 or 1 <br/>
+            <b>Default:</b> 1 <br/>
+		</td>
+	</tr>
+	<tr>
 		<td>sdr_x264_crf</td>
 		<td>
 			Constant rate factor quality value. Note that using 0 (lossless) can produce a video with a 4:4:4 profile which your media player might not support.
