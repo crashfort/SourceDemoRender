@@ -2375,16 +2375,7 @@ namespace
 
 			auto name = args[1];
 
-			ModuleStartMovie::Override
-			(
-				name,
-				0,
-				width,
-				height,
-				0,
-				0,
-				0
-			);
+			ModuleStartMovie::Override(name, 0, width, height, 0, 0, 0);
 		}
 	}
 
