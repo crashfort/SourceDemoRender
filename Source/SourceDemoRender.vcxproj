@@ -198,7 +198,6 @@
     <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\table64.h" />
     <ClInclude Include="3rd Party Libraries\MinHook\src\trampoline.h" />
     <ClInclude Include="Interface\Application\Application.hpp" />
-    <ClInclude Include="Interface\Application\Modules\ModuleTemplates.hpp" />
     <ClInclude Include="Interface\Application\Shared\Shared.hpp" />
     <ClInclude Include="Main\Precompiled Header\PrecompiledHeader.hpp" />
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp" />

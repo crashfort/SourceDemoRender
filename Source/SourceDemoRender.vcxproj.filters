@@ -51,9 +51,6 @@
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interface\Application\Modules\ModuleTemplates.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Interface\Application\Shared\Shared.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
