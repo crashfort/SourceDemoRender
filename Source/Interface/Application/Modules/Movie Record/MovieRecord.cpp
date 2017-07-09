@@ -2189,8 +2189,6 @@ namespace
 					{
 						auto table =
 						{
-							AV_PIX_FMT_RGB24,
-							AV_PIX_FMT_BGR24,
 							AV_PIX_FMT_BGR0,
 						};
 
