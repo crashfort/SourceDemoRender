@@ -1697,13 +1697,6 @@ namespace
 		return true;
 	}
 
-	/*
-		In case endmovie never gets called,
-		this handles the plugin_unload
-	*/
-	void SDR_MovieShutdown();
-	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
-
 	void FrameBufferThread()
 	{
 		auto& movie = CurrentMovie;
@@ -2534,13 +2527,15 @@ namespace
 	}
 
 	/*
-		This function handles plugin_unload.
+		This function handles plugin_unload, and in the event that endmovie wasn't called.
 		The cleaning up cannot be done asynchronously as the module itself gets unloaded.
 	*/
 	void SDR_MovieShutdown()
 	{
 		ModuleEndMovie::Procedure(false);
 	}
+
+	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
 
 	namespace ModuleSUpdateGuts
 	{
