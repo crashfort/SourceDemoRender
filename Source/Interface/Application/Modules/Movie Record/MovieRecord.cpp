@@ -241,135 +241,60 @@ namespace
 
 	namespace Variables
 	{
-		ConVar FrameRate
-		(
-			"sdr_render_framerate", "60", FCVAR_NEVER_AS_STRING, "",
-			true, 30, true, 1000
-		);
-
-		ConVar OutputDirectory
-		(
-			"sdr_outputdir", "", 0,  ""
-		);
-
-		ConVar FlashWindow
-		(
-			"sdr_endmovieflash", "0", FCVAR_NEVER_AS_STRING, "",
-			true, 0, true, 1
-		);
-
-		ConVar ExitOnFinish
-		(
-			"sdr_endmoviequit", "0", FCVAR_NEVER_AS_STRING, "",
-			true, 0, true, 1
-		);
-
-		namespace Sample
+		ConVar MakeBool(const char* name, const char* value)
 		{
-			ConVar Multiply
-			(
-				"sdr_sample_mult", "32", FCVAR_NEVER_AS_STRING, "",
-				true, 0, false, 0
-			);
-
-			ConVar Exposure
-			(
-				"sdr_sample_exposure", "0.5", FCVAR_NEVER_AS_STRING, "",
-				true, 0, true, 1
-			);
+			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, 0, true, 1);
 		}
 
-		namespace Pass
+		template <typename T>
+		ConVar MakeNumber(const char* name, const char* value, T min, T max)
 		{
-			ConVar Fullbright
-			(
-				"sdr_pass_fullbright", "0", FCVAR_NEVER_AS_STRING, "",
-				true, 0, true, 1
-			);
+			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, min, true, max);
 		}
+
+		template <typename T>
+		ConVar MakeNumber(const char* name, const char* value, T min)
+		{
+			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, min, false, 0);
+		}
+
+		ConVar MakeString(const char* name, const char* value)
+		{
+			return ConVar(name, value, 0, "");
+		}
+
+		auto OutputDirectory = MakeString("sdr_outputdir", "");
+		auto FlashWindow = MakeBool("sdr_endmovieflash", "0");
+		auto ExitOnFinish = MakeBool("sdr_endmoviequit", "0");
 
 		namespace Video
 		{
-			ConVar Encoder
+			auto Framerate = MakeNumber("sdr_render_framerate", "60", 30, 1000);
+
+			namespace Sample
 			{
-				"sdr_movie_encoder", "libx264", 0, "",
-				[](IConVar* var, const char* oldstr, float oldfloat)
-				{
-					auto newstr = Encoder.GetString();
+				auto Multiply = MakeNumber("sdr_sample_mult", "32", 0);
+				auto Exposure = MakeNumber("sdr_sample_exposure", "0.5", 0, 1);
+			}
 
-					auto encoder = avcodec_find_encoder_by_name(newstr);
+			namespace Pass
+			{
+				auto Fullbright = MakeBool("sdr_pass_fullbright", "0");
+			}
 
-					if (!encoder)
-					{
-						Warning("SDR: Encoder %s not found\n", newstr);
-
-						Msg("SDR: Available encoders: \n");
-
-						auto next = av_codec_next(nullptr);
-
-						while (next)
-						{
-							Msg("SDR: * %s\n", next->name);
-							
-							next = av_codec_next(next);
-						}
-					}
-				}
-			};
-
-			ConVar PixelFormat
-			(
-				"sdr_movie_encoder_pxformat", "", 0, ""
-			);
+			auto Encoder = MakeString("sdr_movie_encoder", "libx264");
+			auto PixelFormat = MakeString("sdr_movie_encoder_pxformat", "");
 
 			namespace D3D11
 			{
-				ConVar Staging
-				(
-					"sdr_d3d11_staging", "1", FCVAR_NEVER_AS_STRING, "",
-					true, 0, true, 1
-				);
+				auto Staging = MakeBool("sdr_d3d11_staging", "1");
 			}
 
 			namespace X264
 			{
-				ConVar CRF
-				(
-					"sdr_x264_crf", "0", 0, "",
-					true, 0, true, 51
-				);
-
-				ConVar Preset
-				{
-					"sdr_x264_preset", "ultrafast", 0, "",
-					[](IConVar* var, const char* oldstr, float oldfloat)
-					{
-						auto newstr = Preset.GetString();
-
-						auto slowpresets =
-						{
-							"slow",
-							"slower",
-							"veryslow",
-							"placebo"
-						};
-
-						for (auto preset : slowpresets)
-						{
-							if (_strcmpi(newstr, preset) == 0)
-							{
-								Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
-								return;
-							}
-						}
-					}
-				};
-
-				ConVar Intra
-				(
-					"sdr_x264_intra", "1", 0, "",
-					true, 0, true, 1
-				);
+				auto CRF = MakeString("sdr_x264_crf", "0");
+				auto Preset = MakeString("sdr_x264_preset", "ultrafast");
+				auto Intra = MakeBool("sdr_x264_intra", "1");
 			}
 		}
 	}
@@ -787,8 +712,8 @@ namespace
 
 		static bool UseSampling()
 		{
-			auto exposure = Variables::Sample::Exposure.GetFloat();
-			auto mult = Variables::Sample::Multiply.GetInt();
+			auto exposure = Variables::Video::Sample::Exposure.GetFloat();
+			auto mult = Variables::Video::Sample::Multiply.GetInt();
 
 			return mult > 1 && exposure > 0;
 		}
@@ -2109,7 +2034,7 @@ namespace
 				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
 				tempstreams.emplace_back(std::make_unique<MovieData::VideoStreamBase>());
 
-				if (Variables::Pass::Fullbright.GetBool())
+				if (Variables::Video::Pass::Fullbright.GetBool())
 				{
 					tempstreams.emplace_back(std::make_unique<MovieData::FullbrightVideoStream>());
 				}
@@ -2267,7 +2192,7 @@ namespace
 						}
 					}
 
-					auto fps = Variables::FrameRate.GetInt();
+					auto fps = Variables::Video::Framerate.GetInt();
 					stream->Video.OpenEncoder(fps, options.Get());
 
 					stream->Video.WriteHeader();
@@ -2290,9 +2215,9 @@ namespace
 				major recording slowdowns
 			*/
 
-			auto fps = Variables::FrameRate.GetInt();
-			auto exposure = Variables::Sample::Exposure.GetFloat();
-			auto mult = Variables::Sample::Multiply.GetInt();
+			auto fps = Variables::Video::Framerate.GetInt();
+			auto exposure = Variables::Video::Sample::Exposure.GetFloat();
+			auto mult = Variables::Video::Sample::Multiply.GetInt();
 
 			auto enginerate = fps;
 
