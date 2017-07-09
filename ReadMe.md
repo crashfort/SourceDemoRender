@@ -166,7 +166,7 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 	<tr>
 		<td>sdr_d3d11_staging</td>
 		<td>
-			Use extra intermediate buffer when retreiving data from the GPU. On modern hardware this should increase performance.
+			Use extra intermediate buffer when retreiving data from the GPU.
 			<br/><br/>
             <b>Values:</b> 0 or 1 <br/>
             <b>Default:</b> 1 <br/>
