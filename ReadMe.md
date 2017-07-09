@@ -235,3 +235,4 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 	</tr>
 	</tbody>
 </table>
+
