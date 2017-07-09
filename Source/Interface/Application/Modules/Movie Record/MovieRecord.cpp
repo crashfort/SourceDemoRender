@@ -349,12 +349,7 @@ namespace
 						{
 							if (_strcmpi(newstr, preset) == 0)
 							{
-								Warning
-								(
-									"SDR: Slow encoder preset chosen, "
-									"this might not work very well for realtime\n"
-								);
-
+								Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
 								return;
 							}
 						}
@@ -800,7 +795,7 @@ namespace
 			{
 				if (status == Status::CouldNotOpenFile)
 				{
-					SDR::Error::Make("Could not open shader \"%s\"\n", path);
+					SDR::Error::Make("Could not open shader \"%s\"", path);
 				}
 			}
 
