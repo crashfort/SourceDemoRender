@@ -225,11 +225,7 @@ namespace
 
 								if (shouldadd)
 								{
-									targetgame->Properties.emplace_back
-									(
-										sourceprop.first,
-										rapidjson::Value(sourceprop.second, alloc)
-									);
+									targetgame->Properties.emplace_back(sourceprop.first, rapidjson::Value(sourceprop.second, alloc));
 								}
 							}
 
@@ -238,12 +234,7 @@ namespace
 
 						if (!foundgame)
 						{
-							SDR::Error::Make
-							(
-								"%s inherit target %s not found",
-								targetgame->Name.c_str(),
-								from.c_str()
-							);
+							SDR::Error::Make("%s inherit target %s not found", targetgame->Name.c_str(), from.c_str());
 						}
 					}
 
@@ -259,11 +250,7 @@ namespace
 
 		void CallHandlers(GameData* game)
 		{
-			Msg
-			(
-				"SDR: Creating %d modules\n",
-				MainApplication.ModuleHandlers.size()
-			);
+			Msg("SDR: Creating %d modules\n", MainApplication.ModuleHandlers.size());
 
 			for (auto& prop : game->Properties)
 			{
@@ -334,11 +321,7 @@ namespace
 					(
 						gameit->value, [&](GameData::MemberIt gamedata)
 						{
-							curgame.Properties.emplace_back
-							(
-								gamedata->name.GetString(),
-								std::move(gamedata->value)
-							);
+							curgame.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
 						}
 					);
 				}
@@ -405,13 +388,7 @@ void SDR::CallPluginStartupFunctions()
 
 	for (auto entry : MainApplication.StartupFunctions)
 	{
-		Msg
-		(
-			"SDR: Startup procedure (%d/%d): %s\n",
-			index + 1,
-			count,
-			entry.Name
-		);
+		Msg("SDR: Startup procedure (%d/%d): %s\n", index + 1, count, entry.Name);
 
 		auto res = entry.Function();
 
