@@ -773,6 +773,12 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
+		static bool IsWindows7()
+		{
+			static auto ret = IsWindows7SP1OrGreater() && !IsWindows8OrGreater();
+			return ret;
+		}
+
 		static void OpenShader(ID3D11Device* device, const char* name, ID3D11ComputeShader** shader)
 		{
 			using Status = SDR::Shared::ScopedFile::ExceptionType;
@@ -1019,22 +1025,67 @@ namespace
 				{
 					void Create(ID3D11Device* device, DXGI_FORMAT viewformat, int size, int numelements)
 					{
-						D3D11_BUFFER_DESC desc = {};
-						desc.ByteWidth = size;
-						desc.Usage = D3D11_USAGE_DEFAULT;
-						desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-						desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+						/*
+							Windows 7 requires two buffers, one that the GPU operates on and then
+							copies into another buffer that the CPU can read.
+						*/
+						if (IsWindows7())
+						{
+							D3D11_BUFFER_DESC desc = {};
+							desc.ByteWidth = size;
+							desc.Usage = D3D11_USAGE_DEFAULT;
+							desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 
-						SDR::Error::MS::ThrowIfFailed
-						(
-							device->CreateBuffer
+							SDR::Error::MS::ThrowIfFailed
 							(
-								&desc,
-								nullptr,
-								Buffer.GetAddressOf()
-							),
-							"Could not create generic GPU read buffer"
-						);
+								device->CreateBuffer
+								(
+									&desc,
+									nullptr,
+									Buffer.GetAddressOf()
+								),
+								"Could not create generic Windows 7 GPU read buffer"
+							);
+
+							desc.BindFlags = 0;
+							desc.Usage = D3D11_USAGE_STAGING;
+							desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+							SDR::Error::MS::ThrowIfFailed
+							(
+								device->CreateBuffer
+								(
+									&desc,
+									nullptr,
+									BufferWin7.GetAddressOf()
+								),
+								"Could not create staging Windows 7 GPU buffer"
+							);
+						}
+
+						/*
+							Windows 8 and above only requires a single buffer that can be
+							read by the CPU and written by the GPU.
+						*/
+						else
+						{
+							D3D11_BUFFER_DESC desc = {};
+							desc.ByteWidth = size;
+							desc.Usage = D3D11_USAGE_DEFAULT;
+							desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+							desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+							SDR::Error::MS::ThrowIfFailed
+							(
+								device->CreateBuffer
+								(
+									&desc,
+									nullptr,
+									Buffer.GetAddressOf()
+								),
+								"Could not create generic GPU read buffer"
+							);
+						}
 
 						D3D11_UNORDERED_ACCESS_VIEW_DESC viewdesc = {};
 						viewdesc.Format = viewformat;
@@ -1055,15 +1106,28 @@ namespace
 
 					HRESULT Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped)
 					{
+						if (IsWindows7())
+						{
+							context->CopyResource(BufferWin7.Get(), Buffer.Get());
+							return context->Map(BufferWin7.Get(), 0, D3D11_MAP_READ, 0, mapped);
+						}
+
 						return context->Map(Buffer.Get(), 0, D3D11_MAP_READ, 0, mapped);
 					}
 
 					void Unmap(ID3D11DeviceContext* context)
 					{
+						if (IsWindows7())
+						{
+							context->Unmap(BufferWin7.Get(), 0);
+							return;
+						}
+
 						context->Unmap(Buffer.Get(), 0);
 					}
 
 					Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
+					Microsoft::WRL::ComPtr<ID3D11Buffer> BufferWin7;
 					Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
 				};
 

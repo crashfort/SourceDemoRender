@@ -23,7 +23,7 @@
 #define NOMCX
 
 #include <Windows.h>
-
+#include <VersionHelpers.h>
 #include <Psapi.h>
 #include <ShlObj.h>
 #include <comdef.h>
