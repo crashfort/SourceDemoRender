@@ -99,8 +99,8 @@ namespace SDR::Error
 	/*
 		For use with unrecoverable errors
 	*/
-	template <typename T, typename... Args>
-	inline void ThrowIfNull(const T* ptr, const char* format, Args&&... args)
+	template <typename... Args>
+	inline void ThrowIfNull(const void* ptr, const char* format, Args&&... args)
 	{
 		if (ptr == nullptr)
 		{
@@ -113,8 +113,8 @@ namespace SDR::Error
 		/*
 			For use with unrecoverable errors
 		*/
-		template <typename T, typename... Args>
-		inline void ThrowIfFailed(T code, const char* format, Args&&... args)
+		template <typename... Args>
+		inline void ThrowIfFailed(int code, const char* format, Args&&... args)
 		{
 			if (code < 0)
 			{
@@ -129,21 +129,21 @@ namespace SDR::Error
 			For use with unrecoverable errors
 		*/
 		template <typename... Args>
-		inline void ThrowIfFailed(HRESULT hr, const char* format, Args&&...args)
+		inline void ThrowIfFailed(HRESULT hr, const char* format, Args&&... args)
 		{
 			if (FAILED(hr))
 			{
 				_com_error error(hr);
 				auto message = error.ErrorMessage();
 
-				char start[sizeof(Exception::Description)];
-				char end[sizeof(Exception::Description)];
+				char final[sizeof(Exception::Description)];
+				char user[sizeof(Exception::Description)];
 
-				sprintf_s(end, format, std::forward<Args>(args)...);
-				sprintf_s(start, "%08X (%s) -> ", hr, message);
-				strcat_s(start, end);
+				sprintf_s(user, format, std::forward<Args>(args)...);
+				sprintf_s(final, "%08X (%s) -> ", hr, message);
+				strcat_s(final, user);
 
-				Make(start);
+				Make(final);
 			}
 		}
 	}
