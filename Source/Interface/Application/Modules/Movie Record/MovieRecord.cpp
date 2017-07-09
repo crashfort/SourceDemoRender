@@ -2533,12 +2533,10 @@ namespace
 		This function handles plugin_unload, and in the event that endmovie wasn't called.
 		The cleaning up cannot be done asynchronously as the module itself gets unloaded.
 	*/
-	void SDR_MovieShutdown()
+	SDR::PluginShutdownFunctionAdder A1([]()
 	{
 		ModuleEndMovie::Procedure(false);
-	}
-
-	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
+	});
 
 	namespace ModuleSUpdateGuts
 	{
