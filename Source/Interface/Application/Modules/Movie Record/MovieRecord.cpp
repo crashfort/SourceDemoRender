@@ -869,6 +869,9 @@ namespace
 						"Could not create D3D11 device"
 					);
 
+					/*
+						Divisors must match number of threads in SharedAll.hlsl
+					*/
 					GroupsX = std::ceil(width / 8.0);
 					GroupsY = std::ceil(height / 8.0);
 
