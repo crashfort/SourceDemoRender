@@ -2076,6 +2076,8 @@ namespace
 			int unk
 		)
 		{
+			CurrentMovie = {};
+
 			auto& movie = CurrentMovie;
 
 			try
@@ -2279,6 +2281,7 @@ namespace
 					
 			catch (const SDR::Error::Exception& error)
 			{
+				CurrentMovie = {};
 				return;
 			}
 
