@@ -1047,7 +1047,7 @@ namespace
 									nullptr,
 									Buffer.GetAddressOf()
 								),
-								"Could not create generic Windows 7 GPU read buffer"
+								"Could not create generic GPU buffer for staging"
 							);
 
 							desc.BindFlags = 0;
@@ -1062,7 +1062,7 @@ namespace
 									nullptr,
 									BufferStaging.GetAddressOf()
 								),
-								"Could not create staging Windows 7 GPU buffer"
+								"Could not create staging GPU read buffer"
 							);
 						}
 
