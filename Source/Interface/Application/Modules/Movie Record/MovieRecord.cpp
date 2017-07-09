@@ -1674,16 +1674,6 @@ namespace
 		}
 	}
 
-	void SDR_MovieShutdown()
-	{
-		if (CurrentMovie.IsStarted)
-		{
-			SDR_TryJoinFrameThread();
-		}
-
-		CurrentMovie = MovieData();
-	}
-
 	bool SDR_ShouldRecord()
 	{
 		auto& interfaces = SDR::GetEngineInterfaces();
@@ -1711,6 +1701,7 @@ namespace
 		In case endmovie never gets called,
 		this handles the plugin_unload
 	*/
+	void SDR_MovieShutdown();
 	SDR::PluginShutdownFunctionAdder A1(SDR_MovieShutdown);
 
 	void FrameBufferThread()
@@ -2425,7 +2416,7 @@ namespace
 
 		#pragma endregion
 
-		void __cdecl Override()
+		void Procedure(bool async)
 		{
 			if (!CurrentMovie.IsStarted)
 			{
@@ -2445,7 +2436,7 @@ namespace
 
 			Msg("SDR: Ending movie, if there are buffered frames this might take a moment\n");
 
-			concurrency::create_task([]()
+			auto func = []()
 			{
 				SDR_TryJoinFrameThread();
 
@@ -2457,7 +2448,7 @@ namespace
 					stream->Video.Finish();
 				}
 
-				SDR_MovieShutdown();
+				CurrentMovie = {};
 
 				if (Variables::ExitOnFinish.GetBool())
 				{
@@ -2490,7 +2481,22 @@ namespace
 
 					++index;
 				}
-			});
+			};
+
+			if (async)
+			{
+				concurrency::create_task(func);
+			}
+
+			else
+			{
+				func();
+			}
+		}
+
+		void __cdecl Override()
+		{
+			Procedure(true);
 		}
 	}
 
@@ -2525,6 +2531,15 @@ namespace
 		{
 			ModuleEndMovie::Override();
 		}
+	}
+
+	/*
+		This function handles plugin_unload.
+		The cleaning up cannot be done asynchronously as the module itself gets unloaded.
+	*/
+	void SDR_MovieShutdown()
+	{
+		ModuleEndMovie::Procedure(false);
 	}
 
 	namespace ModuleSUpdateGuts
