@@ -1986,6 +1986,50 @@ namespace
 			return {finalname};
 		}
 
+		void WarnAboutVariableValues()
+		{
+			{
+				auto newstr = Variables::Video::Encoder.GetString();
+				auto encoder = avcodec_find_encoder_by_name(newstr);
+
+				if (!encoder)
+				{
+					Warning("SDR: Encoder %s not found\n", newstr);
+
+					Msg("SDR: Available encoders:\n");
+
+					auto next = av_codec_next(nullptr);
+
+					while (next)
+					{
+						Msg("SDR: * %s\n", next->name);
+						next = av_codec_next(next);
+					}
+				}
+			}
+
+			{
+				auto newstr = Variables::Video::X264::Preset.GetString();
+
+				auto slowpresets =
+				{
+					"slow",
+					"slower",
+					"veryslow",
+					"placebo"
+				};
+
+				for (auto preset : slowpresets)
+				{
+					if (_strcmpi(newstr, preset) == 0)
+					{
+						Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
+						return;
+					}
+				}
+			}
+		}
+
 		/*
 			The 7th parameter (unk) was been added in Source 2013,
 			it's not there in Source 2007
@@ -2004,6 +2048,8 @@ namespace
 			CurrentMovie = {};
 
 			auto& movie = CurrentMovie;
+
+			WarnAboutVariableValues();
 
 			try
 			{
