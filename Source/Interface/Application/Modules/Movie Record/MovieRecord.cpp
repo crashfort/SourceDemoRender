@@ -1060,7 +1060,7 @@ namespace
 								(
 									&desc,
 									nullptr,
-									BufferWin7.GetAddressOf()
+									BufferStaging.GetAddressOf()
 								),
 								"Could not create staging Windows 7 GPU buffer"
 							);
@@ -1111,8 +1111,8 @@ namespace
 					{
 						if (UseStaging())
 						{
-							context->CopyResource(BufferWin7.Get(), Buffer.Get());
-							return context->Map(BufferWin7.Get(), 0, D3D11_MAP_READ, 0, mapped);
+							context->CopyResource(BufferStaging.Get(), Buffer.Get());
+							return context->Map(BufferStaging.Get(), 0, D3D11_MAP_READ, 0, mapped);
 						}
 
 						return context->Map(Buffer.Get(), 0, D3D11_MAP_READ, 0, mapped);
@@ -1122,7 +1122,7 @@ namespace
 					{
 						if (UseStaging())
 						{
-							context->Unmap(BufferWin7.Get(), 0);
+							context->Unmap(BufferStaging.Get(), 0);
 							return;
 						}
 
@@ -1130,7 +1130,7 @@ namespace
 					}
 
 					Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
-					Microsoft::WRL::ComPtr<ID3D11Buffer> BufferWin7;
+					Microsoft::WRL::ComPtr<ID3D11Buffer> BufferStaging;
 					Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
 				};
 
