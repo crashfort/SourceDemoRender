@@ -322,6 +322,15 @@ namespace
 				"sdr_movie_encoder_pxformat", "", 0, ""
 			);
 
+			namespace D3D11
+			{
+				ConVar Staging
+				(
+					"sdr_d3d11_staging", "1", FCVAR_NEVER_AS_STRING, "",
+					true, 0, true, 1
+				);
+			}
+
 			namespace X264
 			{
 				ConVar CRF
@@ -768,10 +777,9 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
-		static bool IsWindows7()
+		static bool UseStaging()
 		{
-			static auto ret = IsWindows7SP1OrGreater() && !IsWindows8OrGreater();
-			return ret;
+			return Variables::Video::D3D11::Staging.GetBool();
 		}
 
 		static void OpenShader(ID3D11Device* device, const char* name, ID3D11ComputeShader** shader)
@@ -1021,10 +1029,10 @@ namespace
 					void Create(ID3D11Device* device, DXGI_FORMAT viewformat, int size, int numelements)
 					{
 						/*
-							Windows 7 requires two buffers, one that the GPU operates on and then
+							Staging requires two buffers, one that the GPU operates on and then
 							copies into another buffer that the CPU can read.
 						*/
-						if (IsWindows7())
+						if (UseStaging())
 						{
 							D3D11_BUFFER_DESC desc = {};
 							desc.ByteWidth = size;
@@ -1059,7 +1067,7 @@ namespace
 						}
 
 						/*
-							Windows 8 and above only requires a single buffer that can be
+							Other method only requires a single buffer that can be
 							read by the CPU and written by the GPU.
 						*/
 						else
@@ -1101,7 +1109,7 @@ namespace
 
 					HRESULT Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped)
 					{
-						if (IsWindows7())
+						if (UseStaging())
 						{
 							context->CopyResource(BufferWin7.Get(), Buffer.Get());
 							return context->Map(BufferWin7.Get(), 0, D3D11_MAP_READ, 0, mapped);
@@ -1112,7 +1120,7 @@ namespace
 
 					void Unmap(ID3D11DeviceContext* context)
 					{
-						if (IsWindows7())
+						if (UseStaging())
 						{
 							context->Unmap(BufferWin7.Get(), 0);
 							return;
