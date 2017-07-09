@@ -782,6 +782,14 @@ namespace
 			return Variables::Video::D3D11::Staging.GetBool();
 		}
 
+		static bool UseSampling()
+		{
+			auto exposure = Variables::Sample::Exposure.GetFloat();
+			auto mult = Variables::Sample::Multiply.GetInt();
+
+			return mult > 1 && exposure > 0;
+		}
+
 		static void OpenShader(ID3D11Device* device, const char* name, ID3D11ComputeShader** shader)
 		{
 			using Status = SDR::Shared::ScopedFile::ExceptionType;
@@ -875,6 +883,7 @@ namespace
 					GroupsX = std::ceil(width / 8.0);
 					GroupsY = std::ceil(height / 8.0);
 
+					if (UseSampling())
 					{
 						D3D11_BUFFER_DESC cbufdesc = {};
 						cbufdesc.ByteWidth = sizeof(SamplingConstantData);
@@ -918,8 +927,12 @@ namespace
 						);
 					}
 
-					OpenShader(Device.Get(), "Sampling", SamplingShader.GetAddressOf());
-					OpenShader(Device.Get(), "ClearUAV", ClearShader.GetAddressOf());
+					if (UseSampling())
+					{
+						OpenShader(Device.Get(), "Sampling", SamplingShader.GetAddressOf());
+						OpenShader(Device.Get(), "ClearUAV", ClearShader.GetAddressOf());
+					}
+					
 					OpenShader(Device.Get(), "PassUAV", PassShader.GetAddressOf());
 				}
 
@@ -2293,7 +2306,7 @@ namespace
 
 			auto enginerate = fps;
 
-			movie.SamplingData.Enabled = mult > 1 && exposure > 0;
+			movie.SamplingData.Enabled = MovieData::UseSampling();
 
 			if (movie.SamplingData.Enabled)
 			{
