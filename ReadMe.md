@@ -1,6 +1,10 @@
 # Source Demo Render
-
 The program can be downloaded [here](https://github.com/crashfort/SourceDemoRender/releases). Visit [here](https://twitch.streamlabs.com/crashfort/) if you wish to support the development.
+
+SDR is a multithreaded, hardware accelerated solution to create high quality movies for the Source engine.
+
+## Prerequisites
+Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_d3d11_staging**, Windows 8.1 or later is required.
 
 ## Installing
 SDR comes in separate singleplayer and multiplayer versions which will only work with whatever SDK the game was built with. `SourceDemoRender.Multiplayer.dll` is for games such as Counter-Strike: Source and `SourceDemoRender.Singleplayer.dll` targets for example Half-Life 2.
@@ -10,7 +14,7 @@ The DLL of either SP or MP variant should go in the root game directory. Example
 * steamapps\common\Counter-Strike Source\cstrike\
 * steamapps\common\Half-Life 2\hl2\
 
-You can use the cfg files that comes with SDR as a base where to add your own preferred settings. The loader cfg's are the preferred way to load SDR. It is executed as follows:
+You can use the ``.cfg`` files that comes with SDR as a base where to add your own preferred settings. The loader files are the preferred way to load SDR. It is executed as follows:
 
 * `exec sdr_load_mp` - For multiplayer games
 * `exec sdr_load_sp` - For singleplayer games
@@ -20,7 +24,7 @@ The plugin can be loaded at the main menu or in demo playback, but must be befor
 **You need to launch with -insecure for Source to be able to load plugins.**
 
 ## Instructions
-When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. There's no need to change host_framerate as that is done automatically. **Do not exit the game until you see a gren message that says the movie is completed.**
+When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. **Do not exit the game until you see a gren message that says the movie is completed.**
 
 Example of supported video containers:
 
@@ -29,7 +33,7 @@ Example of supported video containers:
 * `startmovie test.mov`
 * `startmovie test.mkv`
 
-The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slightly slower than ``libx264``.
+The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase memory usage and file size.
 
 ## General commands
 
@@ -229,5 +233,5 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
             <b>Default:</b> 0.5 <br/>
 		</td>
 	</tr>
-</table>
 	</tbody>
+</table>
