@@ -2128,28 +2128,30 @@ namespace
 
 				struct VideoConfigurationData
 				{
+					using FormatsType = std::vector<std::pair<const char*, AVPixelFormat>>;
+
+					VideoConfigurationData(const char* name, FormatsType&& formats) :
+						Encoder(avcodec_find_encoder_by_name(name)),
+						PixelFormats(std::move(formats))
+					{
+
+					}
+
 					AVCodec* Encoder;
-					std::vector<std::pair<const char*, AVPixelFormat>> PixelFormats;
+					FormatsType PixelFormats;
 				};
 
-				std::vector<VideoConfigurationData> videoconfigs;
-				const VideoConfigurationData* vidconfig = nullptr;
+				const auto i420 = std::make_pair("i420", AV_PIX_FMT_YUV420P);
+				const auto i444 = std::make_pair("i444", AV_PIX_FMT_YUV444P);
+				const auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
 
+				VideoConfigurationData table[] =
 				{
-					auto i420 = std::make_pair("i420", AV_PIX_FMT_YUV420P);
-					auto i444 = std::make_pair("i444", AV_PIX_FMT_YUV444P);
-					auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
+					VideoConfigurationData("libx264", { i420, i444 }),
+					VideoConfigurationData("libx264rgb", { bgr0 }),
+				};
 
-					videoconfigs.emplace_back();
-					auto& x264 = videoconfigs.back();
-					x264.Encoder = avcodec_find_encoder_by_name("libx264");
-					x264.PixelFormats = { i420, i444 };
-
-					videoconfigs.emplace_back();
-					auto& x264rgb = videoconfigs.back();
-					x264rgb.Encoder = avcodec_find_encoder_by_name("libx264rgb");
-					x264rgb.PixelFormats = { bgr0 };
-				}
+				const VideoConfigurationData* vidconfig = nullptr;
 
 				{
 					auto encoderstr = Variables::Video::Encoder.GetString();
@@ -2157,7 +2159,7 @@ namespace
 
 					SDR::Error::ThrowIfNull(encoder, "Video encoder %s not found", encoderstr);
 
-					for (const auto& config : videoconfigs)
+					for (const auto& config : table)
 					{
 						if (config.Encoder == encoder)
 						{
