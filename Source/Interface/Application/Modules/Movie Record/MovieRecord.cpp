@@ -777,6 +777,9 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
+		/*
+			Whether to use an extra intermediate buffer for GPU -> CPU transfer.
+		*/
 		static bool UseStaging()
 		{
 			return Variables::Video::D3D11::Staging.GetBool();
