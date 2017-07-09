@@ -1994,9 +1994,7 @@ namespace
 
 				if (!encoder)
 				{
-					Warning("SDR: Encoder %s not found\n", newstr);
-
-					Msg("SDR: Available encoders:\n");
+					Warning("SDR: Encoder %s not found, available encoders:\n", newstr);
 
 					auto next = av_codec_next(nullptr);
 
