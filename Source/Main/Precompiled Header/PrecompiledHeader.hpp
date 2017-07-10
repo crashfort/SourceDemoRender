@@ -76,7 +76,7 @@ namespace SDR::Error
 {
 	struct Exception
 	{
-		char Description[256];
+		char Description[1024];
 	};
 
 	inline void Print(const Exception& error)
