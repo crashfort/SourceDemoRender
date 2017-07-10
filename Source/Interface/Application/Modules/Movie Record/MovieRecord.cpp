@@ -978,11 +978,13 @@ namespace
 				{
 					void Create(ID3D11Device* device, DXGI_FORMAT viewformat, int size, int numelements)
 					{
+						Staging = UseStaging();
+
 						/*
 							Staging requires two buffers, one that the GPU operates on and then
 							copies into another buffer that the CPU can read.
 						*/
-						if (UseStaging())
+						if (Staging)
 						{
 							D3D11_BUFFER_DESC desc = {};
 							desc.ByteWidth = size;
@@ -1059,7 +1061,7 @@ namespace
 
 					HRESULT Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped)
 					{
-						if (UseStaging())
+						if (Staging)
 						{
 							context->CopyResource(BufferStaging.Get(), Buffer.Get());
 							return context->Map(BufferStaging.Get(), 0, D3D11_MAP_READ, 0, mapped);
@@ -1070,7 +1072,7 @@ namespace
 
 					void Unmap(ID3D11DeviceContext* context)
 					{
-						if (UseStaging())
+						if (Staging)
 						{
 							context->Unmap(BufferStaging.Get(), 0);
 							return;
@@ -1079,6 +1081,7 @@ namespace
 						context->Unmap(Buffer.Get(), 0);
 					}
 
+					bool Staging;
 					Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
 					Microsoft::WRL::ComPtr<ID3D11Buffer> BufferStaging;
 					Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
