@@ -199,7 +199,7 @@ namespace
 
 	namespace Commands
 	{
-		CON_COMMAND(sdr_version, "Show the current version")
+		CON_COMMAND(sdr_version, "")
 		{
 			Msg("SDR: Library version: %d\n", SourceDemoRenderPlugin::PluginVersion);
 
@@ -215,13 +215,13 @@ namespace
 			}
 		}
 
-		CON_COMMAND(sdr_update, "Check for any available updates")
+		concurrency::task<void> UpdateProc()
 		{
 			Msg("SDR: Checking for any available updates\n");
 
 			auto webrequest = [](const wchar_t* path, auto callback)
 			{
-				auto task = concurrency::create_task([path]()
+				auto task = concurrency::create_task([=]()
 				{
 					auto address = L"https://raw.githubusercontent.com/";
 
@@ -232,21 +232,19 @@ namespace
 
 					web::http::uri_builder pathbuilder(path);
 
-					return webclient.request(web::http::methods::GET, pathbuilder.to_string());
-				});
+					auto task = webclient.request(web::http::methods::GET, pathbuilder.to_string());
+					auto response = task.get();
 
-				task.then([callback](web::http::http_response response)
-				{
 					auto status = response.status_code();
 
 					if (status != web::http::status_codes::OK)
 					{
-						Msg("SDR: Could not reach update repository\n");
+						Warning("SDR: Could not reach update repository\n");
 						return;
 					}
 
-					auto task = response.content_ready();
-					callback(task.get());
+					auto ready = response.content_ready();
+					callback(ready.get());
 				});
 
 				return task;
@@ -336,14 +334,15 @@ namespace
 							webversion
 						);
 
-						webrequest
+						auto req = webrequest
 						(
 							L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
 							[webversion](web::http::http_response&& response)
 							{
 								using Status = SDR::Shared::ScopedFile::ExceptionType;
 
-								auto json = response.extract_utf8string(true).get();
+								auto task = response.extract_utf8string(true);
+								auto json = task.get();
 
 								try
 								{
@@ -386,6 +385,19 @@ namespace
 								);
 							}
 						);
+
+						for (auto&& entry : {req})
+						{
+							try
+							{
+								entry.wait();
+							}
+
+							catch (const std::exception& error)
+							{
+								Msg("SDR: %s", error.what());
+							}
+						}
 					}
 
 					else if (localversion > webversion)
@@ -395,7 +407,7 @@ namespace
 				}
 			);
 
-			concurrency::create_task([libreq, gcreq]()
+			return concurrency::create_task([libreq, gcreq]()
 			{
 				for (auto&& entry : {libreq, gcreq})
 				{
@@ -410,6 +422,11 @@ namespace
 					}
 				}
 			});
+		}
+
+		CON_COMMAND(sdr_update, "")
+		{
+			UpdateProc();
 		}
 	}
 
@@ -481,8 +498,14 @@ namespace
 
 		concurrency::create_task([]()
 		{
-			Msg("SDR: ==============================\n");
-			Commands::sdr_update({});
+			Msg("SDR: ============================================================\n");
+
+			auto task = Commands::UpdateProc();
+
+			task.then([]()
+			{
+				Msg("SDR: ============================================================\n");
+			});
 		});
 
 		return true;
