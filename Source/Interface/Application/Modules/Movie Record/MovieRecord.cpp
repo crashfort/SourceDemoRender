@@ -253,6 +253,12 @@ namespace
 		}
 
 		template <typename T>
+		ConVar MakeNumberWithString(const char* name, const char* value, T min, T max)
+		{
+			return ConVar(name, value, 0, "", true, min, true, max);
+		}
+
+		template <typename T>
 		ConVar MakeNumber(const char* name, const char* value, T min)
 		{
 			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, min, false, 0);
@@ -292,7 +298,7 @@ namespace
 
 			namespace X264
 			{
-				auto CRF = MakeString("sdr_x264_crf", "0");
+				auto CRF = MakeNumberWithString("sdr_x264_crf", "0", 0, 51);
 				auto Preset = MakeString("sdr_x264_preset", "ultrafast");
 				auto Intra = MakeBool("sdr_x264_intra", "1");
 			}
