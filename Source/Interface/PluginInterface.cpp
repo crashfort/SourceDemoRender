@@ -278,7 +278,7 @@ namespace
 						(
 							Color(51, 167, 255, 255),
 							"SDR: A library update is available: (%d -> %d).\n"
-							"Visit https://github.com/CRASHFORT/SourceDemoRender/releases\n",
+							"Visit https://github.com/crashfort/SourceDemoRender/releases\n",
 							curversion,
 							webversion
 						);
