@@ -14,7 +14,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 {
 	uint2 pos = dtid.xy;
 	uint index = CalculateIndex(Dimensions.x, pos);
-
 	float3 newpix = SharedTexture.Load(dtid);
+
 	WorkBuffer[index].Color += Weight * newpix;
 }

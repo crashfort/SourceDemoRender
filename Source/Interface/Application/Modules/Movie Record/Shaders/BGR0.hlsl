@@ -44,7 +44,6 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	pos.y = Dimensions.y - pos.y - 1;
 
 	uint index = CalculateIndex(Dimensions.x, pos);
-
 	float3 pix = WorkBuffer[index].Color;
 
 	OutTexture[index] = D3DX_FLOAT4_to_B8G8R8A8_UNORM(float4(pix, 1));
