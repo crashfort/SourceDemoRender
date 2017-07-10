@@ -246,15 +246,13 @@ namespace
 					}
 
 					auto task = response.content_ready();
-
-					task.then([callback](web::http::http_response response)
-					{
-						callback(std::move(response));
-					});
+					callback(task.get());
 				});
+
+				return task;
 			};
 
-			webrequest
+			auto libreq = webrequest
 			(
 				L"/crashfort/SourceDemoRender/master/Version/Latest",
 				[](web::http::http_response&& response)
@@ -295,7 +293,7 @@ namespace
 				}
 			);
 
-			webrequest
+			auto gcreq = webrequest
 			(
 				L"/crashfort/SourceDemoRender/master/Version/GameConfigLatest",
 				[webrequest](web::http::http_response&& response)
@@ -396,6 +394,22 @@ namespace
 					}
 				}
 			);
+
+			concurrency::create_task([libreq, gcreq]()
+			{
+				for (auto&& entry : {libreq, gcreq})
+				{
+					try
+					{
+						entry.wait();
+					}
+
+					catch (const std::exception& error)
+					{
+						Msg("SDR: %s", error.what());
+					}
+				}
+			});
 		}
 	}
 
