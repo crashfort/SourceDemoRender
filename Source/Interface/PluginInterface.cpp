@@ -495,19 +495,6 @@ namespace
 		}
 
 		ConColorMsg(Color(88, 255, 39, 255), "SDR: Source Demo Render loaded\n");
-
-		concurrency::create_task([]()
-		{
-			Msg("SDR: ============================================================\n");
-
-			auto task = Commands::UpdateProc();
-
-			task.then([]()
-			{
-				Msg("SDR: ============================================================\n");
-			});
-		});
-
 		return true;
 	}
 
