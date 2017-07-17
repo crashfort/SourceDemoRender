@@ -129,15 +129,6 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_pass_fullbright</td>
-		<td>
-			Do an extra pass to a separate video file that contains fullbright data. This extra video file will have the same encoding parameters as the main stream.
-			<br/><br/>
-			<b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 0 <br/>
-		</td>
-	</tr>
-	<tr>
 		<td>sdr_movie_encoder</td>
 		<td>
 			Desired video encoder.

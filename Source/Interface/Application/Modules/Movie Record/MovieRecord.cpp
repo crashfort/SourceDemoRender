@@ -283,11 +283,6 @@ namespace
 				auto Exposure = MakeNumber("sdr_sample_exposure", "0.5", 0, 1);
 			}
 
-			namespace Pass
-			{
-				auto Fullbright = MakeBool("sdr_pass_fullbright", "0");
-			}
-
 			auto Encoder = MakeString("sdr_movie_encoder", "libx264");
 			auto PixelFormat = MakeString("sdr_movie_encoder_pxformat", "");
 
@@ -489,25 +484,10 @@ namespace
 				int& width,
 				int& height
 			);
-
-			using BeginFrame = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx,
-				float frametime
-			);
-
-			using EndFrame = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx
-			);
 		}
 		
 		void* MaterialsPtr;
 		Types::GetBackBufferDimensions GetBackBufferDimensions;
-		Types::BeginFrame BeginFrame;
-		Types::EndFrame EndFrame;
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -536,90 +516,6 @@ namespace
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
 					return SDR::ModuleShared::SetFromAddress(GetBackBufferDimensions, address);
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"MaterialSystem_BeginFrame",
-				[](const char* name, rapidjson::Value& value)
-				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-					return SDR::ModuleShared::SetFromAddress(BeginFrame, address);
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"MaterialSystem_EndFrame",
-				[](const char* name, rapidjson::Value& value)
-				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress(EndFrame, address);
-				}
-			)
-		);
-	}
-
-	namespace ModuleView
-	{
-		namespace Types
-		{
-			using RenderView = void(__fastcall*)
-			(
-				void* thisptr,
-				void* edx,
-				const void* view,
-				int clearflags,
-				int whattodraw
-			);
-
-			using GetViewSetup = const void*(__fastcall*)
-			(
-				void* thisptr,
-				void* edx
-			);
-		}
-		
-		void* ViewPtr;
-		Types::RenderView RenderView;
-		Types::GetViewSetup GetViewSetup;
-
-		auto Adders = SDR::CreateAdders
-		(
-			SDR::ModuleHandlerAdder
-			(
-				"View_ViewPtr",
-				[](const char* name, rapidjson::Value& value)
-				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
-
-					if (!address)
-					{
-						return false;
-					}
-
-					ViewPtr = **(void***)(address);
-
-					SDR::ModuleShared::Registry::SetKeyValue(name, ViewPtr);
-					return true;
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"View_RenderView",
-				[](const char* name, rapidjson::Value& value)
-				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-					return SDR::ModuleShared::SetFromAddress(RenderView, address);
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"View_GetViewSetup",
-				[](const char* name, rapidjson::Value& value)
-				{
-					auto address = SDR::GetAddressFromJsonFlex(value);
-					return SDR::ModuleShared::SetFromAddress(GetViewSetup, address);
 				}
 			)
 		);
@@ -1508,26 +1404,6 @@ namespace
 			} SamplingData;
 		};
 
-		struct FullbrightVideoStream : VideoStreamBase
-		{
-			virtual const char* GetSuffix() const override
-			{
-				return "fullbright";
-			}
-
-			virtual void PreRender()
-			{
-				ConVarRef ref("mat_fullbright");
-				ref.SetValue(1);
-			}
-
-			virtual void PostRender()
-			{
-				ConVarRef ref("mat_fullbright");
-				ref.SetValue(0);
-			}
-		};
-
 		struct
 		{
 			bool Enabled;
@@ -1776,60 +1652,17 @@ namespace
 
 				Profile::ScopedEntry e1(Profile::Types::ViewRender);
 
-				int index = 0;
+				auto& stream = movie.VideoStreams[0];
 
-				for (auto& stream : movie.VideoStreams)
+				if (stream->FirstFrame)
 				{
-					stream->PreRender();
+					stream->FirstFrame = false;
+					CopyDX9ToDX11(stream.get());
+				}
 
-					/*
-						Every stream after the first requires a scene redraw
-					*/
-					if (index > 0)
-					{
-						ModuleMaterialSystem::EndFrame
-						(
-							ModuleMaterialSystem::MaterialsPtr,
-							nullptr
-						);
-
-						ModuleMaterialSystem::BeginFrame
-						(
-							ModuleMaterialSystem::MaterialsPtr,
-							nullptr,
-							0
-						);
-
-						auto setup = ModuleView::GetViewSetup
-						(
-							ModuleView::ViewPtr,
-							nullptr
-						);
-
-						ModuleView::RenderView
-						(
-							ModuleView::ViewPtr,
-							nullptr,
-							setup,
-							0,
-							RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD
-						);
-					}
-
-					if (stream->FirstFrame)
-					{
-						stream->FirstFrame = false;
-						CopyDX9ToDX11(stream.get());
-					}
-
-					else
-					{
-						Pass(stream.get());
-					}
-
-					stream->PostRender();
-
-					++index;
+				else
+				{
+					Pass(stream.get());
 				}
 			}
 		}
@@ -2033,11 +1866,6 @@ namespace
 
 				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
 				tempstreams.emplace_back(std::make_unique<MovieData::VideoStreamBase>());
-
-				if (Variables::Video::Pass::Fullbright.GetBool())
-				{
-					tempstreams.emplace_back(std::make_unique<MovieData::FullbrightVideoStream>());
-				}
 
 				auto linktabletovariable = [](const char* key, const auto& table, auto& variable)
 				{
