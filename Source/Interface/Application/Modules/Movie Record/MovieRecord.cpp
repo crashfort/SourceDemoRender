@@ -1677,6 +1677,10 @@ namespace
 				}
 			};
 
+			/*
+				When enough frames have been sampled to form a total weight of 1,
+				it will print the final frame.
+			*/
 			if (sampling.Enabled)
 			{
 				auto proc = [=](float weight)
@@ -1738,6 +1742,9 @@ namespace
 				}
 			}
 
+			/*
+				No sampling, just pass through as is to conversion shader and save.
+			*/
 			else
 			{
 				stream->DirectX11.Pass(CurrentMovie.VideoStreamShared);
