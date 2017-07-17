@@ -1428,6 +1428,7 @@ namespace
 	MovieData CurrentMovie;
 	std::atomic_int32_t BufferedFrames;
 	std::atomic_bool ShouldStopFrameThread;
+	std::atomic_bool IsStoppingAsync;
 
 	void SDR_TryJoinFrameThread()
 	{
@@ -2077,6 +2078,8 @@ namespace
 			movie.IsStarted = true;
 			BufferedFrames = 0;
 			ShouldStopFrameThread = false;
+			IsStoppingAsync = false;
+
 			movie.FrameBufferThreadHandle = std::thread(FrameBufferThread);
 		}
 	}
@@ -2234,7 +2237,14 @@ namespace
 
 			if (async)
 			{
-				concurrency::create_task(func);
+				IsStoppingAsync = true;
+
+				auto task = concurrency::create_task(func);
+
+				task.then([]()
+				{
+					IsStoppingAsync = false;
+				});
 			}
 
 			else
@@ -2288,6 +2298,16 @@ namespace
 	*/
 	SDR::PluginShutdownFunctionAdder A1([]()
 	{
+		if (IsStoppingAsync)
+		{
+			Msg("SDR: Already stopping asynchronously\n");
+
+			while (IsStoppingAsync)
+			{
+				std::this_thread::sleep_for(1ms);
+			}
+		}
+
 		ModuleEndMovie::Procedure(false);
 	});
 
