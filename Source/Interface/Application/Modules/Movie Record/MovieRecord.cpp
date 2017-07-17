@@ -624,7 +624,13 @@ namespace
 		{
 			PROCESS_MEMORY_COUNTERS desc = {};
 			
-			K32GetProcessMemoryInfo(GetCurrentProcess(), &desc, sizeof(desc));
+			auto res = K32GetProcessMemoryInfo(GetCurrentProcess(), &desc, sizeof(desc));
+
+			if (res == 0)
+			{
+				Warning("SDR: Could not retrieve process memory info\n");
+				return true;
+			}
 
 			return desc.WorkingSetSize > INT32_MAX;
 		}
