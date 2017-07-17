@@ -1421,7 +1421,7 @@ namespace
 					ResetShaderInputs(context);
 				}
 
-				bool Conversion(VideoStreamSharedData& shared, VideoFutureData& item)
+				void Conversion(VideoStreamSharedData& shared)
 				{
 					auto context = shared.DirectX11.Context.Get();
 
@@ -1438,7 +1438,11 @@ namespace
 					Dispatch(shared);
 
 					ResetShaderInputs(context);
+				}
 
+				bool Download(VideoStreamSharedData& shared, VideoFutureData& item)
+				{
+					auto context = shared.DirectX11.Context.Get();
 					return ConversionPtr->Download(context, item);
 				}
 
@@ -1668,7 +1672,8 @@ namespace
 				MovieData::VideoFutureData item;
 				item.Writer = &stream->Video;
 
-				auto res = stream->DirectX11.Conversion(CurrentMovie.VideoStreamShared, item);
+				stream->DirectX11.Conversion(CurrentMovie.VideoStreamShared);
+				auto res = stream->DirectX11.Download(CurrentMovie.VideoStreamShared, item);
 
 				if (res)
 				{
