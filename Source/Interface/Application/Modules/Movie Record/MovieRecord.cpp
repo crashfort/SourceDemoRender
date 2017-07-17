@@ -525,12 +525,7 @@ namespace
 
 					MaterialsPtr = **(void***)(address);
 
-					SDR::ModuleShared::Registry::SetKeyValue
-					(
-						name,
-						MaterialsPtr
-					);
-
+					SDR::ModuleShared::Registry::SetKeyValue(name,MaterialsPtr);
 					return true;
 				}
 			),
@@ -540,12 +535,7 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						GetBackBufferDimensions,
-						address
-					);
+					return SDR::ModuleShared::SetFromAddress(GetBackBufferDimensions, address);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -554,12 +544,7 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						BeginFrame,
-						address
-					);
+					return SDR::ModuleShared::SetFromAddress(BeginFrame, address);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -569,11 +554,7 @@ namespace
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
 
-					return SDR::ModuleShared::SetFromAddress
-					(
-						EndFrame,
-						address
-					);
+					return SDR::ModuleShared::SetFromAddress(EndFrame, address);
 				}
 			)
 		);
@@ -619,12 +600,7 @@ namespace
 
 					ViewPtr = **(void***)(address);
 
-					SDR::ModuleShared::Registry::SetKeyValue
-					(
-						name,
-						ViewPtr
-					);
-
+					SDR::ModuleShared::Registry::SetKeyValue(name, ViewPtr);
 					return true;
 				}
 			),
@@ -634,12 +610,7 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						RenderView,
-						address
-					);
+					return SDR::ModuleShared::SetFromAddress(RenderView, address);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -648,12 +619,7 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonFlex(value);
-
-					return SDR::ModuleShared::SetFromAddress
-					(
-						GetViewSetup,
-						address
-					);
+					return SDR::ModuleShared::SetFromAddress(GetViewSetup, address);
 				}
 			)
 		);
@@ -827,12 +793,7 @@ namespace
 
 						SDR::Error::MS::ThrowIfFailed
 						(
-							Device->CreateBuffer
-							(
-								&cbufdesc,
-								nullptr,
-								SamplingConstantBuffer.GetAddressOf()
-							),
+							Device->CreateBuffer(&cbufdesc, nullptr, SamplingConstantBuffer.GetAddressOf()),
 							"Could not create sampling constant buffer"
 						);
 					}
@@ -993,12 +954,7 @@ namespace
 
 							SDR::Error::MS::ThrowIfFailed
 							(
-								device->CreateBuffer
-								(
-									&desc,
-									nullptr,
-									Buffer.GetAddressOf()
-								),
+								device->CreateBuffer(&desc, nullptr, Buffer.GetAddressOf()),
 								"Could not create generic GPU buffer for staging"
 							);
 
@@ -1008,12 +964,7 @@ namespace
 
 							SDR::Error::MS::ThrowIfFailed
 							(
-								device->CreateBuffer
-								(
-									&desc,
-									nullptr,
-									BufferStaging.GetAddressOf()
-								),
+								device->CreateBuffer(&desc, nullptr, BufferStaging.GetAddressOf()),
 								"Could not create staging GPU read buffer"
 							);
 						}
@@ -1032,12 +983,7 @@ namespace
 
 							SDR::Error::MS::ThrowIfFailed
 							(
-								device->CreateBuffer
-								(
-									&desc,
-									nullptr,
-									Buffer.GetAddressOf()
-								),
+								device->CreateBuffer(&desc, nullptr, Buffer.GetAddressOf()),
 								"Could not create generic GPU read buffer"
 							);
 						}
@@ -1049,12 +995,7 @@ namespace
 
 						SDR::Error::MS::ThrowIfFailed
 						(
-							device->CreateUnorderedAccessView
-							(
-								Buffer.Get(),
-								&viewdesc,
-								View.GetAddressOf()
-							),
+							device->CreateUnorderedAccessView(Buffer.Get(), &viewdesc, View.GetAddressOf()),
 							"Could not create UAV for generic GPU read buffer"
 						);
 					}
@@ -1984,13 +1925,7 @@ namespace
 				strcpy_s(finalfilename, filename);
 			}
 
-			V_ComposeFileName
-			(
-				savepath,
-				finalfilename,
-				finalname,
-				sizeof(finalname)
-			);
+			V_ComposeFileName(savepath, finalfilename, finalname, sizeof(finalname));
 
 			return {finalname};
 		}
