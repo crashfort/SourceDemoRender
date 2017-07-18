@@ -1188,8 +1188,6 @@ namespace
 					{
 						if (entry.Format == reference->format)
 						{
-							OpenShader(device, entry.ShaderName, ConversionShader.GetAddressOf());
-
 							found = &entry;
 							break;
 						}
@@ -1200,6 +1198,8 @@ namespace
 						auto name = av_get_pix_fmt_name((AVPixelFormat)reference->format);
 						SDR::Error::Make("No conversion rule found for %s", name);
 					}
+
+					OpenShader(device, found->ShaderName, ConversionShader.GetAddressOf());
 
 					ConversionPtr = found->Factory();
 					ConversionPtr->Create(device, reference);
