@@ -1140,33 +1140,41 @@ namespace
 
 					struct ConversionRuleData
 					{
+						using FactoryType = std::function<std::unique_ptr<ConversionBase>()>;
+
 						ConversionRuleData
 						(
 							AVPixelFormat format,
 							const char* shader,
-							bool yuv
+							const FactoryType& factory
 						) :
 							Format(format),
 							ShaderName(shader),
-							IsYUV(yuv)
+							Factory(factory)
 						{
 
 						}
 
 						AVPixelFormat Format;
 						const char* ShaderName;
-						bool IsYUV;
+						FactoryType Factory;
+					};
+
+					auto yuvfactory = []()
+					{
+						return std::make_unique<ConversionYUV>();
+					};
+
+					auto bgr0factory = []()
+					{
+						return std::make_unique<ConversionBGR0>();
 					};
 
 					ConversionRuleData table[] =
 					{
-						ConversionRuleData(AV_PIX_FMT_YUV420P, "YUV420", true),
-						ConversionRuleData(AV_PIX_FMT_YUV444P, "YUV444", true),
-
-						/*
-							libx264rgb
-						*/
-						ConversionRuleData(AV_PIX_FMT_BGR0, "BGR0", false),
+						ConversionRuleData(AV_PIX_FMT_YUV420P, "YUV420", yuvfactory),
+						ConversionRuleData(AV_PIX_FMT_YUV444P, "YUV444", yuvfactory),
+						ConversionRuleData(AV_PIX_FMT_BGR0, "BGR0", bgr0factory),
 					};
 
 					ConversionRuleData* found = nullptr;
@@ -1188,16 +1196,7 @@ namespace
 						SDR::Error::Make("No conversion rule found for %s", name);
 					}
 
-					if (found->IsYUV)
-					{
-						ConversionPtr = std::make_unique<ConversionYUV>();
-					}
-
-					else
-					{
-						ConversionPtr = std::make_unique<ConversionBGR0>();
-					}
-
+					ConversionPtr = found->Factory();
 					ConversionPtr->Create(device, reference);
 				}
 
