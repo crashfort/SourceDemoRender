@@ -46,13 +46,13 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 	<tr>
 		<td>sdr_update</td>
 		<td>
-			Check to see if there are any updates available. Library updates need to be manual but game configurations and shaders are updated automatically with this command.
+			Check to see if there are any updates available. Library updates need to be manual but game configurations are updated automatically with this command.
 		</td>
 	</tr>
 	<tr>
 		<td>sdr_version</td>
 		<td>
-			Displays the current library, config and shader versions.
+			Displays the current library and game config versions.
 		</td>
 	</tr>
 	</tbody>
