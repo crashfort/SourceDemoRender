@@ -144,15 +144,23 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 			<br/><br/>
 			<b>Values:</b><br/>
 			<table>
+				<thead>
 				<tr>
-					<td>libx264</td>
-					<td>i420, i444</td>
-				</tr>
-				<tr>
-					<td>libx264rgb</td>
-					<td>bgr0</td>
-				</tr>
-            </table>
+						<th>Encoder</th>
+						<th>Values</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>libx264</td>
+						<td>i420, i444</td>
+					</tr>
+					<tr>
+						<td>libx264rgb</td>
+						<td>bgr0</td>
+					</tr>
+				</tbody>
+			</table>
 			<br/>
             <b>Default:</b> First listed above per encoder <br/>
 			<a href="https://wiki.videolan.org/YUV/">Read more about YUV</a>
