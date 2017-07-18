@@ -230,7 +230,6 @@ namespace
 	{
 		const char* Names[] =
 		{
-			"ViewRender",
 			"PushYUV",
 			"PushRGB",
 			"Encode",
@@ -240,7 +239,6 @@ namespace
 		{
 			enum Type
 			{
-				ViewRender,
 				PushYUV,
 				PushRGB,
 				Encode,
@@ -1655,8 +1653,6 @@ namespace
 						std::this_thread::sleep_for(1ms);
 					}
 				}
-
-				Profile::ScopedEntry e1(Profile::Types::ViewRender);
 
 				auto& stream = movie.VideoStreams[0];
 
