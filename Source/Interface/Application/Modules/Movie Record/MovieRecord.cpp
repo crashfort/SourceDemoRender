@@ -726,8 +726,11 @@ namespace
 						OpenShader(Device.Get(), "Sampling", SamplingShader.GetAddressOf());
 						OpenShader(Device.Get(), "ClearUAV", ClearShader.GetAddressOf());
 					}
-					
-					OpenShader(Device.Get(), "PassUAV", PassShader.GetAddressOf());
+
+					else
+					{
+						OpenShader(Device.Get(), "PassUAV", PassShader.GetAddressOf());
+					}
 				}
 
 				Microsoft::WRL::ComPtr<ID3D11Device> Device;
