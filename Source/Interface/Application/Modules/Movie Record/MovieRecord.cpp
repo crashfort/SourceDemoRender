@@ -565,6 +565,8 @@ namespace
 		uint32_t Width;
 		uint32_t Height;
 
+		int OldMatQueueModeValue;
+
 		/*
 			Whether to use an extra intermediate buffer for GPU -> CPU transfer.
 		*/
@@ -2065,6 +2067,14 @@ namespace
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(enginerate);
 
+			ConVarRef matqueuemode("mat_queue_mode");
+			movie.OldMatQueueModeValue = matqueuemode.GetInt();
+			
+			/*
+				Force single threaded processing or else there will be flickering
+			*/
+			matqueuemode.SetValue(0);
+
 			/*
 				Make room for some entries in the queues
 			*/
@@ -2180,6 +2190,9 @@ namespace
 
 			ConVarRef hostframerate("host_framerate");
 			hostframerate.SetValue(0);
+
+			ConVarRef matqueuemode("mat_queue_mode");
+			matqueuemode.SetValue(CurrentMovie.OldMatQueueModeValue);
 
 			Msg("SDR: Ending movie, if there are buffered frames this might take a moment\n");
 
