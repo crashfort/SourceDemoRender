@@ -235,9 +235,7 @@
     </ClCompile>
     <ClCompile Include="Interface\Application\Application.cpp" />
     <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp" />
-    <ClCompile Include="Interface\Application\Modules\Latency Remove\LatencyRemove.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp" />
-    <ClCompile Include="Interface\Application\Modules\Player Hide\PlayerHide.cpp" />
     <ClCompile Include="Interface\PluginInterface.cpp" />
     <ClCompile Include="Main\Precompiled Header\PrecompiledHeader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Create</PrecompiledHeader>
