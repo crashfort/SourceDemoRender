@@ -1646,6 +1646,10 @@ namespace
 
 			if (dopasses)
 			{
+				/*
+					Don't risk running out of memory. Just let the encoding
+					finish so we start fresh with no buffered frames.
+				*/
 				if (MovieData::WouldNewFrameOverflow())
 				{
 					while (BufferedFrames)
