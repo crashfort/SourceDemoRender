@@ -167,7 +167,7 @@ namespace
 
 		enum
 		{
-			PluginVersion = 12,
+			PluginVersion = 13,
 		};
 	};
 
