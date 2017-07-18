@@ -7,8 +7,7 @@ namespace
 	{
 		ConVar SuppressDebugLog
 		(
-			"sdr_game_suppressdebug", "0", 0,
-			"Disable slow game debug output logging"
+			"sdr_game_suppressdebug", "1", 0, ""
 		);
 	}
 
@@ -73,18 +72,9 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ActivateMouse",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);
@@ -120,12 +110,7 @@ namespace
 
 		#pragma region Init
 
-		void __fastcall Override
-		(
-			void* thisptr,
-			void* edx,
-			const InputEvent_t& event
-		);
+		void __fastcall Override(void* thisptr, void* edx, const InputEvent_t& event);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -136,30 +121,16 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"AppActivate",
-				[]
-				(
-					const char* name,
-					rapidjson::Value& value
-				)
+				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort
-					(
-						ThisHook,
-						Override,
-						value
-					);
+					return SDR::CreateHookShort(ThisHook, Override, value);
 				}
 			)
 		);
 
 		#pragma endregion
 
-		void __fastcall Override
-		(
-			void* thisptr,
-			void* edx,
-			const InputEvent_t& event
-		)
+		void __fastcall Override(void* thisptr, void* edx, const InputEvent_t& event)
 		{
 			auto& interfaces = SDR::GetEngineInterfaces();
 

@@ -105,7 +105,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_SP)common\;$(SDR_2013SDK_SP)public\;$(SDR_2013SDK_SP)public\tier0\;$(SDR_2013SDK_SP)public\tier1\;$(SDR_2013SDK_SP)game\client\;$(SDR_2013SDK_SP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RWQUEUE_INCLUDE);$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_SP)common\;$(SDR_2013SDK_SP)public\;$(SDR_2013SDK_SP)public\tier0\;$(SDR_2013SDK_SP)public\tier1\;$(SDR_2013SDK_SP)game\client\;$(SDR_2013SDK_SP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -114,7 +114,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SDR_2013SDK_SP)lib\common\;$(SDR_2013SDK_SP)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Debug\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;D3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;zlib.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
@@ -125,7 +125,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_MULTIPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_MP)common\;$(SDR_2013SDK_MP)public\;$(SDR_2013SDK_MP)public\tier0\;$(SDR_2013SDK_MP)public\tier1\;$(SDR_2013SDK_MP)game\client\;$(SDR_2013SDK_MP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RWQUEUE_INCLUDE);$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_MP)common\;$(SDR_2013SDK_MP)public\;$(SDR_2013SDK_MP)public\tier0\;$(SDR_2013SDK_MP)public\tier1\;$(SDR_2013SDK_MP)game\client\;$(SDR_2013SDK_MP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -134,7 +134,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SDR_2013SDK_MP)lib\common\;$(SDR_2013SDK_MP)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Debug\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;D3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;zlib.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
@@ -147,7 +147,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_SP)common\;$(SDR_2013SDK_SP)public\;$(SDR_2013SDK_SP)public\tier0\;$(SDR_2013SDK_SP)public\tier1\;$(SDR_2013SDK_SP)game\client\;$(SDR_2013SDK_SP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RWQUEUE_INCLUDE);$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_SP)common\;$(SDR_2013SDK_SP)public\;$(SDR_2013SDK_SP)public\tier0\;$(SDR_2013SDK_SP)public\tier1\;$(SDR_2013SDK_SP)game\client\;$(SDR_2013SDK_SP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -158,7 +158,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SDR_2013SDK_SP)lib\common\;$(SDR_2013SDK_SP)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Release\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;D3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
@@ -171,7 +171,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;SOURCEDEMORENDER_EXPORTS;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_MULTIPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_MP)common\;$(SDR_2013SDK_MP)public\;$(SDR_2013SDK_MP)public\tier0\;$(SDR_2013SDK_MP)public\tier1\;$(SDR_2013SDK_MP)game\client\;$(SDR_2013SDK_MP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RWQUEUE_INCLUDE);$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_2013SDK_MP)common\;$(SDR_2013SDK_MP)public\;$(SDR_2013SDK_MP)public\tier0\;$(SDR_2013SDK_MP)public\tier1\;$(SDR_2013SDK_MP)game\client\;$(SDR_2013SDK_MP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -182,7 +182,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SDR_2013SDK_MP)lib\common\;$(SDR_2013SDK_MP)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Release\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;libswscale.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;D3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
@@ -198,9 +198,6 @@
     <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\table64.h" />
     <ClInclude Include="3rd Party Libraries\MinHook\src\trampoline.h" />
     <ClInclude Include="Interface\Application\Application.hpp" />
-    <ClInclude Include="Interface\Application\Modules\ModuleTemplates.hpp" />
-    <ClInclude Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.hpp" />
-    <ClInclude Include="Interface\Application\Modules\Movie Record\HLAE\Sampler.hpp" />
     <ClInclude Include="Interface\Application\Shared\Shared.hpp" />
     <ClInclude Include="Main\Precompiled Header\PrecompiledHeader.hpp" />
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp" />
@@ -239,9 +236,7 @@
     <ClCompile Include="Interface\Application\Application.cpp" />
     <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp" />
     <ClCompile Include="Interface\Application\Modules\Latency Remove\LatencyRemove.cpp" />
-    <ClCompile Include="Interface\Application\Modules\Movie Record\HLAE\HLAE.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp" />
-    <ClCompile Include="Interface\Application\Modules\Movie Record\HLAE\Sampler.cpp" />
     <ClCompile Include="Interface\Application\Modules\Player Hide\PlayerHide.cpp" />
     <ClCompile Include="Interface\PluginInterface.cpp" />
     <ClCompile Include="Main\Precompiled Header\PrecompiledHeader.cpp">
@@ -252,7 +247,119 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Interface\Application\Modules\Movie Record\HLAE\Readme.txt" />
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\ClearUAV.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\BGR0.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\PassUAV.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV420.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV444.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Sampling.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+    </FxCompile>
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\SharedAll.hlsl" />
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\Utility.hlsl" />
+    <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

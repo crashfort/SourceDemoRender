@@ -1,8 +1,12 @@
-## Source Demo Render
-
+# Source Demo Render
 The program can be downloaded [here](https://github.com/crashfort/SourceDemoRender/releases). Visit [here](https://twitch.streamlabs.com/crashfort/) if you wish to support the development.
 
-### Installing
+SDR is a multithreaded, hardware accelerated solution to create high quality movies for the Source engine.
+
+## Prerequisites
+Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_d3d11_staging**, Windows 8.1 or later is required.
+
+## Installing
 SDR comes in separate singleplayer and multiplayer versions which will only work with whatever SDK the game was built with. `SourceDemoRender.Multiplayer.dll` is for games such as Counter-Strike: Source and `SourceDemoRender.Singleplayer.dll` targets for example Half-Life 2.
 
 The DLL of either SP or MP variant should go in the root game directory. Examples:
@@ -10,7 +14,7 @@ The DLL of either SP or MP variant should go in the root game directory. Example
 * steamapps\common\Counter-Strike Source\cstrike\
 * steamapps\common\Half-Life 2\hl2\
 
-You can use the cfg files that comes with SDR as a base where to add your own preferred settings. The loader cfg's are the preferred way to load SDR. It is executed as follows:
+You can use the ``.cfg`` files that comes with SDR as a base where to add your own preferred settings. The loader files are the preferred way to load SDR. It is executed as follows:
 
 * `exec sdr_load_mp` - For multiplayer games
 * `exec sdr_load_sp` - For singleplayer games
@@ -19,22 +23,19 @@ The plugin can be loaded at the main menu or in demo playback, but must be befor
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
-### Instructions
-**sdr_outputdir must be set before starting movie!** When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. There's no need to change host_framerate as that is done automatically. **Do not exit the game until you see a message that says the movie is completed.**
+## Instructions
+When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. **Do not exit the game until you see a gren message that says the movie is completed.**
 
-Example of supported video containers and image sequence formats:
+Example of supported video containers:
 
 * `startmovie test.avi`
 * `startmovie test.mp4`
+* `startmovie test.mov`
 * `startmovie test.mkv`
-* `startmovie test.png`
-* `startmovie test.tga`
 
-Image sequences should not have a digit specifier, it is added automatically as 5 padded digits. Note that PNG may be slow, but significantly smaller size than TGA.
+The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase memory usage and file size.
 
-If not specified, the default video encoder is x264.
-
-### General commands
+## General commands
 
 <table>
 	<thead>
@@ -45,19 +46,19 @@ If not specified, the default video encoder is x264.
 	<tr>
 		<td>sdr_update</td>
 		<td>
-			Check to see if there is an update available. If there is a newer version, you will see a link where to get it. Nothing is downloaded.
+			Check to see if there are any updates available. Library updates need to be manual but game configurations and shaders are updated automatically with this command.
 		</td>
 	</tr>
 	<tr>
 		<td>sdr_version</td>
 		<td>
-			Displays the current version.
+			Displays the current library, config and shader versions.
 		</td>
 	</tr>
 	</tbody>
 </table>
 
-### General variables
+## General variables
 
 <table>
 	<thead>
@@ -68,16 +69,7 @@ If not specified, the default video encoder is x264.
 	<tr>
 		<td>sdr_outputdir</td>
 		<td>
-			Path where to save the video or image sequence. The directory structure will be created if it doesn't already exist. This cannot be the root of a drive, it must be a in at least one directory.
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_render_usesample</td>
-		<td>
-			Use the built in frame blending method. If this is disabled, all sampling related variables are disabled and only <b>sdr_render_framerate</b> will work.
-            <br/><br/>
-            <b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 1 <br/>
+			Path where to save the video. The directory structure will be created if it doesn't already exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the game root.
 		</td>
 	</tr>
 	<tr>
@@ -85,57 +77,8 @@ If not specified, the default video encoder is x264.
 		<td>
 			Movie output framerate.
             <br/><br/>
-            <b>Values:</b> Minimum 30 <br/>
+            <b>Values:</b> 30 to 1000 <br/>
             <b>Default:</b> 60 <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_render_exposure</td>
-		<td>
-			0 to 1 fraction of a frame that is exposed for blending.
-			<br/><br/>
-			<b>Values:</b> Between 0 and 1 <br/>
-            <b>Default:</b> 1 <br/>
-			<a href="https://github.com/ripieces/advancedfx/wiki/GoldSrc%3Amirv_sample_exposure">Read more</a>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_render_samplemult</td>
-		<td>
-			Game framerate multiplier.
-			<br/><br/>
-			<b>Values:</b> 2 or higher <br/>
-            <b>Default:</b> 20 <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_render_framestrength</td>
-		<td>
-			0 to 1 fraction how much a new frame clears the previous.
-			<br/><br/>
-			<b>Values:</b> See read more <br/>
-            <b>Default:</b> 1 <br/>
-			<a href="https://github.com/ripieces/advancedfx/wiki/GoldSrc%3A__mirv_sample_frame_strength">Read more</a>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_render_samplemethod</td>
-		<td>
-			The integral approximation method.
-			<br/><br/>
-			<b>Values:</b>
-            <br/>
-            <table>
-                <tr>
-                    <td>0</td><td>Rectangle method</td>
-                </tr>
-                <tr>
-                    <td>1</td><td>Trapezoidal rule</td>
-                </tr>
-            </table>
-            <br/>
-            <b>Default:</b> 1 <br/>
-			<a href="https://github.com/ripieces/advancedfx/wiki/GoldSrc%3A__mirv_sample_smethod">Read more</a>
 		</td>
 	</tr>
 	<tr>
@@ -150,7 +93,7 @@ If not specified, the default video encoder is x264.
 	<tr>
 		<td>sdr_endmoviequit</td>
 		<td>
-			Quits the game after all endmovie processing is done.
+			Quits the game after all processing is done.
 			<br/><br/>
 			<b>Values:</b> 0 or 1 <br/>
             <b>Default:</b> 0 <br/>
@@ -162,36 +105,13 @@ If not specified, the default video encoder is x264.
 			Prevents engine output debug messages to reach the operating system.
 			<br/><br/>
 			<b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 0 <br/>
+            <b>Default:</b> 1 <br/>
 		</td>
 	</tr>
 	</tbody>
 </table>
 
-
-More details about sampling can be [read here](https://github.com/ripieces/advancedfx/wiki/GoldSrc%3ASampling-System).
-
-### Audio variables
-
-<table>
-	<thead>
-		<th>Name</th>
-		<th>Description</th>
-	</thead>
-	<tbody>
-	<tr>
-		<td>sdr_audio_enable</td>
-		<td>
-			Enable to process audio. Currently it does not include in a video file, but is placed as a separate wave file.
-            <br/><br/>
-            <b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 0 <br/>
-		</td>
-	</tr>
-	</tbody>
-</table>
-
-### Video variables
+## Video variables
 
 <table>
 	<thead>
@@ -205,7 +125,16 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 			Enable or disable log output from LAV.
             <br/><br/>
             <b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 0 <br/>
+            <b>Default:</b> 1 <br/>
+		</td>
+	</tr>
+	<tr>
+		<td>sdr_movie_encoder</td>
+		<td>
+			Desired video encoder.
+			<br/><br/>
+			<b>Values:</b> libx264, libx264rgb <br/>
+            <b>Default:</b> libx264 <br/>
 		</td>
 	</tr>
 	<tr>
@@ -215,28 +144,41 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 			<br/><br/>
 			<b>Values:</b><br/>
 			<table>
+				<thead>
 				<tr>
-					<td>x264</td>
-					<td>I420, I444, NV12</td>
-				</tr>
-				<tr>
-					<td>png</td>
-					<td>RGB24</td>
-				</tr>
-				<tr>
-					<td>targa</td>
-					<td>BGR24</td>
-				</tr>
-            </table>
+						<th>Encoder</th>
+						<th>Values</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>libx264</td>
+						<td>i420, i444</td>
+					</tr>
+					<tr>
+						<td>libx264rgb</td>
+						<td>bgr0</td>
+					</tr>
+				</tbody>
+			</table>
 			<br/>
             <b>Default:</b> First listed above per encoder <br/>
 			<a href="https://wiki.videolan.org/YUV/">Read more about YUV</a>
 		</td>
 	</tr>
 	<tr>
+		<td>sdr_d3d11_staging</td>
+		<td>
+			Use extra intermediate buffer when retreiving data from the GPU.
+			<br/><br/>
+            <b>Values:</b> 0 or 1 <br/>
+            <b>Default:</b> 1 <br/>
+		</td>
+	</tr>
+	<tr>
 		<td>sdr_x264_crf</td>
 		<td>
-			Constant rate factor quality value. Note that using 0 (lossless) can produce a video with a 4:4:4 profile which your media player might not support. Only available for x264.
+			Constant rate factor quality value. Note that using 0 (lossless) can produce a video with a 4:4:4 profile which your media player might not support.
 			<br/><br/>
             <b>Values:</b> 0 to 51 <br/>
             <b>Default:</b> 0 <br/>
@@ -246,7 +188,7 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 	<tr>
 		<td>sdr_x264_preset</td>
 		<td>
-			Encoding preset. If you can, prefer not to use a slow encoding preset as the encoding may fall behind and the game will have to wait for it to catch up. Only available for x264.
+			Encoding preset. If you can, prefer not to use a slow encoding preset as the encoding may fall behind and the game will have to wait for it to catch up.
 			<br/><br/>
             <b>Default:</b> ultrafast <br/>
 			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
@@ -255,65 +197,41 @@ More details about sampling can be [read here](https://github.com/ripieces/advan
 	<tr>
 		<td>sdr_x264_intra</td>
 		<td>
-			Whether to produce a video of only keyframes. Only available for x264.
+			Whether to produce a video of only keyframes.
 			<br/><br/>
             <b>Values:</b> 0 or 1 <br/>
             <b>Default:</b> 1 <br/>
 		</td>
 	</tr>
+	</tbody>
+</table>
+
+## Sampling variables
+
+<table>
+	<thead>
+		<th>Name</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
 	<tr>
-		<td>sdr_frame_buffersize</td>
+		<td>sdr_sample_mult</td>
 		<td>
-			How many frames that are allowed to be buffered up for encoding.
-			This value can be lowered or increased depending your available RAM.
+			Value to multiply with <b>sdr_render_framerate</b>. This is how many frames will be put together to form a final frame multiplied by exposure. Less than 2 will disable sampling.
             <br/><br/>
-            Keep in mind the sizes of an uncompressed RGB24 frame:
-            <br/>
-            <table>
-				<tr>
-					<td>1280x720</td>
-					<td>2.7 MB</td>
-				</tr>
-				<tr>
-					<td>1920x1080</td>
-					<td>5.9 MB</td>
-				</tr>
-				<tr>
-					<td>Calculation</td>
-					<td>(((x * y) * 3) / 1024) / 1024</td>
-				</tr>
-            </table>
-			<br/>
-			Multiply the frame size with the buffer size to one that fits you.
-			<br/><br/>
-			The frame buffer queue will only build up and fall behind when the encoding
-			is taking too long, consider not using too low of a preset. Under normal circumstances this should not be an issue.            
-            <br/><br/>
-            Source is a 32 bit process which limits the available RAM between 2 - 4 GB. In worst case scenario, a full buffer of 384 at 1280x720 would use 1 GB while 1920x1080 would use 2.2 GB.
-            <br/><br/>
-			<b>Using too high of a buffer size might eventually crash the application if there no longer is any available memory</b>
-			<br/><br/>
-			<b>Values:</b> Between 8 and 384 <br/>
-            <b>Default:</b> 256 <br/>
+            <b>Values:</b> Over 0 <br/>
+            <b>Default:</b> 32 <br/>
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_movie_encoder_colorspace</td>
+		<td>sdr_sample_exposure</td>
 		<td>
-			Media editors and players handle this value differently, try experimenting. Not available in image sequence.
-			<br/><br/>
-            <b>Values:</b> 601 or 709 <br/>
-            <b>Default:</b> 601 <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_movie_encoder_colorrange</td>
-		<td>
-			Media editors and players handle this value differently, try experimenting. Not available in image sequence.
-			<br/><br/>
-            <b>Values:</b> partial or full <br/>
-            <b>Default:</b> partial <br/>
+			Fraction of time per frame that is exposed for sampling
+            <br/><br/>
+            <b>Values:</b> 0 to 1 <br/>
+            <b>Default:</b> 0.5 <br/>
 		</td>
 	</tr>
 	</tbody>
 </table>
+

@@ -1,11 +1,32 @@
 #pragma once
 
+#define WINVER 0x0601
+#define _WIN32_WINNT 0x0601
 #include "TargetVersion.hpp"
 
-#include <Windows.h>
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#define NOATOM
+#define NOGDICAPMASKS
+#define NOMETAFILE
+#define NOBITMAP
+#define NOMINMAX
+#define NOOPENFILE
+#define NORASTEROPS
+#define NOSCROLL
+#define NOSOUND
+#define NOSYSMETRICS
+#define NOTEXTMETRIC
+#define NOWH
+#define NOCOMM
+#define NOKANJI
+#define NOCRYPT
+#define NOMCX
 
+#include <Windows.h>
 #include <Psapi.h>
 #include <ShlObj.h>
+#include <comdef.h>
 
 #include <wrl.h>
 
@@ -32,6 +53,8 @@ using namespace std::chrono_literals;
 #include "convar.h"
 #include "materialsystem\imaterialsystem.h"
 
+#include "valve_minmax_off.h"
+
 #include "Interface\Application\Shared\Shared.hpp"
 
 #undef Verify
@@ -49,14 +72,81 @@ namespace SDR
 	const EngineInterfaces& GetEngineInterfaces();
 }
 
-namespace MS
+namespace SDR::Error
 {
-	inline void ThrowIfFailed(HRESULT hr)
+	struct Exception
 	{
-		if (FAILED(hr))
+		char Description[1024];
+	};
+
+	inline void Print(const Exception& error)
+	{
+		Warning("SDR: %s\n", error.Description);
+	}
+
+	/*
+		For use with unrecoverable errors
+	*/
+	template <typename... Args>
+	inline Exception Make(const char* format, Args&&... args)
+	{
+		Exception info;
+		sprintf_s(info.Description, format, std::forward<Args>(args)...);
+
+		Print(info);
+		throw info;
+	}
+
+	/*
+		For use with unrecoverable errors
+	*/
+	template <typename... Args>
+	inline void ThrowIfNull(const void* ptr, const char* format, Args&&... args)
+	{
+		if (ptr == nullptr)
 		{
-			Warning("SDR: ThrowIfFailed: %08X\n", hr);
-			throw hr;
+			Make(format, std::forward<Args>(args)...);
+		}
+	}
+
+	namespace LAV
+	{
+		/*
+			For use with unrecoverable errors
+		*/
+		template <typename... Args>
+		inline void ThrowIfFailed(int code, const char* format, Args&&... args)
+		{
+			if (code < 0)
+			{
+				Make(format, std::forward<Args>(args)...);
+			}
+		}
+	}
+
+	namespace MS
+	{
+		/*
+			For use with unrecoverable errors
+		*/
+		template <typename... Args>
+		inline void ThrowIfFailed(HRESULT hr, const char* format, Args&&... args)
+		{
+			if (FAILED(hr))
+			{
+				_com_error error(hr);
+				auto message = error.ErrorMessage();
+
+				char final[sizeof(Exception::Description)];
+				char user[sizeof(Exception::Description)];
+
+				sprintf_s(user, format, std::forward<Args>(args)...);
+				sprintf_s(final, "%08X (%s) -> ", hr, message);
+				strcat_s(final, user);
+
+				Make(final);
+			}
 		}
 	}
 }
+

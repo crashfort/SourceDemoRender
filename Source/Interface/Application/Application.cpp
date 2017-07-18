@@ -20,12 +20,7 @@ namespace
 			makes this run >10x faster, less sitting around
 			waiting for nothing.
 		*/
-		inline bool DataCompare
-		(
-			const uint8_t* data,
-			const SDR::BytePattern::Entry* pattern,
-			size_t patternlength
-		)
+		inline bool DataCompare(const uint8_t* data, const SDR::BytePattern::Entry* pattern, size_t patternlength)
 		{
 			int index = 0;
 
@@ -46,12 +41,7 @@ namespace
 			return index == patternlength;
 		}
 
-		void* FindPattern
-		(
-			void* start,
-			size_t searchlength,
-			const SDR::BytePattern& pattern
-		)
+		void* FindPattern(void* start, size_t searchlength, const SDR::BytePattern& pattern)
 		{
 			auto patternstart = pattern.Bytes.data();
 			auto length = pattern.Bytes.size();
@@ -156,74 +146,18 @@ namespace
 			std::vector<DataType> KeyValues;
 
 			template <typename T>
-			void InsertKeyValue
-			(
-				const char* name,
-				T value
-			)
+			void InsertKeyValue(const char* name, T value)
 			{
 				DataType newtype;
 				newtype.Name = name;
 				newtype.SetValue(value);
 
-				KeyValues.emplace_back
-				(
-					std::move(newtype)
-				);
+				KeyValues.emplace_back(std::move(newtype));
 			}
 		}
 
-		enum class Status
-		{
-			CouldNotFindConfig,
-			CouldNotFindGame,
-
-			InheritTargetWrong,
-			HandlerNotFound,
-
-			CouldNotCreateModule,
-		};
-
-		const char* StatusNames[] =
-		{
-			"Could not find config",
-			"Could not find game",
-			"Inherit target not found",
-			"Module handler not found",
-			"Could not create module",
-		};
-
-		template
-		<
-			typename NodeType
-		>
-		auto SafeFindMember
-		(
-			NodeType& node,
-			const char* name,
-			Status code
-		)
-		{
-			auto it = node.FindMember(name);
-
-			if (it == node.MemberEnd())
-			{
-				throw code;
-			}
-
-			return it;
-		}
-
-		template
-		<
-			typename NodeType,
-			typename FuncType
-		>
-		void MemberLoop
-		(
-			NodeType& node,
-			FuncType callback
-		)
+		template <typename NodeType, typename FuncType>
+		void MemberLoop(NodeType& node, FuncType callback)
 		{
 			auto& begin = node.MemberBegin();
 			auto& end = node.MemberEnd();
@@ -245,11 +179,7 @@ namespace
 
 		std::vector<GameData> Configs;
 
-		void ResolveInherit
-		(
-			GameData* targetgame,
-			rapidjson::Document::AllocatorType& alloc
-		)
+		void ResolveInherit(GameData* targetgame, rapidjson::Document::AllocatorType& alloc)
 		{
 			auto begin = targetgame->Properties.begin();
 			auto end = targetgame->Properties.end();
@@ -264,12 +194,7 @@ namespace
 
 					if (!it->second.IsString())
 					{
-						Warning
-						(
-							"SDR: %s inherit field not a string\n",
-							targetgame->Name.c_str()
-						);
-
+						Warning("SDR: %s inherit field not a string\n", targetgame->Name.c_str());
 						return;
 					}
 
@@ -300,15 +225,7 @@ namespace
 
 								if (shouldadd)
 								{
-									targetgame->Properties.emplace_back
-									(
-										sourceprop.first,
-										rapidjson::Value
-										(
-											sourceprop.second,
-											alloc
-										)
-									);
+									targetgame->Properties.emplace_back(sourceprop.first, rapidjson::Value(sourceprop.second, alloc));
 								}
 							}
 
@@ -317,14 +234,7 @@ namespace
 
 						if (!foundgame)
 						{
-							Warning
-							(
-								"SDR: %s inherit target %s not found\n",
-								targetgame->Name.c_str(),
-								from.c_str()
-							);
-
-							throw Status::InheritTargetWrong;
+							SDR::Error::Make("%s inherit target %s not found", targetgame->Name.c_str(), from.c_str());
 						}
 					}
 
@@ -334,24 +244,13 @@ namespace
 
 			if (foundinherit)
 			{
-				ResolveInherit
-				(
-					targetgame,
-					alloc
-				);
+				ResolveInherit(targetgame, alloc);
 			}
 		}
 
-		void CallHandlers
-		(
-			GameData* game
-		)
+		void CallHandlers(GameData* game)
 		{
-			Msg
-			(
-				"SDR: Creating %d modules\n",
-				MainApplication.ModuleHandlers.size()
-			);
+			Msg("SDR: Creating %d modules\n", MainApplication.ModuleHandlers.size());
 
 			for (auto& prop : game->Properties)
 			{
@@ -363,49 +262,26 @@ namespace
 					{
 						foundhadler = true;
 
-						auto res = handler.Function
-						(
-							handler.Name,
-							prop.second
-						);
+						auto res = handler.Function(handler.Name, prop.second);
 
 						if (!res)
 						{
-							Warning
-							(
-								"SDR: Could not enable module %s\n",
-								handler.Name
-							);
-
-							throw Status::CouldNotCreateModule;
+							SDR::Error::Make("Could not enable module %s", handler.Name);
 						}
 
-						Msg
-						(
-							"SDR: Enabled module %s\n",
-							handler.Name
-						);
-
+						Msg("SDR: Enabled module %s\n", handler.Name);
 						break;
 					}
 				}
 
 				if (!foundhadler)
 				{
-					Warning
-					(
-						"SDR: No handler found for %s\n",
-						prop.first.c_str()
-					);
+					Warning("SDR: No handler found for %s\n", prop.first.c_str());
 				}
 			}
 		}
 
-		void SetupGame
-		(
-			const char* gamepath,
-			const char* gamename
-		)
+		void SetupGame(const char* gamepath, const char* gamename)
 		{
 			char cfgpath[1024];
 		
@@ -416,16 +292,12 @@ namespace
 
 			try
 			{
-				config.Assign
-				(
-					cfgpath,
-					"rb"
-				);
+				config.Assign(cfgpath, "rb");
 			}
 
 			catch (SDR::Shared::ScopedFile::ExceptionType status)
 			{
-				throw Status::CouldNotFindConfig;
+				SDR::Error::Make("Could not find game config");
 			}
 
 			auto data = config.ReadAll();
@@ -449,14 +321,7 @@ namespace
 					(
 						gameit->value, [&](GameData::MemberIt gamedata)
 						{
-							curgame.Properties.emplace_back
-							(
-								std::make_pair
-								(
-									gamedata->name.GetString(),
-									std::move(gamedata->value)
-								)
-							);
+							curgame.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
 						}
 					);
 				}
@@ -473,65 +338,27 @@ namespace
 
 			if (!currentgame)
 			{
-				throw Status::CouldNotFindGame;
+				SDR::Error::Make("Could not find current game in game config");
 			}
 
-			ResolveInherit
-			(
-				currentgame,
-				document.GetAllocator()
-			);
-
-			CallHandlers
-			(
-				currentgame
-			);
+			ResolveInherit(currentgame, document.GetAllocator());
+			CallHandlers(currentgame);
 
 			MainApplication.ModuleHandlers.clear();
 		}
 	}
 }
 
-void SDR::Setup
-(
-	const char* gamepath,
-	const char* gamename
-)
+void SDR::Setup(const char* gamepath, const char* gamename)
 {
 	auto res = MH_Initialize();
 
 	if (res != MH_OK)
 	{
-		Warning
-		(
-			"SDR: Failed to initialize hooks\n"
-		);
-
-		throw false;
+		SDR::Error::Make("Failed to initialize hooks");
 	}
 
-	try
-	{
-		Config::SetupGame
-		(
-			gamepath,
-			gamename
-		);
-	}
-
-	catch (Config::Status status)
-	{
-		auto index = static_cast<int>(status);
-		auto name = Config::StatusNames[index];
-
-		Warning
-		(
-			"SDR: GameConfig: %s\n",
-			name
-		);
-
-		throw false;
-	}
+	Config::SetupGame(gamepath, gamename);
 }
 
 void SDR::Close()
@@ -544,10 +371,7 @@ void SDR::Close()
 	MH_Uninitialize();
 }
 
-void SDR::AddPluginStartupFunction
-(
-	const StartupFuncData& data
-)
+void SDR::AddPluginStartupFunction(const StartupFuncData& data)
 {
 	MainApplication.StartupFunctions.emplace_back(data);
 }
@@ -564,19 +388,13 @@ void SDR::CallPluginStartupFunctions()
 
 	for (auto entry : MainApplication.StartupFunctions)
 	{
-		Msg
-		(
-			"SDR: Startup procedure (%d/%d): %s\n",
-			index + 1,
-			count,
-			entry.Name
-		);
+		Msg("SDR: Startup procedure (%d/%d): %s\n", index + 1, count, entry.Name);
 
 		auto res = entry.Function();
 
 		if (!res)
 		{
-			throw entry.Name;
+			SDR::Error::Make("Startup procedure %s failed");
 		}
 
 		++index;
@@ -585,26 +403,17 @@ void SDR::CallPluginStartupFunctions()
 	MainApplication.StartupFunctions.clear();
 }
 
-void SDR::AddPluginShutdownFunction
-(
-	ShutdownFuncType function
-)
+void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
 {
 	MainApplication.ShutdownFunctions.emplace_back(function);
 }
 
-void SDR::AddModuleHandler
-(
-	const ModuleHandlerData& data
-)
+void SDR::AddModuleHandler(const ModuleHandlerData& data)
 {
 	MainApplication.ModuleHandlers.emplace_back(data);
 }
 
-SDR::BytePattern SDR::GetPatternFromString
-(
-	const char* input
-)
+SDR::BytePattern SDR::GetPatternFromString(const char* input)
 {
 	BytePattern ret;
 
@@ -637,24 +446,12 @@ SDR::BytePattern SDR::GetPatternFromString
 	return ret;
 }
 
-void* SDR::GetAddressFromPattern
-(
-	const ModuleInformation& library,
-	const BytePattern& pattern
-)
+void* SDR::GetAddressFromPattern(const ModuleInformation& library, const BytePattern& pattern)
 {
-	return Memory::FindPattern
-	(
-		library.MemoryBase,
-		library.MemorySize,
-		pattern
-	);
+	return Memory::FindPattern(library.MemoryBase, library.MemorySize, pattern);
 }
 
-bool SDR::JsonHasPattern
-(
-	rapidjson::Value& value
-)
+bool SDR::JsonHasPattern(rapidjson::Value& value)
 {
 	if (value.HasMember("Pattern"))
 	{
@@ -664,10 +461,7 @@ bool SDR::JsonHasPattern
 	return false;
 }
 
-bool SDR::JsonHasVirtualIndexOnly
-(
-	rapidjson::Value& value
-)
+bool SDR::JsonHasVirtualIndexOnly(rapidjson::Value& value)
 {
 	if (value.HasMember("VTIndex"))
 	{
@@ -677,10 +471,7 @@ bool SDR::JsonHasVirtualIndexOnly
 	return false;
 }
 
-bool SDR::JsonHasVirtualIndexAndNamePtr
-(
-	rapidjson::Value& value
-)
+bool SDR::JsonHasVirtualIndexAndNamePtr(rapidjson::Value& value)
 {
 	if (JsonHasVirtualIndexOnly(value))
 	{
@@ -693,10 +484,7 @@ bool SDR::JsonHasVirtualIndexAndNamePtr
 	return false;
 }
 
-void* SDR::GetAddressFromJsonFlex
-(
-	rapidjson::Value& value
-)
+void* SDR::GetAddressFromJsonFlex(rapidjson::Value& value)
 {
 	if (JsonHasPattern(value))
 	{
@@ -725,11 +513,7 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 		{
 			if (!iter->value.IsNumber())
 			{
-				Warning
-				(
-					"SDR: Offset field not a number\n"
-				);
-
+				Warning("SDR: Offset field not a number\n");
 				return nullptr;
 			}
 
@@ -744,31 +528,18 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 
 	auto pattern = GetPatternFromString(patternstr);
 
-	AddressFinder address
-	(
-		module,
-		pattern,
-		offset
-	);
+	AddressFinder address(module, pattern, offset);
 
 	if (isjump)
 	{
-		RelativeJumpFunctionFinder jumper
-		(
-			address.Get()
-		);
-
+		RelativeJumpFunctionFinder jumper(address.Get());
 		return jumper.Get();
 	}
 
 	return address.Get();
 }
 
-void* SDR::GetVirtualAddressFromIndex
-(
-	void* ptr,
-	int index
-)
+void* SDR::GetVirtualAddressFromIndex(void* ptr, int index)
 {
 	auto vtable = *((void***)ptr);
 	auto address = vtable[index];
@@ -776,33 +547,18 @@ void* SDR::GetVirtualAddressFromIndex
 	return address;
 }
 
-void* SDR::GetVirtualAddressFromJson
-(
-	void* ptr,
-	rapidjson::Value& value
-)
+void* SDR::GetVirtualAddressFromJson(void* ptr, rapidjson::Value& value)
 {
 	auto index = GetVirtualIndexFromJson(value);
-
-	return GetVirtualAddressFromIndex
-	(
-		ptr,
-		index
-	);
+	return GetVirtualAddressFromIndex(ptr, index);
 }
 
-int SDR::GetVirtualIndexFromJson
-(
-	rapidjson::Value& value
-)
+int SDR::GetVirtualIndexFromJson(rapidjson::Value& value)
 {
 	return value["VTIndex"].GetInt();
 }
 
-void* SDR::GetVirtualAddressFromJson
-(
-	rapidjson::Value& value
-)
+void* SDR::GetVirtualAddressFromJson(rapidjson::Value& value)
 {
 	auto instance = value["VTPtrName"].GetString();
 
@@ -816,27 +572,15 @@ void* SDR::GetVirtualAddressFromJson
 
 	auto ptr = (void*)ptrnum;
 
-	return GetVirtualAddressFromJson
-	(
-		ptr,
-		value
-	);
+	return GetVirtualAddressFromJson(ptr, value);
 }
 
-void SDR::ModuleShared::Registry::SetKeyValue
-(
-	const char* name,
-	uint32_t value
-)
+void SDR::ModuleShared::Registry::SetKeyValue(const char* name, uint32_t value)
 {
 	Config::Registry::InsertKeyValue(name, value);
 }
 
-bool SDR::ModuleShared::Registry::GetKeyValue
-(
-	const char* name,
-	uint32_t* value
-)
+bool SDR::ModuleShared::Registry::GetKeyValue(const char* name, uint32_t* value)
 {
 	for (auto& keyvalue : Config::Registry::KeyValues)
 	{

@@ -15,11 +15,7 @@ namespace
 	{
 		namespace Types
 		{
-			using GetGameDir = void(__cdecl*)
-			(
-				char* dest,
-				int length
-			);
+			using GetGameDir = void(__cdecl*)(char* dest, int length);
 		}
 
 		char FullPath[1024];
@@ -32,24 +28,10 @@ namespace
 			auto patternstr = "55 8B EC 8B 45 08 85 C0 74 11 FF 75 0C 68 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 0C 5D C3";
 			auto pattern = SDR::GetPatternFromString(patternstr);
 
-			auto address = SDR::GetAddressFromPattern
-			(
-				"engine.dll",
-				pattern
-			);
+			auto address = SDR::GetAddressFromPattern("engine.dll", pattern);
+			SDR::ModuleShared::SetFromAddress(GetGameDir, address);
 
-			SDR::ModuleShared::SetFromAddress
-			(
-				GetGameDir,
-				address
-			);
-
-			SDR::ModuleShared::Verify
-			(
-				GetGameDir,
-				"engine.dll",
-				"GetGameDir"
-			);
+			SDR::ModuleShared::Verify(GetGameDir, "engine.dll", "GetGameDir");
 		}
 	}
 }
@@ -209,12 +191,7 @@ namespace
 
 		catch (SDR::Shared::ScopedFile::ExceptionType status)
 		{
-			Warning
-			(
-				"SDR: Could not get GameConfig version\n"
-			);
-
-			throw false;
+			SDR::Error::Make("Could not get GameConfig version");
 		}
 
 		return ret;
@@ -222,47 +199,29 @@ namespace
 
 	namespace Commands
 	{
-		CON_COMMAND(sdr_version, "Show the current version")
+		CON_COMMAND(sdr_version, "")
 		{
-			Msg
-			(
-				"SDR: Library version: %d\n",
-				SourceDemoRenderPlugin::PluginVersion
-			);
-
-			int gameconfigversion;
+			Msg("SDR: Library version: %d\n", SourceDemoRenderPlugin::PluginVersion);
 
 			try
 			{
-				gameconfigversion = GetGameConfigVersion();
+				auto gcversion = GetGameConfigVersion();
+				Msg("SDR: Game config version: %d\n", gcversion);
 			}
 
-			catch (bool value)
+			catch (const SDR::Error::Exception& error)
 			{
 				return;
 			}
-
-			Msg
-			(
-				"SDR: GameConfig version: %d\n",
-				gameconfigversion
-			);
 		}
 
-		CON_COMMAND(sdr_update, "Check for any available updates")
+		concurrency::task<void> UpdateProc()
 		{
-			Msg
-			(
-				"SDR: Checking for any available updates\n"
-			);
+			Msg("SDR: Checking for any available updates\n");
 
-			auto webrequest = []
-			(
-				const wchar_t* path,
-				auto callback
-			)
+			auto webrequest = [](const wchar_t* path, auto callback)
 			{
-				auto task = concurrency::create_task([path]()
+				auto task = concurrency::create_task([=]()
 				{
 					auto address = L"https://raw.githubusercontent.com/";
 
@@ -273,37 +232,25 @@ namespace
 
 					web::http::uri_builder pathbuilder(path);
 
-					return webclient.request
-					(
-						web::http::methods::GET,
-						pathbuilder.to_string()
-					);
-				});
+					auto task = webclient.request(web::http::methods::GET, pathbuilder.to_string());
+					auto response = task.get();
 
-				task.then([callback](web::http::http_response response)
-				{
 					auto status = response.status_code();
 
 					if (status != web::http::status_codes::OK)
 					{
-						Msg
-						(
-							"SDR: Could not reach update repository\n"
-						);
-
+						Warning("SDR: Could not reach update repository\n");
 						return;
 					}
 
-					auto task = response.content_ready();
-
-					task.then([callback](web::http::http_response response)
-					{
-						callback(std::move(response));
-					});
+					auto ready = response.content_ready();
+					callback(ready.get());
 				});
+
+				return task;
 			};
 
-			webrequest
+			auto libreq = webrequest
 			(
 				L"/crashfort/SourceDemoRender/master/Version/Latest",
 				[](web::http::http_response&& response)
@@ -331,7 +278,7 @@ namespace
 						(
 							Color(51, 167, 255, 255),
 							"SDR: A library update is available: (%d -> %d).\n"
-							"Visit https://github.com/CRASHFORT/SourceDemoRender/releases\n",
+							"Visit https://github.com/crashfort/SourceDemoRender/releases\n",
 							curversion,
 							webversion
 						);
@@ -339,15 +286,12 @@ namespace
 
 					else if (curversion > webversion)
 					{
-						Msg
-						(
-							"SDR: Local library newer than update repository?\n"
-						);
+						Msg("SDR: Local library newer than update repository?\n");
 					}
 				}
 			);
 
-			webrequest
+			auto gcreq = webrequest
 			(
 				L"/crashfort/SourceDemoRender/master/Version/GameConfigLatest",
 				[webrequest](web::http::http_response&& response)
@@ -359,9 +303,9 @@ namespace
 						localversion = GetGameConfigVersion();
 					}
 
-					catch (bool value)
+					catch (const SDR::Error::Exception& error)
 					{
-						return;
+						localversion = 0;
 					}
 
 					/*
@@ -390,14 +334,15 @@ namespace
 							webversion
 						);
 
-						webrequest
+						auto req = webrequest
 						(
 							L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
 							[webversion](web::http::http_response&& response)
 							{
 								using Status = SDR::Shared::ScopedFile::ExceptionType;
 
-								auto json = response.extract_utf8string(true).get();
+								auto task = response.extract_utf8string(true);
+								auto json = task.get();
 
 								try
 								{
@@ -412,11 +357,7 @@ namespace
 
 								catch (Status status)
 								{
-									Warning
-									(
-										"SDR: Could not write GameConfig.json\n"
-									);
-
+									Warning("SDR: Could not write GameConfig.json\n");
 									return;
 								}
 
@@ -433,32 +374,59 @@ namespace
 
 								catch (Status status)
 								{
-									Warning
-									(
-										"SDR: Could not write GameConfigLatest\n"
-									);
-
+									Warning("SDR: Could not write GameConfigLatest\n");
 									return;
 								}
 
 								ConColorMsg
 								(
-									Color(51, 167, 255, 255),
+									Color(88, 255, 39, 255),
 									"SDR: Game config download complete\n"
 								);
 							}
 						);
+
+						for (auto&& entry : {req})
+						{
+							try
+							{
+								entry.wait();
+							}
+
+							catch (const std::exception& error)
+							{
+								Msg("SDR: %s", error.what());
+							}
+						}
 					}
 
 					else if (localversion > webversion)
 					{
-						Msg
-						(
-							"SDR: Local game config newer than update repository?\n"
-						);
+						Msg("SDR: Local game config newer than update repository?\n");
 					}
 				}
 			);
+
+			return concurrency::create_task([libreq, gcreq]()
+			{
+				for (auto&& entry : {libreq, gcreq})
+				{
+					try
+					{
+						entry.wait();
+					}
+
+					catch (const std::exception& error)
+					{
+						Msg("SDR: %s", error.what());
+					}
+				}
+			});
+		}
+
+		CON_COMMAND(sdr_update, "")
+		{
+			UpdateProc();
 		}
 	}
 
@@ -466,18 +434,13 @@ namespace
 	SDR::EngineInterfaces Interfaces;
 
 	template <typename T>
-	void CreateInterface
-	(
-		CreateInterfaceFn interfacefactory,
-		const char* name,
-		T*& outptr
-	)
+	void CreateInterface(CreateInterfaceFn interfacefactory, const char* name, T*& outptr)
 	{
 		auto ptr = static_cast<T*>(interfacefactory(name, nullptr));
 
 		if (!ptr)
 		{
-			throw name;
+			SDR::Error::Make("Could not get the %s interface");
 		}
 
 		outptr = ptr;
@@ -494,38 +457,22 @@ namespace
 			ModuleGameDir::Set();
 		}
 
-		catch (const char* name)
+		catch (const SDR::Error::Exception& error)
 		{
-			Warning
-			(
-				"SDR: Could not get game name. Version: %d\n",
-				SourceDemoRenderPlugin::PluginVersion
-			);
+			auto version = SourceDemoRenderPlugin::PluginVersion;
 
+			Warning("SDR: Could not get game name. Version: %d\n", version);
 			return false;
 		}
 
-		ModuleGameDir::GetGameDir
-		(
-			ModuleGameDir::FullPath,
-			sizeof(ModuleGameDir::FullPath)
-		);
+		ModuleGameDir::GetGameDir(ModuleGameDir::FullPath, sizeof(ModuleGameDir::FullPath));
 
-		strcpy_s
-		(
-			ModuleGameDir::GameName,
-			V_GetFileName(ModuleGameDir::FullPath)
-		);
-
+		strcpy_s(ModuleGameDir::GameName, V_GetFileName(ModuleGameDir::FullPath));
 		strcat_s(ModuleGameDir::FullPath, "\\");
 
 		Commands::sdr_version({});
 
-		Msg
-		(
-			"SDR: Current game: %s\n",
-			ModuleGameDir::GameName
-		);
+		Msg("SDR: Current game: %s\n", ModuleGameDir::GameName);
 
 		avcodec_register_all();
 		av_register_all();
@@ -536,60 +483,18 @@ namespace
 
 		try
 		{
-			CreateInterface
-			(
-				interfacefactory,
-				VENGINE_CLIENT_INTERFACE_VERSION,
-				Interfaces.EngineClient
-			);
-		}
+			CreateInterface(interfacefactory, VENGINE_CLIENT_INTERFACE_VERSION, Interfaces.EngineClient);
 
-		catch (const char* name)
-		{
-			Warning
-			(
-				"SDR: Failed to get the \"%s\" interface\n",
-				name
-			);
-
-			return false;
-		}
-
-		try
-		{
-			SDR::Setup
-			(
-				ModuleGameDir::FullPath,
-				ModuleGameDir::GameName
-			);
-		}
-
-		catch (bool status)
-		{
-			return false;
-		}
-
-		try
-		{
+			SDR::Setup(ModuleGameDir::FullPath, ModuleGameDir::GameName);
 			SDR::CallPluginStartupFunctions();
 		}
 
-		catch (const char* name)
+		catch (const SDR::Error::Exception& error)
 		{
-			Warning
-			(
-				"SDR: Setup procedure \"%s\" failed\n",
-				name
-			);
-
 			return false;
 		}
 
-		Msg
-		(
-			"SDR: Source Demo Render loaded\n"
-		);
-
+		ConColorMsg(Color(88, 255, 39, 255), "SDR: Source Demo Render loaded\n");
 		return true;
 	}
 
