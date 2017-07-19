@@ -1817,7 +1817,7 @@ namespace
 					if (_strcmpi(newstr, preset) == 0)
 					{
 						Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
-						return;
+						break;
 					}
 				}
 			}
