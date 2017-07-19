@@ -6,21 +6,49 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
-#define NOATOM
+
+/*
+	Order like in Windows.h
+*/
+
 #define NOGDICAPMASKS
-#define NOMETAFILE
-#define NOBITMAP
-#define NOMINMAX
-#define NOOPENFILE
-#define NORASTEROPS
-#define NOSCROLL
-#define NOSOUND
+#define NOVIRTUALKEYCODES
+//#define NOWINMESSAGES
+#define NOWINSTYLES
 #define NOSYSMETRICS
+#define NOMENUS
+#define NOICONS
+#define NOKEYSTATES
+#define NOSYSCOMMANDS
+#define NORASTEROPS
+#define NOSHOWWINDOW
+#define OEMRESOURCE
+#define NOATOM
+#define NOCLIPBOARD
+#define NOCOLOR
+//#define NOCTLMGR
+#define NODRAWTEXT
+//#define NOGDI
+#define NOKERNEL
+//#define NOUSER
+#define NONLS
+#define NOMB
+#define NOMEMMGR
+#define NOMETAFILE
+#define NOMINMAX
+//#define NOMSG
+#define NOOPENFILE
+#define NOSCROLL
+#define NOSERVICE
+#define NOSOUND
 #define NOTEXTMETRIC
 #define NOWH
+#define NOWINOFFSETS
 #define NOCOMM
 #define NOKANJI
-#define NOCRYPT
+#define NOHELP
+#define NOPROFILER
+#define NODEFERWINDOWPOS
 #define NOMCX
 
 #include <Windows.h>
