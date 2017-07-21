@@ -33,7 +33,7 @@ Example of supported video containers:
 * `startmovie test.mov`
 * `startmovie test.mkv`
 
-The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase memory usage and file size.
+The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size.
 
 ## General commands
 
