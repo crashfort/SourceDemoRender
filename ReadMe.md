@@ -19,7 +19,7 @@ You can use the ``.cfg`` files that comes with SDR as a base where to add your o
 * `exec sdr_load_mp` - For multiplayer games
 * `exec sdr_load_sp` - For singleplayer games
 
-The plugin can be loaded at the main menu or in demo playback, but must be before any call to `startmovie`.
+The plugin can be loaded at the main menu or in demo playback, but must be before any call to `startmovie`. It's required to unload SDR after you are done recording a particular map as the state does not carry over between demos.
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
