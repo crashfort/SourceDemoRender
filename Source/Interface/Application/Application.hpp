@@ -17,11 +17,7 @@ namespace SDR
 
 	struct PluginStartupFunctionAdder
 	{
-		PluginStartupFunctionAdder
-		(
-			const char* name,
-			StartupFuncData::FuncType function
-		)
+		PluginStartupFunctionAdder(const char* name, StartupFuncData::FuncType function)
 		{
 			StartupFuncData data;
 			data.Name = name;
@@ -73,10 +69,7 @@ namespace SDR
 	template <typename... Types>
 	constexpr auto CreateAdders(Types&&... types)
 	{
-		return std::array<ModuleHandlerAdder, sizeof...(Types)>
-		{
-			{ std::forward<Types>(types)... }
-		};
+		return std::array<ModuleHandlerAdder, sizeof...(Types)>{{std::forward<Types>(types)...}};
 	}
 
 	struct ModuleInformation
@@ -85,13 +78,7 @@ namespace SDR
 		{
 			MODULEINFO info;
 			
-			K32GetModuleInformation
-			(
-				GetCurrentProcess(),
-				GetModuleHandleA(name),
-				&info,
-				sizeof(info)
-			);
+			K32GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(name), &info, sizeof(info));
 
 			MemoryBase = info.lpBaseOfDll;
 			MemorySize = info.SizeOfImage;
