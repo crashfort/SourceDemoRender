@@ -24,7 +24,7 @@ The plugin can be loaded at the main menu or in demo playback, but must be befor
 **You need to launch with -insecure for Source to be able to load plugins.**
 
 ## Instructions
-When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. **Do not exit the game until you see a gren message that says the movie is completed.**
+When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. **Do not exit the game until you see a green message that says the movie is completed.**
 
 Example of supported video containers:
 
