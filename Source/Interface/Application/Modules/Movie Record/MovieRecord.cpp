@@ -785,7 +785,8 @@ namespace
 								the flags for the texture needs to be RENDER_TARGET which I guess the previous function didn't set.
 								MSDN also mentions an non-existent SHADER_RESOURCE flag which seems safe to omit.
 
-								This change was first made in https://github.com/crashfort/SourceDemoRender/commit/eaabd701ce413cc372aeabe57755ce37e4bf741c
+								This change was first made in:
+								https://github.com/crashfort/SourceDemoRender/commit/eaabd701ce413cc372aeabe57755ce37e4bf741c
 							*/
 							device->CreateTexture
 							(
