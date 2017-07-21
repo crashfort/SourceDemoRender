@@ -2011,6 +2011,11 @@ namespace
 						);
 					}
 
+					/*
+						Destroy any deferred D3D11 resources created by above functions.
+					*/
+					movie.VideoStreamShared.DirectX11.Context->Flush();
+
 					for (auto& stream : tempstreams)
 					{
 						auto name = BuildVideoStreamName(sdrpath, filename, stream.get());
