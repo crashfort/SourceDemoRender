@@ -230,7 +230,6 @@ namespace
 	{
 		const char* Names[] =
 		{
-			"ViewRender",
 			"PushYUV",
 			"PushRGB",
 			"Encode",
@@ -240,7 +239,6 @@ namespace
 		{
 			enum Type
 			{
-				ViewRender,
 				PushYUV,
 				PushRGB,
 				Encode,
@@ -778,22 +776,41 @@ namespace
 						(
 							/*
 								Once shared with D3D11, it is interpreted as
-								DXGI_FORMAT_B8G8R8A8_UNORM
+								DXGI_FORMAT_B8G8R8A8_UNORM.
+
+								Previously "CreateOffscreenPlainSurface" but that function
+								produced black output for some users.
+								
+								According to MSDN (https://msdn.microsoft.com/en-us/library/windows/desktop/ff476531(v=vs.85).aspx)
+								the flags for the texture needs to be RENDER_TARGET which I guess the previous function didn't set.
+								MSDN also mentions an non-existent SHADER_RESOURCE flag which seems safe to omit.
+
+								This change was first made in:
+								https://github.com/crashfort/SourceDemoRender/commit/eaabd701ce413cc372aeabe57755ce37e4bf741c
 							*/
-							device->CreateOffscreenPlainSurface
+							device->CreateTexture
 							(
 								width,
 								height,
+								1,
+								D3DUSAGE_RENDERTARGET,
 								D3DFMT_A8R8G8B8,
 								D3DPOOL_DEFAULT,
-								Surface.GetAddressOf(),
+								Texture.GetAddressOf(),
 								&SharedHandle
 							),
-							"Could not create D3D9 shared surface"
+							"Could not create D3D9 shared texture"
+						);
+
+						SDR::Error::MS::ThrowIfFailed
+						(
+							Texture->GetSurfaceLevel(0, Surface.GetAddressOf()),
+							"Could not get D3D9 surface from texture"
 						);
 					}
 
 					HANDLE SharedHandle = nullptr;
+					Microsoft::WRL::ComPtr<IDirect3DTexture9> Texture;
 					Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 				};
 
@@ -1145,33 +1162,41 @@ namespace
 
 					struct ConversionRuleData
 					{
+						using FactoryType = std::function<std::unique_ptr<ConversionBase>()>;
+
 						ConversionRuleData
 						(
 							AVPixelFormat format,
 							const char* shader,
-							bool yuv
+							const FactoryType& factory
 						) :
 							Format(format),
 							ShaderName(shader),
-							IsYUV(yuv)
+							Factory(factory)
 						{
 
 						}
 
 						AVPixelFormat Format;
 						const char* ShaderName;
-						bool IsYUV;
+						FactoryType Factory;
+					};
+
+					auto yuvfactory = []()
+					{
+						return std::make_unique<ConversionYUV>();
+					};
+
+					auto bgr0factory = []()
+					{
+						return std::make_unique<ConversionBGR0>();
 					};
 
 					ConversionRuleData table[] =
 					{
-						ConversionRuleData(AV_PIX_FMT_YUV420P, "YUV420", true),
-						ConversionRuleData(AV_PIX_FMT_YUV444P, "YUV444", true),
-
-						/*
-							libx264rgb
-						*/
-						ConversionRuleData(AV_PIX_FMT_BGR0, "BGR0", false),
+						ConversionRuleData(AV_PIX_FMT_YUV420P, "YUV420", yuvfactory),
+						ConversionRuleData(AV_PIX_FMT_YUV444P, "YUV444", yuvfactory),
+						ConversionRuleData(AV_PIX_FMT_BGR0, "BGR0", bgr0factory),
 					};
 
 					ConversionRuleData* found = nullptr;
@@ -1180,8 +1205,6 @@ namespace
 					{
 						if (entry.Format == reference->format)
 						{
-							OpenShader(device, entry.ShaderName, ConversionShader.GetAddressOf());
-
 							found = &entry;
 							break;
 						}
@@ -1193,16 +1216,9 @@ namespace
 						SDR::Error::Make("No conversion rule found for %s", name);
 					}
 
-					if (found->IsYUV)
-					{
-						ConversionPtr = std::make_unique<ConversionYUV>();
-					}
+					OpenShader(device, found->ShaderName, ConversionShader.GetAddressOf());
 
-					else
-					{
-						ConversionPtr = std::make_unique<ConversionBGR0>();
-					}
-
+					ConversionPtr = found->Factory();
 					ConversionPtr->Create(device, reference);
 				}
 
@@ -1649,6 +1665,10 @@ namespace
 
 			if (dopasses)
 			{
+				/*
+					Don't risk running out of memory. Just let the encoding
+					finish so we start fresh with no buffered frames.
+				*/
 				if (MovieData::WouldNewFrameOverflow())
 				{
 					while (BufferedFrames)
@@ -1656,8 +1676,6 @@ namespace
 						std::this_thread::sleep_for(1ms);
 					}
 				}
-
-				Profile::ScopedEntry e1(Profile::Types::ViewRender);
 
 				auto& stream = movie.VideoStreams[0];
 
@@ -1818,7 +1836,7 @@ namespace
 					if (_strcmpi(newstr, preset) == 0)
 					{
 						Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
-						return;
+						break;
 					}
 				}
 			}
@@ -1992,6 +2010,11 @@ namespace
 							stream->Video.Frame.Get()
 						);
 					}
+
+					/*
+						Destroy any deferred D3D11 resources created by above functions.
+					*/
+					movie.VideoStreamShared.DirectX11.Context->Flush();
 
 					for (auto& stream : tempstreams)
 					{

@@ -86,12 +86,6 @@
     <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Latency Remove\LatencyRemove.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Player Hide\PlayerHide.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Sampling.hlsl" />
