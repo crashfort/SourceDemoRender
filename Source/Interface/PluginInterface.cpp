@@ -41,79 +41,26 @@ namespace
 	class SourceDemoRenderPlugin final : public IServerPluginCallbacks
 	{
 	public:
-		virtual bool Load
-		(
-			CreateInterfaceFn interfacefactory,
-			CreateInterfaceFn gameserverfactory
-		) override;
+		virtual bool Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) override;
+		virtual void Unload() override;
 
-		virtual void Unload
-		(
-
-		) override;
-
-		virtual void Pause
-		(
-
-		) override {}
-
-		virtual void UnPause
-		(
-
-		) override {}
+		virtual void Pause() override {}
+		virtual void UnPause() override {}
 
 		virtual const char* GetPluginDescription() override
 		{
 			return "Source Demo Render";
 		}
 
-		virtual void LevelInit
-		(
-			char const* mapname
-		) override {}
-
-		virtual void ServerActivate
-		(
-			edict_t* edictlist,
-			int edictcount,
-			int maxclients
-		) override {}
-
-		virtual void GameFrame
-		(
-			bool simulating
-		) override {}
-
-		virtual void LevelShutdown
-		(
-
-		) override {}
-
-		virtual void ClientActive
-		(
-			edict_t* entity
-		) override {}
-
-		virtual void ClientDisconnect
-		(
-			edict_t* entity
-		) override {}
-		
-		virtual void ClientPutInServer
-		(
-			edict_t* entity,
-			char const* playername
-		) override {}
-
-		virtual void SetCommandClient
-		(
-			int index
-		) override {}
-
-		virtual void ClientSettingsChanged
-		(
-			edict_t* entity
-		) override {}
+		virtual void LevelInit(char const* mapname) override {}
+		virtual void ServerActivate(edict_t* edictlist, int edictcount, int maxclients) override {}
+		virtual void GameFrame(bool simulating ) override {}
+		virtual void LevelShutdown() override {}
+		virtual void ClientActive(edict_t* entity) override {}
+		virtual void ClientDisconnect(edict_t* entity) override {}		
+		virtual void ClientPutInServer(edict_t* entity, char const* playername) override {}
+		virtual void SetCommandClient(int index) override {}
+		virtual void ClientSettingsChanged(edict_t* entity) override {}
 
 		virtual PLUGIN_RESULT ClientConnect
 		(
@@ -128,20 +75,12 @@ namespace
 			return PLUGIN_CONTINUE;
 		}
 
-		virtual PLUGIN_RESULT ClientCommand
-		(
-			edict_t* entity,
-			const CCommand& args
-		) override
+		virtual PLUGIN_RESULT ClientCommand(edict_t* entity, const CCommand& args) override
 		{
 			return PLUGIN_CONTINUE;
 		}
 
-		virtual PLUGIN_RESULT NetworkIDValidated
-		(
-			const char* username,
-			const char* networkid
-		) override
+		virtual PLUGIN_RESULT NetworkIDValidated(const char* username, const char* networkid) override
 		{
 			return PLUGIN_CONTINUE;
 		}
@@ -151,19 +90,12 @@ namespace
 			QueryCvarCookie_t cookie,
 			edict_t* playerentity,
 			EQueryCvarValueStatus status,
-			const char *cvarname,
-			const char *cvarvalue
+			const char* cvarname,
+			const char* cvarvalue
 		) override {}
 
-		virtual void OnEdictAllocated
-		(
-			edict_t* entity
-		) override {}
-
-		virtual void OnEdictFreed
-		(
-			const edict_t* entity
-		) override {}
+		virtual void OnEdictAllocated(edict_t* entity) override {}
+		virtual void OnEdictFreed(const edict_t* entity) override {}
 
 		enum
 		{
@@ -446,11 +378,7 @@ namespace
 		outptr = ptr;
 	}
 
-	bool SourceDemoRenderPlugin::Load
-	(
-		CreateInterfaceFn interfacefactory,
-		CreateInterfaceFn gameserverfactory
-	)
+	bool SourceDemoRenderPlugin::Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory)
 	{
 		try
 		{
