@@ -183,14 +183,6 @@ namespace SDR
 
 			return true;
 		}
-
-		inline void Verify(void* address, const char* module, const char* name)
-		{
-			if (!address)
-			{
-				Error::Make("SDR: Could not enable module \"%s\"\n", name);
-			}
-		}
 	}
 
 	template <typename FuncType>

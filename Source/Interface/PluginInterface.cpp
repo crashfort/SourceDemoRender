@@ -25,13 +25,20 @@ namespace
 
 		void Set()
 		{
+			/*
+				Assume that this pattern will always exist.
+				It's deep in the engine that probably will never be changed anyway.
+			*/
 			auto patternstr = "55 8B EC 8B 45 08 85 C0 74 11 FF 75 0C 68 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 0C 5D C3";
 			auto pattern = SDR::GetPatternFromString(patternstr);
 
 			auto address = SDR::GetAddressFromPattern("engine.dll", pattern);
 			SDR::ModuleShared::SetFromAddress(GetGameDir, address);
 
-			SDR::ModuleShared::Verify(GetGameDir, "engine.dll", "GetGameDir");
+			if (!GetGameDir)
+			{
+				SDR::Error::Make("Could not find current game name");
+			}
 		}
 	}
 }
