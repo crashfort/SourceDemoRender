@@ -9,7 +9,7 @@ Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is r
 ## Installing
 SDR comes in separate singleplayer and multiplayer versions which will only work with whatever SDK the game was built with. `SourceDemoRender.Multiplayer.dll` is for games such as Counter-Strike: Source and `SourceDemoRender.Singleplayer.dll` targets for example Half-Life 2.
 
-The DLL of either SP or MP variant should go in the root game directory. Examples:
+The content of the archive should go in the root game directory. Examples:
 
 * steamapps\common\Counter-Strike Source\cstrike\
 * steamapps\common\Half-Life 2\hl2\
