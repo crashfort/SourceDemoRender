@@ -776,22 +776,40 @@ namespace
 						(
 							/*
 								Once shared with D3D11, it is interpreted as
-								DXGI_FORMAT_B8G8R8A8_UNORM
+								DXGI_FORMAT_B8G8R8A8_UNORM.
+
+								Previously "CreateOffscreenPlainSurface" but that function
+								produced black output for some users.
+								
+								According to MSDN (https://msdn.microsoft.com/en-us/library/windows/desktop/ff476531(v=vs.85).aspx)
+								the flags for the texture needs to be RENDER_TARGET which I guess the previous function didn't set.
+								MSDN also mentions an non-existent SHADER_RESOURCE flag which seems safe to omit.
+
+								This change was first made in https://github.com/crashfort/SourceDemoRender/commit/eaabd701ce413cc372aeabe57755ce37e4bf741c
 							*/
-							device->CreateOffscreenPlainSurface
+							device->CreateTexture
 							(
 								width,
 								height,
+								1,
+								D3DUSAGE_RENDERTARGET,
 								D3DFMT_A8R8G8B8,
 								D3DPOOL_DEFAULT,
-								Surface.GetAddressOf(),
+								Texture.GetAddressOf(),
 								&SharedHandle
 							),
-							"Could not create D3D9 shared surface"
+							"Could not create D3D9 shared texture"
+						);
+
+						SDR::Error::MS::ThrowIfFailed
+						(
+							Texture->GetSurfaceLevel(0, Surface.GetAddressOf()),
+							"Could not get D3D9 surface from texture"
 						);
 					}
 
 					HANDLE SharedHandle = nullptr;
+					Microsoft::WRL::ComPtr<IDirect3DTexture9> Texture;
 					Microsoft::WRL::ComPtr<IDirect3DSurface9> Surface;
 				};
 
