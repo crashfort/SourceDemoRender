@@ -1681,16 +1681,7 @@ namespace
 	{
 		#pragma region Init
 
-		void __cdecl Override
-		(
-			const char* filename,
-			int flags,
-			int width,
-			int height,
-			float framerate,
-			int jpegquality,
-			int unk
-		);
+		void __cdecl Override(const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -1810,16 +1801,7 @@ namespace
 		/*
 			The 7th parameter (unk) was been added in Source 2013, it's not there in Source 2007.
 		*/
-		void __cdecl Override
-		(
-			const char* filename,
-			int flags,
-			int width,
-			int height,
-			float framerate,
-			int jpegquality,
-			int unk
-		)
+		void __cdecl Override(const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk)
 		{
 			CurrentMovie = {};
 
