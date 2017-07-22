@@ -69,7 +69,7 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 	<tr>
 		<td>sdr_outputdir</td>
 		<td>
-			Path where to save the video. The directory structure will be created if it doesn't already exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the game root.
+			Path where to save the video. The directory structure must exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the game root.
 		</td>
 	</tr>
 	<tr>
