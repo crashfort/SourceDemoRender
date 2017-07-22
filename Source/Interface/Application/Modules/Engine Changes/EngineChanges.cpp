@@ -82,8 +82,7 @@ namespace
 		#pragma endregion
 
 		/*
-			This is needed because it's responsible
-			for locking the mouse inside the window
+			This is needed because it's responsible for locking the mouse inside the window.
 		*/
 		void __cdecl Override()
 		{
@@ -97,15 +96,15 @@ namespace
 	namespace ModuleAppActivate
 	{
 		/*
-			Structure from Source 2007
+			Structure from Source 2007.
 		*/
 		struct InputEvent_t
 		{
-			int m_nType; // Type of the event (see InputEventType_t)
-			int m_nTick; // Tick on which the event occurred
-			int m_nData; // Generic 32-bit data, what it contains depends on the event
-			int m_nData2; // Generic 32-bit data, what it contains depends on the event
-			int m_nData3; // Generic 32-bit data, what it contains depends on the event
+			int m_nType;
+			int m_nTick;
+			int m_nData;
+			int m_nData2;
+			int m_nData3;
 		};
 
 		#pragma region Init
@@ -139,7 +138,7 @@ namespace
 				EngineFocusData.IsUnfocused = event.m_nData == 0;
 
 				/*
-					52 is the offset of m_bActiveApp in CGame
+					52 is the offset of m_bActiveApp in CGame.
 				*/
 				auto& isactiveapp = *(bool*)((char*)(thisptr) + 52);
 

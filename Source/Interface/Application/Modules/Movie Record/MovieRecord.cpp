@@ -15,7 +15,7 @@ extern "C"
 #include <ppltasks.h>
 
 /*
-	For WAVE related things
+	For WAVE related things.
 */
 #include <mmsystem.h>
 
@@ -209,14 +209,13 @@ namespace
 					989 max limit according to
 					https://developer.valvesoftware.com/wiki/Developer_Console_Control#Printing_to_the_console
 
-					960 to keep in a 32 byte alignment
+					960 to keep in a 32 byte alignment.
 				*/
 				char buf[960];
 				vsprintf_s(buf, fmt, vl);
 
 				/*
-					Not formatting the buffer to a string will create
-					a runtime error on any float conversion
+					Not formatting the buffer to a string will create a runtime error on any float conversion.
 				*/
 				Msg("%s", buf);
 			}
@@ -453,7 +452,7 @@ namespace
 		LAV::ScopedFormatContext FormatContext;
 		
 		/*
-			This gets freed when FormatContext gets destroyed
+			This gets freed when FormatContext gets destroyed.
 		*/
 		AVCodecContext* CodecContext;
 		AVCodec* Encoder = nullptr;
@@ -461,7 +460,7 @@ namespace
 		LAV::ScopedAVFrame Frame;
 
 		/*
-			Incremented and written to for every sent frame
+			Incremented for every sent frame.
 		*/
 		int64_t PresentationIndex = 0;
 	};
@@ -631,8 +630,7 @@ namespace
 		}
 
 		/*
-			This structure is sent to the encoder thread
-			from the capture thread
+			This structure is sent to the encoder thread from the capture thread.
 		*/
 		struct VideoFutureData
 		{
@@ -641,7 +639,7 @@ namespace
 		};
 
 		/*
-			A lock-free producer/consumer queue
+			A lock-free producer/consumer queue.
 		*/
 		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureData>;
 
@@ -675,7 +673,7 @@ namespace
 					);
 
 					/*
-						Divisors must match number of threads in SharedAll.hlsl
+						Divisors must match number of threads in SharedAll.hlsl.
 					*/
 					GroupsX = std::ceil(width / 8.0);
 					GroupsY = std::ceil(height / 8.0);
@@ -738,8 +736,7 @@ namespace
 				int GroupsY;
 
 				/*
-					Contains the current video frame dimensions. Will always be
-					bound at slot 0.
+					Contains the current video frame dimensions. Will always be bound at slot 0.
 				*/
 				Microsoft::WRL::ComPtr<ID3D11Buffer> SharedConstantBuffer;
 
@@ -757,8 +754,7 @@ namespace
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ClearShader;
 
 				/*
-					When no sampling is enabled, this shader just takes the
-					game backbuffer texture and puts it into WorkBuffer.
+					When no sampling is enabled, this shader just takes the game backbuffer texture and puts it into WorkBuffer.
 				*/
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> PassShader;
 			} DirectX11;
@@ -821,8 +817,7 @@ namespace
 
 				/*
 					This is the surface that we draw on to.
-					It is shared with a DirectX 11 texture so we can run it through
-					shaders.
+					It is shared with a DirectX 11 texture so we can run it through shaders.
 				*/
 				SharedSurfaceData SharedSurface;
 			} DirectX9;
@@ -839,12 +834,12 @@ namespace
 					virtual void Create(ID3D11Device* device, AVFrame* reference) = 0;
 
 					/*
-						States that need update every frame
+						States that need update every frame.
 					*/
 					virtual void DynamicBind(ID3D11DeviceContext* context) = 0;
 
 					/*
-						Try to retrieve data to CPU after an operation
+						Try to retrieve data to CPU after an operation.
 					*/
 					virtual bool Download(ID3D11DeviceContext* context, VideoFutureData& item) = 0;
 				};
@@ -889,8 +884,7 @@ namespace
 						}
 
 						/*
-							Other method only requires a single buffer that can be
-							read by the CPU and written by the GPU.
+							Other method only requires a single buffer that can be read by the CPU and written by the GPU.
 						*/
 						else
 						{
@@ -1112,7 +1106,7 @@ namespace
 
 					{
 						/*
-							As seen in SharedAll.hlsl
+							As seen in SharedAll.hlsl.
 						*/
 						struct WorkBufferData
 						{
@@ -1400,8 +1394,7 @@ namespace
 			SDRVideoWriter Video;
 
 			/*
-				Skip first frame as it will alwys be black
-				when capturing the engine backbuffer.
+				Skip first frame as it will alwys be black when capturing the engine backbuffer.
 			*/
 			bool FirstFrame = true;
 
@@ -1537,7 +1530,7 @@ namespace
 			}
 
 			/*
-				The DX11 texture now contains this data
+				The DX11 texture now contains this data.
 			*/
 			hr = ModuleSourceGlobals::DX9Device->StretchRect
 			(
@@ -1582,8 +1575,7 @@ namespace
 			};
 
 			/*
-				When enough frames have been sampled to form a total weight of 1,
-				it will print the final frame.
+				When enough frames have been sampled to form a total weight of 1, it will print the final frame.
 			*/
 			if (sampling.Enabled)
 			{
@@ -1666,8 +1658,7 @@ namespace
 			if (dopasses)
 			{
 				/*
-					Don't risk running out of memory. Just let the encoding
-					finish so we start fresh with no buffered frames.
+					Don't risk running out of memory. Just let the encoding finish so we start fresh with no buffered frames.
 				*/
 				if (MovieData::WouldNewFrameOverflow())
 				{
@@ -1824,8 +1815,7 @@ namespace
 		}
 
 		/*
-			The 7th parameter (unk) was been added in Source 2013,
-			it's not there in Source 2007
+			The 7th parameter (unk) was been added in Source 2013, it's not there in Source 2007.
 		*/
 		void __cdecl Override
 		(
@@ -1849,7 +1839,7 @@ namespace
 				auto sdrpath = Variables::OutputDirectory.GetString();
 
 				/*
-					No desired path, use game root
+					No desired path, use game root.
 				*/
 				if (strlen(sdrpath) == 0)
 				{
@@ -1932,17 +1922,12 @@ namespace
 					linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat);
 
 					/*
-						User selected pixel format does not match any in config
+						User selected pixel format does not match any in config.
 					*/
 					if (pxformat == AV_PIX_FMT_NONE)
 					{
 						pxformat = vidconfig->PixelFormats[0].second;
 					}
-
-					/*
-						Not setting this will leave different colors across
-						multiple programs
-					*/
 
 					auto isrgbtype = [](AVPixelFormat format)
 					{
@@ -2024,8 +2009,7 @@ namespace
 						if (intra)
 						{
 							/*
-								Setting every frame as a keyframe
-								gives the ability to use the video in a video editor with ease
+								Setting every frame as a keyframe gives the ability to use the video in a video editor with ease.
 							*/
 							options.Set("x264-params", "keyint=1");
 						}
@@ -2038,7 +2022,7 @@ namespace
 				}
 
 				/*
-					All went well, move state over
+					All went well, move state over.
 				*/
 				movie.VideoStreams = std::move(tempstreams);
 			}
@@ -2050,8 +2034,7 @@ namespace
 			}
 
 			/*
-				Don't call the original CL_StartMovie as it causes
-				major recording slowdowns
+				Don't call the original CL_StartMovie as it causes major recording slowdowns.
 			*/
 
 			auto fps = Variables::Video::Framerate.GetInt();
@@ -2078,12 +2061,12 @@ namespace
 			movie.OldMatQueueModeValue = matqueuemode.GetInt();
 			
 			/*
-				Force single threaded processing or else there will be flickering
+				Force single threaded processing or else there will be flickering.
 			*/
 			matqueuemode.SetValue(0);
 
 			/*
-				Make room for some entries in the queues
+				Make room for some entries in the queues.
 			*/
 			movie.VideoQueue = std::make_unique<MovieData::VideoQueueType>(256);
 
@@ -2121,7 +2104,7 @@ namespace
 		#pragma endregion
 
 		/*
-			This command is overriden to remove the incorrect description
+			This command is overriden to remove the incorrect description.
 		*/
 		void __cdecl Override(const CCommand& args)
 		{
@@ -2191,8 +2174,7 @@ namespace
 			CurrentMovie.IsStarted = false;
 
 			/*
-				Don't call original function as we don't
-				call the engine's startmovie
+				Don't call original function as we don't call the engine's startmovie.
 			*/
 
 			ConVarRef hostframerate("host_framerate");
@@ -2208,7 +2190,7 @@ namespace
 				SDR_TryJoinFrameThread();
 
 				/*
-					Let the encoders finish all the delayed frames
+					Let the encoders finish all the delayed frames.
 				*/
 				for (auto& stream : CurrentMovie.VideoStreams)
 				{
@@ -2299,7 +2281,7 @@ namespace
 		#pragma endregion
 
 		/*
-			Always allow ending movie
+			Always allow ending movie.
 		*/
 		void __cdecl Override(const CCommand& args)
 		{

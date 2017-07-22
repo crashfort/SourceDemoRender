@@ -11,7 +11,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	float3 pix = WorkBuffer[index].Color;
 
 	/*
-		FFMpeg frames are flipped
+		FFMpeg frames are flipped.
 	*/
 	int yuvposy = Dimensions.y - pos.y - 1;
 
@@ -21,7 +21,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	if ((pos.x & 1) == 0 && (pos.y & 1) == 0)
 	{
 		/*
-			Average the 4 pixel values for better results
+			Average the 4 pixel values for better results.
 		*/
 		float3 topright;
 		float3 botleft;

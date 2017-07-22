@@ -195,7 +195,7 @@ namespace
 				[](web::http::http_response&& response)
 				{
 					/*
-						Content is only text, so extract it raw
+						Content is only text, so extract it raw.
 					*/
 					auto string = response.extract_utf8string(true).get();
 
@@ -248,7 +248,7 @@ namespace
 					}
 
 					/*
-						Content is only text, so extract it raw
+						Content is only text, so extract it raw.
 					*/
 					auto string = response.extract_utf8string(true).get();
 

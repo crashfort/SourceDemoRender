@@ -8,7 +8,7 @@
 #define VC_EXTRALEAN
 
 /*
-	Order like in Windows.h
+	Order like in Windows.h.
 */
 
 #define NOGDICAPMASKS
@@ -113,7 +113,7 @@ namespace SDR::Error
 	}
 
 	/*
-		For use with unrecoverable errors
+		For use with unrecoverable errors.
 	*/
 	template <typename... Args>
 	inline Exception Make(const char* format, Args&&... args)
@@ -126,7 +126,7 @@ namespace SDR::Error
 	}
 
 	/*
-		For use with unrecoverable errors
+		For use with unrecoverable errors.
 	*/
 	template <typename... Args>
 	inline void ThrowIfNull(const void* ptr, const char* format, Args&&... args)
@@ -140,7 +140,7 @@ namespace SDR::Error
 	namespace LAV
 	{
 		/*
-			For use with unrecoverable errors
+			For use with unrecoverable errors.
 		*/
 		template <typename... Args>
 		inline void ThrowIfFailed(int code, const char* format, Args&&... args)
@@ -155,7 +155,7 @@ namespace SDR::Error
 	namespace MS
 	{
 		/*
-			For use with unrecoverable errors
+			For use with unrecoverable errors.
 		*/
 		template <typename... Args>
 		inline void ThrowIfFailed(HRESULT hr, const char* format, Args&&... args)

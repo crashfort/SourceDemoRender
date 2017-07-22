@@ -239,7 +239,7 @@ namespace SDR
 			if (addrmod)
 			{
 				/*
-					Increment for any extra instructions
+					Increment for any extra instructions.
 				*/
 				addrmod += offset;
 			}
@@ -256,7 +256,7 @@ namespace SDR
 	};
 
 	/*
-		First byte at target address should be E8
+		First byte at target address should be E8.
 	*/
 	struct RelativeJumpFunctionFinder
 	{
@@ -265,7 +265,7 @@ namespace SDR
 			auto addrmod = static_cast<uint8_t*>(address);
 
 			/*
-				Skip the E8 byte
+				Skip the E8 byte.
 			*/
 			addrmod += sizeof(uint8_t);
 
@@ -278,7 +278,7 @@ namespace SDR
 			addrmod += sizeof(uintptr_t);
 
 			/*
-				Do the jump, address will now be the target function
+				Do the jump, address will now be the target function.
 			*/
 			addrmod += offset;
 
