@@ -1848,9 +1848,11 @@ namespace
 						if (_strcmpi(key, entry.first) == 0)
 						{
 							variable = entry.second;
-							break;
+							return true;
 						}
 					}
+
+					return false;
 				};
 
 				struct VideoConfigurationData
@@ -1897,13 +1899,11 @@ namespace
 
 					auto pxformatstr = Variables::Video::PixelFormat.GetString();
 
-					linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat);
-
-					/*
-						User selected pixel format does not match any in config.
-					*/
-					if (pxformat == AV_PIX_FMT_NONE)
+					if (!linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat))
 					{
+						/*
+							User selected pixel format does not match any in config.
+						*/
 						pxformat = vidconfig->PixelFormats[0].second;
 					}
 
