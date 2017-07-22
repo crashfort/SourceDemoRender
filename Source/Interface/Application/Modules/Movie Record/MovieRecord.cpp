@@ -140,14 +140,7 @@ namespace
 				}
 			}
 
-			void Assign
-			(
-				int width,
-				int height,
-				AVPixelFormat format,
-				AVColorSpace colorspace,
-				AVColorRange colorrange
-			)
+			void Assign(int width, int height, AVPixelFormat format, AVColorSpace colorspace, AVColorRange colorrange)
 			{
 				Frame = av_frame_alloc();
 
