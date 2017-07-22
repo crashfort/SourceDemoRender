@@ -1906,8 +1906,8 @@ namespace
 
 				VideoConfigurationData table[] =
 				{
-					VideoConfigurationData("libx264", { i420, i444 }),
-					VideoConfigurationData("libx264rgb", { bgr0 }),
+					VideoConfigurationData("libx264", {i420, i444}),
+					VideoConfigurationData("libx264rgb", {bgr0}),
 				};
 
 				const VideoConfigurationData* vidconfig = nullptr;
