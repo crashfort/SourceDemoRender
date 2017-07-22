@@ -1726,40 +1726,21 @@ namespace
 
 		#pragma endregion
 
-		void CreateOutputDirectory(const char* path)
+		void VerifyOutputDirectory(const char* path)
 		{
 			char final[1024];
 			strcpy_s(final, path);
 
 			V_AppendSlash(final, sizeof(final));
 
-			auto res = SHCreateDirectoryExA(nullptr, final, nullptr);
+			auto res = PathFileExistsA(final) == 1;
 
-			switch (res)
+			if (!res)
 			{
-				case ERROR_SUCCESS:
-				case ERROR_ALREADY_EXISTS:
-				case ERROR_FILE_EXISTS:
-				{
-					break;
-				}
+				auto error = GetLastError();
+				auto hr = HRESULT_FROM_WIN32(error);
 
-				case ERROR_BAD_PATHNAME:
-				case ERROR_PATH_NOT_FOUND:
-				case ERROR_FILENAME_EXCED_RANGE:
-				{
-					SDR::Error::Make("Movie output path is invalid");
-				}
-
-				case ERROR_CANCELLED:
-				{
-					SDR::Error::Make("Extra directories were created but are hidden, aborting");
-				}
-
-				default:
-				{
-					SDR::Error::Make("Some unknown error happened when starting movie, related to sdr_outputdir");
-				}
+				SDR::Error::MS::ThrowIfFailed(hr, "Could not access wanted output directory");
 			}
 		}
 
@@ -1877,7 +1858,7 @@ namespace
 
 				else
 				{
-					CreateOutputDirectory(sdrpath);
+					VerifyOutputDirectory(sdrpath);
 				}
 
 				auto colorspace = AVCOL_SPC_BT470BG;

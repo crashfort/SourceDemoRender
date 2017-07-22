@@ -53,7 +53,7 @@
 
 #include <Windows.h>
 #include <Psapi.h>
-#include <ShlObj.h>
+#include <Shlwapi.h>
 #include <comdef.h>
 
 #include <wrl.h>
