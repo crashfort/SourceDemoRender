@@ -1826,6 +1826,9 @@ namespace
 					VerifyOutputDirectory(sdrpath);
 				}
 
+				/*
+					Use 601 space and partial range.
+				*/
 				auto colorspace = AVCOL_SPC_BT470BG;
 				auto colorrange = AVCOL_RANGE_MPEG;
 				auto pxformat = AV_PIX_FMT_NONE;
