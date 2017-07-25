@@ -22,7 +22,7 @@ CC=cl ./configure \
 --disable-sdl2 \
 --disable-securetransport \
 --disable-xlib \
---enable-zlib \
+--disable-zlib \
 --enable-muxer=mp4 \
 --enable-muxer=avi \
 --enable-muxer=matroska \
