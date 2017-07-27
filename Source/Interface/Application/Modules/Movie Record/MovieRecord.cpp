@@ -1436,11 +1436,6 @@ namespace
 			*/
 			bool FirstFrame = true;
 
-			virtual const char* GetSuffix() const
-			{
-				return nullptr;
-			}
-
 			struct
 			{
 				double Remainder = 0;
@@ -1763,28 +1758,8 @@ namespace
 		{
 			char finalname[2048];
 			char finalfilename[1024];
-			char extension[64];
 
-			auto suffix = stream->GetSuffix();
-
-			if (suffix)
-			{
-				auto ptr = V_GetFileExtension(filename);
-				strcpy_s(extension, ptr);
-
-				V_StripExtension(filename, finalfilename, sizeof(finalfilename));
-
-				strcat_s(finalfilename, "_");
-				strcat_s(finalfilename, suffix);
-
-				strcat_s(finalfilename, ".");
-				strcat_s(finalfilename, extension);
-			}
-
-			else
-			{
-				strcpy_s(finalfilename, filename);
-			}
+			strcpy_s(finalfilename, filename);
 
 			V_ComposeFileName(savepath, finalfilename, finalname, sizeof(finalname));
 
