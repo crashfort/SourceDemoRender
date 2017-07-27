@@ -35,6 +35,33 @@ Example of supported video containers:
 
 The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size. Some video editors are not capable of opening libx264rgb encoded videos or MKV containers.
 
+## Guide
+
+SDR can output in YUV420, YUV444 and BGR0 formats with x264. Color space can be `601` or `709`, for YUV video the color range is `full`.
+
+### Vegas Pro
+
+This video editor cannot open:
+* YUV444 or RGB video - *Use YUV420 or workaround for RGB below*
+* MKV containers - *Use MP4*
+* Vegas Pro 14: AVI containers with YUV video - *Use MP4*
+* Vegas Pro 14: `CRF 0` with `ultrafast` - *Use higher CRF or slower preset*
+
+If you wish to open an RGB video you have to do a workaround:
+
+* Get [ffmpeg](https://ffmpeg.org/)
+* Run `.\ffmpeg.exe -i .\input.mp4 -vcodec huffyuv -pix_fmt rgb24 output.avi`
+* Above will create a VFW compatible file that [VirtualDub](http://virtualdub.org/) can open
+* Save with optional lossless encoder (not Lagarith) or uncompressed and open in Vegas Pro
+
+If you just use YUV420 you have to use the `709` color space. If you also want to render using `x264vfw`, you have to set these advanced parameters to not lose any color:
+
+`--colormatrix=bt709 --transfer=bt709 --colorprim=bt709 --range=pc`
+
+### Adobe Premiere
+
+This video editor can open `libx264rgb` videos natively which is the recommended way as there are no possibilities of color loss. If you want to use YUV video you should use the `601` color space.
+
 ## General commands
 
 <table>
@@ -69,7 +96,7 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 	<tr>
 		<td>sdr_outputdir</td>
 		<td>
-			Path where to save the video. The directory structure will be created if it doesn't already exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the game root.
+			Path where to save the video. The directory structure must exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the game root.
 		</td>
 	</tr>
 	<tr>
@@ -201,6 +228,15 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
 			<br/><br/>
             <b>Values:</b> 0 or 1 <br/>
             <b>Default:</b> 1 <br/>
+		</td>
+	</tr>
+	<tr>
+		<td>sdr_movie_encoder_colorspace</td>
+		<td>
+			YUV color space. This value is handled differently in media, try experimenting. Not available in RGB video.
+			<br/><br/>
+            <b>Values:</b> 601 or 709 <br/>
+            <b>Default:</b> 709 <br/>
 		</td>
 	</tr>
 	</tbody>

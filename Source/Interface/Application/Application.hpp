@@ -17,11 +17,7 @@ namespace SDR
 
 	struct PluginStartupFunctionAdder
 	{
-		PluginStartupFunctionAdder
-		(
-			const char* name,
-			StartupFuncData::FuncType function
-		)
+		PluginStartupFunctionAdder(const char* name, StartupFuncData::FuncType function)
 		{
 			StartupFuncData data;
 			data.Name = name;
@@ -73,10 +69,7 @@ namespace SDR
 	template <typename... Types>
 	constexpr auto CreateAdders(Types&&... types)
 	{
-		return std::array<ModuleHandlerAdder, sizeof...(Types)>
-		{
-			{ std::forward<Types>(types)... }
-		};
+		return std::array<ModuleHandlerAdder, sizeof...(Types)>{{std::forward<Types>(types)...}};
 	}
 
 	struct ModuleInformation
@@ -85,13 +78,7 @@ namespace SDR
 		{
 			MODULEINFO info;
 			
-			K32GetModuleInformation
-			(
-				GetCurrentProcess(),
-				GetModuleHandleA(name),
-				&info,
-				sizeof(info)
-			);
+			K32GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(name), &info, sizeof(info));
 
 			MemoryBase = info.lpBaseOfDll;
 			MemorySize = info.SizeOfImage;
@@ -196,14 +183,6 @@ namespace SDR
 
 			return true;
 		}
-
-		inline void Verify(void* address, const char* module, const char* name)
-		{
-			if (!address)
-			{
-				Error::Make("SDR: Could not enable module \"%s\"\n", name);
-			}
-		}
 	}
 
 	template <typename FuncType>
@@ -260,7 +239,7 @@ namespace SDR
 			if (addrmod)
 			{
 				/*
-					Increment for any extra instructions
+					Increment for any extra instructions.
 				*/
 				addrmod += offset;
 			}
@@ -277,7 +256,7 @@ namespace SDR
 	};
 
 	/*
-		First byte at target address should be E8
+		First byte at target address should be E8.
 	*/
 	struct RelativeJumpFunctionFinder
 	{
@@ -286,7 +265,7 @@ namespace SDR
 			auto addrmod = static_cast<uint8_t*>(address);
 
 			/*
-				Skip the E8 byte
+				Skip the E8 byte.
 			*/
 			addrmod += sizeof(uint8_t);
 
@@ -299,7 +278,7 @@ namespace SDR
 			addrmod += sizeof(uintptr_t);
 
 			/*
-				Do the jump, address will now be the target function
+				Do the jump, address will now be the target function.
 			*/
 			addrmod += offset;
 

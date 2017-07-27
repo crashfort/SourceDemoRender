@@ -4,7 +4,7 @@ cbuffer SharedInputData : register(b0)
 };
 
 /*
-	Padding is required beacuse structured buffers are tightly packed
+	Padding is required beacuse structured buffers are tightly packed.
 */
 struct WorkBufferData
 {

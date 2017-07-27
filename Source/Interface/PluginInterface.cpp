@@ -25,13 +25,20 @@ namespace
 
 		void Set()
 		{
+			/*
+				Assume that this pattern will always exist.
+				It's deep in the engine that probably will never be changed anyway.
+			*/
 			auto patternstr = "55 8B EC 8B 45 08 85 C0 74 11 FF 75 0C 68 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 0C 5D C3";
 			auto pattern = SDR::GetPatternFromString(patternstr);
 
 			auto address = SDR::GetAddressFromPattern("engine.dll", pattern);
 			SDR::ModuleShared::SetFromAddress(GetGameDir, address);
 
-			SDR::ModuleShared::Verify(GetGameDir, "engine.dll", "GetGameDir");
+			if (!GetGameDir)
+			{
+				SDR::Error::Make("Could not find current game name");
+			}
 		}
 	}
 }
@@ -41,79 +48,26 @@ namespace
 	class SourceDemoRenderPlugin final : public IServerPluginCallbacks
 	{
 	public:
-		virtual bool Load
-		(
-			CreateInterfaceFn interfacefactory,
-			CreateInterfaceFn gameserverfactory
-		) override;
+		virtual bool Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) override;
+		virtual void Unload() override;
 
-		virtual void Unload
-		(
-
-		) override;
-
-		virtual void Pause
-		(
-
-		) override {}
-
-		virtual void UnPause
-		(
-
-		) override {}
+		virtual void Pause() override {}
+		virtual void UnPause() override {}
 
 		virtual const char* GetPluginDescription() override
 		{
 			return "Source Demo Render";
 		}
 
-		virtual void LevelInit
-		(
-			char const* mapname
-		) override {}
-
-		virtual void ServerActivate
-		(
-			edict_t* edictlist,
-			int edictcount,
-			int maxclients
-		) override {}
-
-		virtual void GameFrame
-		(
-			bool simulating
-		) override {}
-
-		virtual void LevelShutdown
-		(
-
-		) override {}
-
-		virtual void ClientActive
-		(
-			edict_t* entity
-		) override {}
-
-		virtual void ClientDisconnect
-		(
-			edict_t* entity
-		) override {}
-		
-		virtual void ClientPutInServer
-		(
-			edict_t* entity,
-			char const* playername
-		) override {}
-
-		virtual void SetCommandClient
-		(
-			int index
-		) override {}
-
-		virtual void ClientSettingsChanged
-		(
-			edict_t* entity
-		) override {}
+		virtual void LevelInit(char const* mapname) override {}
+		virtual void ServerActivate(edict_t* edictlist, int edictcount, int maxclients) override {}
+		virtual void GameFrame(bool simulating ) override {}
+		virtual void LevelShutdown() override {}
+		virtual void ClientActive(edict_t* entity) override {}
+		virtual void ClientDisconnect(edict_t* entity) override {}		
+		virtual void ClientPutInServer(edict_t* entity, char const* playername) override {}
+		virtual void SetCommandClient(int index) override {}
+		virtual void ClientSettingsChanged(edict_t* entity) override {}
 
 		virtual PLUGIN_RESULT ClientConnect
 		(
@@ -128,20 +82,12 @@ namespace
 			return PLUGIN_CONTINUE;
 		}
 
-		virtual PLUGIN_RESULT ClientCommand
-		(
-			edict_t* entity,
-			const CCommand& args
-		) override
+		virtual PLUGIN_RESULT ClientCommand(edict_t* entity, const CCommand& args) override
 		{
 			return PLUGIN_CONTINUE;
 		}
 
-		virtual PLUGIN_RESULT NetworkIDValidated
-		(
-			const char* username,
-			const char* networkid
-		) override
+		virtual PLUGIN_RESULT NetworkIDValidated(const char* username, const char* networkid) override
 		{
 			return PLUGIN_CONTINUE;
 		}
@@ -151,23 +97,16 @@ namespace
 			QueryCvarCookie_t cookie,
 			edict_t* playerentity,
 			EQueryCvarValueStatus status,
-			const char *cvarname,
-			const char *cvarvalue
+			const char* cvarname,
+			const char* cvarvalue
 		) override {}
 
-		virtual void OnEdictAllocated
-		(
-			edict_t* entity
-		) override {}
-
-		virtual void OnEdictFreed
-		(
-			const edict_t* entity
-		) override {}
+		virtual void OnEdictAllocated(edict_t* entity) override {}
+		virtual void OnEdictFreed(const edict_t* entity) override {}
 
 		enum
 		{
-			PluginVersion = 14,
+			PluginVersion = 15,
 		};
 	};
 
@@ -256,7 +195,7 @@ namespace
 				[](web::http::http_response&& response)
 				{
 					/*
-						Content is only text, so extract it raw
+						Content is only text, so extract it raw.
 					*/
 					auto string = response.extract_utf8string(true).get();
 
@@ -309,7 +248,7 @@ namespace
 					}
 
 					/*
-						Content is only text, so extract it raw
+						Content is only text, so extract it raw.
 					*/
 					auto string = response.extract_utf8string(true).get();
 
@@ -446,11 +385,7 @@ namespace
 		outptr = ptr;
 	}
 
-	bool SourceDemoRenderPlugin::Load
-	(
-		CreateInterfaceFn interfacefactory,
-		CreateInterfaceFn gameserverfactory
-	)
+	bool SourceDemoRenderPlugin::Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory)
 	{
 		try
 		{

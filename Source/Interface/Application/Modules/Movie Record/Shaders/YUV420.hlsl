@@ -11,17 +11,17 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	float3 pix = WorkBuffer[index].Color;
 
 	/*
-		FFMpeg frames are flipped
+		FFMpeg frames are flipped.
 	*/
 	int yuvposy = Dimensions.y - pos.y - 1;
 
-	float y = 16 + pix.r * 65.481 + pix.g * 128.553 + pix.b * 24.966;
+	float y = Y_Full(pix);
 	ChannelY[(height - yuvposy - 1) * Strides[0] + pos.x] = round(y);
 
 	if ((pos.x & 1) == 0 && (pos.y & 1) == 0)
 	{
 		/*
-			Average the 4 pixel values for better results
+			Average the 4 pixel values for better results.
 		*/
 		float3 topright;
 		float3 botleft;
@@ -64,8 +64,8 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 
 		yuvposy = (height >> 1) - yuvposy - 1;
 
-		float u = 128 - pix.r * 37.797 - pix.g * 74.203 + pix.b * 112.0;
-		float v = 128 + pix.r * 112.0 - pix.g * 93.786 - pix.b * 18.214;
+		float u = U_Full(pix);
+		float v = V_Full(pix);
 
 		ChannelU[yuvposy * Strides[1] + pos.x] = round(u);
 		ChannelV[yuvposy * Strides[2] + pos.x] = round(v);

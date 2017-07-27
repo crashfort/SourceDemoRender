@@ -15,7 +15,7 @@ extern "C"
 #include <ppltasks.h>
 
 /*
-	For WAVE related things
+	For WAVE related things.
 */
 #include <mmsystem.h>
 
@@ -64,6 +64,7 @@ namespace
 		namespace Video
 		{
 			auto Framerate = MakeNumber("sdr_render_framerate", "60", 30, 1000);
+			auto ColorSpace = MakeString("sdr_movie_encoder_colorspace", "601");
 
 			namespace Sample
 			{
@@ -140,14 +141,7 @@ namespace
 				}
 			}
 
-			void Assign
-			(
-				int width,
-				int height,
-				AVPixelFormat format,
-				AVColorSpace colorspace,
-				AVColorRange colorrange
-			)
+			void Assign(int width, int height, AVPixelFormat format, AVColorSpace colorspace, AVColorRange colorrange)
 			{
 				Frame = av_frame_alloc();
 
@@ -209,14 +203,13 @@ namespace
 					989 max limit according to
 					https://developer.valvesoftware.com/wiki/Developer_Console_Control#Printing_to_the_console
 
-					960 to keep in a 32 byte alignment
+					960 to keep in a 32 byte alignment.
 				*/
 				char buf[960];
 				vsprintf_s(buf, fmt, vl);
 
 				/*
-					Not formatting the buffer to a string will create
-					a runtime error on any float conversion
+					Not formatting the buffer to a string will create a runtime error on any float conversion.
 				*/
 				Msg("%s", buf);
 			}
@@ -453,7 +446,7 @@ namespace
 		LAV::ScopedFormatContext FormatContext;
 		
 		/*
-			This gets freed when FormatContext gets destroyed
+			This gets freed when FormatContext gets destroyed.
 		*/
 		AVCodecContext* CodecContext;
 		AVCodec* Encoder = nullptr;
@@ -461,7 +454,7 @@ namespace
 		LAV::ScopedAVFrame Frame;
 
 		/*
-			Incremented and written to for every sent frame
+			Incremented for every sent frame.
 		*/
 		int64_t PresentationIndex = 0;
 	};
@@ -631,8 +624,7 @@ namespace
 		}
 
 		/*
-			This structure is sent to the encoder thread
-			from the capture thread
+			This structure is sent to the encoder thread from the capture thread.
 		*/
 		struct VideoFutureData
 		{
@@ -641,7 +633,7 @@ namespace
 		};
 
 		/*
-			A lock-free producer/consumer queue
+			A lock-free producer/consumer queue.
 		*/
 		using VideoQueueType = moodycamel::ReaderWriterQueue<VideoFutureData>;
 
@@ -675,7 +667,7 @@ namespace
 					);
 
 					/*
-						Divisors must match number of threads in SharedAll.hlsl
+						Divisors must match number of threads in SharedAll.hlsl.
 					*/
 					GroupsX = std::ceil(width / 8.0);
 					GroupsY = std::ceil(height / 8.0);
@@ -738,8 +730,7 @@ namespace
 				int GroupsY;
 
 				/*
-					Contains the current video frame dimensions. Will always be
-					bound at slot 0.
+					Contains the current video frame dimensions. Will always be bound at slot 0.
 				*/
 				Microsoft::WRL::ComPtr<ID3D11Buffer> SharedConstantBuffer;
 
@@ -757,8 +748,7 @@ namespace
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> ClearShader;
 
 				/*
-					When no sampling is enabled, this shader just takes the
-					game backbuffer texture and puts it into WorkBuffer.
+					When no sampling is enabled, this shader just takes the game backbuffer texture and puts it into WorkBuffer.
 				*/
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> PassShader;
 			} DirectX11;
@@ -821,8 +811,7 @@ namespace
 
 				/*
 					This is the surface that we draw on to.
-					It is shared with a DirectX 11 texture so we can run it through
-					shaders.
+					It is shared with a DirectX 11 texture so we can run it through shaders.
 				*/
 				SharedSurfaceData SharedSurface;
 			} DirectX9;
@@ -839,12 +828,12 @@ namespace
 					virtual void Create(ID3D11Device* device, AVFrame* reference) = 0;
 
 					/*
-						States that need update every frame
+						States that need update every frame.
 					*/
 					virtual void DynamicBind(ID3D11DeviceContext* context) = 0;
 
 					/*
-						Try to retrieve data to CPU after an operation
+						Try to retrieve data to CPU after an operation.
 					*/
 					virtual bool Download(ID3D11DeviceContext* context, VideoFutureData& item) = 0;
 				};
@@ -889,8 +878,7 @@ namespace
 						}
 
 						/*
-							Other method only requires a single buffer that can be
-							read by the CPU and written by the GPU.
+							Other method only requires a single buffer that can be read by the CPU and written by the GPU.
 						*/
 						else
 						{
@@ -1002,22 +990,61 @@ namespace
 						U.Create(device, DXGI_FORMAT_R8_UINT, sizeu, sizeu);
 						V.Create(device, DXGI_FORMAT_R8_UINT, sizev, sizev);
 
+						/*
+							Matches YUVInputData in YUVShared.hlsl.
+						*/
 						__declspec(align(16)) struct
 						{
 							int Strides[3];
-						} constantbufferdata;
+							int Padding1;
+							float CoeffY[3];
+							int Padding2;
+							float CoeffU[3];
+							int Padding3;
+							float CoeffV[3];
+						} yuvdata;
 
-						constantbufferdata.Strides[0] = reference->linesize[0];
-						constantbufferdata.Strides[1] = reference->linesize[1];
-						constantbufferdata.Strides[2] = reference->linesize[2];
+						yuvdata.Strides[0] = reference->linesize[0];
+						yuvdata.Strides[1] = reference->linesize[1];
+						yuvdata.Strides[2] = reference->linesize[2];
+
+						auto setcoeffs = [](auto& obj, float x, float y, float z)
+						{
+							obj[0] = x;
+							obj[1] = y;
+							obj[2] = z;
+						};
+
+						/*
+							https://msdn.microsoft.com/en-us/library/windows/desktop/ms698715.aspx
+						*/
+
+						if (reference->colorspace == AVCOL_PRI_BT470BG)
+						{
+							setcoeffs(yuvdata.CoeffY, +0.299000, +0.587000, +0.114000);
+							setcoeffs(yuvdata.CoeffU, -0.168736, -0.331264, +0.500000);
+							setcoeffs(yuvdata.CoeffV, +0.500000, -0.418688, -0.081312);
+						}
+
+						else if (reference->colorspace == AVCOL_PRI_BT709)
+						{
+							setcoeffs(yuvdata.CoeffY, +0.212600, +0.715200, +0.072200);
+							setcoeffs(yuvdata.CoeffU, -0.114572, -0.385428, +0.500000);
+							setcoeffs(yuvdata.CoeffV, +0.500000, -0.454153, -0.045847);
+						}
+
+						else
+						{
+							SDR::Error::Make("No matching YUV color space for coefficients");
+						}
 
 						D3D11_BUFFER_DESC cbufdesc = {};
-						cbufdesc.ByteWidth = sizeof(constantbufferdata);
+						cbufdesc.ByteWidth = sizeof(yuvdata);
 						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
 						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-						cbufsubdesc.pSysMem = &constantbufferdata;
+						cbufsubdesc.pSysMem = &yuvdata;
 
 						SDR::Error::MS::ThrowIfFailed
 						(
@@ -1112,7 +1139,7 @@ namespace
 
 					{
 						/*
-							As seen in SharedAll.hlsl
+							As seen in SharedAll.hlsl.
 						*/
 						struct WorkBufferData
 						{
@@ -1160,11 +1187,11 @@ namespace
 						);
 					}
 
-					struct ConversionRuleData
+					struct RuleData
 					{
 						using FactoryType = std::function<std::unique_ptr<ConversionBase>()>;
 
-						ConversionRuleData
+						RuleData
 						(
 							AVPixelFormat format,
 							const char* shader,
@@ -1175,6 +1202,11 @@ namespace
 							Factory(factory)
 						{
 
+						}
+
+						bool Matches(const AVFrame* ref) const
+						{
+							return ref->format == Format;
 						}
 
 						AVPixelFormat Format;
@@ -1192,18 +1224,18 @@ namespace
 						return std::make_unique<ConversionBGR0>();
 					};
 
-					ConversionRuleData table[] =
+					RuleData table[] =
 					{
-						ConversionRuleData(AV_PIX_FMT_YUV420P, "YUV420", yuvfactory),
-						ConversionRuleData(AV_PIX_FMT_YUV444P, "YUV444", yuvfactory),
-						ConversionRuleData(AV_PIX_FMT_BGR0, "BGR0", bgr0factory),
+						RuleData(AV_PIX_FMT_YUV420P, "YUV420", yuvfactory),
+						RuleData(AV_PIX_FMT_YUV444P, "YUV444", yuvfactory),
+						RuleData(AV_PIX_FMT_BGR0, "BGR0", bgr0factory),
 					};
 
-					ConversionRuleData* found = nullptr;
+					RuleData* found = nullptr;
 
 					for (auto&& entry : table)
 					{
-						if (entry.Format == reference->format)
+						if (entry.Matches(reference))
 						{
 							found = &entry;
 							break;
@@ -1400,8 +1432,7 @@ namespace
 			SDRVideoWriter Video;
 
 			/*
-				Skip first frame as it will alwys be black
-				when capturing the engine backbuffer.
+				Skip first frame as it will alwys be black when capturing the engine backbuffer.
 			*/
 			bool FirstFrame = true;
 
@@ -1537,7 +1568,7 @@ namespace
 			}
 
 			/*
-				The DX11 texture now contains this data
+				The DX11 texture now contains this data.
 			*/
 			hr = ModuleSourceGlobals::DX9Device->StretchRect
 			(
@@ -1582,8 +1613,7 @@ namespace
 			};
 
 			/*
-				When enough frames have been sampled to form a total weight of 1,
-				it will print the final frame.
+				When enough frames have been sampled to form a total weight of 1, it will print the final frame.
 			*/
 			if (sampling.Enabled)
 			{
@@ -1666,8 +1696,7 @@ namespace
 			if (dopasses)
 			{
 				/*
-					Don't risk running out of memory. Just let the encoding
-					finish so we start fresh with no buffered frames.
+					Don't risk running out of memory. Just let the encoding finish so we start fresh with no buffered frames.
 				*/
 				if (MovieData::WouldNewFrameOverflow())
 				{
@@ -1697,16 +1726,7 @@ namespace
 	{
 		#pragma region Init
 
-		void __cdecl Override
-		(
-			const char* filename,
-			int flags,
-			int width,
-			int height,
-			float framerate,
-			int jpegquality,
-			int unk
-		);
+		void __cdecl Override(const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk);
 
 		using ThisFunction = decltype(Override)*;
 
@@ -1726,40 +1746,21 @@ namespace
 
 		#pragma endregion
 
-		void CreateOutputDirectory(const char* path)
+		void VerifyOutputDirectory(const char* path)
 		{
 			char final[1024];
 			strcpy_s(final, path);
 
 			V_AppendSlash(final, sizeof(final));
 
-			auto res = SHCreateDirectoryExA(nullptr, final, nullptr);
+			auto res = PathFileExistsA(final) == 1;
 
-			switch (res)
+			if (!res)
 			{
-				case ERROR_SUCCESS:
-				case ERROR_ALREADY_EXISTS:
-				case ERROR_FILE_EXISTS:
-				{
-					break;
-				}
+				auto error = GetLastError();
+				auto hr = HRESULT_FROM_WIN32(error);
 
-				case ERROR_BAD_PATHNAME:
-				case ERROR_PATH_NOT_FOUND:
-				case ERROR_FILENAME_EXCED_RANGE:
-				{
-					SDR::Error::Make("Movie output path is invalid");
-				}
-
-				case ERROR_CANCELLED:
-				{
-					SDR::Error::Make("Extra directories were created but are hidden, aborting");
-				}
-
-				default:
-				{
-					SDR::Error::Make("Some unknown error happened when starting movie, related to sdr_outputdir");
-				}
+				SDR::Error::MS::ThrowIfFailed(hr, "Could not access wanted output directory");
 			}
 		}
 
@@ -1843,19 +1844,9 @@ namespace
 		}
 
 		/*
-			The 7th parameter (unk) was been added in Source 2013,
-			it's not there in Source 2007
+			The 7th parameter (unk) was been added in Source 2013, it's not there in Source 2007.
 		*/
-		void __cdecl Override
-		(
-			const char* filename,
-			int flags,
-			int width,
-			int height,
-			float framerate,
-			int jpegquality,
-			int unk
-		)
+		void __cdecl Override(const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk)
 		{
 			CurrentMovie = {};
 
@@ -1868,7 +1859,7 @@ namespace
 				auto sdrpath = Variables::OutputDirectory.GetString();
 
 				/*
-					No desired path, use game root
+					No desired path, use game root.
 				*/
 				if (strlen(sdrpath) == 0)
 				{
@@ -1877,20 +1868,8 @@ namespace
 
 				else
 				{
-					CreateOutputDirectory(sdrpath);
+					VerifyOutputDirectory(sdrpath);
 				}
-
-				auto colorspace = AVCOL_SPC_BT470BG;
-				auto colorrange = AVCOL_RANGE_MPEG;
-				auto pxformat = AV_PIX_FMT_NONE;
-				
-				movie.Width = width;
-				movie.Height = height;
-
-				av_log_set_callback(LAV::LogFunction);
-
-				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
-				tempstreams.emplace_back(std::make_unique<MovieData::VideoStreamBase>());
 
 				auto linktabletovariable = [](const char* key, const auto& table, auto& variable)
 				{
@@ -1899,10 +1878,37 @@ namespace
 						if (_strcmpi(key, entry.first) == 0)
 						{
 							variable = entry.second;
-							break;
+							return true;
 						}
 					}
+
+					return false;
 				};
+
+				/*
+					Default to 709 space and full range.
+				*/
+				auto colorspace = AVCOL_SPC_BT709;
+				auto colorrange = AVCOL_RANGE_JPEG;
+				auto pxformat = AV_PIX_FMT_NONE;
+
+				{
+					auto table =
+					{
+						std::make_pair("601", AVCOL_SPC_BT470BG),
+						std::make_pair("709", AVCOL_SPC_BT709)
+					};
+
+					linktabletovariable(Variables::Video::ColorSpace.GetString(), table, colorspace);
+				}
+				
+				movie.Width = width;
+				movie.Height = height;
+
+				av_log_set_callback(LAV::LogFunction);
+
+				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
+				tempstreams.emplace_back(std::make_unique<MovieData::VideoStreamBase>());
 
 				struct VideoConfigurationData
 				{
@@ -1925,8 +1931,8 @@ namespace
 
 				VideoConfigurationData table[] =
 				{
-					VideoConfigurationData("libx264", { i420, i444 }),
-					VideoConfigurationData("libx264rgb", { bgr0 }),
+					VideoConfigurationData("libx264", {i420, i444}),
+					VideoConfigurationData("libx264rgb", {bgr0}),
 				};
 
 				const VideoConfigurationData* vidconfig = nullptr;
@@ -1948,20 +1954,13 @@ namespace
 
 					auto pxformatstr = Variables::Video::PixelFormat.GetString();
 
-					linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat);
-
-					/*
-						User selected pixel format does not match any in config
-					*/
-					if (pxformat == AV_PIX_FMT_NONE)
+					if (!linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat))
 					{
+						/*
+							User selected pixel format does not match any in config.
+						*/
 						pxformat = vidconfig->PixelFormats[0].second;
 					}
-
-					/*
-						Not setting this will leave different colors across
-						multiple programs
-					*/
 
 					auto isrgbtype = [](AVPixelFormat format)
 					{
@@ -2043,8 +2042,7 @@ namespace
 						if (intra)
 						{
 							/*
-								Setting every frame as a keyframe
-								gives the ability to use the video in a video editor with ease
+								Setting every frame as a keyframe gives the ability to use the video in a video editor with ease.
 							*/
 							options.Set("x264-params", "keyint=1");
 						}
@@ -2057,7 +2055,7 @@ namespace
 				}
 
 				/*
-					All went well, move state over
+					All went well, move state over.
 				*/
 				movie.VideoStreams = std::move(tempstreams);
 			}
@@ -2069,8 +2067,7 @@ namespace
 			}
 
 			/*
-				Don't call the original CL_StartMovie as it causes
-				major recording slowdowns
+				Don't call the original CL_StartMovie as it causes major recording slowdowns.
 			*/
 
 			auto fps = Variables::Video::Framerate.GetInt();
@@ -2097,12 +2094,12 @@ namespace
 			movie.OldMatQueueModeValue = matqueuemode.GetInt();
 			
 			/*
-				Force single threaded processing or else there will be flickering
+				Force single threaded processing or else there will be flickering.
 			*/
 			matqueuemode.SetValue(0);
 
 			/*
-				Make room for some entries in the queues
+				Make room for some entries in the queues.
 			*/
 			movie.VideoQueue = std::make_unique<MovieData::VideoQueueType>(256);
 
@@ -2140,7 +2137,7 @@ namespace
 		#pragma endregion
 
 		/*
-			This command is overriden to remove the incorrect description
+			This command is overriden to remove the incorrect description.
 		*/
 		void __cdecl Override(const CCommand& args)
 		{
@@ -2210,8 +2207,7 @@ namespace
 			CurrentMovie.IsStarted = false;
 
 			/*
-				Don't call original function as we don't
-				call the engine's startmovie
+				Don't call original function as we don't call the engine's startmovie.
 			*/
 
 			ConVarRef hostframerate("host_framerate");
@@ -2227,7 +2223,7 @@ namespace
 				SDR_TryJoinFrameThread();
 
 				/*
-					Let the encoders finish all the delayed frames
+					Let the encoders finish all the delayed frames.
 				*/
 				for (auto& stream : CurrentMovie.VideoStreams)
 				{
@@ -2318,7 +2314,7 @@ namespace
 		#pragma endregion
 
 		/*
-			Always allow ending movie
+			Always allow ending movie.
 		*/
 		void __cdecl Override(const CCommand& args)
 		{

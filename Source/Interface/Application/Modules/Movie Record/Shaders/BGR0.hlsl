@@ -5,7 +5,7 @@ StructuredBuffer<WorkBufferData> WorkBuffer : register(t0);
 RWBuffer<uint> OutTexture : register(u0);
 
 /*
-	Parts from d3dx_dxgiformatconvert.inl
+	Parts from d3dx_dxgiformatconvert.inl.
 */
 
 inline float D3DX_Saturate_FLOAT(float _V)
@@ -39,7 +39,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	uint2 pos = dtid.xy;
 
 	/*
-		FFMpeg frames are flipped
+		FFMpeg frames are flipped.
 	*/
 	pos.y = Dimensions.y - pos.y - 1;
 
