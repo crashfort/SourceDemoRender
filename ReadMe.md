@@ -44,8 +44,8 @@ SDR can output in YUV420, YUV444 and BGR0 formats with x264. Color space can be 
 This video editor cannot open:
 * YUV444 or RGB video
 * MKV containers
-* **Vegas Pro 14:** `CRF 0` with `ultrafast`
-* **Vegas Pro 14:** AVI containers with YUV video
+* Vegas Pro 14: `CRF 0` with `ultrafast`
+* Vegas Pro 14: AVI containers with YUV video
 
 If you wish to open an RGB video you have to do a workaround:
 
