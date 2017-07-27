@@ -996,8 +996,11 @@ namespace
 						__declspec(align(16)) struct
 						{
 							int Strides[3];
+							int Padding1;
 							float CoeffY[3];
+							int Padding2;
 							float CoeffU[3];
+							int Padding3;
 							float CoeffV[3];
 						} yuvdata;
 
@@ -1191,12 +1194,10 @@ namespace
 						RuleData
 						(
 							AVPixelFormat format,
-							AVColorSpace space,
 							const char* shader,
 							const FactoryType& factory
 						) :
 							Format(format),
-							Space(space),
 							ShaderName(shader),
 							Factory(factory)
 						{
@@ -1205,11 +1206,10 @@ namespace
 
 						bool Matches(const AVFrame* ref) const
 						{
-							return ref->format == Format && ref->colorspace == Space;
+							return ref->format == Format;
 						}
 
 						AVPixelFormat Format;
-						AVColorSpace Space;
 						const char* ShaderName;
 						FactoryType Factory;
 					};
@@ -1224,17 +1224,11 @@ namespace
 						return std::make_unique<ConversionBGR0>();
 					};
 
-					auto bt601 = AVCOL_SPC_BT470BG;
-					auto bt709 = AVCOL_SPC_BT709;
-
 					RuleData table[] =
 					{
-						RuleData(AV_PIX_FMT_YUV420P, bt601, "YUV420_601_FULL", yuvfactory),
-						RuleData(AV_PIX_FMT_YUV420P, bt709, "YUV420_709_FULL", yuvfactory),
-						RuleData(AV_PIX_FMT_YUV444P, bt601, "YUV444_601_FULL", yuvfactory),
-						RuleData(AV_PIX_FMT_YUV444P, bt709, "YUV444_709_FULL", yuvfactory),
-
-						RuleData(AV_PIX_FMT_BGR0, AVCOL_SPC_RGB, "BGR0", bgr0factory),
+						RuleData(AV_PIX_FMT_YUV420P, "YUV420", yuvfactory),
+						RuleData(AV_PIX_FMT_YUV444P, "YUV444", yuvfactory),
+						RuleData(AV_PIX_FMT_BGR0, "BGR0", bgr0factory),
 					};
 
 					RuleData* found = nullptr;
