@@ -1025,7 +1025,7 @@ namespace
 
 						else if (reference->colorspace == AVCOL_PRI_BT709)
 						{
-							setcoeffs(yuvdata.CoeffY, 0.212600, 0.212600, 0.212600);
+							setcoeffs(yuvdata.CoeffY, 0.212600, 0.715200, 0.072200);
 							setcoeffs(yuvdata.CoeffU, 0.114572, 0.385428, 0.500000);
 							setcoeffs(yuvdata.CoeffV, 0.500000, 0.454153, 0.045847);
 						}
