@@ -42,7 +42,7 @@ SDR can output in YUV420, YUV444 and BGR0 formats with x264. Color space can be 
 ### Vegas Pro
 
 This video editor cannot open:
-* YUV444 or RGB video
+* YUV444 or RGB video - *Use YUV420 or workaround for RGB below*
 * MKV containers - *Use MP4*
 * Vegas Pro 14: AVI containers with YUV video - *Use MP4*
 * Vegas Pro 14: `CRF 0` with `ultrafast` - *Use higher CRF or slower preset*
