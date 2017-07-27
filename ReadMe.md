@@ -48,7 +48,7 @@ This video editor cannot open YUV444 or RGB video or MKV containers. If you wish
 * Above will create a VFW compatible file that [VirtualDub](http://virtualdub.org/) can open
 * Save with optional lossless encoder (not Lagarith) or uncompressed and open in Vegas Pro
 
-If you just use YUV420 you have to use the 709 color space. If you also want to render using `x264vfw`, you have to set these advanced parameters to not lose any color:
+If you just use YUV420 you have to use the `709` color space. If you also want to render using `x264vfw`, you have to set these advanced parameters to not lose any color:
 
 `--colormatrix=bt709 --transfer=bt709 --colorprim=bt709 --range=pc`
 
