@@ -203,6 +203,15 @@ The default video encoder is ``libx264``. Other available is ``libx264rgb`` whic
             <b>Default:</b> 1 <br/>
 		</td>
 	</tr>
+	<tr>
+		<td>sdr_movie_encoder_colorspace</td>
+		<td>
+			YUV color space. This value is handled differently in media, try experimenting. Not available in RGB video.
+			<br/><br/>
+            <b>Values:</b> 601 or 709 <br/>
+            <b>Default:</b> 709 <br/>
+		</td>
+	</tr>
 	</tbody>
 </table>
 
