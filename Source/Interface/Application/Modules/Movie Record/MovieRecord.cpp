@@ -1018,16 +1018,16 @@ namespace
 
 						if (reference->colorspace == AVCOL_PRI_BT470BG)
 						{
-							setcoeffs(yuvdata.CoeffY, 0.299000, 0.587000, 0.114000);
-							setcoeffs(yuvdata.CoeffU, 0.168736, 0.331264, 0.500000);
-							setcoeffs(yuvdata.CoeffV, 0.500000, 0.418688, 0.081312);
+							setcoeffs(yuvdata.CoeffY, +0.299000, +0.587000, +0.114000);
+							setcoeffs(yuvdata.CoeffU, -0.168736, -0.331264, +0.500000);
+							setcoeffs(yuvdata.CoeffV, +0.500000, -0.418688, -0.081312);
 						}
 
 						else if (reference->colorspace == AVCOL_PRI_BT709)
 						{
-							setcoeffs(yuvdata.CoeffY, 0.212600, 0.715200, 0.072200);
-							setcoeffs(yuvdata.CoeffU, 0.114572, 0.385428, 0.500000);
-							setcoeffs(yuvdata.CoeffV, 0.500000, 0.454153, 0.045847);
+							setcoeffs(yuvdata.CoeffY, +0.212600, +0.715200, +0.072200);
+							setcoeffs(yuvdata.CoeffU, -0.114572, -0.385428, +0.500000);
+							setcoeffs(yuvdata.CoeffV, +0.500000, -0.454153, -0.045847);
 						}
 
 						else
