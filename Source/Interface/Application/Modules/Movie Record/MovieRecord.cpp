@@ -1441,16 +1441,6 @@ namespace
 				return nullptr;
 			}
 
-			virtual void PreRender()
-			{
-
-			}
-
-			virtual void PostRender()
-			{
-
-			}
-
 			struct
 			{
 				double Remainder = 0;
