@@ -64,6 +64,7 @@ namespace
 		namespace Video
 		{
 			auto Framerate = MakeNumber("sdr_render_framerate", "60", 30, 1000);
+			auto ColorSpace = MakeString("sdr_movie_encoder_colorspace", "601");
 
 			namespace Sample
 			{
@@ -989,22 +990,58 @@ namespace
 						U.Create(device, DXGI_FORMAT_R8_UINT, sizeu, sizeu);
 						V.Create(device, DXGI_FORMAT_R8_UINT, sizev, sizev);
 
+						/*
+							Matches YUVInputData in YUVShared.hlsl.
+						*/
 						__declspec(align(16)) struct
 						{
 							int Strides[3];
-						} constantbufferdata;
+							float CoeffY[3];
+							float CoeffU[3];
+							float CoeffV[3];
+						} yuvdata;
 
-						constantbufferdata.Strides[0] = reference->linesize[0];
-						constantbufferdata.Strides[1] = reference->linesize[1];
-						constantbufferdata.Strides[2] = reference->linesize[2];
+						yuvdata.Strides[0] = reference->linesize[0];
+						yuvdata.Strides[1] = reference->linesize[1];
+						yuvdata.Strides[2] = reference->linesize[2];
+
+						auto setcoeffs = [](auto& obj, float x, float y, float z)
+						{
+							obj[0] = x;
+							obj[1] = y;
+							obj[2] = z;
+						};
+
+						/*
+							https://msdn.microsoft.com/en-us/library/windows/desktop/ms698715.aspx
+						*/
+
+						if (reference->colorspace == AVCOL_PRI_BT470BG)
+						{
+							setcoeffs(yuvdata.CoeffY, 0.299000, 0.587000, 0.114000);
+							setcoeffs(yuvdata.CoeffU, 0.168736, 0.331264, 0.500000);
+							setcoeffs(yuvdata.CoeffV, 0.500000, 0.418688, 0.081312);
+						}
+
+						else if (reference->colorspace == AVCOL_PRI_BT709)
+						{
+							setcoeffs(yuvdata.CoeffY, 0.212600, 0.212600, 0.212600);
+							setcoeffs(yuvdata.CoeffU, 0.114572, 0.385428, 0.500000);
+							setcoeffs(yuvdata.CoeffV, 0.500000, 0.454153, 0.045847);
+						}
+
+						else
+						{
+							SDR::Error::Make("No matching YUV color space for coefficients");
+						}
 
 						D3D11_BUFFER_DESC cbufdesc = {};
-						cbufdesc.ByteWidth = sizeof(constantbufferdata);
+						cbufdesc.ByteWidth = sizeof(yuvdata);
 						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
 						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-						cbufsubdesc.pSysMem = &constantbufferdata;
+						cbufsubdesc.pSysMem = &yuvdata;
 
 						SDR::Error::MS::ThrowIfFailed
 						(
@@ -1147,24 +1184,32 @@ namespace
 						);
 					}
 
-					struct ConversionRuleData
+					struct RuleData
 					{
 						using FactoryType = std::function<std::unique_ptr<ConversionBase>()>;
 
-						ConversionRuleData
+						RuleData
 						(
 							AVPixelFormat format,
+							AVColorSpace space,
 							const char* shader,
 							const FactoryType& factory
 						) :
 							Format(format),
+							Space(space),
 							ShaderName(shader),
 							Factory(factory)
 						{
 
 						}
 
+						bool Matches(const AVFrame* ref) const
+						{
+							return ref->format == Format && ref->colorspace == Space;
+						}
+
 						AVPixelFormat Format;
+						AVColorSpace Space;
 						const char* ShaderName;
 						FactoryType Factory;
 					};
@@ -1179,18 +1224,24 @@ namespace
 						return std::make_unique<ConversionBGR0>();
 					};
 
-					ConversionRuleData table[] =
+					auto bt601 = AVCOL_SPC_BT470BG;
+					auto bt709 = AVCOL_SPC_BT709;
+
+					RuleData table[] =
 					{
-						ConversionRuleData(AV_PIX_FMT_YUV420P, "YUV420", yuvfactory),
-						ConversionRuleData(AV_PIX_FMT_YUV444P, "YUV444", yuvfactory),
-						ConversionRuleData(AV_PIX_FMT_BGR0, "BGR0", bgr0factory),
+						RuleData(AV_PIX_FMT_YUV420P, bt601, "YUV420_601_FULL", yuvfactory),
+						RuleData(AV_PIX_FMT_YUV420P, bt709, "YUV420_709_FULL", yuvfactory),
+						RuleData(AV_PIX_FMT_YUV444P, bt601, "YUV444_601_FULL", yuvfactory),
+						RuleData(AV_PIX_FMT_YUV444P, bt709, "YUV444_709_FULL", yuvfactory),
+
+						RuleData(AV_PIX_FMT_BGR0, AVCOL_SPC_RGB, "BGR0", bgr0factory),
 					};
 
-					ConversionRuleData* found = nullptr;
+					RuleData* found = nullptr;
 
 					for (auto&& entry : table)
 					{
-						if (entry.Format == reference->format)
+						if (entry.Matches(reference))
 						{
 							found = &entry;
 							break;
@@ -1826,21 +1877,6 @@ namespace
 					VerifyOutputDirectory(sdrpath);
 				}
 
-				/*
-					Use 601 space and partial range.
-				*/
-				auto colorspace = AVCOL_SPC_BT470BG;
-				auto colorrange = AVCOL_RANGE_MPEG;
-				auto pxformat = AV_PIX_FMT_NONE;
-				
-				movie.Width = width;
-				movie.Height = height;
-
-				av_log_set_callback(LAV::LogFunction);
-
-				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
-				tempstreams.emplace_back(std::make_unique<MovieData::VideoStreamBase>());
-
 				auto linktabletovariable = [](const char* key, const auto& table, auto& variable)
 				{
 					for (const auto& entry : table)
@@ -1854,6 +1890,31 @@ namespace
 
 					return false;
 				};
+
+				/*
+					Default to 709 space and full range.
+				*/
+				auto colorspace = AVCOL_SPC_BT709;
+				auto colorrange = AVCOL_RANGE_JPEG;
+				auto pxformat = AV_PIX_FMT_NONE;
+
+				{
+					auto table =
+					{
+						std::make_pair("601", AVCOL_SPC_BT470BG),
+						std::make_pair("709", AVCOL_SPC_BT709)
+					};
+
+					linktabletovariable(Variables::Video::ColorSpace.GetString(), table, colorspace);
+				}
+				
+				movie.Width = width;
+				movie.Height = height;
+
+				av_log_set_callback(LAV::LogFunction);
+
+				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
+				tempstreams.emplace_back(std::make_unique<MovieData::VideoStreamBase>());
 
 				struct VideoConfigurationData
 				{
