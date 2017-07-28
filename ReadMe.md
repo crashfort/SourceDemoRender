@@ -62,6 +62,10 @@ If you just use YUV420 you have to use the `709` color space. If you also want t
 
 This video editor can open `libx264rgb` videos natively which is the recommended way as there are no possibilities of color loss. If you want to use YUV video you should use the `601` color space.
 
+### Kdenlive
+
+This video editor can open everything SDR outputs and has detailed advanced settings for rendering.
+
 ## General commands
 
 <table>
