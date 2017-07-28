@@ -28,63 +28,35 @@ namespace
 {
 	namespace Variables
 	{
-		ConVar MakeBool(const char* name, const char* value)
-		{
-			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, 0, true, 1);
-		}
-
-		template <typename T>
-		ConVar MakeNumber(const char* name, const char* value, T min, T max)
-		{
-			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, min, true, max);
-		}
-
-		template <typename T>
-		ConVar MakeNumberWithString(const char* name, const char* value, T min, T max)
-		{
-			return ConVar(name, value, 0, "", true, min, true, max);
-		}
-
-		template <typename T>
-		ConVar MakeNumber(const char* name, const char* value, T min)
-		{
-			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, min, false, 0);
-		}
-
-		ConVar MakeString(const char* name, const char* value)
-		{
-			return ConVar(name, value, 0, "");
-		}
-
-		auto OutputDirectory = MakeString("sdr_outputdir", "");
-		auto FlashWindow = MakeBool("sdr_endmovieflash", "0");
-		auto ExitOnFinish = MakeBool("sdr_endmoviequit", "0");
-		auto SuppressLog = MakeBool("sdr_movie_suppresslog", "1");
+		auto OutputDirectory = SDR::Shared::MakeString("sdr_outputdir", "");
+		auto FlashWindow = SDR::Shared::MakeBool("sdr_endmovieflash", "0");
+		auto ExitOnFinish = SDR::Shared::MakeBool("sdr_endmoviequit", "0");
+		auto SuppressLog = SDR::Shared::MakeBool("sdr_movie_suppresslog", "1");
 
 		namespace Video
 		{
-			auto Framerate = MakeNumber("sdr_render_framerate", "60", 30, 1000);
-			auto ColorSpace = MakeString("sdr_movie_encoder_colorspace", "601");
+			auto Framerate = SDR::Shared::MakeNumber("sdr_render_framerate", "60", 30, 1000);
+			auto ColorSpace = SDR::Shared::MakeString("sdr_movie_encoder_colorspace", "601");
 
 			namespace Sample
 			{
-				auto Multiply = MakeNumber("sdr_sample_mult", "32", 0);
-				auto Exposure = MakeNumber("sdr_sample_exposure", "0.5", 0, 1);
+				auto Multiply = SDR::Shared::MakeNumber("sdr_sample_mult", "32", 0);
+				auto Exposure = SDR::Shared::MakeNumber("sdr_sample_exposure", "0.5", 0, 1);
 			}
 
-			auto Encoder = MakeString("sdr_movie_encoder", "libx264");
-			auto PixelFormat = MakeString("sdr_movie_encoder_pxformat", "");
+			auto Encoder = SDR::Shared::MakeString("sdr_movie_encoder", "libx264");
+			auto PixelFormat = SDR::Shared::MakeString("sdr_movie_encoder_pxformat", "");
 
 			namespace D3D11
 			{
-				auto Staging = MakeBool("sdr_d3d11_staging", "1");
+				auto Staging = SDR::Shared::MakeBool("sdr_d3d11_staging", "1");
 			}
 
 			namespace X264
 			{
-				auto CRF = MakeNumberWithString("sdr_x264_crf", "0", 0, 51);
-				auto Preset = MakeString("sdr_x264_preset", "ultrafast");
-				auto Intra = MakeBool("sdr_x264_intra", "1");
+				auto CRF = SDR::Shared::MakeNumberWithString("sdr_x264_crf", "0", 0, 51);
+				auto Preset = SDR::Shared::MakeString("sdr_x264_preset", "ultrafast");
+				auto Intra = SDR::Shared::MakeBool("sdr_x264_intra", "1");
 			}
 		}
 	}

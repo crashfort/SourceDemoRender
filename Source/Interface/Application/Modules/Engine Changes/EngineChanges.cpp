@@ -5,10 +5,7 @@ namespace
 {
 	namespace Variables
 	{
-		ConVar SuppressDebugLog
-		(
-			"sdr_game_suppressdebug", "1", 0, ""
-		);
+		auto SuppressDebugLog = SDR::Shared::MakeBool("sdr_game_suppressdebug", "1");
 	}
 
 	namespace ModuleOutputDebugString
