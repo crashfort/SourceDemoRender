@@ -28,63 +28,35 @@ namespace
 {
 	namespace Variables
 	{
-		ConVar MakeBool(const char* name, const char* value)
-		{
-			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, 0, true, 1);
-		}
-
-		template <typename T>
-		ConVar MakeNumber(const char* name, const char* value, T min, T max)
-		{
-			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, min, true, max);
-		}
-
-		template <typename T>
-		ConVar MakeNumberWithString(const char* name, const char* value, T min, T max)
-		{
-			return ConVar(name, value, 0, "", true, min, true, max);
-		}
-
-		template <typename T>
-		ConVar MakeNumber(const char* name, const char* value, T min)
-		{
-			return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, min, false, 0);
-		}
-
-		ConVar MakeString(const char* name, const char* value)
-		{
-			return ConVar(name, value, 0, "");
-		}
-
-		auto OutputDirectory = MakeString("sdr_outputdir", "");
-		auto FlashWindow = MakeBool("sdr_endmovieflash", "0");
-		auto ExitOnFinish = MakeBool("sdr_endmoviequit", "0");
-		auto SuppressLog = MakeBool("sdr_movie_suppresslog", "1");
+		auto OutputDirectory = SDR::Shared::MakeString("sdr_outputdir", "");
+		auto FlashWindow = SDR::Shared::MakeBool("sdr_endmovieflash", "0");
+		auto ExitOnFinish = SDR::Shared::MakeBool("sdr_endmoviequit", "0");
+		auto SuppressLog = SDR::Shared::MakeBool("sdr_movie_suppresslog", "1");
 
 		namespace Video
 		{
-			auto Framerate = MakeNumber("sdr_render_framerate", "60", 30, 1000);
-			auto ColorSpace = MakeString("sdr_movie_encoder_colorspace", "601");
+			auto Framerate = SDR::Shared::MakeNumber("sdr_render_framerate", "60", 30, 1000);
+			auto ColorSpace = SDR::Shared::MakeString("sdr_movie_encoder_colorspace", "709");
 
 			namespace Sample
 			{
-				auto Multiply = MakeNumber("sdr_sample_mult", "32", 0);
-				auto Exposure = MakeNumber("sdr_sample_exposure", "0.5", 0, 1);
+				auto Multiply = SDR::Shared::MakeNumber("sdr_sample_mult", "32", 0);
+				auto Exposure = SDR::Shared::MakeNumber("sdr_sample_exposure", "0.5", 0, 1);
 			}
 
-			auto Encoder = MakeString("sdr_movie_encoder", "libx264");
-			auto PixelFormat = MakeString("sdr_movie_encoder_pxformat", "");
+			auto Encoder = SDR::Shared::MakeString("sdr_movie_encoder", "libx264");
+			auto PixelFormat = SDR::Shared::MakeString("sdr_movie_encoder_pxformat", "");
 
 			namespace D3D11
 			{
-				auto Staging = MakeBool("sdr_d3d11_staging", "1");
+				auto Staging = SDR::Shared::MakeBool("sdr_d3d11_staging", "1");
 			}
 
 			namespace X264
 			{
-				auto CRF = MakeNumberWithString("sdr_x264_crf", "0", 0, 51);
-				auto Preset = MakeString("sdr_x264_preset", "ultrafast");
-				auto Intra = MakeBool("sdr_x264_intra", "1");
+				auto CRF = SDR::Shared::MakeNumberWithString("sdr_x264_crf", "0", 0, 51);
+				auto Preset = SDR::Shared::MakeString("sdr_x264_preset", "ultrafast");
+				auto Intra = SDR::Shared::MakeBool("sdr_x264_intra", "1");
 			}
 		}
 	}
@@ -688,21 +660,24 @@ namespace
 					}
 
 					{
+						/*
+							Matches SharedInputData in SharedAll.hlsl.
+						*/
 						__declspec(align(16)) struct
 						{
 							int Dimensions[2];
-						} constantbufferdata;
+						} cbufdata;
 
-						constantbufferdata.Dimensions[0] = width;
-						constantbufferdata.Dimensions[1] = height;
+						cbufdata.Dimensions[0] = width;
+						cbufdata.Dimensions[1] = height;
 
 						D3D11_BUFFER_DESC cbufdesc = {};
-						cbufdesc.ByteWidth = sizeof(constantbufferdata);
-						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+						cbufdesc.ByteWidth = sizeof(cbufdata);
+						cbufdesc.Usage = D3D11_USAGE_IMMUTABLE;
 						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-						cbufsubdesc.pSysMem = &constantbufferdata;
+						cbufsubdesc.pSysMem = &cbufdata;
 
 						SDR::Error::MS::ThrowIfFailed
 						(
@@ -1040,7 +1015,7 @@ namespace
 
 						D3D11_BUFFER_DESC cbufdesc = {};
 						cbufdesc.ByteWidth = sizeof(yuvdata);
-						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+						cbufdesc.Usage = D3D11_USAGE_IMMUTABLE;
 						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
@@ -1256,7 +1231,10 @@ namespace
 
 				void ResetShaderInputs(ID3D11DeviceContext* context)
 				{
-					const auto count = 4;
+					/*
+						At most, 3 slots are used for the YUV buffers.
+					*/
+					const auto count = 3;
 
 					ID3D11ShaderResourceView* srvs[count] = {};
 					ID3D11UnorderedAccessView* uavs[count] = {};
@@ -1435,21 +1413,6 @@ namespace
 				Skip first frame as it will alwys be black when capturing the engine backbuffer.
 			*/
 			bool FirstFrame = true;
-
-			virtual const char* GetSuffix() const
-			{
-				return nullptr;
-			}
-
-			virtual void PreRender()
-			{
-
-			}
-
-			virtual void PostRender()
-			{
-
-			}
 
 			struct
 			{
@@ -1773,28 +1736,8 @@ namespace
 		{
 			char finalname[2048];
 			char finalfilename[1024];
-			char extension[64];
 
-			auto suffix = stream->GetSuffix();
-
-			if (suffix)
-			{
-				auto ptr = V_GetFileExtension(filename);
-				strcpy_s(extension, ptr);
-
-				V_StripExtension(filename, finalfilename, sizeof(finalfilename));
-
-				strcat_s(finalfilename, "_");
-				strcat_s(finalfilename, suffix);
-
-				strcat_s(finalfilename, ".");
-				strcat_s(finalfilename, extension);
-			}
-
-			else
-			{
-				strcpy_s(finalfilename, filename);
-			}
+			strcpy_s(finalfilename, filename);
 
 			V_ComposeFileName(savepath, finalfilename, finalname, sizeof(finalname));
 
@@ -1995,12 +1938,7 @@ namespace
 
 					for (auto& stream : tempstreams)
 					{
-						stream->DirectX9.Create
-						(
-							ModuleSourceGlobals::DX9Device,
-							width,
-							height
-						);
+						stream->DirectX9.Create(ModuleSourceGlobals::DX9Device, width, height);
 
 						stream->DirectX11.Create
 						(

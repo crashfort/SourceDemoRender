@@ -104,12 +104,12 @@ namespace SDR::Error
 {
 	struct Exception
 	{
-		char Description[1024];
+		std::string Description;
 	};
 
 	inline void Print(const Exception& error)
 	{
-		Warning("SDR: %s\n", error.Description);
+		Warning("SDR: %s\n", error.Description.c_str());
 	}
 
 	/*
@@ -119,7 +119,11 @@ namespace SDR::Error
 	inline Exception Make(const char* format, Args&&... args)
 	{
 		Exception info;
-		sprintf_s(info.Description, format, std::forward<Args>(args)...);
+		
+		auto size = std::snprintf(nullptr, 0, format, std::forward<Args>(args)...);
+		info.Description.resize(size + 1);
+
+		std::snprintf(info.Description.data(), size + 1, format, std::forward<Args>(args)...);
 
 		Print(info);
 		throw info;
