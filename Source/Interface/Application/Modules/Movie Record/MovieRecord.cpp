@@ -670,7 +670,7 @@ namespace
 
 						D3D11_BUFFER_DESC cbufdesc = {};
 						cbufdesc.ByteWidth = sizeof(constantbufferdata);
-						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+						cbufdesc.Usage = D3D11_USAGE_IMMUTABLE;
 						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
@@ -1012,7 +1012,7 @@ namespace
 
 						D3D11_BUFFER_DESC cbufdesc = {};
 						cbufdesc.ByteWidth = sizeof(yuvdata);
-						cbufdesc.Usage = D3D11_USAGE_DEFAULT;
+						cbufdesc.Usage = D3D11_USAGE_IMMUTABLE;
 						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
