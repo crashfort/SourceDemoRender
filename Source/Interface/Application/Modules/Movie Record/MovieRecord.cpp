@@ -1935,12 +1935,7 @@ namespace
 
 					for (auto& stream : tempstreams)
 					{
-						stream->DirectX9.Create
-						(
-							ModuleSourceGlobals::DX9Device,
-							width,
-							height
-						);
+						stream->DirectX9.Create(ModuleSourceGlobals::DX9Device, width, height);
 
 						stream->DirectX11.Create
 						(
