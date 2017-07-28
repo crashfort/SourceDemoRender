@@ -36,7 +36,7 @@ namespace
 		namespace Video
 		{
 			auto Framerate = SDR::Shared::MakeNumber("sdr_render_framerate", "60", 30, 1000);
-			auto ColorSpace = SDR::Shared::MakeString("sdr_movie_encoder_colorspace", "601");
+			auto ColorSpace = SDR::Shared::MakeString("sdr_movie_encoder_colorspace", "709");
 
 			namespace Sample
 			{
