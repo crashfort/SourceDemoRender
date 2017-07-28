@@ -1231,7 +1231,10 @@ namespace
 
 				void ResetShaderInputs(ID3D11DeviceContext* context)
 				{
-					const auto count = 4;
+					/*
+						At most, 3 slots are used for the YUV buffers.
+					*/
+					const auto count = 3;
 
 					ID3D11ShaderResourceView* srvs[count] = {};
 					ID3D11UnorderedAccessView* uavs[count] = {};
