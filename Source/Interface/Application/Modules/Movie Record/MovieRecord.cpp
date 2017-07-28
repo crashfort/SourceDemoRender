@@ -660,21 +660,24 @@ namespace
 					}
 
 					{
+						/*
+							Matches SharedInputData in SharedAll.hlsl.
+						*/
 						__declspec(align(16)) struct
 						{
 							int Dimensions[2];
-						} constantbufferdata;
+						} cbufdata;
 
-						constantbufferdata.Dimensions[0] = width;
-						constantbufferdata.Dimensions[1] = height;
+						cbufdata.Dimensions[0] = width;
+						cbufdata.Dimensions[1] = height;
 
 						D3D11_BUFFER_DESC cbufdesc = {};
-						cbufdesc.ByteWidth = sizeof(constantbufferdata);
+						cbufdesc.ByteWidth = sizeof(cbufdata);
 						cbufdesc.Usage = D3D11_USAGE_IMMUTABLE;
 						cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 						D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-						cbufsubdesc.pSysMem = &constantbufferdata;
+						cbufsubdesc.pSysMem = &cbufdata;
 
 						SDR::Error::MS::ThrowIfFailed
 						(
