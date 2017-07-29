@@ -112,7 +112,7 @@ namespace SDR::Shared
 		}
 
 		template <typename... Args>
-		int WriteText(const char* format,Args&&... args)
+		int WriteText(const char* format, Args&&... args)
 		{
 			return fprintf_s(Get(), format, std::forward<Args>(args)...);
 		}
