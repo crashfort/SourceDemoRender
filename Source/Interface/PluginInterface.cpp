@@ -202,20 +202,19 @@ namespace
 					auto curversion = SourceDemoRenderPlugin::PluginVersion;
 					auto webversion = std::stoi(string);
 
+					auto green = Color(88, 255, 39, 255);
+					auto blue = Color(51, 167, 255, 255);
+
 					if (curversion == webversion)
 					{
-						ConColorMsg
-						(
-							Color(88, 255, 39, 255),
-							"SDR: Using the latest library version\n"
-						);
+						ConColorMsg(green, "SDR: Using the latest library version\n");
 					}
 
 					else if (curversion < webversion)
 					{
 						ConColorMsg
 						(
-							Color(51, 167, 255, 255),
+							blue,
 							"SDR: A library update is available: (%d -> %d).\n"
 							"Visit https://github.com/crashfort/SourceDemoRender/releases\n",
 							curversion,
@@ -230,135 +229,16 @@ namespace
 				}
 			);
 
-			auto gcreq = webrequest
-			(
-				L"/crashfort/SourceDemoRender/master/Version/GameConfigLatest",
-				[webrequest](web::http::http_response&& response)
-				{
-					int localversion;
-
-					try
-					{
-						localversion = GetGameConfigVersion();
-					}
-
-					catch (const SDR::Error::Exception& error)
-					{
-						localversion = 0;
-					}
-
-					/*
-						Content is only text, so extract it raw.
-					*/
-					auto string = response.extract_utf8string(true).get();
-
-					auto webversion = std::stoi(string);
-
-					if (localversion == webversion)
-					{
-						ConColorMsg
-						(
-							Color(88, 255, 39, 255),
-							"SDR: Using the latest game config\n"
-						);
-					}
-
-					else if (localversion < webversion)
-					{
-						ConColorMsg
-						(
-							Color(51, 167, 255, 255),
-							"SDR: A game config update is available: (%d -> %d), downloading\n",
-							localversion,
-							webversion
-						);
-
-						auto req = webrequest
-						(
-							L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
-							[webversion](web::http::http_response&& response)
-							{
-								using Status = SDR::Shared::ScopedFile::ExceptionType;
-
-								auto task = response.extract_utf8string(true);
-								auto json = task.get();
-
-								try
-								{
-									char path[1024];
-									strcpy_s(path, SDR::GetGamePath());
-									strcat_s(path, "SDR\\GameConfig.json");
-									
-									SDR::Shared::ScopedFile file(path, "wb");
-
-									file.WriteText(json.c_str());
-								}
-
-								catch (Status status)
-								{
-									Warning("SDR: Could not write GameConfig.json\n");
-									return;
-								}
-
-								try
-								{
-									char path[1024];
-									strcpy_s(path, SDR::GetGamePath());
-									strcat_s(path, "SDR\\GameConfigLatest");
-
-									SDR::Shared::ScopedFile file(path, "wb");
-
-									file.WriteText("%d", webversion);
-								}
-
-								catch (Status status)
-								{
-									Warning("SDR: Could not write GameConfigLatest\n");
-									return;
-								}
-
-								ConColorMsg
-								(
-									Color(88, 255, 39, 255),
-									"SDR: Game config download complete\n"
-								);
-							}
-						);
-
-						for (auto&& entry : {req})
-						{
-							try
-							{
-								entry.wait();
-							}
-
-							catch (const std::exception& error)
-							{
-								Msg("SDR: %s", error.what());
-							}
-						}
-					}
-
-					else if (localversion > webversion)
-					{
-						Msg("SDR: Local game config newer than update repository?\n");
-					}
-				}
-			);
-
-			return concurrency::create_task([libreq, gcreq]()
+			return concurrency::create_task([libreq]()
 			{
-				for (auto&& entry : {libreq, gcreq})
+				try
 				{
-					try
-					{
-						entry.wait();
-					}
+					libreq.wait();
+				}
 
-					catch (const std::exception& error)
-					{
-						Msg("SDR: %s", error.what());
-					}
+				catch (const std::exception& error)
+				{
+					Msg("SDR: %s", error.what());
 				}
 			});
 		}
