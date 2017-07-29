@@ -1,7 +1,7 @@
 # Source Demo Render
 The program can be downloaded [here](https://github.com/crashfort/SourceDemoRender/releases). Visit [here](https://twitch.streamlabs.com/crashfort/) if you wish to support the development.
 
-SDR is a multithreaded, hardware accelerated solution to create high quality movies for the Source engine.
+SDR offers the highest possible performance for recording movies by utilizing the GPU and all available threads. As opposed to other Source recording methods, SDR integrates itself into the engine and runs from the inside. Frames are kept on the GPU for processing which allows maximum performance. Many frames can be sampled together to form a good motion blur effect.
 
 ## Prerequisites
 Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_d3d11_staging**, Windows 8.1 or later is required.
