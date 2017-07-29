@@ -76,19 +76,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\</OutDir>
+    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
     <TargetName>$(ProjectName).Singleplayer</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\</OutDir>
+    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
     <TargetName>$(ProjectName).Multiplayer</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\</OutDir>
+    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
     <TargetName>$(ProjectName).Singleplayer</TargetName>
     <IncludePath>$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
@@ -96,7 +96,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\</OutDir>
+    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
     <TargetName>$(ProjectName).Multiplayer</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
