@@ -25,6 +25,7 @@ The content of the archive should go in the root game directory. Examples:
 
 * steamapps\common\Counter-Strike Source\cstrike\
 * steamapps\common\Half-Life 2\hl2\
+* steamapps\sourcemods\momentum\
 
 After you've extracted the archive you should navigate into the SDR directory and run the installer. It's not actually an installer, but it downloads the required game config data that is needed for game support.
 
