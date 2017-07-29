@@ -14,10 +14,10 @@ The content of the archive should go in the root game directory. Examples:
 * steamapps\common\Counter-Strike Source\cstrike\
 * steamapps\common\Half-Life 2\hl2\
 
-You can use the ``.cfg`` files that comes with SDR as a base where to add your own preferred settings. The loader files are the preferred way to load SDR. It is executed as follows:
+You can use the user ``.cfg`` files that comes with SDR as a base where to add your own settings. The loader files are the preferred way to load SDR. It is executed as follows:
 
-* `exec sdr_load_mp` - For multiplayer games
-* `exec sdr_load_sp` - For singleplayer games
+* `exec sdr_user_mp` - For multiplayer games
+* `exec sdr_user_sp` - For singleplayer games
 
 The plugin can be loaded at the main menu or in demo playback, but must be before any call to `startmovie`. It's required to unload SDR after you are done recording a particular map as the state does not carry over between demos.
 
