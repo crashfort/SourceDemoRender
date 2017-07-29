@@ -1,7 +1,19 @@
 # Source Demo Render
 The program can be downloaded [here](https://github.com/crashfort/SourceDemoRender/releases). Visit [here](https://twitch.streamlabs.com/crashfort/) if you wish to support the development.
 
-SDR is a multithreaded, hardware accelerated solution to create high quality movies for the Source engine.
+SDR offers the highest possible performance for recording movies by utilizing the GPU and all available threads. As opposed to other Source recording methods, SDR integrates itself into the engine and runs from the inside. Frames are kept on the GPU for processing which allows maximum performance. Many frames can be sampled together to form a good motion blur effect.
+
+## Is my game supported?
+Since games might need special setup, they have to be added manually. You can [request your game](https://github.com/crashfort/SourceDemoRender/issues) for it to be added.
+
+Games that are added:
+* Counter-Strike: Source
+* Half-Life 2
+* Team Fortress 2
+* Momentum
+
+Known games that don't work:
+* Garry's Mod - *No plugin_load support*
 
 ## Prerequisites
 Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_d3d11_staging**, Windows 8.1 or later is required.
@@ -19,7 +31,7 @@ You can use the user ``.cfg`` files that comes with SDR as a base where to add y
 * `exec sdr_user_mp` - For multiplayer games
 * `exec sdr_user_sp` - For singleplayer games
 
-The plugin can be loaded at the main menu or in demo playback, but must be before any call to `startmovie`. It's required to unload SDR after you are done recording a particular map as the state does not carry over between demos.
+The plugin can be loaded at the main menu or in demo playback, but must be before any call to `startmovie`. It's required to `exec sdr_unload` after you are done recording a particular map as the state does not carry over between demos.
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
@@ -33,7 +45,7 @@ Example of supported video containers:
 * `startmovie test.mov`
 * `startmovie test.mkv`
 
-The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size. Some video editors are not capable of opening libx264rgb encoded videos or MKV containers.
+The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size.
 
 ## Guide
 

@@ -89,5 +89,10 @@
 	"tf":
 	{
 		"Inherit": "cstrike"
+	},
+	
+	"momentum":
+	{
+		"Inherit": "cstrike"
 	}
 }
