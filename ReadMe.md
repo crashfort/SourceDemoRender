@@ -26,6 +26,8 @@ The content of the archive should go in the root game directory. Examples:
 * steamapps\common\Counter-Strike Source\cstrike\
 * steamapps\common\Half-Life 2\hl2\
 
+After you've extracted the archive you should navigate into the SDR directory and run the installer. It's not actually an installer, but it downloads the required game config data that is needed for game support.
+
 You can use the user ``.cfg`` files that comes with SDR as a base where to add your own settings. The loader files are the preferred way to load SDR. It is executed as follows:
 
 * `exec sdr_user_mp` - For multiplayer games
