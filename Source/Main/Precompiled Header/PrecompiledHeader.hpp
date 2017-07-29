@@ -83,7 +83,8 @@ using namespace std::chrono_literals;
 
 #include "valve_minmax_off.h"
 
-#include "Interface\Application\Shared\Shared.hpp"
+#include "Interface\Application\Modules\Shared\Shared.hpp"
+#include "Shared\File.hpp"
 
 #undef Verify
 

@@ -2,34 +2,6 @@
 
 namespace SDR::Shared
 {
-	inline ConVar MakeBool(const char* name, const char* value)
-	{
-		return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, 0, true, 1);
-	}
-
-	template <typename T>
-	inline ConVar MakeNumber(const char* name, const char* value, T min, T max)
-	{
-		return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, min, true, max);
-	}
-
-	template <typename T>
-	inline ConVar MakeNumberWithString(const char* name, const char* value, T min, T max)
-	{
-		return ConVar(name, value, 0, "", true, min, true, max);
-	}
-
-	template <typename T>
-	inline ConVar MakeNumber(const char* name, const char* value, T min)
-	{
-		return ConVar(name, value, FCVAR_NEVER_AS_STRING, "", true, min, false, 0);
-	}
-
-	inline ConVar MakeString(const char* name, const char* value)
-	{
-		return ConVar(name, value, 0, "");
-	}
-
 	struct ScopedFile
 	{
 		enum class ExceptionType
@@ -40,6 +12,11 @@ namespace SDR::Shared
 		ScopedFile() = default;
 
 		ScopedFile(const char* path, const char* mode)
+		{
+			Assign(path, mode);
+		}
+
+		ScopedFile(const wchar_t* path, const wchar_t* mode)
 		{
 			Assign(path, mode);
 		}
@@ -73,6 +50,18 @@ namespace SDR::Shared
 			Close();
 
 			Handle = fopen(path, mode);
+
+			if (!Handle)
+			{
+				throw ExceptionType::CouldNotOpenFile;
+			}
+		}
+
+		void Assign(const wchar_t* path, const wchar_t* mode)
+		{
+			Close();
+
+			Handle = _wfopen(path, mode);
 
 			if (!Handle)
 			{
@@ -123,7 +112,7 @@ namespace SDR::Shared
 		}
 
 		template <typename... Args>
-		int WriteText(const char* format,Args&&... args)
+		int WriteText(const char* format, Args&&... args)
 		{
 			return fprintf_s(Get(), format, std::forward<Args>(args)...);
 		}

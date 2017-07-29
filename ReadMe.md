@@ -25,6 +25,9 @@ The content of the archive should go in the root game directory. Examples:
 
 * steamapps\common\Counter-Strike Source\cstrike\
 * steamapps\common\Half-Life 2\hl2\
+* steamapps\sourcemods\momentum\
+
+After you've extracted the archive you should navigate into the SDR directory and run the updater. It downloads the required game config data that is needed for game support.
 
 You can use the user ``.cfg`` files that comes with SDR as a base where to add your own settings. The loader files are the preferred way to load SDR. It is executed as follows:
 
@@ -89,7 +92,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	<tr>
 		<td>sdr_update</td>
 		<td>
-			Check to see if there are any updates available. Library updates need to be manual but game configurations are updated automatically with this command.
+			Check to see if there are any updates available. Library updates need to be manual.
 		</td>
 	</tr>
 	<tr>

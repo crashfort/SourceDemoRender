@@ -75,28 +75,28 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\</OutDir>
+    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
     <TargetName>$(ProjectName).Singleplayer</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\</OutDir>
+    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
     <TargetName>$(ProjectName).Multiplayer</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\</OutDir>
+    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
     <TargetName>$(ProjectName).Singleplayer</TargetName>
     <IncludePath>$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\</OutDir>
+    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
     <TargetName>$(ProjectName).Multiplayer</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
@@ -198,9 +198,10 @@
     <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\table64.h" />
     <ClInclude Include="3rd Party Libraries\MinHook\src\trampoline.h" />
     <ClInclude Include="Interface\Application\Application.hpp" />
-    <ClInclude Include="Interface\Application\Shared\Shared.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Shared\Shared.hpp" />
     <ClInclude Include="Main\Precompiled Header\PrecompiledHeader.hpp" />
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp" />
+    <ClInclude Include="Shared\File.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd Party Libraries\MinHook\src\buffer.c">
@@ -258,10 +259,10 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\BGR0.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
@@ -276,10 +277,10 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\PassUAV.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
@@ -294,10 +295,10 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV444.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
@@ -308,10 +309,10 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
@@ -330,10 +331,10 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV420.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
@@ -344,10 +345,10 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)SDR\%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(OutDir)%(Filename).sdrshader</ObjectFileOutput>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
