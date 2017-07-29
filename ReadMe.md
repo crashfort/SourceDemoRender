@@ -6,6 +6,11 @@ SDR offers the highest possible performance for recording movies by utilizing th
 ## Is my game supported?
 Since games might need special setup, they have to be added manually. You can [request your game](https://github.com/crashfort/SourceDemoRender/issues) for it to be added.
 
+Games that are added:
+* Counter-Strike: Source
+* Half-Life 2
+* Team Fortress 2
+
 Known games that don't work:
 * Garry's Mod - *No plugin_load support*
 
