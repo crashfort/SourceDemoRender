@@ -92,7 +92,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	<tr>
 		<td>sdr_update</td>
 		<td>
-			Check to see if there are any updates available. Library updates need to be manual but game configurations are updated automatically with this command.
+			Check to see if there are any updates available. Library updates need to be manual.
 		</td>
 	</tr>
 	<tr>
