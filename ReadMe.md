@@ -6,6 +6,9 @@ SDR offers the highest possible performance for recording movies by utilizing th
 ## Is my game supported?
 Since some games might need special setup, only some have been enabled right now. You can [request your game](https://github.com/crashfort/SourceDemoRender/issues) for it to be enabled.
 
+Known games that don't work:
+* Garry's Mod - *No plugin_load support*
+
 ## Prerequisites
 Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_d3d11_staging**, Windows 8.1 or later is required.
 
