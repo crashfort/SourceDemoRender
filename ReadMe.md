@@ -10,6 +10,7 @@ Games that are added:
 * Counter-Strike: Source
 * Half-Life 2
 * Team Fortress 2
+* Momentum
 
 Known games that don't work:
 * Garry's Mod - *No plugin_load support*
