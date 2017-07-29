@@ -75,19 +75,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\Output\</OutDir>
     <TargetName>$(ProjectName).Singleplayer</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\Output\</OutDir>
     <TargetName>$(ProjectName).Multiplayer</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\Output\</OutDir>
     <TargetName>$(ProjectName).Singleplayer</TargetName>
     <IncludePath>$(IncludePath)</IncludePath>
@@ -95,7 +95,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(SolutionDir)Intermediate\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\Output\</OutDir>
     <TargetName>$(ProjectName).Multiplayer</TargetName>
   </PropertyGroup>
@@ -198,9 +198,10 @@
     <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\table64.h" />
     <ClInclude Include="3rd Party Libraries\MinHook\src\trampoline.h" />
     <ClInclude Include="Interface\Application\Application.hpp" />
-    <ClInclude Include="Interface\Application\Shared\Shared.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Shared\Shared.hpp" />
     <ClInclude Include="Main\Precompiled Header\PrecompiledHeader.hpp" />
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp" />
+    <ClInclude Include="Shared\File.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd Party Libraries\MinHook\src\buffer.c">
