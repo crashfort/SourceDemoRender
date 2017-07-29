@@ -25,7 +25,7 @@ You can use the user ``.cfg`` files that comes with SDR as a base where to add y
 * `exec sdr_user_mp` - For multiplayer games
 * `exec sdr_user_sp` - For singleplayer games
 
-The plugin can be loaded at the main menu or in demo playback, but must be before any call to `startmovie`. It's required to unload SDR after you are done recording a particular map as the state does not carry over between demos.
+The plugin can be loaded at the main menu or in demo playback, but must be before any call to `startmovie`. It's required to `exec sdr_unload` after you are done recording a particular map as the state does not carry over between demos.
 
 **You need to launch with -insecure for Source to be able to load plugins.**
 
