@@ -82,8 +82,7 @@ namespace
 
 						try
 						{
-							auto path = dir;
-							path += L"GameConfig.json";
+							auto path = dir + L"GameConfig.json";
 									
 							SDR::Shared::ScopedFile file(path.c_str(), L"wb");
 
@@ -98,8 +97,7 @@ namespace
 
 						try
 						{
-							auto path = dir;
-							path += L"GameConfigLatest";
+							auto path = dir + L"GameConfigLatest";
 
 							SDR::Shared::ScopedFile file(path.c_str(), L"wb");
 
