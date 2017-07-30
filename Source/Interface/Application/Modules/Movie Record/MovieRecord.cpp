@@ -1710,12 +1710,7 @@ namespace
 			}
 		}
 
-		std::string BuildVideoStreamName
-		(
-			const char* savepath,
-			const char* filename,
-			MovieData::VideoStreamBase* stream
-		)
+		std::string BuildVideoStreamName(const char* savepath, const char* filename)
 		{
 			char finalname[2048];
 			char finalfilename[1024];
@@ -1935,7 +1930,7 @@ namespace
 
 					for (auto& stream : tempstreams)
 					{
-						auto name = BuildVideoStreamName(sdrpath, filename, stream.get());
+						auto name = BuildVideoStreamName(sdrpath, filename);
 
 						stream->Video.OpenFileForWrite(name.c_str());
 						stream->Video.SetEncoder(vidconfig->Encoder);
