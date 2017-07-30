@@ -30,7 +30,7 @@ namespace
 
 		Will place them in the running directory.
 	*/
-	void UpdateProc(const std::wstring& dir)
+	void UpdateProc()
 	{
 		printf_s("SDR: Checking for any available updates\n");
 
@@ -90,11 +90,8 @@ namespace
 						auto string = response.extract_utf8string(true).get();
 
 						try
-						{
-							auto path = dir + L"GameConfig.json";
-									
-							SDR::Shared::ScopedFile file(path.c_str(), L"wb");
-
+						{									
+							SDR::Shared::ScopedFile file(L"GameConfig.json", L"wb");
 							file.WriteText(string.c_str());
 						}
 
@@ -106,10 +103,7 @@ namespace
 
 						try
 						{
-							auto path = dir + L"GameConfigLatest";
-
-							SDR::Shared::ScopedFile file(path.c_str(), L"wb");
-
+							SDR::Shared::ScopedFile file(L"GameConfigLatest", L"wb");
 							file.WriteText("%d", webversion);
 						}
 
@@ -134,20 +128,7 @@ namespace
 
 void wmain(int argc, wchar_t* args[])
 {
-	std::wstring dir = args[0];
-
-	auto length = dir.size();
-
-	for (int i = length - 1; i >= 0; i--)
-	{
-		if (dir[i] == L'\\')
-		{
-			dir.resize(i + 1);
-			break;
-		}
-	}
-
-	UpdateProc(dir);
+	UpdateProc();
 
 	printf_s("You can close this window now\n");
 
