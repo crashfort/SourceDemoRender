@@ -24,6 +24,13 @@ extern "C"
 
 #include "readerwriterqueue.h"
 
+#include "Shaders\Blobs\BGR0.hpp"
+#include "Shaders\Blobs\ClearUAV.hpp"
+#include "Shaders\Blobs\PassUAV.hpp"
+#include "Shaders\Blobs\Sampling.hpp"
+#include "Shaders\Blobs\YUV420.hpp"
+#include "Shaders\Blobs\YUV444.hpp"
+
 namespace
 {
 	namespace Variables
@@ -546,36 +553,11 @@ namespace
 			return mult > 1 && exposure > 0;
 		}
 
-		static void OpenShader(ID3D11Device* device, const char* name, ID3D11ComputeShader** shader)
+		static void OpenShader(ID3D11Device* device, const char* name, const BYTE* data, size_t size, ID3D11ComputeShader** shader)
 		{
-			using Status = SDR::Shared::ScopedFile::ExceptionType;
-
-			SDR::Shared::ScopedFile file;
-
-			char path[1024];
-			strcpy_s(path, SDR::GetGamePath());
-			strcat(path, R"(SDR\)");
-			strcat_s(path, name);
-			strcat_s(path, ".sdrshader");
-
-			try
-			{
-				file.Assign(path, "rb");
-			}
-
-			catch (Status status)
-			{
-				if (status == Status::CouldNotOpenFile)
-				{
-					SDR::Error::Make("Could not open shader \"%s\"", path);
-				}
-			}
-
-			auto data = file.ReadAll();
-
 			SDR::Error::MS::ThrowIfFailed
 			(
-				device->CreateComputeShader(data.data(), data.size(), nullptr, shader),
+				device->CreateComputeShader(data, size, nullptr, shader),
 				"Could not create compute shader %s", name
 			);
 		}
@@ -688,13 +670,13 @@ namespace
 
 					if (UseSampling())
 					{
-						OpenShader(Device.Get(), "Sampling", SamplingShader.GetAddressOf());
-						OpenShader(Device.Get(), "ClearUAV", ClearShader.GetAddressOf());
+						OpenShader(Device.Get(), "Sampling", CSBlob_Sampling, sizeof(CSBlob_Sampling), SamplingShader.GetAddressOf());
+						OpenShader(Device.Get(), "ClearUAV", CSBlob_ClearUAV, sizeof(CSBlob_ClearUAV), ClearShader.GetAddressOf());
 					}
 
 					else
 					{
-						OpenShader(Device.Get(), "PassUAV", PassShader.GetAddressOf());
+						OpenShader(Device.Get(), "PassUAV", CSBlob_PassUAV, sizeof(CSBlob_PassUAV), PassShader.GetAddressOf());
 					}
 				}
 
@@ -1169,11 +1151,13 @@ namespace
 						RuleData
 						(
 							AVPixelFormat format,
-							const char* shader,
+							const char* name,
+							const BYTE* data,
+							size_t datasize,
 							const FactoryType& factory
 						) :
 							Format(format),
-							ShaderName(shader),
+							ShaderName(name),
 							Factory(factory)
 						{
 
@@ -1185,6 +1169,8 @@ namespace
 						}
 
 						AVPixelFormat Format;
+						const BYTE* Data;
+						size_t DataSize;
 						const char* ShaderName;
 						FactoryType Factory;
 					};
@@ -1201,9 +1187,9 @@ namespace
 
 					RuleData table[] =
 					{
-						RuleData(AV_PIX_FMT_YUV420P, "YUV420", yuvfactory),
-						RuleData(AV_PIX_FMT_YUV444P, "YUV444", yuvfactory),
-						RuleData(AV_PIX_FMT_BGR0, "BGR0", bgr0factory),
+						RuleData(AV_PIX_FMT_YUV420P, "YUV420", CSBlob_YUV420, sizeof(CSBlob_YUV420), yuvfactory),
+						RuleData(AV_PIX_FMT_YUV444P, "YUV444", CSBlob_YUV444, sizeof(CSBlob_YUV444), yuvfactory),
+						RuleData(AV_PIX_FMT_BGR0, "BGR0", CSBlob_BGR0, sizeof(CSBlob_BGR0), bgr0factory),
 					};
 
 					RuleData* found = nullptr;
@@ -1223,7 +1209,7 @@ namespace
 						SDR::Error::Make("No conversion rule found for %s", name);
 					}
 
-					OpenShader(device, found->ShaderName, ConversionShader.GetAddressOf());
+					OpenShader(device, found->ShaderName, found->Data, found->DataSize, ConversionShader.GetAddressOf());
 
 					ConversionPtr = found->Factory();
 					ConversionPtr->Create(device, reference);
