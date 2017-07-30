@@ -21,6 +21,15 @@ namespace
 		}
 	}
 
+	/*
+		Downloads the latest game config files from Github.
+
+		Files:
+		https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Output/SDR/GameConfigLatest
+		https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json
+
+		Will place them in the running directory.
+	*/
 	void UpdateProc(const std::wstring& dir)
 	{
 		printf_s("SDR: Checking for any available updates\n");
