@@ -12,7 +12,7 @@
 
 # Build results
 Source/Intermediate/
-Installer/Intermediate/
+Updater/Intermediate/
 x64/
 x86/
 bld/
