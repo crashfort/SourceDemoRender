@@ -1412,7 +1412,7 @@ namespace
 			double TimePerFrame;
 		} SamplingData;
 
-		std::vector<std::unique_ptr<VideoStreamBase>> VideoStreams;
+		std::unique_ptr<VideoStreamBase> VideoStream;
 
 		std::thread FrameBufferThreadHandle;
 		std::unique_ptr<VideoQueueType> VideoQueue;
@@ -1652,17 +1652,15 @@ namespace
 					}
 				}
 
-				auto& stream = movie.VideoStreams[0];
-
-				if (stream->FirstFrame)
+				if (movie.VideoStream->FirstFrame)
 				{
-					stream->FirstFrame = false;
-					CopyDX9ToDX11(stream.get());
+					movie.VideoStream->FirstFrame = false;
+					CopyDX9ToDX11(movie.VideoStream.get());
 				}
 
 				else
 				{
-					Pass(stream.get());
+					Pass(movie.VideoStream.get());
 				}
 			}
 		}
@@ -1825,8 +1823,7 @@ namespace
 
 				av_log_set_callback(LAV::LogFunction);
 
-				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
-				tempstreams.emplace_back(std::make_unique<MovieData::VideoStreamBase>());
+				auto stream = std::make_unique<MovieData::VideoStreamBase>();
 
 				struct VideoConfigurationData
 				{
@@ -1904,40 +1901,30 @@ namespace
 						colorrange = AVCOL_RANGE_UNSPECIFIED;
 					}
 
-					for (auto& stream : tempstreams)
-					{
-						stream->Video.Frame.Assign(width, height, pxformat, colorspace, colorrange);
-					}
+					stream->Video.Frame.Assign(width, height, pxformat, colorspace, colorrange);
 
 					movie.VideoStreamShared.DirectX11.Create(width, height);
 
-					for (auto& stream : tempstreams)
-					{
-						stream->DirectX9.Create(ModuleSourceGlobals::DX9Device, width, height);
+					stream->DirectX9.Create(ModuleSourceGlobals::DX9Device, width, height);
 
-						stream->DirectX11.Create
-						(
-							movie.VideoStreamShared.DirectX11.Device.Get(),
-							stream->DirectX9.SharedSurface.SharedHandle,
-							stream->Video.Frame.Get()
-						);
-					}
+					stream->DirectX11.Create
+					(
+						movie.VideoStreamShared.DirectX11.Device.Get(),
+						stream->DirectX9.SharedSurface.SharedHandle,
+						stream->Video.Frame.Get()
+					);
 
 					/*
 						Destroy any deferred D3D11 resources created by above functions.
 					*/
 					movie.VideoStreamShared.DirectX11.Context->Flush();
 
-					for (auto& stream : tempstreams)
-					{
-						auto name = BuildVideoStreamName(sdrpath, filename);
+					auto name = BuildVideoStreamName(sdrpath, filename);
 
-						stream->Video.OpenFileForWrite(name.c_str());
-						stream->Video.SetEncoder(vidconfig->Encoder);
-					}
+					stream->Video.OpenFileForWrite(name.c_str());
+					stream->Video.SetEncoder(vidconfig->Encoder);
 				}
 
-				for (auto& stream : tempstreams)
 				{
 					LAV::ScopedAVDictionary options;
 
@@ -1970,7 +1957,7 @@ namespace
 				/*
 					All went well, move state over.
 				*/
-				movie.VideoStreams = std::move(tempstreams);
+				movie.VideoStream = std::move(stream);
 			}
 					
 			catch (const SDR::Error::Exception& error)
@@ -2136,12 +2123,9 @@ namespace
 				SDR_TryJoinFrameThread();
 
 				/*
-					Let the encoders finish all the delayed frames.
+					Let the encoder finish all the delayed frames.
 				*/
-				for (auto& stream : CurrentMovie.VideoStreams)
-				{
-					stream->Video.Finish();
-				}
+				CurrentMovie.VideoStream->Video.Finish();
 
 				CurrentMovie = {};
 
