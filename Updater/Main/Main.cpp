@@ -123,7 +123,7 @@ namespace
 	}
 }
 
-void wmain(int main, wchar_t* args[])
+void wmain(int argc, wchar_t* args[])
 {
 	std::wstring dir = args[0];
 
