@@ -1,4 +1,4 @@
-#include <Windows.h>
+#include <conio.h>
 #include <chrono>
 #include <string>
 #include <cpprest\http_client.h>
@@ -142,5 +142,5 @@ void wmain(int argc, wchar_t* args[])
 
 	printf_s("You can close this window now\n");
 
-	std::getchar();
+	_getch();
 }
