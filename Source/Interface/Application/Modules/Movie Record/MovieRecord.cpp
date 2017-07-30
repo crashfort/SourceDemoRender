@@ -532,9 +532,6 @@ namespace
 	{
 		bool IsStarted = false;
 
-		uint32_t Width;
-		uint32_t Height;
-
 		int OldMatQueueModeValue;
 
 		/*
@@ -1830,9 +1827,6 @@ namespace
 
 					linktabletovariable(Variables::Video::ColorSpace.GetString(), table, colorspace);
 				}
-				
-				movie.Width = width;
-				movie.Height = height;
 
 				av_log_set_callback(LAV::LogFunction);
 
