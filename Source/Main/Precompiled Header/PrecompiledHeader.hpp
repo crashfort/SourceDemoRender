@@ -113,21 +113,39 @@ namespace SDR::Error
 		Warning("SDR: %s\n", error.Description.c_str());
 	}
 
+	template <typename... Args>
+	inline std::string GetFormattedString(const char* format, Args&&... args)
+	{
+		std::string ret;
+
+		auto size = std::snprintf(nullptr, 0, format, std::forward<Args>(args)...);
+		ret.resize(size + 1);
+
+		std::snprintf(ret.data(), size + 1, format, std::forward<Args>(args)...);
+
+		return ret;
+	}
+
+	/*
+		For use with unrecoverable errors.
+	*/
+	inline void Make(std::string&& str)
+	{
+		Exception info;
+		info.Description = std::move(str);
+
+		Print(info);
+		throw info;
+	}
+
 	/*
 		For use with unrecoverable errors.
 	*/
 	template <typename... Args>
-	inline Exception Make(const char* format, Args&&... args)
+	inline void Make(const char* format, Args&&... args)
 	{
-		Exception info;
+		Make(GetFormattedString(format, std::forward<Args>(args)...));
 		
-		auto size = std::snprintf(nullptr, 0, format, std::forward<Args>(args)...);
-		info.Description.resize(size + 1);
-
-		std::snprintf(info.Description.data(), size + 1, format, std::forward<Args>(args)...);
-
-		Print(info);
-		throw info;
 	}
 
 	/*
@@ -170,16 +188,13 @@ namespace SDR::Error
 				_com_error error(hr);
 				auto message = error.ErrorMessage();
 
-				char final[sizeof(Exception::Description)];
-				char user[sizeof(Exception::Description)];
+				auto user = GetFormattedString(format, std::forward<Args>(args)...);
+				auto final = GetFormattedString("%08X (%s) -> ", hr, message);
 
-				sprintf_s(user, format, std::forward<Args>(args)...);
-				sprintf_s(final, "%08X (%s) -> ", hr, message);
-				strcat_s(final, user);
+				final += user;
 
-				Make(final);
+				Make(std::move(final));
 			}
 		}
 	}
 }
-
