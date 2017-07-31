@@ -1722,41 +1722,43 @@ namespace
 
 		void WarnAboutVariableValues()
 		{
+			auto newstr = Variables::Video::Encoder.GetString();
+			auto encoder = avcodec_find_encoder_by_name(newstr);
+
+			if (!encoder)
 			{
-				auto newstr = Variables::Video::Encoder.GetString();
-				auto encoder = avcodec_find_encoder_by_name(newstr);
+				Warning("SDR: Encoder %s not found, available encoders:\n", newstr);
 
-				if (!encoder)
+				auto next = av_codec_next(nullptr);
+
+				while (next)
 				{
-					Warning("SDR: Encoder %s not found, available encoders:\n", newstr);
-
-					auto next = av_codec_next(nullptr);
-
-					while (next)
-					{
-						Msg("SDR: * %s\n", next->name);
-						next = av_codec_next(next);
-					}
+					Msg("SDR: * %s\n", next->name);
+					next = av_codec_next(next);
 				}
 			}
 
+			else
 			{
-				auto newstr = Variables::Video::X264::Preset.GetString();
-
-				auto slowpresets =
+				if (encoder->id == AV_CODEC_ID_H264)
 				{
-					"slow",
-					"slower",
-					"veryslow",
-					"placebo"
-				};
+					auto newstr = Variables::Video::X264::Preset.GetString();
 
-				for (auto preset : slowpresets)
-				{
-					if (_strcmpi(newstr, preset) == 0)
+					auto slowpresets =
 					{
-						Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
-						break;
+						"slow",
+						"slower",
+						"veryslow",
+						"placebo"
+					};
+
+					for (auto preset : slowpresets)
+					{
+						if (_strcmpi(newstr, preset) == 0)
+						{
+							Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
+							break;
+						}
 					}
 				}
 			}
