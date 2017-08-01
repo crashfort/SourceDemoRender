@@ -4,7 +4,7 @@ The program can be downloaded [here](https://github.com/crashfort/SourceDemoRend
 SDR offers the highest possible performance for recording movies by utilizing the GPU and all available threads. As opposed to other Source recording methods, SDR integrates itself into the engine and runs from the inside. Frames are kept on the GPU for processing which allows maximum performance. Many frames can be sampled together to form a good motion blur effect.
 
 ## Is my game supported?
-Since games might need special setup, they have to be added manually. You can [request your game](https://github.com/crashfort/SourceDemoRender/issues) for it to be added.
+Since games might need special setup, they have to be added manually. You can request your game [here](https://github.com/crashfort/SourceDemoRender/issues) or in [Discord](https://discord.gg/5t8D68c) for it to be added.
 
 Games that are added:
 * Counter-Strike: Source
