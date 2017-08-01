@@ -1,4 +1,4 @@
-#include <Windows.h>
+#include <conio.h>
 #include <chrono>
 #include <string>
 #include <cpprest\http_client.h>
@@ -21,7 +21,16 @@ namespace
 		}
 	}
 
-	void UpdateProc(const std::wstring& dir)
+	/*
+		Downloads the latest game config files from Github.
+
+		Files:
+		https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Output/SDR/GameConfigLatest
+		https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json
+
+		Will place them in the running directory.
+	*/
+	void UpdateProc()
 	{
 		printf_s("SDR: Checking for any available updates\n");
 
@@ -81,11 +90,8 @@ namespace
 						auto string = response.extract_utf8string(true).get();
 
 						try
-						{
-							auto path = dir + L"GameConfig.json";
-									
-							SDR::Shared::ScopedFile file(path.c_str(), L"wb");
-
+						{									
+							SDR::Shared::ScopedFile file(L"GameConfig.json", L"wb");
 							file.WriteText(string.c_str());
 						}
 
@@ -97,10 +103,7 @@ namespace
 
 						try
 						{
-							auto path = dir + L"GameConfigLatest";
-
-							SDR::Shared::ScopedFile file(path.c_str(), L"wb");
-
+							SDR::Shared::ScopedFile file(L"GameConfigLatest", L"wb");
 							file.WriteText("%d", webversion);
 						}
 
@@ -123,24 +126,11 @@ namespace
 	}
 }
 
-void wmain(int main, wchar_t* args[])
+void wmain(int argc, wchar_t* args[])
 {
-	std::wstring dir = args[0];
-
-	auto length = dir.size();
-
-	for (int i = length - 1; i >= 0; i--)
-	{
-		if (dir[i] == L'\\')
-		{
-			dir.resize(i + 1);
-			break;
-		}
-	}
-
-	UpdateProc(dir);
+	UpdateProc();
 
 	printf_s("You can close this window now\n");
 
-	std::getchar();
+	_getch();
 }

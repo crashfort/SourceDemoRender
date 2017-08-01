@@ -24,6 +24,13 @@ extern "C"
 
 #include "readerwriterqueue.h"
 
+#include "Shaders\Blobs\BGR0.hpp"
+#include "Shaders\Blobs\ClearUAV.hpp"
+#include "Shaders\Blobs\PassUAV.hpp"
+#include "Shaders\Blobs\Sampling.hpp"
+#include "Shaders\Blobs\YUV420.hpp"
+#include "Shaders\Blobs\YUV444.hpp"
+
 namespace
 {
 	namespace Variables
@@ -525,9 +532,6 @@ namespace
 	{
 		bool IsStarted = false;
 
-		uint32_t Width;
-		uint32_t Height;
-
 		int OldMatQueueModeValue;
 
 		/*
@@ -546,36 +550,11 @@ namespace
 			return mult > 1 && exposure > 0;
 		}
 
-		static void OpenShader(ID3D11Device* device, const char* name, ID3D11ComputeShader** shader)
+		static void OpenShader(ID3D11Device* device, const char* name, const BYTE* data, size_t size, ID3D11ComputeShader** shader)
 		{
-			using Status = SDR::Shared::ScopedFile::ExceptionType;
-
-			SDR::Shared::ScopedFile file;
-
-			char path[1024];
-			strcpy_s(path, SDR::GetGamePath());
-			strcat(path, R"(SDR\)");
-			strcat_s(path, name);
-			strcat_s(path, ".sdrshader");
-
-			try
-			{
-				file.Assign(path, "rb");
-			}
-
-			catch (Status status)
-			{
-				if (status == Status::CouldNotOpenFile)
-				{
-					SDR::Error::Make("Could not open shader \"%s\"", path);
-				}
-			}
-
-			auto data = file.ReadAll();
-
 			SDR::Error::MS::ThrowIfFailed
 			(
-				device->CreateComputeShader(data.data(), data.size(), nullptr, shader),
+				device->CreateComputeShader(data, size, nullptr, shader),
 				"Could not create compute shader %s", name
 			);
 		}
@@ -688,13 +667,13 @@ namespace
 
 					if (UseSampling())
 					{
-						OpenShader(Device.Get(), "Sampling", SamplingShader.GetAddressOf());
-						OpenShader(Device.Get(), "ClearUAV", ClearShader.GetAddressOf());
+						OpenShader(Device.Get(), "Sampling", CSBlob_Sampling, sizeof(CSBlob_Sampling), SamplingShader.GetAddressOf());
+						OpenShader(Device.Get(), "ClearUAV", CSBlob_ClearUAV, sizeof(CSBlob_ClearUAV), ClearShader.GetAddressOf());
 					}
 
 					else
 					{
-						OpenShader(Device.Get(), "PassUAV", PassShader.GetAddressOf());
+						OpenShader(Device.Get(), "PassUAV", CSBlob_PassUAV, sizeof(CSBlob_PassUAV), PassShader.GetAddressOf());
 					}
 				}
 
@@ -1169,11 +1148,13 @@ namespace
 						RuleData
 						(
 							AVPixelFormat format,
-							const char* shader,
+							const char* name,
+							const BYTE* data,
+							size_t datasize,
 							const FactoryType& factory
 						) :
 							Format(format),
-							ShaderName(shader),
+							ShaderName(name),
 							Factory(factory)
 						{
 
@@ -1185,6 +1166,8 @@ namespace
 						}
 
 						AVPixelFormat Format;
+						const BYTE* Data;
+						size_t DataSize;
 						const char* ShaderName;
 						FactoryType Factory;
 					};
@@ -1201,9 +1184,9 @@ namespace
 
 					RuleData table[] =
 					{
-						RuleData(AV_PIX_FMT_YUV420P, "YUV420", yuvfactory),
-						RuleData(AV_PIX_FMT_YUV444P, "YUV444", yuvfactory),
-						RuleData(AV_PIX_FMT_BGR0, "BGR0", bgr0factory),
+						RuleData(AV_PIX_FMT_YUV420P, "YUV420", CSBlob_YUV420, sizeof(CSBlob_YUV420), yuvfactory),
+						RuleData(AV_PIX_FMT_YUV444P, "YUV444", CSBlob_YUV444, sizeof(CSBlob_YUV444), yuvfactory),
+						RuleData(AV_PIX_FMT_BGR0, "BGR0", CSBlob_BGR0, sizeof(CSBlob_BGR0), bgr0factory),
 					};
 
 					RuleData* found = nullptr;
@@ -1223,7 +1206,7 @@ namespace
 						SDR::Error::Make("No conversion rule found for %s", name);
 					}
 
-					OpenShader(device, found->ShaderName, ConversionShader.GetAddressOf());
+					OpenShader(device, found->ShaderName, found->Data, found->DataSize, ConversionShader.GetAddressOf());
 
 					ConversionPtr = found->Factory();
 					ConversionPtr->Create(device, reference);
@@ -1429,7 +1412,7 @@ namespace
 			double TimePerFrame;
 		} SamplingData;
 
-		std::vector<std::unique_ptr<VideoStreamBase>> VideoStreams;
+		std::unique_ptr<VideoStreamBase> VideoStream;
 
 		std::thread FrameBufferThreadHandle;
 		std::unique_ptr<VideoQueueType> VideoQueue;
@@ -1669,17 +1652,15 @@ namespace
 					}
 				}
 
-				auto& stream = movie.VideoStreams[0];
-
-				if (stream->FirstFrame)
+				if (movie.VideoStream->FirstFrame)
 				{
-					stream->FirstFrame = false;
-					CopyDX9ToDX11(stream.get());
+					movie.VideoStream->FirstFrame = false;
+					CopyDX9ToDX11(movie.VideoStream.get());
 				}
 
 				else
 				{
-					Pass(stream.get());
+					Pass(movie.VideoStream.get());
 				}
 			}
 		}
@@ -1727,12 +1708,7 @@ namespace
 			}
 		}
 
-		std::string BuildVideoStreamName
-		(
-			const char* savepath,
-			const char* filename,
-			MovieData::VideoStreamBase* stream
-		)
+		std::string BuildVideoStreamName(const char* savepath, const char* filename)
 		{
 			char finalname[2048];
 			char finalfilename[1024];
@@ -1746,41 +1722,43 @@ namespace
 
 		void WarnAboutVariableValues()
 		{
+			auto newstr = Variables::Video::Encoder.GetString();
+			auto encoder = avcodec_find_encoder_by_name(newstr);
+
+			if (!encoder)
 			{
-				auto newstr = Variables::Video::Encoder.GetString();
-				auto encoder = avcodec_find_encoder_by_name(newstr);
+				Warning("SDR: Encoder %s not found, available encoders:\n", newstr);
 
-				if (!encoder)
+				auto next = av_codec_next(nullptr);
+
+				while (next)
 				{
-					Warning("SDR: Encoder %s not found, available encoders:\n", newstr);
-
-					auto next = av_codec_next(nullptr);
-
-					while (next)
-					{
-						Msg("SDR: * %s\n", next->name);
-						next = av_codec_next(next);
-					}
+					Msg("SDR: * %s\n", next->name);
+					next = av_codec_next(next);
 				}
 			}
 
+			else
 			{
-				auto newstr = Variables::Video::X264::Preset.GetString();
-
-				auto slowpresets =
+				if (encoder->id == AV_CODEC_ID_H264)
 				{
-					"slow",
-					"slower",
-					"veryslow",
-					"placebo"
-				};
+					auto newstr = Variables::Video::X264::Preset.GetString();
 
-				for (auto preset : slowpresets)
-				{
-					if (_strcmpi(newstr, preset) == 0)
+					auto slowpresets =
 					{
-						Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
-						break;
+						"slow",
+						"slower",
+						"veryslow",
+						"placebo"
+					};
+
+					for (auto preset : slowpresets)
+					{
+						if (_strcmpi(newstr, preset) == 0)
+						{
+							Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
+							break;
+						}
 					}
 				}
 			}
@@ -1844,14 +1822,10 @@ namespace
 
 					linktabletovariable(Variables::Video::ColorSpace.GetString(), table, colorspace);
 				}
-				
-				movie.Width = width;
-				movie.Height = height;
 
 				av_log_set_callback(LAV::LogFunction);
 
-				std::vector<std::unique_ptr<MovieData::VideoStreamBase>> tempstreams;
-				tempstreams.emplace_back(std::make_unique<MovieData::VideoStreamBase>());
+				auto stream = std::make_unique<MovieData::VideoStreamBase>();
 
 				struct VideoConfigurationData
 				{
@@ -1929,40 +1903,30 @@ namespace
 						colorrange = AVCOL_RANGE_UNSPECIFIED;
 					}
 
-					for (auto& stream : tempstreams)
-					{
-						stream->Video.Frame.Assign(width, height, pxformat, colorspace, colorrange);
-					}
+					stream->Video.Frame.Assign(width, height, pxformat, colorspace, colorrange);
 
 					movie.VideoStreamShared.DirectX11.Create(width, height);
 
-					for (auto& stream : tempstreams)
-					{
-						stream->DirectX9.Create(ModuleSourceGlobals::DX9Device, width, height);
+					stream->DirectX9.Create(ModuleSourceGlobals::DX9Device, width, height);
 
-						stream->DirectX11.Create
-						(
-							movie.VideoStreamShared.DirectX11.Device.Get(),
-							stream->DirectX9.SharedSurface.SharedHandle,
-							stream->Video.Frame.Get()
-						);
-					}
+					stream->DirectX11.Create
+					(
+						movie.VideoStreamShared.DirectX11.Device.Get(),
+						stream->DirectX9.SharedSurface.SharedHandle,
+						stream->Video.Frame.Get()
+					);
 
 					/*
 						Destroy any deferred D3D11 resources created by above functions.
 					*/
 					movie.VideoStreamShared.DirectX11.Context->Flush();
 
-					for (auto& stream : tempstreams)
-					{
-						auto name = BuildVideoStreamName(sdrpath, filename, stream.get());
+					auto name = BuildVideoStreamName(sdrpath, filename);
 
-						stream->Video.OpenFileForWrite(name.c_str());
-						stream->Video.SetEncoder(vidconfig->Encoder);
-					}
+					stream->Video.OpenFileForWrite(name.c_str());
+					stream->Video.SetEncoder(vidconfig->Encoder);
 				}
 
-				for (auto& stream : tempstreams)
 				{
 					LAV::ScopedAVDictionary options;
 
@@ -1995,7 +1959,7 @@ namespace
 				/*
 					All went well, move state over.
 				*/
-				movie.VideoStreams = std::move(tempstreams);
+				movie.VideoStream = std::move(stream);
 			}
 					
 			catch (const SDR::Error::Exception& error)
@@ -2161,12 +2125,9 @@ namespace
 				SDR_TryJoinFrameThread();
 
 				/*
-					Let the encoders finish all the delayed frames.
+					Let the encoder finish all the delayed frames.
 				*/
-				for (auto& stream : CurrentMovie.VideoStreams)
-				{
-					stream->Video.Finish();
-				}
+				CurrentMovie.VideoStream->Video.Finish();
 
 				CurrentMovie = {};
 
