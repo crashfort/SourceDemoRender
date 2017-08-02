@@ -11,8 +11,7 @@
 *.userprefs
 
 # Build results
-Source/Intermediate/
-Updater/Intermediate/
+Projects/*/Intermediate/
 x64/
 x86/
 bld/

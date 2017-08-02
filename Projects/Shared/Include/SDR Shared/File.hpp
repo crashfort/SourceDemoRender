@@ -1,4 +1,7 @@
 #pragma once
+#include <cstdio>
+#include <cstdint>
+#include <vector>
 
 namespace SDR::Shared
 {
@@ -10,79 +13,21 @@ namespace SDR::Shared
 		};
 
 		ScopedFile() = default;
+		ScopedFile(const char* path, const char* mode);
+		ScopedFile(const wchar_t* path, const wchar_t* mode);
 
-		ScopedFile(const char* path, const char* mode)
-		{
-			Assign(path, mode);
-		}
+		~ScopedFile();
 
-		ScopedFile(const wchar_t* path, const wchar_t* mode)
-		{
-			Assign(path, mode);
-		}
+		void Close();
+		FILE* Get() const;
+		explicit operator bool() const;
 
-		~ScopedFile()
-		{
-			Close();
-		}
+		void Assign(const char* path, const char* mode);
+		void Assign(const wchar_t* path, const wchar_t* mode);
 
-		void Close()
-		{
-			if (Handle)
-			{
-				fclose(Handle);
-				Handle = nullptr;
-			}
-		}
-
-		auto Get() const
-		{
-			return Handle;
-		}
-
-		explicit operator bool() const
-		{
-			return Get() != nullptr;
-		}
-
-		void Assign(const char* path, const char* mode)
-		{
-			Close();
-
-			Handle = fopen(path, mode);
-
-			if (!Handle)
-			{
-				throw ExceptionType::CouldNotOpenFile;
-			}
-		}
-
-		void Assign(const wchar_t* path, const wchar_t* mode)
-		{
-			Close();
-
-			Handle = _wfopen(path, mode);
-
-			if (!Handle)
-			{
-				throw ExceptionType::CouldNotOpenFile;
-			}
-		}
-
-		int GetStreamPosition() const
-		{
-			return ftell(Get());
-		}
-
-		void SeekAbsolute(size_t pos)
-		{
-			fseek(Get(), pos, SEEK_SET);
-		}
-
-		void SeekEnd()
-		{
-			fseek(Get(), 0, SEEK_END);
-		}
+		int GetStreamPosition() const;
+		void SeekAbsolute(size_t pos);
+		void SeekEnd();
 
 		template <typename... Types>
 		bool WriteSimple(Types&&... args)
@@ -145,21 +90,7 @@ namespace SDR::Shared
 			return fread_s(&vec[0], vec.size() * sizeof(T), sizeof(T), count, Get());
 		}
 
-		std::vector<uint8_t> ReadAll()
-		{
-			SeekAbsolute(0);
-			SeekEnd();
-
-			auto size = GetStreamPosition();
-
-			SeekAbsolute(0);
-
-			std::vector<uint8_t> ret(size);
-
-			fread_s(&ret[0], ret.size(), size, 1, Get());
-
-			return ret;
-		}
+		std::vector<uint8_t> ReadAll();
 
 		FILE* Handle = nullptr;
 	};

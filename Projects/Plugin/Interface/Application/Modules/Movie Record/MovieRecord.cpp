@@ -1155,6 +1155,8 @@ namespace
 						) :
 							Format(format),
 							ShaderName(name),
+							Data(data),
+							DataSize(datasize),
 							Factory(factory)
 						{
 
