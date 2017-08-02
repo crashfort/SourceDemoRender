@@ -2,7 +2,6 @@
 
 namespace SDR::Shared
 {
-
 	ScopedFile::ScopedFile(const char* path, const char* mode)
 	{
 		Assign(path, mode);
