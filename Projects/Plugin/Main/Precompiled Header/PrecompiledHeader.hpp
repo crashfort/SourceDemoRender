@@ -71,6 +71,11 @@ namespace SDR::Error
 
 		std::snprintf(ret.data(), size + 1, format, std::forward<Args>(args)...);
 
+		/*
+			Remove null terminator that above function adds.
+		*/
+		ret.pop_back();
+
 		return ret;
 	}
 
