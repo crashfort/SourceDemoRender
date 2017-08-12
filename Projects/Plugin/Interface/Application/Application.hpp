@@ -274,6 +274,8 @@ namespace SDR
 
 	bool CreateHookBareShort(HookModuleBare& hook, void* override, rapidjson::Value& value);
 
+	bool CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare& hook, void* override);
+
 	struct GenericHookInitParam
 	{
 		GenericHookInitParam(HookModuleBare& hook, void* override) : Hook(hook), Override(override)

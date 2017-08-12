@@ -357,6 +357,96 @@ namespace
 	}
 }
 
+namespace LoadLibraryIntercept
+{
+	namespace A
+	{
+		SDR::HookModule<decltype(LoadLibraryA)*> ThisHook;
+
+		HMODULE WINAPI Override(LPCSTR name)
+		{
+			auto ret = ThisHook.GetOriginal()(name);
+			return ret;
+		}
+	}
+
+	namespace ExA
+	{
+		SDR::HookModule<decltype(LoadLibraryExA)*> ThisHook;
+
+		HMODULE WINAPI Override(LPCSTR name, HANDLE file, DWORD flags)
+		{
+			auto ret = ThisHook.GetOriginal()(name, file, flags);
+			return ret;
+		}
+	}
+
+	namespace W
+	{
+		SDR::HookModule<decltype(LoadLibraryW)*> ThisHook;
+
+		HMODULE WINAPI Override(LPCWSTR name)
+		{
+			auto ret = ThisHook.GetOriginal()(name);
+			return ret;
+		}
+	}
+
+	namespace ExW
+	{
+		SDR::HookModule<decltype(LoadLibraryExW)*> ThisHook;
+
+		HMODULE WINAPI Override(LPCWSTR name, HANDLE file, DWORD flags)
+		{
+			auto ret = ThisHook.GetOriginal()(name, file, flags);
+			return ret;
+		}
+	}
+
+	void Start()
+	{
+		auto results =
+		{
+			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override),
+			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override),
+			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override),
+			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", ExW::ThisHook, ExW::Override),
+		};
+
+		for (auto res : results)
+		{
+			if (!res)
+			{
+				SDR::Error::Make("Could not create library intercepts");
+			}
+		}
+
+		auto codes =
+		{
+			MH_EnableHook(A::ThisHook.TargetFunction),
+			MH_EnableHook(ExA::ThisHook.TargetFunction),
+			MH_EnableHook(W::ThisHook.TargetFunction),
+			MH_EnableHook(ExW::ThisHook.TargetFunction),
+		};
+
+		for (auto code : codes)
+		{
+			if (code != MH_OK)
+			{
+				SDR::Error::Make("Could not enable library intercepts");
+			}
+		}
+	}
+
+	void End()
+	{
+		MH_DisableHook(A::ThisHook.TargetFunction);
+		MH_DisableHook(ExA::ThisHook.TargetFunction);
+		MH_DisableHook(W::ThisHook.TargetFunction);
+		MH_DisableHook(ExW::ThisHook.TargetFunction);
+	}
+}
+
 void SDR::PreEngineSetup()
 {
 	auto res = MH_Initialize();
@@ -365,10 +455,13 @@ void SDR::PreEngineSetup()
 	{
 		SDR::Error::Make("Failed to initialize hooks"s);
 	}
+
+	LoadLibraryIntercept::Start();
 }
 
 void SDR::Setup(const char* gamepath, const char* gamename)
 {
+	LoadLibraryIntercept::End();
 	Config::SetupGame(gamepath, gamename);
 }
 
@@ -683,6 +776,15 @@ bool SDR::CreateHookBareShort(HookModuleBare& hook, void* override, rapidjson::V
 {
 	auto address = GetAddressFromJsonPattern(value);
 	return CreateHookBare(hook, override, address);
+}
+
+bool SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare& hook, void* override)
+{
+	hook.NewFunction = override;
+	
+	auto res = MH_CreateHookApiEx(module, name, override, &hook.OriginalFunction, &hook.TargetFunction);
+
+	return res == MH_OK;
 }
 
 bool SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam>&& hooks, const char* name, rapidjson::Value& value)
