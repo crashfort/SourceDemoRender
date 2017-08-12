@@ -253,13 +253,13 @@ namespace
 
 			for (auto& prop : game->Properties)
 			{
-				bool foundhadler = false;
+				bool found = false;
 
 				for (auto& handler : MainApplication.ModuleHandlers)
 				{
 					if (prop.first == handler.Name)
 					{
-						foundhadler = true;
+						found = true;
 
 						auto res = handler.Function(handler.Name, prop.second);
 
@@ -282,7 +282,7 @@ namespace
 					}
 				}
 
-				if (!foundhadler)
+				if (!found)
 				{
 					SDR::Log::Warning("SDR: No handler found for %s\n", prop.first.c_str());
 				}
