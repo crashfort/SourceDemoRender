@@ -460,7 +460,7 @@ void main(int argc, char* argv[])
 	/*
 		Simulation for machine code generation.
 	*/
-	#ifndef _DEBUG
+	#if 0
 	InterProcessData data;
 	data.LoadLibraryAddr = LoadLibraryA;
 	data.GetProcAddressAddr = GetProcAddress;
