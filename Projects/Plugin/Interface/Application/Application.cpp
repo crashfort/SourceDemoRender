@@ -1,5 +1,6 @@
 #include "PrecompiledHeader.hpp"
 #include "Application.hpp"
+#include <d3d9.h>
 
 namespace
 {
@@ -358,6 +359,24 @@ namespace
 
 	namespace LoadLibraryIntercept
 	{
+		namespace D3D9
+		{
+			SDR::HookModule<decltype(Direct3DCreate9)*> ThisHook;
+
+			IDirect3D9* WINAPI Override(UINT version)
+			{
+				IDirect3D9Ex* ret = nullptr;
+				auto hr = Direct3DCreate9Ex(version, &ret);
+
+				if (FAILED(hr))
+				{
+					return nullptr;
+				}
+
+				return ret;
+			}
+		}
+
 		namespace A
 		{
 			SDR::HookModule<decltype(LoadLibraryA)*> ThisHook;
@@ -365,6 +384,12 @@ namespace
 			HMODULE WINAPI Override(LPCSTR name)
 			{
 				auto ret = ThisHook.GetOriginal()(name);
+
+				if (_strcmpi(name, "d3d9.dll") == 0)
+				{
+					auto res = SDR::CreateHookAPI(L"d3d9.dll", "Direct3DCreate9", D3D9::ThisHook, D3D9::Override);
+				}
+
 				return ret;
 			}
 		}
