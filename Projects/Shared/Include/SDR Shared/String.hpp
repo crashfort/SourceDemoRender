@@ -22,4 +22,19 @@ namespace SDR::String
 
 		return ret;
 	}
+
+	template <typename T>
+	bool EndsWith(const T* str, const T* end)
+	{
+		auto sourcelength = std::char_traits<T>::length(str);
+		auto endlength = std::char_traits<T>::length(end);
+
+		if (sourcelength < endlength)
+		{
+			return false;
+		}
+
+		auto start = str + sourcelength - endlength;
+		return std::char_traits<T>::compare(start, end, endlength) == 0;
+	}
 }
