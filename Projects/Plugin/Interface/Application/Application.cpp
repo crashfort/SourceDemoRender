@@ -377,6 +377,22 @@ namespace
 			}
 		}
 
+		namespace Common
+		{
+			HMODULE Load(const char* name)
+			{
+				if (_strcmpi(name, "d3d9.dll") == 0)
+				{
+					auto res = SDR::CreateHookAPI(L"d3d9.dll", "Direct3DCreate9", D3D9::ThisHook, D3D9::Override);
+				}
+			}
+
+			HMODULE Load(const wchar_t* name)
+			{
+
+			}
+		}
+
 		namespace A
 		{
 			SDR::HookModule<decltype(LoadLibraryA)*> ThisHook;
@@ -385,10 +401,7 @@ namespace
 			{
 				auto ret = ThisHook.GetOriginal()(name);
 
-				if (_strcmpi(name, "d3d9.dll") == 0)
-				{
-					auto res = SDR::CreateHookAPI(L"d3d9.dll", "Direct3DCreate9", D3D9::ThisHook, D3D9::Override);
-				}
+				Common::Load(name);
 
 				return ret;
 			}
@@ -401,6 +414,9 @@ namespace
 			HMODULE WINAPI Override(LPCSTR name, HANDLE file, DWORD flags)
 			{
 				auto ret = ThisHook.GetOriginal()(name, file, flags);
+
+				Common::Load(name);
+
 				return ret;
 			}
 		}
@@ -412,6 +428,9 @@ namespace
 			HMODULE WINAPI Override(LPCWSTR name)
 			{
 				auto ret = ThisHook.GetOriginal()(name);
+
+				Common::Load(name);
+
 				return ret;
 			}
 		}
@@ -423,6 +442,9 @@ namespace
 			HMODULE WINAPI Override(LPCWSTR name, HANDLE file, DWORD flags)
 			{
 				auto ret = ThisHook.GetOriginal()(name, file, flags);
+
+				Common::Load(name);
+
 				return ret;
 			}
 		}
