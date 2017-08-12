@@ -13,6 +13,7 @@
 namespace
 {
 	char LibraryName[] = R"(SDR\SourceDemoRender.dll)";
+	char LibraryNameNoPrefix[] = "SourceDemoRender.dll";
 	char InitializeExportName[] = "SDR_Initialize";
 	char EventName[] = "SDR_LAUNCHER";
 }
@@ -428,7 +429,7 @@ namespace
 
 	void ShowLibraryVersion()
 	{
-		auto module = LoadLibraryA(LibraryName);
+		auto module = LoadLibraryA(LibraryNameNoPrefix);
 
 		if (!module)
 		{
