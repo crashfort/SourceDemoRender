@@ -17,7 +17,7 @@ namespace
 
 		catch (const std::exception& error)
 		{
-			printf_s("SDR: %s", error.what());
+			printf_s("%s", error.what());
 		}
 	}
 
@@ -32,7 +32,7 @@ namespace
 	*/
 	void UpdateProc()
 	{
-		printf_s("SDR: Checking for any available updates\n");
+		printf_s("Checking for any available updates\n");
 
 		auto webrequest = [](const wchar_t* path, auto callback)
 		{
@@ -54,7 +54,7 @@ namespace
 
 				if (status != web::http::status_codes::OK)
 				{
-					printf_s("SDR: Could not reach update repository\n");
+					printf_s("Could not reach update repository\n");
 					return;
 				}
 
@@ -82,7 +82,7 @@ namespace
 					L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
 					[=](web::http::http_response&& response)
 					{
-						using Status = SDR::Shared::ScopedFile::ExceptionType;
+						using Status = SDR::File::ScopedFile::ExceptionType;
 
 						/*
 							Content is only text, so extract it raw.
@@ -91,30 +91,30 @@ namespace
 
 						try
 						{									
-							SDR::Shared::ScopedFile file(L"GameConfig.json", L"wb");
+							SDR::File::ScopedFile file(L"GameConfig.json", L"wb");
 							file.WriteText(string.c_str());
 						}
 
 						catch (Status status)
 						{
-							printf_s("SDR: Could not write GameConfig.json\n");
+							printf_s("Could not write GameConfig.json\n");
 							return;
 						}
 
 						try
 						{
-							SDR::Shared::ScopedFile file(L"GameConfigLatest", L"wb");
+							SDR::File::ScopedFile file(L"GameConfigLatest", L"wb");
 							file.WriteText("%d", webversion);
 						}
 
 						catch (Status status)
 						{
-							printf_s("SDR: Could not write GameConfigLatest\n");
+							printf_s("Could not write GameConfigLatest\n");
 							return;
 						}
 
-						printf_s("SDR: Game config download complete\n");
-						printf_s("SDR: Now using version %d game config\n", webversion);
+						printf_s("Game config download complete\n");
+						printf_s("Now using version %d game config\n", webversion);
 					}
 				);
 
