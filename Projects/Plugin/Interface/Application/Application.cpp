@@ -410,7 +410,7 @@ namespace LoadLibraryIntercept
 			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override),
 			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override),
 			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override),
-			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", ExW::ThisHook, ExW::Override),
+			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override),
 		};
 
 		for (auto res : results)
