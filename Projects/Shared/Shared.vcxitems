@@ -16,11 +16,18 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\BareWindows.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\BareWindowsDefs.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Color.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Error.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\File.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Log.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\String.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\TargetWindowsVersion.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Source\File.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Source\Log.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>

@@ -1,6 +1,7 @@
 #include "SDR Shared\File.hpp"
+#include <Shlwapi.h>
 
-namespace SDR::Shared
+namespace SDR::File
 {
 	ScopedFile::ScopedFile(const char* path, const char* mode)
 	{

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace SDR::Shared
+namespace SDR::File
 {
 	struct ScopedFile
 	{
