@@ -106,7 +106,7 @@ namespace
 		No errors are checked because it would leave the process in an intermediate state.
 		On any error the process will automatically crash.
 	*/
-	VOID CALLBACK ProcessACP(ULONG_PTR param)
+	VOID CALLBACK ProcessAPC(ULONG_PTR param)
 	{
 		auto data = (InterProcessData*)param;
 
@@ -138,8 +138,8 @@ namespace
 		ProcessWriter writer(process, memory.Address);
 
 		/*
-			Produced from ProcessACP above in Release with machine code listing output.
-			Any change to ProcessACP or InterProcessData will need a simulation rebuild in Release.
+			Produced from ProcessAPC above in Release with machine code listing output.
+			Any change to ProcessAPC or InterProcessData will need a simulation rebuild in Release.
 		*/
 		uint8_t function[] =
 		{
@@ -230,7 +230,7 @@ namespace
 		SDR::Error::MS::ThrowIfZero
 		(
 			QueueUserAPC((PAPCFUNC)funcaddr, thread, (ULONG_PTR)dataaddr),
-			"Could not queue ACP for process"
+			"Could not queue APC for process"
 		);
 
 		/*
@@ -466,7 +466,7 @@ void main(int argc, char* argv[])
 	data.GameNameAddr = "i dont know";
 	data.EventNameAddr = EventName;
 
-	QueueUserAPC(ProcessACP, GetCurrentThread(), (ULONG_PTR)&data);
+	QueueUserAPC(ProcessAPC, GetCurrentThread(), (ULONG_PTR)&data);
 
 	SleepEx(0, 1);
 
