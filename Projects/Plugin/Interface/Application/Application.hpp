@@ -2,6 +2,8 @@
 
 namespace SDR
 {
+	void PreEngineSetup();
+
 	void Setup(const char* gamepath, const char* gamename);
 	void Close();
 
@@ -69,7 +71,7 @@ namespace SDR
 	template <typename... Types>
 	constexpr auto CreateAdders(Types&&... types)
 	{
-		return std::array<ModuleHandlerAdder, sizeof...(Types)>{{std::forward<Types>(types)...}};
+		return std::array<std::common_type_t<Types...>, sizeof...(Types)>{{std::forward<Types>(types)...}};
 	}
 
 	struct ModuleInformation
@@ -101,17 +103,20 @@ namespace SDR
 		std::vector<Entry> Bytes;
 	};
 
+	struct HookModuleBare
+	{
+		void* TargetFunction;
+		void* NewFunction;
+		void* OriginalFunction;
+	};
+
 	template <typename FuncSignature>
-	struct HookModule
+	struct HookModule : HookModuleBare
 	{
 		inline auto GetOriginal() const
 		{
 			return static_cast<FuncSignature>(OriginalFunction);
 		}
-
-		void* TargetFunction;
-		void* NewFunction;
-		void* OriginalFunction;
 	};
 
 	BytePattern GetPatternFromString(const char* input);
@@ -119,14 +124,17 @@ namespace SDR
 	void* GetAddressFromPattern(const ModuleInformation& library, const BytePattern& pattern);
 
 	bool JsonHasPattern(rapidjson::Value& value);
-
 	bool JsonHasVirtualIndexOnly(rapidjson::Value& value);
-
 	bool JsonHasVirtualIndexAndNamePtr(rapidjson::Value& value);
+	bool JsonHasVariant(rapidjson::Value& value);
 
 	void* GetAddressFromJsonFlex(rapidjson::Value& value);
-
 	void* GetAddressFromJsonPattern(rapidjson::Value& value);
+
+	int GetVariantFromJson(rapidjson::Value& value);
+
+	void WarnAboutHookVariant(const char* name, int variant);
+	bool WarnIfVariantOutOfBounds(const char* name, int variant, int max);
 
 	void* GetVirtualAddressFromIndex(void* ptr, int index);
 
@@ -171,10 +179,65 @@ namespace SDR
 			}
 		}
 
-		template <typename T>
-		bool SetFromAddress(T& type, void* address)
+		namespace Variant
 		{
-			type = (T)(address);
+			struct Entry
+			{
+				void* Address;
+				int Variant;
+
+				bool operator==(int other) const
+				{
+					return Variant == other;
+				}
+			};
+
+			template <typename T>
+			struct Function
+			{
+				using Type = T;
+
+				Function(Entry& entry) : TargetEntry(entry)
+				{
+
+				}
+
+				auto operator()() const
+				{
+					return (Type)TargetEntry.Address;
+				}
+
+				Entry& TargetEntry;
+			};
+
+			struct HookFunction
+			{
+				HookFunction(Entry& entry) : TargetEntry(entry)
+				{
+
+				}
+
+				Entry& TargetEntry;
+			};
+		}
+
+		template <typename T>
+		inline bool SetFromAddress(T& obj, void* address)
+		{
+			obj = (T)address;
+
+			if (!address)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		inline bool SetFromAddress(Variant::Entry& entry, void* address, int variant)
+		{
+			entry.Address = address;
+			entry.Variant = variant;
 
 			if (!address)
 			{
@@ -185,27 +248,14 @@ namespace SDR
 		}
 	}
 
+	bool GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, rapidjson::Value& value, int maxvariant);
+
+	bool CreateHookBare(HookModuleBare& hook, void* override, void* address);
+
 	template <typename FuncType>
 	bool CreateHook(HookModule<FuncType>& hook, FuncType override, void* address)
 	{
-		hook.TargetFunction = address;
-		hook.NewFunction = override;
-
-		auto res = MH_CreateHookEx(hook.TargetFunction, hook.NewFunction, &hook.OriginalFunction);
-
-		if (res != MH_OK)
-		{
-			return false;
-		}
-
-		res = MH_EnableHook(hook.TargetFunction);
-
-		if (res != MH_OK)
-		{
-			return false;
-		}
-
-		return true;
+		return CreateHookBare(hook, override, address);
 	}
 
 	template <typename FuncType>
@@ -216,17 +266,26 @@ namespace SDR
 	}
 
 	template <typename FuncType>
-	bool CreateHook(HookModule<FuncType>& hook, FuncType override, rapidjson::Value& value)
+	bool CreateHookShort(HookModule<FuncType>& hook, FuncType override, rapidjson::Value& value)
 	{
 		auto address = GetAddressFromJsonPattern(value);
 		return CreateHook(hook, override, address);
 	}
 
-	template <typename FuncType>
-	bool CreateHookShort(HookModule<FuncType>& hook, FuncType override, rapidjson::Value& value)
+	bool CreateHookBareShort(HookModuleBare& hook, void* override, rapidjson::Value& value);
+
+	struct GenericHookInitParam
 	{
-		return CreateHook(hook, override, value);;
-	}
+		GenericHookInitParam(HookModuleBare& hook, void* override) : Hook(hook), Override(override)
+		{
+
+		}
+
+		HookModuleBare& Hook;
+		void* Override;
+	};
+
+	bool GenericHookVariantInit(std::initializer_list<GenericHookInitParam>&& hooks, const char* name, rapidjson::Value& value);
 
 	struct AddressFinder
 	{

@@ -1,6 +1,5 @@
 #include "PrecompiledHeader.hpp"
 #include "Application.hpp"
-#include "dbg.h"
 
 namespace
 {
@@ -194,7 +193,7 @@ namespace
 
 					if (!it->second.IsString())
 					{
-						Warning("SDR: %s inherit field not a string\n", targetgame->Name.c_str());
+						SDR::Log::Warning("SDR: %s inherit field not a string\n", targetgame->Name.c_str());
 						return;
 					}
 
@@ -250,7 +249,7 @@ namespace
 
 		void CallHandlers(GameData* game)
 		{
-			Msg("SDR: Creating %d modules\n", MainApplication.ModuleHandlers.size());
+			SDR::Log::Message("SDR: Creating %d modules\n", MainApplication.ModuleHandlers.size());
 
 			for (auto& prop : game->Properties)
 			{
@@ -269,14 +268,23 @@ namespace
 							SDR::Error::Make("Could not enable module %s", handler.Name);
 						}
 
-						Msg("SDR: Enabled module %s\n", handler.Name);
+						auto comment = "no comment";
+
+						auto it = prop.second.FindMember("Comment");
+
+						if (it != prop.second.MemberEnd())
+						{
+							comment = it->value.GetString();
+						}
+
+						SDR::Log::Message("SDR: Enabled module %s (%s)\n", handler.Name, comment);
 						break;
 					}
 				}
 
 				if (!foundhadler)
 				{
-					Warning("SDR: No handler found for %s\n", prop.first.c_str());
+					SDR::Log::Warning("SDR: No handler found for %s\n", prop.first.c_str());
 				}
 			}
 		}
@@ -288,14 +296,14 @@ namespace
 			strcpy_s(cfgpath, gamepath);
 			strcat_s(cfgpath, "SDR\\GameConfig.json");
 
-			SDR::Shared::ScopedFile config;
+			SDR::File::ScopedFile config;
 
 			try
 			{
 				config.Assign(cfgpath, "rb");
 			}
 
-			catch (SDR::Shared::ScopedFile::ExceptionType status)
+			catch (SDR::File::ScopedFile::ExceptionType status)
 			{
 				SDR::Error::Make("Could not find game config");
 			}
@@ -349,7 +357,7 @@ namespace
 	}
 }
 
-void SDR::Setup(const char* gamepath, const char* gamename)
+void SDR::PreEngineSetup()
 {
 	auto res = MH_Initialize();
 
@@ -357,7 +365,10 @@ void SDR::Setup(const char* gamepath, const char* gamename)
 	{
 		SDR::Error::Make("Failed to initialize hooks");
 	}
+}
 
+void SDR::Setup(const char* gamepath, const char* gamename)
+{
 	Config::SetupGame(gamepath, gamename);
 }
 
@@ -388,13 +399,13 @@ void SDR::CallPluginStartupFunctions()
 
 	for (auto entry : MainApplication.StartupFunctions)
 	{
-		Msg("SDR: Startup procedure (%d/%d): %s\n", index + 1, count, entry.Name);
+		SDR::Log::Message("SDR: Startup procedure (%d/%d): %s\n", index + 1, count, entry.Name);
 
 		auto res = entry.Function();
 
 		if (!res)
 		{
-			SDR::Error::Make("Startup procedure %s failed");
+			SDR::Error::Make("Startup procedure %s failed"s);
 		}
 
 		++index;
@@ -484,6 +495,16 @@ bool SDR::JsonHasVirtualIndexAndNamePtr(rapidjson::Value& value)
 	return false;
 }
 
+bool SDR::JsonHasVariant(rapidjson::Value& value)
+{
+	if (value.HasMember("Variant"))
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void* SDR::GetAddressFromJsonFlex(rapidjson::Value& value)
 {
 	if (JsonHasPattern(value))
@@ -503,6 +524,7 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 {
 	auto module = value["Module"].GetString();
 	auto patternstr = value["Pattern"].GetString();
+
 	int offset = 0;
 	bool isjump = false;
 
@@ -511,12 +533,6 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 
 		if (iter != value.MemberEnd())
 		{
-			if (!iter->value.IsNumber())
-			{
-				Warning("SDR: Offset field not a number\n");
-				return nullptr;
-			}
-
 			offset = iter->value.GetInt();
 		}
 	}
@@ -537,6 +553,32 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 	}
 
 	return address.Get();
+}
+
+int SDR::GetVariantFromJson(rapidjson::Value& value)
+{
+	if (JsonHasVariant(value))
+	{
+		return value["Variant"].GetInt();
+	}
+
+	return 0;
+}
+
+void SDR::WarnAboutHookVariant(const char* name, int variant)
+{
+	SDR::Log::Warning("SDR: No such hook overload for %s in variant %d\n", variant);
+}
+
+bool SDR::WarnIfVariantOutOfBounds(const char* name, int variant, int max)
+{
+	if (variant < 0 || variant > max)
+	{
+		SDR::Log::Warning("SDR: Variant overload %d for %s not in bounds (%d max)\n", variant, max);
+		return true;
+	}
+
+	return false;
 }
 
 void* SDR::GetVirtualAddressFromIndex(void* ptr, int index)
@@ -582,6 +624,8 @@ void SDR::ModuleShared::Registry::SetKeyValue(const char* name, uint32_t value)
 
 bool SDR::ModuleShared::Registry::GetKeyValue(const char* name, uint32_t* value)
 {
+	*value = 0;
+
 	for (auto& keyvalue : Config::Registry::KeyValues)
 	{
 		if (strcmp(keyvalue.Name, name) == 0)
@@ -598,4 +642,60 @@ bool SDR::ModuleShared::Registry::GetKeyValue(const char* name, uint32_t* value)
 	}
 
 	return false;
+}
+
+bool SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, rapidjson::Value& value, int maxvariant)
+{
+	auto addr = SDR::GetAddressFromJsonFlex(value);
+	auto variant = SDR::GetVariantFromJson(value);
+
+	if (WarnIfVariantOutOfBounds(name, variant, maxvariant))
+	{
+		return false;
+	}
+
+	return ModuleShared::SetFromAddress(entry, addr, variant);
+}
+
+bool SDR::CreateHookBare(HookModuleBare& hook, void* override, void* address)
+{
+	hook.TargetFunction = address;
+	hook.NewFunction = override;
+
+	auto res = MH_CreateHookEx(hook.TargetFunction, hook.NewFunction, &hook.OriginalFunction);
+
+	if (res != MH_OK)
+	{
+		return false;
+	}
+
+	res = MH_EnableHook(hook.TargetFunction);
+
+	if (res != MH_OK)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool SDR::CreateHookBareShort(HookModuleBare& hook, void* override, rapidjson::Value& value)
+{
+	auto address = GetAddressFromJsonPattern(value);
+	return CreateHookBare(hook, override, address);
+}
+
+bool SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam>&& hooks, const char* name, rapidjson::Value& value)
+{
+	auto variant = SDR::GetVariantFromJson(value);
+	auto size = hooks.size();
+
+	if (WarnIfVariantOutOfBounds(name, variant, size))
+	{
+		return false;
+	}
+
+	auto target = *(hooks.begin() + variant);
+
+	return CreateHookBareShort(target.Hook, target.Override, value);
 }
