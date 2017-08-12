@@ -388,7 +388,7 @@ namespace
 				{
 					std::make_pair("shaderapidx9.dll", [=]()
 					{
-						auto res = SDR::CreateHookAPI(L"d3d9.dll", "Direct3DCreate9", D3D9::ThisHook, D3D9::Override);
+						
 					}),
 					std::make_pair("d3d9.dll", [=]()
 					{
