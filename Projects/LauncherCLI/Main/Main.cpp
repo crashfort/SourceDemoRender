@@ -20,15 +20,6 @@ namespace
 
 namespace
 {
-	inline HRESULT GetLastHR()
-	{
-		auto error = GetLastError();
-		return HRESULT_FROM_WIN32(error);
-	}
-}
-
-namespace
-{
 	struct ProcessWriter
 	{
 		ProcessWriter(HANDLE process, void* startaddress) : Process(process), Address((uint8_t*)(startaddress))
