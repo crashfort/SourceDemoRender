@@ -194,15 +194,6 @@ namespace
 		*/
 		auto funcaddr = writer.PushMemory(function, sizeof(function));
 
-		/*
-			All referenced strings must be allocated in the other process too.
-		*/
-		auto libnameaddr = writer.PushString(LibraryName);
-		auto exportnameaddr = writer.PushString(InitializeExportName);
-		auto gamepathaddr = writer.PushString(path);
-		auto gamenameaddr = writer.PushString(game);
-		auto eventnameaddr = writer.PushString(EventName);
-
 		InterProcessData data;
 		
 		/*
@@ -214,11 +205,14 @@ namespace
 		data.SetEventAddr = SetEvent;
 		data.CloseHandleAddr = CloseHandle;
 
-		data.LibraryNameAddr = libnameaddr;
-		data.ExportNameAddr = exportnameaddr;
-		data.GamePathAddr = gamepathaddr;
-		data.GameNameAddr = gamenameaddr;
-		data.EventNameAddr = eventnameaddr;
+		/*
+			All referenced strings must be allocated in the other process too.
+		*/
+		data.LibraryNameAddr = writer.PushString(LibraryName);
+		data.ExportNameAddr = writer.PushString(InitializeExportName);
+		data.GamePathAddr = writer.PushString(path);
+		data.GameNameAddr = writer.PushString(game);
+		data.EventNameAddr = writer.PushString(EventName);
 		
 		data.Code = SDR::API::InitializeCode::GeneralFailure;
 
