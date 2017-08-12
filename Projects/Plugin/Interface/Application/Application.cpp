@@ -287,6 +287,8 @@ namespace
 					SDR::Log::Warning("SDR: No handler found for %s\n", prop.first.c_str());
 				}
 			}
+
+			MainApplication.ModuleHandlers.clear();
 		}
 
 		void SetupGame(const char* gamepath, const char* gamename)
@@ -351,8 +353,6 @@ namespace
 
 			ResolveInherit(currentgame, document.GetAllocator());
 			CallHandlers(currentgame);
-
-			MainApplication.ModuleHandlers.clear();
 		}
 	}
 
