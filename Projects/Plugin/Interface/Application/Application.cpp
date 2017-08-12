@@ -355,95 +355,95 @@ namespace
 			MainApplication.ModuleHandlers.clear();
 		}
 	}
-}
 
-namespace LoadLibraryIntercept
-{
-	namespace A
+	namespace LoadLibraryIntercept
 	{
-		SDR::HookModule<decltype(LoadLibraryA)*> ThisHook;
-
-		HMODULE WINAPI Override(LPCSTR name)
+		namespace A
 		{
-			auto ret = ThisHook.GetOriginal()(name);
-			return ret;
-		}
-	}
+			SDR::HookModule<decltype(LoadLibraryA)*> ThisHook;
 
-	namespace ExA
-	{
-		SDR::HookModule<decltype(LoadLibraryExA)*> ThisHook;
-
-		HMODULE WINAPI Override(LPCSTR name, HANDLE file, DWORD flags)
-		{
-			auto ret = ThisHook.GetOriginal()(name, file, flags);
-			return ret;
-		}
-	}
-
-	namespace W
-	{
-		SDR::HookModule<decltype(LoadLibraryW)*> ThisHook;
-
-		HMODULE WINAPI Override(LPCWSTR name)
-		{
-			auto ret = ThisHook.GetOriginal()(name);
-			return ret;
-		}
-	}
-
-	namespace ExW
-	{
-		SDR::HookModule<decltype(LoadLibraryExW)*> ThisHook;
-
-		HMODULE WINAPI Override(LPCWSTR name, HANDLE file, DWORD flags)
-		{
-			auto ret = ThisHook.GetOriginal()(name, file, flags);
-			return ret;
-		}
-	}
-
-	void Start()
-	{
-		auto results =
-		{
-			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override),
-			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override),
-			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override),
-			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override),
-		};
-
-		for (auto res : results)
-		{
-			if (!res)
+			HMODULE WINAPI Override(LPCSTR name)
 			{
-				SDR::Error::Make("Could not create library intercepts");
+				auto ret = ThisHook.GetOriginal()(name);
+				return ret;
 			}
 		}
 
-		auto codes =
+		namespace ExA
 		{
-			MH_EnableHook(A::ThisHook.TargetFunction),
-			MH_EnableHook(ExA::ThisHook.TargetFunction),
-			MH_EnableHook(W::ThisHook.TargetFunction),
-			MH_EnableHook(ExW::ThisHook.TargetFunction),
-		};
+			SDR::HookModule<decltype(LoadLibraryExA)*> ThisHook;
 
-		for (auto code : codes)
-		{
-			if (code != MH_OK)
+			HMODULE WINAPI Override(LPCSTR name, HANDLE file, DWORD flags)
 			{
-				SDR::Error::Make("Could not enable library intercepts");
+				auto ret = ThisHook.GetOriginal()(name, file, flags);
+				return ret;
 			}
 		}
-	}
 
-	void End()
-	{
-		MH_DisableHook(A::ThisHook.TargetFunction);
-		MH_DisableHook(ExA::ThisHook.TargetFunction);
-		MH_DisableHook(W::ThisHook.TargetFunction);
-		MH_DisableHook(ExW::ThisHook.TargetFunction);
+		namespace W
+		{
+			SDR::HookModule<decltype(LoadLibraryW)*> ThisHook;
+
+			HMODULE WINAPI Override(LPCWSTR name)
+			{
+				auto ret = ThisHook.GetOriginal()(name);
+				return ret;
+			}
+		}
+
+		namespace ExW
+		{
+			SDR::HookModule<decltype(LoadLibraryExW)*> ThisHook;
+
+			HMODULE WINAPI Override(LPCWSTR name, HANDLE file, DWORD flags)
+			{
+				auto ret = ThisHook.GetOriginal()(name, file, flags);
+				return ret;
+			}
+		}
+
+		void Start()
+		{
+			auto results =
+			{
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override),
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override),
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override),
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override),
+			};
+
+			for (auto res : results)
+			{
+				if (!res)
+				{
+					SDR::Error::Make("Could not create library intercepts");
+				}
+			}
+
+			auto codes =
+			{
+				MH_EnableHook(A::ThisHook.TargetFunction),
+				MH_EnableHook(ExA::ThisHook.TargetFunction),
+				MH_EnableHook(W::ThisHook.TargetFunction),
+				MH_EnableHook(ExW::ThisHook.TargetFunction),
+			};
+
+			for (auto code : codes)
+			{
+				if (code != MH_OK)
+				{
+					SDR::Error::Make("Could not enable library intercepts");
+				}
+			}
+		}
+
+		void End()
+		{
+			MH_DisableHook(A::ThisHook.TargetFunction);
+			MH_DisableHook(ExA::ThisHook.TargetFunction);
+			MH_DisableHook(W::ThisHook.TargetFunction);
+			MH_DisableHook(ExW::ThisHook.TargetFunction);
+		}
 	}
 }
 
