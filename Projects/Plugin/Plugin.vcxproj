@@ -14,7 +14,7 @@
     <ProjectGuid>{4B8E5130-D408-4AD9-A9C4-009CA22E8C5E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>SourceDemoRender</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
     <ProjectName>Plugin</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
