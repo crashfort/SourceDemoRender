@@ -15,6 +15,7 @@
 #include <atomic>
 #include <cctype>
 #include <array>
+#include <functional>
 
 #include "rapidjson\document.h"
 
