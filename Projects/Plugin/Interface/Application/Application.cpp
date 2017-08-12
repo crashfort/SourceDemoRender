@@ -363,6 +363,9 @@ namespace
 		{
 			SDR::HookModule<decltype(Direct3DCreate9)*> ThisHook;
 
+			/*
+				Texture sharing requires a D3D9Ex interface.
+			*/
 			IDirect3D9* WINAPI Override(UINT version)
 			{
 				IDirect3D9Ex* ret = nullptr;
