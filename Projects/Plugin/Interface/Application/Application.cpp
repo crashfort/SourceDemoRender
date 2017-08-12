@@ -379,15 +379,31 @@ namespace
 
 		namespace Common
 		{
-			void Load(const char* name)
+			void Load(HMODULE module, const char* name)
 			{
-				if (_strcmpi(name, "d3d9.dll") == 0)
+				std::initializer_list<std::pair<const char*, std::function<void()>>> table =
 				{
-					auto res = SDR::CreateHookAPI(L"d3d9.dll", "Direct3DCreate9", D3D9::ThisHook, D3D9::Override);
+					std::make_pair("shaderapidx9.dll", [=]()
+					{
+						auto res = SDR::CreateHookAPI(L"d3d9.dll", "Direct3DCreate9", D3D9::ThisHook, D3D9::Override);
+					}),
+					std::make_pair("d3d9.dll", [=]()
+					{
+						auto res = SDR::CreateHookAPI(L"d3d9.dll", "Direct3DCreate9", D3D9::ThisHook, D3D9::Override);
+					}),
+				};
+
+				for (auto& entry : table)
+				{
+					if (SDR::String::EndsWith(name, entry.first))
+					{
+						entry.second();
+						break;
+					}
 				}
 			}
 
-			void Load(const wchar_t* name)
+			void Load(HMODULE module, const wchar_t* name)
 			{
 
 			}
@@ -401,7 +417,7 @@ namespace
 			{
 				auto ret = ThisHook.GetOriginal()(name);
 
-				Common::Load(name);
+				Common::Load(ret, name);
 
 				return ret;
 			}
@@ -415,7 +431,7 @@ namespace
 			{
 				auto ret = ThisHook.GetOriginal()(name, file, flags);
 
-				Common::Load(name);
+				Common::Load(ret, name);
 
 				return ret;
 			}
@@ -429,7 +445,7 @@ namespace
 			{
 				auto ret = ThisHook.GetOriginal()(name);
 
-				Common::Load(name);
+				Common::Load(ret, name);
 
 				return ret;
 			}
@@ -443,7 +459,7 @@ namespace
 			{
 				auto ret = ThisHook.GetOriginal()(name, file, flags);
 
-				Common::Load(name);
+				Common::Load(ret, name);
 
 				return ret;
 			}
