@@ -38,7 +38,7 @@ namespace
 			[]()
 			{
 				auto res = MH_CreateHookApiEx(L"kernel32.dll", "OutputDebugStringA", Override, &ThisHook.OriginalFunction, &ThisHook.TargetFunction);
-				return true;
+				return res == MH_OK;
 			}
 		);
 
