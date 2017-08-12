@@ -11,6 +11,7 @@ Games that are added:
 * Half-Life 2
 * Team Fortress 2
 * Momentum
+* Day of Defeat: Source
 
 Known games that don't work:
 * Garry's Mod - *No plugin_load support*
