@@ -1,20 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug MP|Win32">
-      <Configuration>Debug MP</Configuration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug SP|Win32">
-      <Configuration>Debug SP</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release MP|Win32">
-      <Configuration>Release MP</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release SP|Win32">
-      <Configuration>Release SP</Configuration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -26,26 +18,13 @@
     <ProjectName>Plugin</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
@@ -58,56 +37,36 @@
   <ImportGroup Label="Shared">
     <Import Project="..\Shared\Shared.vcxitems" Label="Shared" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\Property Sheet\PropertySheet.props" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\Property Sheet\PropertySheet.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\Property Sheet\PropertySheet.props" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'" Label="PropertySheets">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\Property Sheet\PropertySheet.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
-    <TargetName>SourceDemoRender.Singleplayer</TargetName>
+    <TargetName>SourceDemoRender</TargetName>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
-    <TargetName>SourceDemoRender.Multiplayer</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
-    <TargetName>SourceDemoRender.Singleplayer</TargetName>
+    <TargetName>SourceDemoRender</TargetName>
     <IncludePath>$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(ProjectDir)Intermediate\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\Output\SDR\</OutDir>
-    <TargetName>SourceDemoRender.Multiplayer</TargetName>
-  </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_SP)common\;$(SDR_2013SDK_SP)public\;$(SDR_2013SDK_SP)public\tier0\;$(SDR_2013SDK_SP)public\tier1\;$(SDR_2013SDK_SP)game\client\;$(SDR_2013SDK_SP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);$(SDR_SHARED_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -115,33 +74,13 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_2013SDK_SP)lib\common\;$(SDR_2013SDK_SP)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Debug\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;Shlwapi.lib;zlib.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Debug\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>D3D11.lib;Shell32.lib;Shlwapi.lib;zlib.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
-    <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_MULTIPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_MP)common\;$(SDR_2013SDK_MP)public\;$(SDR_2013SDK_MP)public\tier0\;$(SDR_2013SDK_MP)public\tier1\;$(SDR_2013SDK_MP)game\client\;$(SDR_2013SDK_MP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);$(SDR_SHARED_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_2013SDK_MP)lib\common\;$(SDR_2013SDK_MP)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Debug\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;Shlwapi.lib;zlib.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>
-      </DelayLoadDLLs>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -149,7 +88,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_SP)common\;$(SDR_2013SDK_SP)public\;$(SDR_2013SDK_SP)public\tier0\;$(SDR_2013SDK_SP)public\tier1\;$(SDR_2013SDK_SP)game\client\;$(SDR_2013SDK_SP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);$(SDR_SHARED_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -159,32 +98,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_2013SDK_SP)lib\common\;$(SDR_2013SDK_SP)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Release\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;Shlwapi.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>
-      </DelayLoadDLLs>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_MULTIPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SDR_2013SDK_MP)common\;$(SDR_2013SDK_MP)public\;$(SDR_2013SDK_MP)public\tier0\;$(SDR_2013SDK_MP)public\tier1\;$(SDR_2013SDK_MP)game\client\;$(SDR_2013SDK_MP)game\server\;$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RWQUEUE_INCLUDE);$(ProjectDir)3rd Party Libraries\MinHook\include\;$(SDR_FFMPEG_ROOT)include\;$(SDR_RESTSDK_ROOT)Release\include\;$(DXSDK_DIR)Include\;$(SDR_RAPIDJSON_INCLUDE);$(SDR_SHARED_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_2013SDK_MP)lib\common\;$(SDR_2013SDK_MP)lib\public\;$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Release\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;legacy_stdio_definitions.lib;mathlib.lib;tier0.lib;tier1.lib;tier2.lib;vstdlib.lib;Shell32.lib;Shlwapi.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Release\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>D3D11.lib;Shell32.lib;Shlwapi.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
@@ -206,226 +121,130 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd Party Libraries\MinHook\src\buffer.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="3rd Party Libraries\MinHook\src\HDE\hde32.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="3rd Party Libraries\MinHook\src\HDE\hde64.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="3rd Party Libraries\MinHook\src\hook.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="3rd Party Libraries\MinHook\src\trampoline.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Interface\Application\Application.cpp" />
     <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp" />
     <ClCompile Include="Interface\PluginInterface.cpp" />
     <ClCompile Include="Main\Precompiled Header\PrecompiledHeader.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\ClearUAV.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSMain</EntryPointName>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
-      </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
-      </ObjectFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
     </FxCompile>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\BGR0.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSMain</EntryPointName>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
-      </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
-      </ObjectFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
     </FxCompile>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\PassUAV.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSMain</EntryPointName>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
-      </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
-      </ObjectFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
     </FxCompile>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV444.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
-      </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
-      </ObjectFileOutput>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSMain</EntryPointName>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
     </FxCompile>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Sampling.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSMain</EntryPointName>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
-      </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
-      </ObjectFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
     </FxCompile>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\YUV420.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">
-      </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">
-      </ObjectFileOutput>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSMain</EntryPointName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug SP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">CSBlob_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug MP|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSMain</EntryPointName>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CSBlob_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Interface\Application\Modules\Movie Record\Shaders\Blobs\%(Filename).hpp</HeaderFileOutput>
     </FxCompile>
     <None Include="Interface\Application\Modules\Movie Record\Shaders\SharedAll.hlsl" />
     <None Include="Interface\Application\Modules\Movie Record\Shaders\Utility.hlsl" />
