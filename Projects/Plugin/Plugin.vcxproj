@@ -115,7 +115,10 @@
     <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\table64.h" />
     <ClInclude Include="3rd Party Libraries\MinHook\src\trampoline.h" />
     <ClInclude Include="Interface\Application\Application.hpp" />
-    <ClInclude Include="Interface\Application\Modules\Shared\Shared.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Shared\EngineClient.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Shared\MaterialSystem.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Shared\SourceGlobals.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Shared\Console.hpp" />
     <ClInclude Include="Main\Precompiled Header\PrecompiledHeader.hpp" />
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp" />
   </ItemGroup>
@@ -143,6 +146,10 @@
     <ClCompile Include="Interface\Application\Application.cpp" />
     <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp" />
+    <ClCompile Include="Interface\Application\Modules\Shared\EngineClient.cpp" />
+    <ClCompile Include="Interface\Application\Modules\Shared\MaterialSystem.cpp" />
+    <ClCompile Include="Interface\Application\Modules\Shared\SourceGlobals.cpp" />
+    <ClCompile Include="Interface\Application\Modules\Shared\Console.cpp" />
     <ClCompile Include="Interface\PluginInterface.cpp" />
     <ClCompile Include="Main\Precompiled Header\PrecompiledHeader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -251,6 +258,9 @@
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl">
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Interface\Application\Modules\Templates.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
