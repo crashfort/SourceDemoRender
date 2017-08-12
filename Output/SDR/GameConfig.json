@@ -78,6 +78,64 @@
 			"Module": "engine.dll",
 			"Pattern": "E8 ?? ?? ?? ?? 83 C4 04 83 7D C8 00 7C 27 8B 55 C0 85 D2 74 20 A1 ?? ?? ?? ?? 52 8B 08 8B 01 FF 50 14 33 D2 85 D2 74 0D A1 ?? ?? ?? ?? 52 8B 08 8B 01 FF 50 14 8B E5 5D C3",
 			"IsRelativeJump": true
+		},
+		"CvarPtr":
+		{
+			"Comment": "0x10253CC9 static CSS IDA address August 8 2017",
+			"Module": "engine.dll",
+			"Pattern": "A3 ?? ?? ?? ?? A3 ?? ?? ?? ?? 83 3D ?? ?? ?? ?? ?? 75 19 8B 04 B7 6A 00 68 ?? ?? ?? ?? FF D0 A3 ?? ?? ?? ?? 83 C4 08 A1 ?? ?? ?? ?? 46 3B F3 7C BD 5F 5E 5B 5D C3",
+			"Offset": 1
+		},
+		"Cvar_FindVar":
+		{
+			"Comment": "Static CSS ICVar vtable offset August 8 2017",
+			"VTPtrName": "CvarPtr",
+			"VTIndex": 13
+		},
+		"IConVar_VTable":
+		{
+			"Comment": "0x10249A40 + 0xF + 3 static CSS IDA address August 9 2017",
+			"Module": "engine.dll",
+			"Pattern": "55 8B EC 56 8B F1 8B 46 24 C7 06 ?? ?? ?? ?? C7 46 ?? ?? ?? ?? ?? 85 C0 74 10 50 E8 ?? ?? ?? ?? 83 C4 04 C7 46 ?? ?? ?? ?? ?? F6 45 08 01 C7 06 ?? ?? ?? ?? 74 09 56 E8 ?? ?? ?? ?? 83 C4 04 8B C6 5E 5D C2 04 00",
+			"Offset": 18
+		},
+		"ConCommandBase_VTable":
+		{
+			"Comment": "0x10249A40 + 0x2E + 2 static CSS IDA address August 9 2017",
+			"Module": "engine.dll",
+			"Pattern": "55 8B EC 56 8B F1 8B 46 24 C7 06 ?? ?? ?? ?? C7 46 ?? ?? ?? ?? ?? 85 C0 74 10 50 E8 ?? ?? ?? ?? 83 C4 04 C7 46 ?? ?? ?? ?? ?? F6 45 08 01 C7 06 ?? ?? ?? ?? 74 09 56 E8 ?? ?? ?? ?? 83 C4 04 8B C6 5E 5D C2 04 00",
+			"Offset": 48
+		},
+		"Convar_Info":
+		{
+			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017",
+			"NeverAsStringFlag": 4096,
+			"Variant": 0
+		},
+		"ConVar_Create":
+		{
+			"Comment": "0x1024A110 static CSS IDA address August 9 2017",
+			"Module": "engine.dll",
+			"Pattern": "55 8B EC 8B 45 0C 85 C0 56 57 BF ?? ?? ?? ?? 8B F1 8B D7 0F 45 D0 89 76 1C 89 56 20 8D 4A 01 90 8A 02 42 84 C0 75 F9 2B D1 8D 42 01 50 89 46 28 E8 ?? ?? ?? ??"
+		},
+		"ConCommandBase_Info":
+		{
+			"Comment": "Static CSS ConCommandBase vtable offset August 9 2017",
+			"Variant": 0
+		},
+		"ConCommandBase_CreateBase":
+		{
+			"Comment": "Static CSS ConCommandBase vtable offset August 9 2017",
+			"VTPtrName": "ConCommandBase_VTable",
+			"VTIndex": 8
+		},
+		"CCommand_Info":
+		{
+			"Variant": 0
+		},
+		"ConCommand_Info":
+		{
+			"Variant": 0
 		}
 	},
 
