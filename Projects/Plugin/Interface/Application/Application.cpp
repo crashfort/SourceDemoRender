@@ -363,7 +363,7 @@ void SDR::PreEngineSetup()
 
 	if (res != MH_OK)
 	{
-		SDR::Error::Make("Failed to initialize hooks");
+		SDR::Error::Make("Failed to initialize hooks"s);
 	}
 }
 
