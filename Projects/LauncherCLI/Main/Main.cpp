@@ -446,8 +446,6 @@ namespace
 		dir += game;
 		dir += '\\';
 
-		SDR::Error::MS::ThrowIfZero(SetCurrentDirectoryA(dir.c_str()), "Could not change current directory");
-
 		printf_s("Game: \"%s\"\n", game.c_str());
 		printf_s("Executable path: \"%s\"\n", exepath.c_str());
 		printf_s("Directory: \"%s\"\n", dir.c_str());
