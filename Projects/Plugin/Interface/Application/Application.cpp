@@ -361,9 +361,12 @@ namespace
 	{
 		namespace Common
 		{
+			template <typename T>
+			using TableType = std::initializer_list<std::pair<const T*, std::function<void()>>>;
+
 			void Load(HMODULE module, const char* name)
 			{
-				std::initializer_list<std::pair<const char*, std::function<void()>>> table =
+				TableType<char> table =
 				{
 					
 				};
