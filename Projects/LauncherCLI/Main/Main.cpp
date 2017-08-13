@@ -263,9 +263,17 @@ namespace
 			auto index = waitres - WAIT_OBJECT_0;
 
 			/*
+				Event handle.
+			*/
+			if (index == 0)
+			{
+				printf_s("Received remote SDR signal\n");
+			}
+			
+			/*
 				Process handle.
 			*/
-			if (index == 1)
+			else  if (index == 1)
 			{
 				SDR::Error::Make("Process exited");
 			}
