@@ -421,7 +421,10 @@ namespace
 			{
 				auto ret = ThisHook.GetOriginal()(name);
 
-				Common::Load(ret, name);
+				if (ret)
+				{
+					Common::Load(ret, name);
+				}
 
 				return ret;
 			}
@@ -435,7 +438,10 @@ namespace
 			{
 				auto ret = ThisHook.GetOriginal()(name, file, flags);
 
-				Common::Load(ret, name);
+				if (ret)
+				{
+					Common::Load(ret, name);
+				}
 
 				return ret;
 			}
@@ -449,7 +455,10 @@ namespace
 			{
 				auto ret = ThisHook.GetOriginal()(name);
 
-				Common::Load(ret, name);
+				if (ret)
+				{
+					Common::Load(ret, name);
+				}
 
 				return ret;
 			}
@@ -463,7 +472,10 @@ namespace
 			{
 				auto ret = ThisHook.GetOriginal()(name, file, flags);
 
-				Common::Load(ret, name);
+				if (ret)
+				{
+					Common::Load(ret, name);
+				}
 
 				return ret;
 			}
