@@ -383,7 +383,19 @@ namespace
 
 			void Load(HMODULE module, const wchar_t* name)
 			{
+				TableType<wchar_t> table =
+				{
+					
+				};
 
+				for (auto& entry : table)
+				{
+					if (SDR::String::EndsWith(name, entry.first))
+					{
+						entry.second();
+						break;
+					}
+				}
 			}
 		}
 
