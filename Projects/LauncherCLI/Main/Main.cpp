@@ -288,21 +288,48 @@ namespace
 			"Could not read process memory for status code"
 		);
 
+		bool fail = false;
+
 		switch (data.Code)
 		{
+			case SDR::API::InitializeCode::GeneralFailure:
+			{
+				printf_s("Could not remotely initialize SDR\n");
+				fail = true;
+				break;
+			}
+
 			case SDR::API::InitializeCode::Success:
 			{
 				printf_s("SDR initialized in \"%s\"\n", game.c_str());
 				break;
 			}
 
-			case SDR::API::InitializeCode::GeneralFailure:
+			case SDR::API::InitializeCode::CouldNotInitializeHooks:
 			{
-				printf_s("Could not remotely initialize SDR\n");
-
-				TerminateProcess(process, 0);
+				printf_s("Could not initialize hooks inside SDR\n");
+				fail = true;
 				break;
 			}
+
+			case SDR::API::InitializeCode::CouldNotCreateLibraryIntercepts:
+			{
+				printf_s("Could not create library intercepts inside SDR\n");
+				fail = true;
+				break;
+			}
+
+			case SDR::API::InitializeCode::CouldNotEnableLibraryIntercepts:
+			{
+				printf_s("Could not enable library intercepts inside SDR\n");
+				fail = true;
+				break;
+			}
+		}
+
+		if (fail)
+		{
+			TerminateProcess(process, 0);
 		}
 	}
 

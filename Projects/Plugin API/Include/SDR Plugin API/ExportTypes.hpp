@@ -7,6 +7,9 @@ namespace SDR::API
 	{
 		GeneralFailure = 0,
 		Success = 1,
+		CouldNotInitializeHooks,
+		CouldNotCreateLibraryIntercepts,
+		CouldNotEnableLibraryIntercepts,
 	};
 
 	using SDR_LibraryVersion = int(__cdecl*)();

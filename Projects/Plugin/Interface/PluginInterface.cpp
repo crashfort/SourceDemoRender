@@ -212,10 +212,6 @@ namespace
 		ModuleGameDir::FullPath = path;
 		ModuleGameDir::GameName = game;
 
-		SDR::Log::SetMessageFunction(MessageFunc);
-		SDR::Log::SetMessageColorFunction(MessageColorFunc);
-		SDR::Log::SetWarningFunction(WarningFunc);
-
 		RegisterLAV();
 
 		try
@@ -223,9 +219,9 @@ namespace
 			SDR::PreEngineSetup();
 		}
 
-		catch (const SDR::Error::Exception& error)
+		catch (SDR::API::InitializeCode code)
 		{
-			return SDR::API::InitializeCode::GeneralFailure;
+			return code;
 		}
 
 		return SDR::API::InitializeCode::Success;
@@ -233,6 +229,10 @@ namespace
 
 	bool Load()
 	{
+		SDR::Log::SetMessageFunction(MessageFunc);
+		SDR::Log::SetMessageColorFunction(MessageColorFunc);
+		SDR::Log::SetWarningFunction(WarningFunc);
+
 		Commands::Version();
 
 		SDR::Log::Message("SDR: Current game: %s\n", SDR::GetGameName());

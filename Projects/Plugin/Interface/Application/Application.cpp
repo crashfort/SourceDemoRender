@@ -1,4 +1,5 @@
 #include "PrecompiledHeader.hpp"
+#include "SDR Plugin API\ExportTypes.hpp"
 #include "Application.hpp"
 #include <d3d9.h>
 
@@ -482,7 +483,7 @@ namespace
 			{
 				if (!res)
 				{
-					SDR::Error::Make("Could not create library intercepts");
+					throw SDR::API::InitializeCode::CouldNotCreateLibraryIntercepts;
 				}
 			}
 
@@ -498,7 +499,7 @@ namespace
 			{
 				if (code != MH_OK)
 				{
-					SDR::Error::Make("Could not enable library intercepts");
+					throw SDR::API::InitializeCode::CouldNotEnableLibraryIntercepts;
 				}
 			}
 		}
@@ -519,7 +520,7 @@ void SDR::PreEngineSetup()
 
 	if (res != MH_OK)
 	{
-		SDR::Error::Make("Failed to initialize hooks"s);
+		throw SDR::API::InitializeCode::CouldNotInitializeHooks;
 	}
 
 	LoadLibraryIntercept::Start();
