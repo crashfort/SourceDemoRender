@@ -75,7 +75,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Debug\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;D3d9.lib;Shell32.lib;Shlwapi.lib;zlib.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.lib;Shell32.lib;Shlwapi.lib;zlib.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140d_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
@@ -99,7 +99,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SDR_FFMPEG_ROOT)lib\;$(SDR_RESTSDK_ROOT)Binaries\Win32\Release\;$(DXSDK_DIR)Lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;D3d9.lib;Shell32.lib;Shlwapi.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.lib;Shell32.lib;Shlwapi.lib;libx264.lib;zlib.lib;libavutil.a;libavcodec.a;libavformat.a;winhttp.lib;crypt32.lib;bcrypt.lib;libcpprest140_2_9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>

@@ -1,7 +1,6 @@
 #include "PrecompiledHeader.hpp"
 #include "SDR Plugin API\ExportTypes.hpp"
 #include "Application.hpp"
-#include <d3d9.h>
 
 namespace
 {
@@ -360,41 +359,13 @@ namespace
 
 	namespace LoadLibraryIntercept
 	{
-		namespace D3D9
-		{
-			SDR::HookModule<decltype(Direct3DCreate9)*> ThisHook;
-
-			/*
-				Texture sharing requires a D3D9Ex interface.
-			*/
-			IDirect3D9* WINAPI Override(UINT version)
-			{
-				IDirect3D9Ex* ret = nullptr;
-				auto hr = Direct3DCreate9Ex(version, &ret);
-
-				if (FAILED(hr))
-				{
-					return nullptr;
-				}
-
-				return ret;
-			}
-		}
-
 		namespace Common
 		{
 			void Load(HMODULE module, const char* name)
 			{
 				std::initializer_list<std::pair<const char*, std::function<void()>>> table =
 				{
-					std::make_pair("shaderapidx9.dll", [=]()
-					{
-						
-					}),
-					std::make_pair("d3d9.dll", [=]()
-					{
-						auto res = SDR::CreateHookAPI(L"d3d9.dll", "Direct3DCreate9", D3D9::ThisHook, D3D9::Override);
-					}),
+					
 				};
 
 				for (auto& entry : table)
