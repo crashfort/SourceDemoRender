@@ -239,12 +239,36 @@ namespace
 		*/
 		ResumeThread(thread);
 
+		auto handles =
+		{
+			event,
+			process
+		};
+
 		/*
-			Wait for the signal that it's safe to read back the status code.
+			Wait for the signal that it's safe to read back the status code, or if there
+			was an error and the process ended.
 		*/
-		if (WaitForSingleObject(event, INFINITE) == WAIT_FAILED)
+		auto waitres = WaitForMultipleObjects(handles.size(), handles.begin(), false, INFINITE);
+
+		if (waitres == WAIT_FAILED)
 		{
 			SDR::Error::MS::ThrowLastError("Could not wait for launcher event");
+		}
+
+		auto maxwait = WAIT_OBJECT_0 + handles.size();
+
+		if (waitres < maxwait)
+		{
+			auto index = waitres - WAIT_OBJECT_0;
+
+			/*
+				Process handle.
+			*/
+			if (index == 1)
+			{
+				SDR::Error::Make("Process exited");
+			}
 		}
 
 		/*
