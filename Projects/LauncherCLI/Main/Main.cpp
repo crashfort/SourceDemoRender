@@ -14,6 +14,7 @@ namespace
 {
 	char LibraryName[] = R"(SDR\SourceDemoRender.dll)";
 	char LibraryNameNoPrefix[] = "SourceDemoRender.dll";
+	char ConfigNameNoPrefix[] = "GameConfig.json";
 	char InitializeExportName[] = "SDR_Initialize";
 	char EventName[] = "SDR_LAUNCHER";
 }
@@ -409,7 +410,7 @@ namespace
 
 		try
 		{
-			config.Assign("GameConfig.json", "rb");
+			config.Assign(ConfigNameNoPrefix, "rb");
 		}
 
 		catch (SDR::File::ScopedFile::ExceptionType status)
@@ -560,8 +561,8 @@ void main(int argc, char* argv[])
 
 	try
 	{
-		EnsureFileIsPresent("SourceDemoRender.dll");
-		EnsureFileIsPresent("GameConfig.json");
+		EnsureFileIsPresent(LibraryNameNoPrefix);
+		EnsureFileIsPresent(ConfigNameNoPrefix);
 
 		ShowLibraryVersion();
 
