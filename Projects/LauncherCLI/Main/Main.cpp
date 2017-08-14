@@ -132,6 +132,30 @@ namespace
 
 	void InjectProcess(HANDLE process, HANDLE thread, const std::string& path, const std::string& game)
 	{
+		struct FailTerminateData
+		{
+			FailTerminateData(HANDLE process) : Process(process)
+			{
+
+			}
+
+			~FailTerminateData()
+			{
+				if (Fail && Process)
+				{
+					TerminateProcess(Process, 0);
+				}
+			}
+
+			HANDLE Process;
+			bool Fail = true;
+		};
+
+		/*
+			Ensure the process is closed on any error.
+		*/
+		FailTerminateData terminator(process);
+
 		printf_s("Injecting into \"%s\"\n", game.c_str());
 
 		VirtualMemory memory(process, 1024);
@@ -288,48 +312,38 @@ namespace
 			"Could not read process memory for status code"
 		);
 
-		bool fail = false;
-
 		switch (data.Code)
 		{
 			case SDR::API::InitializeCode::GeneralFailure:
 			{
 				printf_s("Could not remotely initialize SDR\n");
-				fail = true;
 				break;
 			}
 
 			case SDR::API::InitializeCode::Success:
 			{
 				printf_s("SDR initialized in \"%s\"\n", game.c_str());
+				terminator.Fail = false;
 				break;
 			}
 
 			case SDR::API::InitializeCode::CouldNotInitializeHooks:
 			{
 				printf_s("Could not initialize hooks inside SDR\n");
-				fail = true;
 				break;
 			}
 
 			case SDR::API::InitializeCode::CouldNotCreateLibraryIntercepts:
 			{
 				printf_s("Could not create library intercepts inside SDR\n");
-				fail = true;
 				break;
 			}
 
 			case SDR::API::InitializeCode::CouldNotEnableLibraryIntercepts:
 			{
 				printf_s("Could not enable library intercepts inside SDR\n");
-				fail = true;
 				break;
 			}
-		}
-
-		if (fail)
-		{
-			TerminateProcess(process, 0);
 		}
 	}
 
