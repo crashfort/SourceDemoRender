@@ -5,8 +5,8 @@ namespace SDR::API
 {
 	enum class InitializeCode : int32_t
 	{
-		GeneralFailure = 0,
-		Success = 1,
+		GeneralFailure,
+		Success,
 		CouldNotInitializeHooks,
 		CouldNotCreateLibraryIntercepts,
 		CouldNotEnableLibraryIntercepts,
