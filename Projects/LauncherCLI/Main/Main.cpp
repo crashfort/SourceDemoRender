@@ -522,6 +522,14 @@ namespace
 
 		FreeLibrary(module);
 	}
+
+	void EnsureFileIsPresent(const char* name)
+	{
+		if (PathFileExistsA(name) == 0)
+		{
+			SDR::Error::Make("Required file \"%s\" does not exist", name);
+		}
+	}
 }
 
 void main(int argc, char* argv[])
@@ -550,16 +558,19 @@ void main(int argc, char* argv[])
 	return;
 	#endif
 
-	/*
-		Don't need our own name.
-	*/
-	argv++;
-	argc--;
-
-	ShowLibraryVersion();
-
 	try
 	{
+		EnsureFileIsPresent("SourceDemoRender.dll");
+		EnsureFileIsPresent("GameConfig.json");
+
+		ShowLibraryVersion();
+
+		/*
+			Don't need our own name.
+		*/
+		argv++;
+		argc--;
+
 		MainProcedure(argc, argv);
 	}
 
