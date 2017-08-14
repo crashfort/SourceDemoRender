@@ -453,6 +453,8 @@ namespace
 
 		std::string params = "-steam -insecure +sv_lan 1 -console";
 
+		printf_s("Appending parameters: \"%s\"\n", params.c_str());
+
 		std::string exepath = argv[0];
 		std::string game = FindGameNameFromPath(exepath);
 		
