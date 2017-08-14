@@ -282,9 +282,4 @@ extern "C"
 	{
 		return Initialize(path, game);
 	}
-
-	__declspec(dllexport) void __cdecl SDR_Shutdown()
-	{
-		SDR::Plugin::Unload();
-	}
 }
