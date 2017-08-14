@@ -441,7 +441,6 @@ namespace
 		}
 
 		SDR::Error::Make("Game not found in game config");
-		return ""s;
 	}
 
 	void MainProcedure(int argc, char* argv[])
