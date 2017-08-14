@@ -7,5 +7,4 @@ namespace SDR::EngineClient
 	bool IsConsoleVisible();
 	void FlashWindow();
 	void ClientCommand(const char* str);
-	bool PlayingDemo();
 }

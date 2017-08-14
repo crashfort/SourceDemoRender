@@ -119,31 +119,23 @@ namespace
 
 			void __fastcall NewFunction(void* thisptr, void* edx, const InputEvent_t& event)
 			{
-				if (SDR::EngineClient::PlayingDemo())
+				IsUnfocused = event.m_nData == 0;
+
+				/*
+					52 is the offset of m_bActiveApp in CGame.
+				*/
+				auto& isactiveapp = *(bool*)((char*)(thisptr) + 52);
+
+				ThisHook.GetOriginal()(thisptr, edx, event);
+
+				/*
+					Deep in the engine somewhere in CEngine::Frame, the logical
+					FPS is lowered when the window is unfocused to save performance.
+					That also makes the processing slower if you are alt tabbed.
+				*/
+				if (IsUnfocused)
 				{
-					IsUnfocused = event.m_nData == 0;
-
-					/*
-						52 is the offset of m_bActiveApp in CGame.
-					*/
-					auto& isactiveapp = *(bool*)((char*)(thisptr) + 52);
-
-					ThisHook.GetOriginal()(thisptr, edx, event);
-
-					/*
-						Deep in the engine somewhere in CEngine::Frame, the logical
-						FPS is lowered when the window is unfocused to save performance.
-						That also makes the processing slower if you are alt tabbed.
-					*/
-					if (IsUnfocused)
-					{
-						isactiveapp = true;
-					}
-				}
-
-				else
-				{
-					ThisHook.GetOriginal()(thisptr, edx, event);
+					isactiveapp = true;
 				}
 			}
 		}

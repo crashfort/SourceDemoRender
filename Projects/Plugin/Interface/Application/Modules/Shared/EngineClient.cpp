@@ -13,7 +13,6 @@ namespace
 			SDR::ModuleShared::Variant::Entry ConsoleVisible;
 			SDR::ModuleShared::Variant::Entry FlashWindow;
 			SDR::ModuleShared::Variant::Entry ClientCommand;
-			SDR::ModuleShared::Variant::Entry PlayingDemo;
 		}
 
 		enum
@@ -31,9 +30,6 @@ namespace
 
 			using ClientCommandType = void(__fastcall*)(void* thisptr, void* edx, const char* str);
 			SDR::ModuleShared::Variant::Function<ClientCommandType> ClientCommand(Entries::ClientCommand);
-
-			using PlayingDemoType = bool(__fastcall*)(void* thisptr, void* edx);
-			SDR::ModuleShared::Variant::Function<PlayingDemoType> PlayingDemo(Entries::PlayingDemo);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -79,14 +75,6 @@ namespace
 				{
 					return SDR::GenericVariantInit(Entries::ClientCommand, name, value, VariantCount);
 				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"EngineClient_PlayingDemo",
-				[](const char* name, rapidjson::Value& value)
-				{
-					return SDR::GenericVariantInit(Entries::PlayingDemo, name, value, VariantCount);
-				}
 			)
 		);
 	}
@@ -121,14 +109,4 @@ void SDR::EngineClient::ClientCommand(const char* str)
 	{
 		ModuleEngineClient::Variant0::ClientCommand()(GetPtr(), nullptr, str);
 	}
-}
-
-bool SDR::EngineClient::PlayingDemo()
-{
-	if (ModuleEngineClient::Entries::PlayingDemo == 0)
-	{
-		return ModuleEngineClient::Variant0::PlayingDemo()(GetPtr(), nullptr);
-	}
-
-	return false;
 }
