@@ -1334,7 +1334,7 @@ namespace
 			SDRVideoWriter Video;
 
 			/*
-				Skip first frame as it will alwys be black when capturing the engine backbuffer.
+				Skip first frame as it will always be black when capturing the engine backbuffer.
 			*/
 			bool FirstFrame = true;
 
