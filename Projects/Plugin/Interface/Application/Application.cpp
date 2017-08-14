@@ -1,4 +1,5 @@
 #include "PrecompiledHeader.hpp"
+#include "Interface\PluginInterface.hpp"
 #include "SDR Plugin API\ExportTypes.hpp"
 #include "Application.hpp"
 

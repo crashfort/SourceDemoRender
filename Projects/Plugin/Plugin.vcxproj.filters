@@ -63,6 +63,9 @@
     <ClInclude Include="Interface\Application\Modules\Shared\Console.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Interface\PluginInterface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main\Precompiled Header\PrecompiledHeader.cpp">

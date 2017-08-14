@@ -119,6 +119,7 @@
     <ClInclude Include="Interface\Application\Modules\Shared\MaterialSystem.hpp" />
     <ClInclude Include="Interface\Application\Modules\Shared\SourceGlobals.hpp" />
     <ClInclude Include="Interface\Application\Modules\Shared\Console.hpp" />
+    <ClInclude Include="Interface\PluginInterface.hpp" />
     <ClInclude Include="Main\Precompiled Header\PrecompiledHeader.hpp" />
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp" />
   </ItemGroup>

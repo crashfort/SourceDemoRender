@@ -1,4 +1,5 @@
 #include "PrecompiledHeader.hpp"
+#include "PluginInterface.hpp"
 #include "Application\Application.hpp"
 #include "SDR Plugin API\ExportTypes.hpp"
 
@@ -226,36 +227,36 @@ namespace
 
 		return SDR::API::InitializeCode::Success;
 	}
+}
 
-	bool Load()
+bool SDR::Plugin::Load()
+{
+	SDR::Log::SetMessageFunction(MessageFunc);
+	SDR::Log::SetMessageColorFunction(MessageColorFunc);
+	SDR::Log::SetWarningFunction(WarningFunc);
+
+	Commands::Version();
+
+	SDR::Log::Message("SDR: Current game: %s\n", SDR::GetGameName());
+
+	try
 	{
-		SDR::Log::SetMessageFunction(MessageFunc);
-		SDR::Log::SetMessageColorFunction(MessageColorFunc);
-		SDR::Log::SetWarningFunction(WarningFunc);
-
-		Commands::Version();
-
-		SDR::Log::Message("SDR: Current game: %s\n", SDR::GetGameName());
-
-		try
-		{
-			SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
-			SDR::CallPluginStartupFunctions();
-		}
-
-		catch (const SDR::Error::Exception& error)
-		{
-			return false;
-		}
-
-		SDR::Log::MessageColor({88, 255, 39}, "SDR: Source Demo Render loaded\n");
-		return true;
+		SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
+		SDR::CallPluginStartupFunctions();
 	}
 
-	void Unload()
+	catch (const SDR::Error::Exception& error)
 	{
-		SDR::Close();
+		return false;
 	}
+
+	SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Source Demo Render loaded\n");
+	return true;
+}
+
+void SDR::Plugin::Unload()
+{
+	SDR::Close();
 }
 
 const char* SDR::GetGameName()
@@ -282,6 +283,6 @@ extern "C"
 
 	__declspec(dllexport) void __cdecl SDR_Shutdown()
 	{
-		Unload();
+		SDR::Plugin::Unload();
 	}
 }
