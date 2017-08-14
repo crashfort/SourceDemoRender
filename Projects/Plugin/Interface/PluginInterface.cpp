@@ -203,32 +203,6 @@ namespace
 
 		return true;
 	});
-
-	/*
-		First actual pre-engine load function. Don't reference any
-		engine libraries here as they aren't loaded yet like in "Load".
-	*/
-	SDR::API::InitializeCode Initialize(const char* path, const char* game)
-	{
-		ModuleGameDir::FullPath = path;
-		ModuleGameDir::GameName = game;
-
-		SDR::Error::SetPrintFormat("SDR: %s\n");
-
-		RegisterLAV();
-
-		try
-		{
-			SDR::PreEngineSetup();
-		}
-
-		catch (SDR::API::InitializeCode code)
-		{
-			return code;
-		}
-
-		return SDR::API::InitializeCode::Success;
-	}
 }
 
 bool SDR::Plugin::Load()
@@ -278,8 +252,29 @@ extern "C"
 		return PluginVersion;
 	}
 
+	/*
+		First actual pre-engine load function. Don't reference any
+		engine libraries here as they aren't loaded yet like in "Load".
+	*/
 	__declspec(dllexport) SDR::API::InitializeCode __cdecl SDR_Initialize(const char* path, const char* game)
 	{
-		return Initialize(path, game);
+		ModuleGameDir::FullPath = path;
+		ModuleGameDir::GameName = game;
+
+		SDR::Error::SetPrintFormat("SDR: %s\n");
+
+		RegisterLAV();
+
+		try
+		{
+			SDR::PreEngineSetup();
+		}
+
+		catch (SDR::API::InitializeCode code)
+		{
+			return code;
+		}
+
+		return SDR::API::InitializeCode::Success;
 	}
 }
