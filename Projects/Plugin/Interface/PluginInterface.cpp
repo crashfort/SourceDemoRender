@@ -213,6 +213,8 @@ namespace
 		ModuleGameDir::FullPath = path;
 		ModuleGameDir::GameName = game;
 
+		SDR::Error::SetPrintFormat("SDR: %s\n");
+
 		RegisterLAV();
 
 		try

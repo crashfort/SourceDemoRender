@@ -10,10 +10,8 @@ namespace SDR::Error
 		std::string Description;
 	};
 
-	inline void Print(const Exception& error)
-	{
-		Log::Warning("SDR: %s\n", error.Description.c_str());
-	}
+	void SetPrintFormat(const char* format);
+	void Print(const Exception& error);
 
 	/*
 		For use with unrecoverable errors.
