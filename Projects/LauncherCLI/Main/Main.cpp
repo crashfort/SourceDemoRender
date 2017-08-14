@@ -141,7 +141,7 @@ namespace
 
 			~FailTerminateData()
 			{
-				if (Fail && Process)
+				if (Fail)
 				{
 					TerminateProcess(Process, 0);
 				}
