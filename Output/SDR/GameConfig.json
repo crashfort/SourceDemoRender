@@ -13,7 +13,7 @@
 			"Module": "engine.dll",
 			"Pattern": "55 8B EC 8B 45 08 83 78 08 00 0F 95 C0 0F B6 C0 89 45 08 5D E9 ?? ?? ?? ??"
 		},
-		"MaterialSystem_MaterialsPtr":
+		"MaterialsPtr":
 		{
 			"Comment": "0x101FFFAF static CSS IDA address May 29 2017",
 			"Module": "engine.dll",
@@ -23,7 +23,7 @@
 		"MaterialSystem_GetBackBufferDimensions":
 		{
 			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017",
-			"VTPtrName": "MaterialSystem_MaterialsPtr",
+			"VTPtrName": "MaterialsPtr",
 			"VTIndex": 31
 		},
 		"D3D9_Device":
