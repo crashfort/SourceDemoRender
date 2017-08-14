@@ -31,7 +31,7 @@ namespace SDR::Error
 	template <typename... Args>
 	inline void Make(const char* format, Args&&... args)
 	{
-		Make(String::GetFormattedString(format, std::forward<Args>(args)...));		
+		Make(String::GetFormattedString(format, std::forward<Args>(args)...));
 	}
 
 	/*
