@@ -530,34 +530,30 @@ namespace
 			SDR::Error::Make("Required file \"%s\" does not exist", name);
 		}
 	}
+
+	void SimulateMachineCode()
+	{
+		InterProcessData data;
+		data.LoadLibraryAddr = LoadLibraryA;
+		data.GetProcAddressAddr = GetProcAddress;
+		data.OpenEventAddr = OpenEventA;
+		data.SetEventAddr = SetEvent;
+		data.CloseHandleAddr = CloseHandle;
+
+		data.LibraryNameAddr = LibraryName;
+		data.ExportNameAddr = InitializeExportName;
+		data.GamePathAddr = "i dont know";
+		data.GameNameAddr = "i dont know";
+		data.EventNameAddr = EventName;
+
+		QueueUserAPC(ProcessAPC, GetCurrentThread(), (ULONG_PTR)&data);
+
+		SleepEx(0, 1);
+	}
 }
 
 void main(int argc, char* argv[])
 {
-	/*
-		Simulation for machine code generation.
-	*/
-	#if 0
-	InterProcessData data;
-	data.LoadLibraryAddr = LoadLibraryA;
-	data.GetProcAddressAddr = GetProcAddress;
-	data.OpenEventAddr = OpenEventA;
-	data.SetEventAddr = SetEvent;
-	data.CloseHandleAddr = CloseHandle;
-
-	data.LibraryNameAddr = LibraryName;
-	data.ExportNameAddr = InitializeExportName;
-	data.GamePathAddr = "i dont know";
-	data.GameNameAddr = "i dont know";
-	data.EventNameAddr = EventName;
-
-	QueueUserAPC(ProcessAPC, GetCurrentThread(), (ULONG_PTR)&data);
-
-	SleepEx(0, 1);
-
-	return;
-	#endif
-
 	try
 	{
 		EnsureFileIsPresent(LibraryNameNoPrefix);
