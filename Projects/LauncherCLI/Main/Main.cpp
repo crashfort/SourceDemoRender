@@ -516,7 +516,7 @@ namespace
 			else
 			{
 				auto version = func();
-				printf_s("SourceDemoRender library version: %d\n", version);
+				printf_s("SDR library version: %d\n", version);
 			}
 		}
 
