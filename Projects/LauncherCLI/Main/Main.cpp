@@ -458,6 +458,11 @@ namespace
 			SDR::Error::Make("Specified path at argument 0 does not exist\n");
 		}
 
+		if (PathMatchSpecA(exepath.c_str(), "*.exe") == 0)
+		{
+			SDR::Error::Make("Specified path at argument 0 not an executable\n");
+		}
+
 		std::string params = "-steam -insecure +sv_lan 1 -console";
 		printf_s("Appending parameters: \"%s\"\n", params.c_str());
 
