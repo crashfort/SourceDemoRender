@@ -462,7 +462,7 @@ namespace
 
 		VerifyGameName(game);
 
-		std::string params = "-steam -insecure +sv_lan 1 -console";
+		auto params = "-steam -insecure +sv_lan 1 -console"s;
 		printf_s("Appending parameters: \"%s\"\n", params.c_str());
 		
 		std::string dir = curdir;
