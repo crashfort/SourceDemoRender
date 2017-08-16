@@ -265,13 +265,13 @@ namespace
 		*/
 		ResumeThread(thread);
 
+		printf_s("Waiting for signals\n");
+
 		auto handles =
 		{
 			event.Get(),
 			process
 		};
-
-		printf_s("Waiting for signals\n");
 
 		/*
 			Wait for the signal that it's safe to read back the status code, or if there
