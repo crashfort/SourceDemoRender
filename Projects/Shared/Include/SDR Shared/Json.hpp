@@ -15,4 +15,9 @@ namespace SDR::Json
 
 		return document;
 	}
+
+	inline rapidjson::Document FromFile(const std::string& name)
+	{
+		return FromFile(name.c_str());
+	}
 }
