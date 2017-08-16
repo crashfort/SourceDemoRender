@@ -453,6 +453,9 @@ namespace
 
 		std::string exepath = argv[0];
 
+		argc -= 1;
+		argv += 1;
+
 		if (PathFileExistsA(exepath.c_str()) == 0)
 		{
 			SDR::Error::Make("Specified path at argument 0 does not exist\n");
@@ -475,9 +478,6 @@ namespace
 		printf_s("Game: \"%s\"\n", game.c_str());
 		printf_s("Executable path: \"%s\"\n", exepath.c_str());
 		printf_s("Directory: \"%s\"\n", dir.c_str());
-
-		argc -= 1;
-		argv += 1;
 
 		for (size_t i = 0; i < argc; i++)
 		{
