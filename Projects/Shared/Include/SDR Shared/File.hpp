@@ -26,7 +26,9 @@ namespace SDR::File
 		explicit operator bool() const;
 
 		void Assign(const char* path, const char* mode);
+		void Assign(const std::string& path, const char* mode);
 		void Assign(const wchar_t* path, const wchar_t* mode);
+		void Assign(const std::wstring& path, const wchar_t* mode);
 
 		int GetStreamPosition() const;
 		void SeekAbsolute(size_t pos);

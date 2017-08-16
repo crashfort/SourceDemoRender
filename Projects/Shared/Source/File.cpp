@@ -59,6 +59,11 @@ namespace SDR::File
 		}
 	}
 
+	void ScopedFile::Assign(const std::string& path, const char* mode)
+	{
+		Assign(path.c_str(), mode);
+	}
+
 	void ScopedFile::Assign(const wchar_t* path, const wchar_t* mode)
 	{
 		Close();
@@ -69,6 +74,11 @@ namespace SDR::File
 		{
 			throw ExceptionType::CouldNotOpenFile;
 		}
+	}
+
+	void ScopedFile::Assign(const std::wstring& path, const wchar_t* mode)
+	{
+		Assign(path.c_str(), mode);
 	}
 
 	int ScopedFile::GetStreamPosition() const
