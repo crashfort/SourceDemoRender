@@ -36,9 +36,8 @@ namespace
 
 		try
 		{
-			auto path = SDR::BuildPath("SDR\\GameConfigLatest");
+			SDR::File::ScopedFile config(SDR::BuildPath("SDR\\GameConfigLatest"), "rb");
 
-			SDR::File::ScopedFile config(path, "rb");
 
 			auto content = config.ReadAll();
 			std::string str((const char*)content.data(), content.size());
