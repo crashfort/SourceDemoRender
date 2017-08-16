@@ -301,7 +301,7 @@ namespace
 			/*
 				Process handle.
 			*/
-			else  if (index == 1)
+			else if (index == 1)
 			{
 				SDR::Error::Make("Process exited");
 			}
