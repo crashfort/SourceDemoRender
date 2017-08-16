@@ -245,6 +245,11 @@ const char* SDR::GetGamePath()
 	return ModuleGameDir::FullPath.c_str();
 }
 
+bool SDR::IsGame(const char* test)
+{
+	return strcmp(GetGameName(), test) == 0;
+}
+
 extern "C"
 {
 	__declspec(dllexport) int __cdecl SDR_LibraryVersion()

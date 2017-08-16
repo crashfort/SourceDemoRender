@@ -31,4 +31,5 @@ namespace SDR
 {
 	const char* GetGamePath();
 	const char* GetGameName();
+	bool IsGame(const char* test);
 }
