@@ -1,5 +1,6 @@
 #include "PrecompiledHeader.hpp"
 #include "Interface\PluginInterface.hpp"
+#include "SDR Shared\Json.hpp"
 #include "SDR Plugin API\ExportTypes.hpp"
 #include "Application.hpp"
 
@@ -295,21 +296,17 @@ namespace
 
 		void SetupGame(const char* gamepath, const char* gamename)
 		{
-			std::string strdata;
+			rapidjson::Document document;
 
 			try
 			{
-				SDR::File::ScopedFile config(SDR::BuildPath("SDR\\GameConfig.json"), "rb");
-				strdata = config.ReadString();
+				document = SDR::Json::FromFile(SDR::BuildPath("SDR\\GameConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
 			{
 				SDR::Error::Make("Could not find game config");
 			}
-
-			rapidjson::Document document;
-			document.Parse(strdata.c_str());
 
 			GameData* currentgame = nullptr;
 
