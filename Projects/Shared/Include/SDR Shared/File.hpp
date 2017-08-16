@@ -66,7 +66,7 @@ namespace SDR::File
 		}
 
 		template <typename... Types>
-		bool ReadSimple(Types&... args)
+		bool ReadSimple(Types&... args) const
 		{
 			size_t adder[] =
 			{
@@ -88,7 +88,7 @@ namespace SDR::File
 		}
 
 		template <typename T>
-		size_t ReadRegion(std::vector<T>& vec, int count = 1)
+		size_t ReadRegion(std::vector<T>& vec, int count = 1) const
 		{
 			return fread_s(&vec[0], vec.size() * sizeof(T), sizeof(T), count, Get());
 		}
