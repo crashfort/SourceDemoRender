@@ -31,5 +31,8 @@ namespace SDR
 {
 	const char* GetGamePath();
 	const char* GetGameName();
+	
 	bool IsGame(const char* test);
+
+	std::string BuildPath(const char* file);
 }

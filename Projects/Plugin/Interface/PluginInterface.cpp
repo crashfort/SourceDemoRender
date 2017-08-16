@@ -36,9 +36,7 @@ namespace
 
 		try
 		{
-			char path[1024];
-			strcpy_s(path, SDR::GetGamePath());
-			strcat(path, "SDR\\GameConfigLatest");
+			auto path = SDR::BuildPath("SDR\\GameConfigLatest");
 
 			SDR::File::ScopedFile config(path, "rb");
 
@@ -248,6 +246,14 @@ const char* SDR::GetGamePath()
 bool SDR::IsGame(const char* test)
 {
 	return strcmp(GetGameName(), test) == 0;
+}
+
+std::string SDR::BuildPath(const char* file)
+{
+	std::string ret = GetGamePath();
+	ret += file;
+
+	return ret;
 }
 
 extern "C"
