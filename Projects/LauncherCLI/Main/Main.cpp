@@ -447,7 +447,7 @@ namespace
 	{
 		if (argc < 1)
 		{
-			printf_s("Arguments: <path> <startup params ...>\n");
+			printf_s("Arguments: <exe path> <startup params ...>\n");
 			return;
 		}
 
