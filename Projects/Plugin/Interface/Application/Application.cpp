@@ -295,10 +295,7 @@ namespace
 
 		void SetupGame(const char* gamepath, const char* gamename)
 		{
-			char cfgpath[1024];
-		
-			strcpy_s(cfgpath, gamepath);
-			strcat_s(cfgpath, "SDR\\GameConfig.json");
+			auto cfgpath = SDR::BuildPath("SDR\\GameConfig.json");
 
 			SDR::File::ScopedFile config;
 
