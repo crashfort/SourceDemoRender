@@ -393,19 +393,8 @@ namespace
 		return procinfo;
 	}
 
-	std::string GetPathFromExecutable(const std::string& exepath)
+	void VerifyGameName(const std::string& name)
 	{
-		char rundir[1024];
-		strcpy_s(rundir, exepath.c_str());
-		RemoveFileName(rundir);
-
-		return rundir;
-	}
-
-	std::string FindGameNameFromPath(const std::string& exepath)
-	{
-		auto dir = GetPathFromExecutable(exepath);
-
 		SDR::File::ScopedFile config;
 
 		try
@@ -429,14 +418,11 @@ namespace
 		for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it)
 		{
 			auto gamename = it->name.GetString();
-			std::string testdir = dir;
-			testdir += gamename;
-			testdir += '\\';
-
-			if (PathFileExistsA(testdir.c_str()) == 1)
+			
+			if (gamename == name)
 			{
 				printf_s("Found \"%s\" in game config\n", gamename);
-				return gamename;
+				return;
 			}
 		}
 
@@ -450,6 +436,14 @@ namespace
 			printf_s("Arguments: <exe path> <startup params ...>\n");
 			return;
 		}
+
+		char curdir[1024];
+		SDR::Error::MS::ThrowIfZero(GetCurrentDirectoryA(sizeof(curdir), curdir), "Could not get current directory");
+
+		RemoveFileName(curdir);
+
+		std::string game = PathFindFileNameA(curdir);
+		game.pop_back();
 
 		std::string exepath = argv[0];
 
@@ -466,14 +460,12 @@ namespace
 			SDR::Error::Make("Specified path at argument 0 not an executable\n");
 		}
 
+		VerifyGameName(game);
+
 		std::string params = "-steam -insecure +sv_lan 1 -console";
 		printf_s("Appending parameters: \"%s\"\n", params.c_str());
-
-		std::string game = FindGameNameFromPath(exepath);
 		
-		std::string dir = GetPathFromExecutable(exepath);
-		dir += game;
-		dir += '\\';
+		std::string dir = curdir;
 
 		printf_s("Game: \"%s\"\n", game.c_str());
 		printf_s("Executable path: \"%s\"\n", exepath.c_str());
