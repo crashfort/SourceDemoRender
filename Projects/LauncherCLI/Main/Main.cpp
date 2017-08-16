@@ -437,14 +437,6 @@ namespace
 			return;
 		}
 
-		char curdir[1024];
-		SDR::Error::MS::ThrowIfZero(GetCurrentDirectoryA(sizeof(curdir), curdir), "Could not get current directory");
-
-		RemoveFileName(curdir);
-
-		std::string game = PathFindFileNameA(curdir);
-		game.pop_back();
-
 		std::string exepath = argv[0];
 
 		argc -= 1;
@@ -459,6 +451,14 @@ namespace
 		{
 			SDR::Error::Make("Specified path at argument 0 not an executable\n");
 		}
+
+		char curdir[1024];
+		SDR::Error::MS::ThrowIfZero(GetCurrentDirectoryA(sizeof(curdir), curdir), "Could not get current directory");
+
+		RemoveFileName(curdir);
+
+		std::string game = PathFindFileNameA(curdir);
+		game.pop_back();
 
 		VerifyGameName(game);
 
