@@ -6,8 +6,7 @@ namespace SDR::Json
 {
 	inline rapidjson::Document FromFile(const char* name)
 	{
-		SDR::File::ScopedFile file;
-		file.Assign(name, "rb");
+		SDR::File::ScopedFile file(name, "rb");
 
 		auto data = file.ReadAll();
 		std::string strdata((const char*)data.data(), data.size());
