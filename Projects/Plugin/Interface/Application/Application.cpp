@@ -18,9 +18,7 @@ namespace
 	namespace Memory
 	{
 		/*
-			Not accessing the STL iterators in debug mode
-			makes this run >10x faster, less sitting around
-			waiting for nothing.
+			Not accessing the STL iterators in debug mode makes this run >10x faster, less sitting around waiting for nothing.
 		*/
 		inline bool DataCompare(const uint8_t* data, const SDR::BytePattern::Entry* pattern, size_t patternlength)
 		{
