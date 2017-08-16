@@ -19,6 +19,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Color.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Error.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\File.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Json.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Log.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\String.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\TargetWindowsVersion.hpp" />

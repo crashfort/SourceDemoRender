@@ -1,7 +1,8 @@
 #include "SDR Shared\BareWindows.hpp"
 #include "SDR Shared\Error.hpp"
-#include "SDR Plugin API\ExportTypes.hpp"
 #include "SDR Shared\File.hpp"
+#include "SDR Shared\Json.hpp"
+#include "SDR Plugin API\ExportTypes.hpp"
 #include "rapidjson\document.h"
 #include <Shlwapi.h>
 #include <wrl.h>
@@ -395,25 +396,19 @@ namespace
 
 	void VerifyGameName(const std::string& name)
 	{
-		SDR::File::ScopedFile config;
+		printf_s("Searching game config for matching name\n");
+
+		rapidjson::Document document;
 
 		try
 		{
-			config.Assign(ConfigNameNoPrefix, "rb");
+			document = SDR::Json::FromFile(ConfigNameNoPrefix);
 		}
 
 		catch (SDR::File::ScopedFile::ExceptionType status)
 		{
 			SDR::Error::Make("Could not find game config");
 		}
-
-		printf_s("Searching game config for matching name\n");
-
-		auto data = config.ReadAll();
-		std::string strdata((const char*)data.data(), data.size());
-
-		rapidjson::Document document;
-		document.Parse(strdata.c_str());
 
 		for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it)
 		{
