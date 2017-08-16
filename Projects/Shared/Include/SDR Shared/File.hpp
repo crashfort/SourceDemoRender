@@ -94,6 +94,7 @@ namespace SDR::File
 		}
 
 		std::vector<uint8_t> ReadAll();
+		std::string ReadString();
 
 		FILE* Handle = nullptr;
 	};

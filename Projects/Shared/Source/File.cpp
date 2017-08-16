@@ -101,4 +101,20 @@ namespace SDR::File
 
 		return ret;
 	}
+
+	std::string ScopedFile::ReadString()
+	{
+		SeekAbsolute(0);
+		SeekEnd();
+
+		auto size = GetStreamPosition();
+
+		SeekAbsolute(0);
+
+		std::string ret(size, 0);
+
+		fread_s(&ret[0], ret.size(), size, 1, Get());
+
+		return ret;
+	}
 }

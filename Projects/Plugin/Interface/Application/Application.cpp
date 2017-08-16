@@ -312,8 +312,7 @@ namespace
 				SDR::Error::Make("Could not find game config");
 			}
 
-			auto data = config.ReadAll();
-			std::string strdata((const char*)data.data(), data.size());
+			auto strdata = config.ReadString();
 
 			rapidjson::Document document;
 			document.Parse(strdata.c_str());

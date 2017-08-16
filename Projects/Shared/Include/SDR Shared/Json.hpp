@@ -8,8 +8,7 @@ namespace SDR::Json
 	{
 		SDR::File::ScopedFile file(name, "rb");
 
-		auto data = file.ReadAll();
-		std::string strdata((const char*)data.data(), data.size());
+		auto strdata = file.ReadString();
 
 		rapidjson::Document document;
 		document.Parse(strdata.c_str());
