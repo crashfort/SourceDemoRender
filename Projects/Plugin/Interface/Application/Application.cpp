@@ -295,21 +295,18 @@ namespace
 
 		void SetupGame(const char* gamepath, const char* gamename)
 		{
-			auto cfgpath = SDR::BuildPath("SDR\\GameConfig.json");
-
-			SDR::File::ScopedFile config;
+			std::string strdata;
 
 			try
 			{
-				config.Assign(cfgpath, "rb");
+				SDR::File::ScopedFile config(SDR::BuildPath("SDR\\GameConfig.json"), "rb");
+				strdata = config.ReadString();
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
 			{
 				SDR::Error::Make("Could not find game config");
 			}
-
-			auto strdata = config.ReadString();
 
 			rapidjson::Document document;
 			document.Parse(strdata.c_str());
