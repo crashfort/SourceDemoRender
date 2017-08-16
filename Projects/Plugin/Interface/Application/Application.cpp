@@ -313,24 +313,18 @@ namespace
 
 			GameData* currentgame = nullptr;
 
-			MemberLoop
-			(
-				document, [&](GameData::MemberIt gameit)
+			MemberLoop(document, [&](GameData::MemberIt gameit)
+			{
+				Configs.emplace_back();
+				auto& curgame = Configs.back();
+
+				curgame.Name = gameit->name.GetString();
+
+				MemberLoop(gameit->value, [&](GameData::MemberIt gamedata)
 				{
-					Configs.emplace_back();
-					auto& curgame = Configs.back();
-
-					curgame.Name = gameit->name.GetString();
-
-					MemberLoop
-					(
-						gameit->value, [&](GameData::MemberIt gamedata)
-						{
-							curgame.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
-						}
-					);
-				}
-			);
+					curgame.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
+				});
+			});
 
 			for (auto& game : Configs)
 			{
