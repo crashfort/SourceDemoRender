@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <vector>
+#include <string>
 
 namespace SDR::File
 {
@@ -14,7 +15,9 @@ namespace SDR::File
 
 		ScopedFile() = default;
 		ScopedFile(const char* path, const char* mode);
+		ScopedFile(const std::string& path, const char* mode);
 		ScopedFile(const wchar_t* path, const wchar_t* mode);
+		ScopedFile(const std::wstring& path, const wchar_t* mode);
 
 		~ScopedFile();
 

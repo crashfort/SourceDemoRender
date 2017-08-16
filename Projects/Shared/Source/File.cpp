@@ -8,9 +8,19 @@ namespace SDR::File
 		Assign(path, mode);
 	}
 
+	ScopedFile::ScopedFile(const std::string& path, const char* mode)
+	{
+		Assign(path.c_str(), mode);
+	}
+
 	ScopedFile::ScopedFile(const wchar_t* path, const wchar_t* mode)
 	{
 		Assign(path, mode);
+	}
+
+	ScopedFile::ScopedFile(const std::wstring& path, const wchar_t* mode)
+	{
+		Assign(path.c_str(), mode);
 	}
 
 	ScopedFile::~ScopedFile()
