@@ -256,9 +256,9 @@ namespace
 		/*
 			Event that will notify the completion of the initialize routine.
 		*/
-		auto event = CreateEventA(nullptr, false, false, EventName);
+		ScopedHandle event(CreateEventA(nullptr, false, false, EventName));
 		
-		SDR::Error::MS::ThrowIfZero(event, "Could not create launcher sync event");
+		SDR::Error::MS::ThrowIfZero(event.Get(), "Could not create launcher sync event");
 
 		/*
 			Our initialize function will now run inside the other process.
@@ -267,7 +267,7 @@ namespace
 
 		auto handles =
 		{
-			event,
+			event.Get(),
 			process
 		};
 
