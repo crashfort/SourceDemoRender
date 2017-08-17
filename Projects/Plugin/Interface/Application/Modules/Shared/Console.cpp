@@ -187,7 +187,7 @@ namespace
 
 		namespace Entries
 		{
-			SDR::ModuleShared::Variant::Entry Create;
+			SDR::ModuleShared::Variant::Entry Constructor3;
 		}
 
 		enum
@@ -218,14 +218,13 @@ namespace
 				void* ChangeCallback;
 			};
 
-			using CreateType = void(__fastcall*)
+			using Constructor3Type = void(__fastcall*)
 			(
-				void* thisptr, void* edx, const char* name, const char* value,
-				int flags, const char* helpstr, bool hasmin, float min,
-				bool hasmax, float max, void* callback
+				void* thisptr, void* edx, const char* name, const char* value, int flags,
+				const char* helpstr, bool hasmin, float min, bool hasmax, float max
 			);
 
-			SDR::ModuleShared::Variant::Function<CreateType> Create(Entries::Create);
+			SDR::ModuleShared::Variant::Function<Constructor3Type> Constructor3(Entries::Constructor3);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -242,10 +241,10 @@ namespace
 			),
 			SDR::ModuleHandlerAdder
 			(
-				"ConVar_Create",
+				"ConVar_Constructor3",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::Create, name, value, VariantCount);
+					return SDR::GenericVariantInit(Entries::Constructor3, name, value, VariantCount);
 				}
 			)
 		);
