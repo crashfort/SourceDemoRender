@@ -28,10 +28,10 @@
 		},
 		"EngineClientPtr":
 		{
-			"Comment": "0x100D483A static CSS IDA address August 13 2017",
-			"Module": "client.dll",
-			"Pattern": "68 ?? ?? ?? ?? FF 55 08 83 C4 08 A3 ?? ?? ?? ?? 85 C0 75 08 33 C0 8B E5 5D C2 0C 00 6A 00 68 ?? ?? ?? ?? FF 55 08 83 C4 08 A3 ?? ?? ?? ?? 85 C0 74 E2",
-			"Offset": 12
+			"Comment": "0x100BA350 static CSS IDA address August 17 2017",
+			"Module": "engine.dll",
+			"Pattern": "55 8B EC 83 EC 08 E8 ?? ?? ?? ?? 83 78 20 00 74 6C 8B 4D 08 8B 01 FF 50 0C 50 8D 4D F8 E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 48 20 8B 45 FC 8B 11 83 78 30 00",
+			"Offset": 92
 		},
 		"EngineClient_ConsoleVisible":
 		{
