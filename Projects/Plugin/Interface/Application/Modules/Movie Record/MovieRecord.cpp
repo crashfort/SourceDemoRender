@@ -478,13 +478,13 @@ namespace
 		*/
 		static bool UseStaging()
 		{
-			return Variables::Video::D3D11::Staging->GetBool();
+			return Variables::Video::D3D11::Staging.GetBool();
 		}
 
 		static bool UseSampling()
 		{
-			auto exposure = Variables::Video::Sample::Exposure->GetFloat();
-			auto mult = Variables::Video::Sample::Multiply->GetInt();
+			auto exposure = Variables::Video::Sample::Exposure.GetFloat();
+			auto mult = Variables::Video::Sample::Multiply.GetInt();
 
 			return mult > 1 && exposure > 0;
 		}
