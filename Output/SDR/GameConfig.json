@@ -135,7 +135,10 @@
 		{
 			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017",
 			"NeverAsStringFlag": 4096,
-			"Variant": 0
+			"Variant": 0,
+			"VTIndex_SetValueString": 10,
+			"VTIndex_SetValueFloat": 11,
+			"VTIndex_SetValueInt": 12
 		},
 		"ConVar_Constructor3":
 		{

@@ -184,6 +184,9 @@ namespace
 	{
 		int Variant;
 		int NeverAsStringFlag;
+		int VTIndex_SetValueString;
+		int VTIndex_SetValueFloat;
+		int VTIndex_SetValueInt;
 
 		namespace Entries
 		{
@@ -225,6 +228,10 @@ namespace
 			);
 
 			SDR::ModuleShared::Variant::Function<Constructor3Type> Constructor3(Entries::Constructor3);
+
+			using SetValueStringType = void(__fastcall*)(void* thisptr, void* edx, const char* value);
+			using SetValueFloatType = void(__fastcall*)(void* thisptr, void* edx, float value);
+			using SetValueIntType = void(__fastcall*)(void* thisptr, void* edx, int value);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -236,6 +243,11 @@ namespace
 				{
 					Variant = SDR::GetVariantFromJson(value);
 					NeverAsStringFlag = value["NeverAsStringFlag"].GetInt();
+					
+					VTIndex_SetValueString = value["VTIndex_SetValueString"].GetInt();
+					VTIndex_SetValueFloat = value["VTIndex_SetValueFloat"].GetInt();
+					VTIndex_SetValueInt = value["VTIndex_SetValueInt"].GetInt();
+
 					return true;
 				}
 			),
@@ -436,17 +448,44 @@ namespace SDR::Console
 
 	void Variable::SetValue(int value)
 	{
+		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueInt);
 
+		if (func)
+		{
+			if (ModuleConVar::Variant == 0)
+			{
+				auto casted = (ModuleConVar::Variant0::SetValueIntType)func;
+				casted(Opaque, nullptr, value);
+			}
+		}
 	}
 
 	void Variable::SetValue(float value)
 	{
+		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueFloat);
 
+		if (func)
+		{
+			if (ModuleConVar::Variant == 0)
+			{
+				auto casted = (ModuleConVar::Variant0::SetValueFloatType)func;
+				casted(Opaque, nullptr, value);
+			}
+		}
 	}
 
 	void Variable::SetValue(const char* value)
 	{
+		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueString);
 
+		if (func)
+		{
+			if (ModuleConVar::Variant == 0)
+			{
+				auto casted = (ModuleConVar::Variant0::SetValueStringType)func;
+				casted(Opaque, nullptr, value);
+			}
+		}
 	}
 
 	SDR::Console::CommandArgs::CommandArgs(const void* ptr) : Ptr(ptr)
