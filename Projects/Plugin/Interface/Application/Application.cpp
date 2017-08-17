@@ -350,7 +350,10 @@ namespace
 			{
 				TableType<char> table =
 				{
-					
+					std::make_pair("server.dll", []()
+					{
+						SDR::Plugin::Load();
+					})
 				};
 
 				for (auto& entry : table)
