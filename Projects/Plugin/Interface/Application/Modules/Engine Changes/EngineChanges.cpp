@@ -44,7 +44,7 @@ namespace
 
 		void __stdcall Override(LPCSTR outputstring)
 		{
-			if (!Variables::SuppressDebugLog->GetBool())
+			if (!Variables::SuppressDebugLog.GetBool())
 			{
 				ThisHook.GetOriginal()(outputstring);
 			}

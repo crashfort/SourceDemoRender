@@ -205,7 +205,7 @@ namespace
 
 		void LogFunction(void* avcl, int level, const char* fmt, va_list vl)
 		{
-			if (!Variables::SuppressLog->GetBool())
+			if (!Variables::SuppressLog.GetBool())
 			{
 				/*
 					989 max limit according to
@@ -1654,7 +1654,7 @@ namespace
 
 			void WarnAboutVariableValues()
 			{
-				auto newstr = Variables::Video::Encoder->GetString();
+				auto newstr = Variables::Video::Encoder.GetString();
 				auto encoder = avcodec_find_encoder_by_name(newstr);
 
 				if (!encoder)
@@ -1674,7 +1674,7 @@ namespace
 				{
 					if (encoder->id == AV_CODEC_ID_H264)
 					{
-						auto newstr = Variables::Video::X264::Preset->GetString();
+						auto newstr = Variables::Video::X264::Preset.GetString();
 
 						auto slowpresets =
 						{
@@ -1706,7 +1706,7 @@ namespace
 
 				try
 				{
-					auto sdrpath = Variables::OutputDirectory->GetString();
+					auto sdrpath = Variables::OutputDirectory.GetString();
 
 					/*
 						No desired path, use game root.
@@ -1749,7 +1749,7 @@ namespace
 							std::make_pair("709", AVCOL_SPC_BT709)
 						};
 
-						linktabletovariable(Variables::Video::ColorSpace->GetString(), table, colorspace);
+						linktabletovariable(Variables::Video::ColorSpace.GetString(), table, colorspace);
 					}
 
 					av_log_set_callback(LAV::LogFunction);
@@ -1784,7 +1784,7 @@ namespace
 					const VideoConfigurationData* vidconfig = nullptr;
 
 					{
-						auto encoderstr = Variables::Video::Encoder->GetString();
+						auto encoderstr = Variables::Video::Encoder.GetString();
 						auto encoder = avcodec_find_encoder_by_name(encoderstr);
 
 						SDR::Error::ThrowIfNull(encoder, "Video encoder %s not found", encoderstr);
@@ -1798,7 +1798,7 @@ namespace
 							}
 						}
 
-						auto pxformatstr = Variables::Video::PixelFormat->GetString();
+						auto pxformatstr = Variables::Video::PixelFormat.GetString();
 
 						if (!linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat))
 						{
@@ -1863,9 +1863,9 @@ namespace
 						{
 							namespace X264 = Variables::Video::X264;
 
-							auto preset = X264::Preset->GetString();
-							auto crf = X264::CRF->GetString();
-							auto intra = X264::Intra->GetBool();
+							auto preset = X264::Preset.GetString();
+							auto crf = X264::CRF.GetString();
+							auto intra = X264::Intra.GetBool();
 							
 							options.Set("preset", preset);
 							options.Set("crf", crf);
@@ -1879,7 +1879,7 @@ namespace
 							}
 						}
 
-						auto fps = Variables::Video::Framerate->GetInt();
+						auto fps = Variables::Video::Framerate.GetInt();
 						stream->Video.OpenEncoder(fps, options.Get());
 
 						stream->Video.WriteHeader();
@@ -1901,9 +1901,9 @@ namespace
 					Don't call the original CL_StartMovie as it causes major recording slowdowns.
 				*/
 
-				auto fps = Variables::Video::Framerate->GetInt();
-				auto exposure = Variables::Video::Sample::Exposure->GetFloat();
-				auto mult = Variables::Video::Sample::Multiply->GetInt();
+				auto fps = Variables::Video::Framerate.GetInt();
+				auto exposure = Variables::Video::Sample::Exposure.GetFloat();
+				auto mult = Variables::Video::Sample::Multiply.GetInt();
 
 				auto enginerate = fps;
 
@@ -2095,13 +2095,13 @@ namespace
 
 					CurrentMovie = {};
 
-					if (Variables::ExitOnFinish->GetBool())
+					if (Variables::ExitOnFinish.GetBool())
 					{
 						SDR::EngineClient::ClientCommand("quit\n");
 						return;
 					}
 
-					if (Variables::FlashWindow->GetBool())
+					if (Variables::FlashWindow.GetBool())
 					{
 						SDR::EngineClient::FlashWindow();
 					}

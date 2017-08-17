@@ -306,7 +306,7 @@ namespace
 {
 	auto MakeGenericVariable(const char* name, const char* value, int flags = 0, bool hasmin = 0, float min = 0, bool hasmax = 0, float max = 0)
 	{
-		auto ret = std::make_unique<SDR::Console::Variable>();
+		SDR::Console::Variable ret;
 		size_t size = 0;
 
 		if (ModuleConVar::Variant == 0)
@@ -314,21 +314,17 @@ namespace
 			size = sizeof(ModuleConVar::Variant0::Data);
 		}
 
-		ret->Blob = std::make_unique<uint8_t[]>(size);
-		ret->Opaque = ret->Blob.get();
+		ret.Blob = std::make_unique<uint8_t[]>(size);
+		ret.Opaque = ret.Blob.get();
 
-		std::memset(ret->Opaque, 0, size);
+		std::memset(ret.Opaque, 0, size);
 
-		if (ModuleConVar::Variant == 0)
+		if (ModuleConVar::Entries::Constructor3.Variant == 0)
 		{
-			auto data = (ModuleConVar::Variant0::Data*)ret->Opaque;
-			data->VTable_ConCommandBase = VTables::ConCommandBase;
-			data->VTable_IConVar = VTables::IConVar;
-		}
-
-		if (ret->Opaque && ModuleConVar::Entries::Create == 0)
-		{
-			ModuleConVar::Variant0::Create()(ret->Opaque, nullptr, name, value, flags, "", hasmin, min, hasmax, max, nullptr);
+			if (ModuleConVar::Variant == 0)
+			{
+				ModuleConVar::Variant0::Constructor3()(ret.Opaque, nullptr, name, value, flags, "", hasmin, min, hasmax, max);
+			}
 		}
 
 		return ret;
@@ -336,7 +332,7 @@ namespace
 
 	auto MakeGenericCommand(const char* name, void* callback)
 	{
-		auto ret = std::make_unique<SDR::Console::Command>();
+		SDR::Console::Command ret;
 		size_t size = 0;
 
 		if (ModuleConCommand::Variant == 0)
@@ -344,21 +340,21 @@ namespace
 			size = sizeof(ModuleConCommand::Variant0::Data);
 		}
 
-		ret->Blob = std::make_unique<uint8_t[]>(size);
-		ret->Opaque = ret->Blob.get();
+		ret.Blob = std::make_unique<uint8_t[]>(size);
+		ret.Opaque = ret.Blob.get();
 
-		std::memset(ret->Opaque, 0, size);
+		std::memset(ret.Opaque, 0, size);
 
 		if (ModuleConCommand::Variant == 0)
 		{
-			auto data = (ModuleConCommand::Variant0::Data*)ret->Opaque;
+			auto data = (ModuleConCommand::Variant0::Data*)ret.Opaque;
 			data->VTable_ConCommandBase = VTables::ConCommandBase;
 			data->m_fnCommandCallback = callback;
 		}
 
-		if (ret->Opaque && ModuleConCommandBase::Entries::CreateBase == 0)
+		if (ret.Opaque && ModuleConCommandBase::Entries::CreateBase == 0)
 		{
-			ModuleConCommandBase::Variant0::CreateBase()(ret->Opaque, nullptr, name, "", 0);
+			ModuleConCommandBase::Variant0::CreateBase()(ret.Opaque, nullptr, name, "", 0);
 		}
 
 		return ret;
@@ -382,17 +378,22 @@ namespace SDR::Console
 
 	Variable::Variable(Variable&& other)
 	{
+		*this = std::move(other);
+	}
+
+	Variable::~Variable()
+	{
+
+	}
+
+	void Variable::operator=(Variable&& other)
+	{
 		if (this != &other)
 		{
 			Blob = std::move(other.Blob);
 			Opaque = other.Opaque;
 			other.Opaque = nullptr;
 		}
-	}
-
-	Variable::~Variable()
-	{
-
 	}
 
 	bool Variable::GetBool() const
@@ -476,37 +477,37 @@ namespace SDR::Console
 	}
 }
 
-std::unique_ptr<SDR::Console::Command> SDR::Console::MakeCommand(const char* name, CommandCallbackArgsType callback)
+SDR::Console::CommandPtr SDR::Console::MakeCommand(const char* name, CommandCallbackArgsType callback)
 {
 	return MakeGenericCommand(name, callback);
 }
 
-std::unique_ptr<SDR::Console::Command> SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callback)
+SDR::Console::CommandPtr SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callback)
 {
 	return MakeGenericCommand(name, callback);
 }
 
-std::unique_ptr<SDR::Console::Variable> SDR::Console::MakeBool(const char* name, const char* value)
+SDR::Console::VariablePtr SDR::Console::MakeBool(const char* name, const char* value)
 {
 	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, 0,  true, 1);
 }
 
-std::unique_ptr<SDR::Console::Variable> SDR::Console::MakeNumber(const char* name, const char* value, float min)
+SDR::Console::VariablePtr SDR::Console::MakeNumber(const char* name, const char* value, float min)
 {
 	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, min);
 }
 
-std::unique_ptr<SDR::Console::Variable> SDR::Console::MakeNumber(const char* name, const char* value, float min, float max)
+SDR::Console::VariablePtr SDR::Console::MakeNumber(const char* name, const char* value, float min, float max)
 {
 	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, min, true, max);
 }
 
-std::unique_ptr<SDR::Console::Variable> SDR::Console::MakeNumberWithString(const char* name, const char* value, float min, float max)
+SDR::Console::VariablePtr SDR::Console::MakeNumberWithString(const char* name, const char* value, float min, float max)
 {
 	return MakeGenericVariable(name, value, 0, true, min, true, max);
 }
 
-std::unique_ptr<SDR::Console::Variable> SDR::Console::MakeString(const char* name, const char* value)
+SDR::Console::VariablePtr SDR::Console::MakeString(const char* name, const char* value)
 {
 	return MakeGenericVariable(name, value);
 }

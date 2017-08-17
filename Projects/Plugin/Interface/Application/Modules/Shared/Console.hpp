@@ -12,6 +12,8 @@ namespace SDR::Console
 		Variable(Variable&& other);
 		~Variable();
 
+		void operator=(Variable&& other);
+
 		bool GetBool() const;
 		int GetInt() const;
 		float GetFloat() const;
@@ -25,7 +27,7 @@ namespace SDR::Console
 		std::unique_ptr<uint8_t[]> Blob;
 	};
 
-	using VariablePtr = std::unique_ptr<Variable>;
+	using VariablePtr = Variable;
 
 	struct CommandArgs
 	{
@@ -43,19 +45,19 @@ namespace SDR::Console
 		std::unique_ptr<uint8_t[]> Blob;
 	};
 
-	using CommandPtr = std::unique_ptr<Command>;
+	using CommandPtr = Command;
 
 	using CommandCallbackArgsType = void(*)(const void* args);
 	using CommandCallbackVoidType = void(*)();
 
-	std::unique_ptr<Command> MakeCommand(const char* name, CommandCallbackArgsType callback);
-	std::unique_ptr<Command> MakeCommand(const char* name, CommandCallbackVoidType callback);
+	CommandPtr MakeCommand(const char* name, CommandCallbackArgsType callback);
+	CommandPtr MakeCommand(const char* name, CommandCallbackVoidType callback);
 
-	std::unique_ptr<Variable> MakeBool(const char* name, const char* value);
+	VariablePtr MakeBool(const char* name, const char* value);
 
-	std::unique_ptr<Variable> MakeNumber(const char* name, const char* value, float min);
-	std::unique_ptr<Variable> MakeNumber(const char* name, const char* value, float min, float max);
-	std::unique_ptr<Variable> MakeNumberWithString(const char* name, const char* value, float min, float max);
+	VariablePtr MakeNumber(const char* name, const char* value, float min);
+	VariablePtr MakeNumber(const char* name, const char* value, float min, float max);
+	VariablePtr MakeNumberWithString(const char* name, const char* value, float min, float max);
 
-	std::unique_ptr<Variable> MakeString(const char* name, const char* value);
+	VariablePtr MakeString(const char* name, const char* value);
 }
