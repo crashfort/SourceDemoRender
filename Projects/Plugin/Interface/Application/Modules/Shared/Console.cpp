@@ -238,7 +238,7 @@ namespace
 		(
 			SDR::ModuleHandlerAdder
 			(
-				"Convar_Info",
+				"ConVar_Info",
 				[](const char* name, rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
