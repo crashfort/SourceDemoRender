@@ -194,8 +194,7 @@ namespace
 
 					if (!it->second.IsString())
 					{
-						SDR::Log::Warning("SDR: %s inherit field not a string\n", targetgame->Name.c_str());
-						return;
+						SDR::Error::Make("SDR: %s inherit field not a string\n", targetgame->Name.c_str());
 					}
 
 					std::string from = it->second.GetString();
