@@ -137,12 +137,6 @@
 			"Comment": "Static CSS ConCommandBase vtable offset August 9 2017",
 			"Variant": 0
 		},
-		"ConCommandBase_CreateBase":
-		{
-			"Comment": "Static CSS ConCommandBase vtable offset August 9 2017",
-			"VTPtrName": "ConCommandBase_VTable",
-			"VTIndex": 8
-		},
 		"CCommand_Info":
 		{
 			"Variant": 0

@@ -8,11 +8,6 @@ namespace
 	{
 		int Variant;
 
-		namespace Entries
-		{
-			SDR::ModuleShared::Variant::Entry CreateBase;
-		}
-
 		enum
 		{
 			VariantCount = 1
@@ -30,9 +25,6 @@ namespace
 				const char* HelpString;
 				int Flags;
 			};
-
-			using CreateBaseType = void(__fastcall*)(void* thisptr, void* edx, const char* name, const char* helpstr, int flags);
-			SDR::ModuleShared::Variant::Function<CreateBaseType> CreateBase(Entries::CreateBase);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -44,14 +36,6 @@ namespace
 				{
 					Variant = SDR::GetVariantFromJson(value);
 					return true;
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"ConCommandBase_CreateBase",
-				[](const char* name, rapidjson::Value& value)
-				{
-					return SDR::GenericVariantInit(Entries::CreateBase, name, value, VariantCount);
 				}
 			)
 		);
