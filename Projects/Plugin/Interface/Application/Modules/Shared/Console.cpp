@@ -347,11 +347,6 @@ namespace
 
 		return ret;
 	}
-
-	SDR::PluginShutdownFunctionAdder A1([]()
-	{
-
-	});
 }
 
 namespace SDR::Console
