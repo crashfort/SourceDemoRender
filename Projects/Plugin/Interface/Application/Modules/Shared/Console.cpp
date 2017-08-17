@@ -4,52 +4,6 @@
 
 namespace
 {
-	namespace VTables
-	{
-		void* IConVar;
-		void* ConCommandBase;
-
-		auto Adders = SDR::CreateAdders
-		(
-			SDR::ModuleHandlerAdder
-			(
-				"IConVar_VTable",
-				[](const char* name, rapidjson::Value& value)
-				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
-
-					if (!address)
-					{
-						return false;
-					}
-
-					IConVar = address;
-
-					SDR::ModuleShared::Registry::SetKeyValue(name, IConVar);
-					return true;
-				}
-			),
-			SDR::ModuleHandlerAdder
-			(
-				"ConCommandBase_VTable",
-				[](const char* name, rapidjson::Value& value)
-				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
-
-					if (!address)
-					{
-						return false;
-					}
-
-					ConCommandBase = address;
-
-					SDR::ModuleShared::Registry::SetKeyValue(name, ConCommandBase);
-					return true;
-				}
-			)
-		);
-	}
-
 	namespace ModuleConCommandBase
 	{
 		int Variant;
