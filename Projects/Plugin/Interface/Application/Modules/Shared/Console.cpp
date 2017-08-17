@@ -143,6 +143,16 @@ namespace
 	{
 		int Variant;
 
+		namespace Entries
+		{
+			SDR::ModuleShared::Variant::Entry Constructor1;
+		}
+
+		enum
+		{
+			VariantCount = 1
+		};
+
 		namespace Variant0
 		{
 			struct Data : ModuleConCommandBase::Variant0::Data
@@ -164,6 +174,14 @@ namespace
 				bool m_bUsingNewCommandCallback : 1;
 				bool m_bUsingCommandCallbackInterface : 1;
 			};
+
+			using Constructor1Type = void(__fastcall*)
+			(
+				void* thisptr, void* edx, const char* name,
+				void* callback, const char* helpstr, int flags, void* compfunc
+			);
+
+			SDR::ModuleShared::Variant::Function<Constructor1Type> Constructor1(Entries::Constructor1);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -175,6 +193,14 @@ namespace
 				{
 					Variant = SDR::GetVariantFromJson(value);
 					return true;
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"ConCommand_Constructor1",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::GenericVariantInit(Entries::Constructor1, name, value, VariantCount);
 				}
 			)
 		);
@@ -357,16 +383,12 @@ namespace
 
 		std::memset(ret.Opaque, 0, size);
 
-		if (ModuleConCommand::Variant == 0)
+		if (ModuleConCommand::Entries::Constructor1.Variant == 0)
 		{
-			auto data = (ModuleConCommand::Variant0::Data*)ret.Opaque;
-			data->VTable_ConCommandBase = VTables::ConCommandBase;
-			data->m_fnCommandCallback = callback;
-		}
-
-		if (ret.Opaque && ModuleConCommandBase::Entries::CreateBase == 0)
-		{
-			ModuleConCommandBase::Variant0::CreateBase()(ret.Opaque, nullptr, name, "", 0);
+			if (ModuleConCommand::Variant == 0)
+			{
+				ModuleConCommand::Variant0::Constructor1()(ret.Opaque, nullptr, name, callback, "", 0, nullptr);
+			}
 		}
 
 		return ret;
