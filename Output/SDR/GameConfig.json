@@ -133,7 +133,7 @@
 		},
 		"Convar_Info":
 		{
-			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017",
+			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes August 17 2017",
 			"NeverAsStringFlag": 4096,
 			"Variant": 0,
 			"VTIndex_SetValueString": 10,
