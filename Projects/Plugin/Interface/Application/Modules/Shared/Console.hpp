@@ -19,9 +19,9 @@ namespace SDR::Console
 		float GetFloat() const;
 		const char* GetString() const;
 
-		void SetValue(int value);
-		void SetValue(float value);
 		void SetValue(const char* value);
+		void SetValue(float value);
+		void SetValue(int value);
 
 		void* Opaque = nullptr;
 		std::unique_ptr<uint8_t[]> Blob;

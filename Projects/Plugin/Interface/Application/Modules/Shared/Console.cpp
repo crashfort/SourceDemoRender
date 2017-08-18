@@ -401,15 +401,15 @@ namespace SDR::Console
 		return nullptr;
 	}
 
-	void Variable::SetValue(int value)
+	void Variable::SetValue(const char* value)
 	{
-		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueInt);
+		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueString);
 
 		if (func)
 		{
 			if (ModuleConVar::Variant == 0)
 			{
-				auto casted = (ModuleConVar::Variant0::SetValueIntType)func;
+				auto casted = (ModuleConVar::Variant0::SetValueStringType)func;
 				casted(Opaque, nullptr, value);
 			}
 		}
@@ -429,15 +429,15 @@ namespace SDR::Console
 		}
 	}
 
-	void Variable::SetValue(const char* value)
+	void Variable::SetValue(int value)
 	{
-		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueString);
+		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueInt);
 
 		if (func)
 		{
 			if (ModuleConVar::Variant == 0)
 			{
-				auto casted = (ModuleConVar::Variant0::SetValueStringType)func;
+				auto casted = (ModuleConVar::Variant0::SetValueIntType)func;
 				casted(Opaque, nullptr, value);
 			}
 		}
