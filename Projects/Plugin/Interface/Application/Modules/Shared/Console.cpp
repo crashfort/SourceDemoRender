@@ -295,7 +295,7 @@ namespace
 
 		std::memset(ret.Opaque, 0, size);
 
-		if (ModuleConVar::Entries::Constructor3.Variant == 0)
+		if (ModuleConVar::Entries::Constructor3 == 0)
 		{
 			if (ModuleConVar::Variant == 0)
 			{
@@ -321,7 +321,7 @@ namespace
 
 		std::memset(ret.Opaque, 0, size);
 
-		if (ModuleConCommand::Entries::Constructor1.Variant == 0)
+		if (ModuleConCommand::Entries::Constructor1 == 0)
 		{
 			if (ModuleConCommand::Variant == 0)
 			{
