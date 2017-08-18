@@ -452,7 +452,7 @@ namespace SDR::Console
 	{
 		if (ModuleCCommand::Variant == 0)
 		{
-			auto ptr = (ModuleCCommand::Variant0::Data*)Ptr;
+			auto ptr = (const ModuleCCommand::Variant0::Data*)Ptr;
 			return ptr->ArgC;
 		}
 
@@ -463,7 +463,7 @@ namespace SDR::Console
 	{
 		if (ModuleCCommand::Variant == 0)
 		{
-			auto ptr = (ModuleCCommand::Variant0::Data*)Ptr;
+			auto ptr = (const ModuleCCommand::Variant0::Data*)Ptr;
 			return ptr->ArgV[index];
 		}
 
