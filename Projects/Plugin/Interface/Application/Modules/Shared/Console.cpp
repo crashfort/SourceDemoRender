@@ -477,7 +477,7 @@ SDR::Console::CommandPtr SDR::Console::MakeCommand(const char* name, CommandCall
 
 SDR::Console::VariablePtr SDR::Console::MakeBool(const char* name, const char* value)
 {
-	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, 0,  true, 1);
+	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, 0, true, 1);
 }
 
 SDR::Console::VariablePtr SDR::Console::MakeNumber(const char* name, const char* value, float min)
