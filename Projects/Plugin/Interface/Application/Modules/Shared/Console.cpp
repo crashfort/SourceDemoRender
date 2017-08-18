@@ -523,7 +523,7 @@ void SDR::Console::Load()
 
 	if (!module)
 	{
-		SDR::Error::Make("Could not load library for console exports \"%s\"", ModulePrint::Library.c_str());
+		SDR::Error::Make("Could not load library for console exports: \"%s\"", ModulePrint::Library.c_str());
 	}
 
 	ModulePrint::MessageAddr = GetProcAddress(module, ModulePrint::MessageExport.c_str());
