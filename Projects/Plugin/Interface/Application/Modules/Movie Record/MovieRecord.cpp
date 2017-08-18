@@ -71,7 +71,7 @@ namespace
 		/*
 			Creation has to be delayed as the necessary console stuff isn't available earlier.
 		*/
-		SDR::PluginStartupFunctionAdder A1("Console variables", []()
+		SDR::PluginStartupFunctionAdder A1("MovieRecord: Console variables", []()
 		{
 			OutputDirectory = SDR::Console::MakeString("sdr_outputdir", "");
 			FlashWindow = SDR::Console::MakeBool("sdr_endmovieflash", "0");

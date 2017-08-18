@@ -17,7 +17,7 @@ namespace
 		/*
 			Creation has to be delayed as the necessary console stuff isn't available earlier.
 		*/
-		SDR::PluginStartupFunctionAdder A1("Console variables", []()
+		SDR::PluginStartupFunctionAdder A1("EngineChanges: Console variables", []()
 		{
 			SuppressDebugLog = SDR::Console::MakeBool("sdr_game_suppressdebug", "1");
 			return true;
