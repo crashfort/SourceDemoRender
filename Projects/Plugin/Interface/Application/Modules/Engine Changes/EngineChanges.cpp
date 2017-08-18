@@ -10,6 +10,27 @@ namespace
 
 namespace
 {
+	namespace ModuleEngineInfo
+	{
+		/*
+			The offset of m_bActiveApp in CGame.
+		*/
+		int ActiveAppOffset;
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"Engine_Info",
+				[](const char* name, rapidjson::Value& value)
+				{
+					ActiveAppOffset = value["ActiveAppOffset"].GetInt();
+					return true;
+				}
+			)
+		);
+	}
+
 	namespace ModuleActivateMouse
 	{
 		/*
@@ -80,10 +101,7 @@ namespace
 			{
 				IsUnfocused = event.m_nData == 0;
 
-				/*
-					52 is the offset of m_bActiveApp in CGame.
-				*/
-				auto& isactiveapp = *(bool*)((char*)(thisptr) + 52);
+				auto& isactiveapp = *(bool*)((char*)(thisptr) + ModuleEngineInfo::ActiveAppOffset);
 
 				ThisHook.GetOriginal()(thisptr, edx, event);
 

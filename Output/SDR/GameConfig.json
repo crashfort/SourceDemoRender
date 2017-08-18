@@ -150,6 +150,11 @@
 			"Comment": "0x10249520 static CSS IDA address August 17 2017",
 			"Module": "engine.dll",
 			"Pattern": "55 8B EC 8B 45 0C 8B 55 18 85 D2 56 8B F1 0F 95 C1 89 46 18 B8 ?? ?? ?? ?? 0F 45 C2 C7 46 ?? ?? ?? ?? ?? 89 46 1C 80 E1 01 8A 46 20 24 FA C7 06 ?? ?? ?? ?? 0A C8 C6 46 08 00 8B 45 08 80 C9 02 89 46 0C 8B 45 10"
+		},
+		"Engine_Info":
+		{
+			"Comment": "52 static CSS CGame offset June 4 2016",
+			"ActiveAppOffset": 52
 		}
 	},
 
