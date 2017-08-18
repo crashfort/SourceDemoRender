@@ -53,9 +53,6 @@ namespace
 
 	namespace Commands
 	{
-		SDR::Console::CommandPtr VersionPtr;
-		SDR::Console::CommandPtr UpdatePtr;
-
 		void Version()
 		{
 			SDR::Log::Message("SDR: Library version: %d\n", PluginVersion);
@@ -178,8 +175,8 @@ namespace
 	*/
 	SDR::PluginStartupFunctionAdder A1("PluginInterface: Console commands", []()
 	{
-		Commands::VersionPtr = SDR::Console::MakeCommand("sdr_version", Commands::Version);
-		Commands::UpdatePtr = SDR::Console::MakeCommand("sdr_update", Commands::Update);
+		SDR::Console::MakeCommand("sdr_version", Commands::Version);
+		SDR::Console::MakeCommand("sdr_update", Commands::Update);
 
 		return true;
 	});
