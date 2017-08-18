@@ -276,6 +276,58 @@ namespace
 			)
 		);
 	}
+
+	namespace ModulePrint
+	{
+		std::string Library;
+
+		int MessageVariant;
+		std::string MessageExport;
+		void* MessageAddr;
+
+		int MessageColorVariant;
+		std::string MessageColorExport;
+		void* MessageColorAddr;
+
+		int WarningVariant;
+		std::string WarningExport;
+		void* WarningAddr;
+
+		enum
+		{
+			VariantCount = 1
+		};
+
+		namespace Variant0
+		{
+			using MessageType = void(__cdecl*)(const char* format, ...);
+			using MessageColorType = void(__cdecl*)(const SDR::Shared::Color& col, const char* format, ...);
+			using WarningType = void(__cdecl*)(const char* format, ...);
+		}
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"Console_Info",
+				[](const char* name, rapidjson::Value& value)
+				{					
+					Library = value["Library"].GetString();					
+
+					MessageVariant = value["MessageVariant"].GetInt();
+					MessageExport = value["MessageExport"].GetString();
+
+					MessageColorVariant = value["MessageColorVariant"].GetInt();
+					MessageColorExport = value["MessageColorExport"].GetString();
+
+					WarningVariant = value["WarningVariant"].GetInt();
+					WarningExport = value["WarningExport"].GetString();
+
+					return true;
+				}
+			)
+		);
+	}
 }
 
 namespace
