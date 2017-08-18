@@ -280,7 +280,7 @@ namespace
 
 namespace
 {
-	auto MakeGenericVariable(const char* name, const char* value, int flags = 0, bool hasmin = 0, float min = 0, bool hasmax = 0, float max = 0)
+	auto MakeGenericVariable(const char* name, const char* value, int flags = 0, bool hasmin = false, float min = 0, bool hasmax = false, float max = 0)
 	{
 		SDR::Console::Variable ret;
 		size_t size = 0;
