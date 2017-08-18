@@ -268,16 +268,7 @@ namespace
 							SDR::Error::Make("Could not enable module %s", handler.Name);
 						}
 
-						auto comment = "no comment";
-
-						auto it = prop.second.FindMember("Comment");
-
-						if (it != prop.second.MemberEnd())
-						{
-							comment = it->value.GetString();
-						}
-
-						SDR::Log::Message("SDR: Enabled module %s (%s)\n", handler.Name, comment);
+						SDR::Log::Message("SDR: Enabled module %s\n", handler.Name);
 						break;
 					}
 				}
