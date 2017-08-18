@@ -517,6 +517,64 @@ namespace SDR::Console
 	}
 }
 
+void SDR::Console::Load()
+{
+	auto module = GetModuleHandleA(ModulePrint::Library.c_str());
+
+	if (!module)
+	{
+		SDR::Error::Make("Could not load library for console exports \"%s\"", ModulePrint::Library.c_str());
+	}
+
+	ModulePrint::MessageAddr = GetProcAddress(module, ModulePrint::MessageExport.c_str());
+
+	if (!ModulePrint::MessageAddr)
+	{
+		SDR::Error::Make("Could not find console message export");
+	}
+
+	ModulePrint::MessageColorAddr = GetProcAddress(module, ModulePrint::MessageColorExport.c_str());
+
+	if (!ModulePrint::MessageColorAddr)
+	{
+		SDR::Error::Make("Could not find console color message export");
+	}
+
+	ModulePrint::WarningAddr = GetProcAddress(module, ModulePrint::WarningExport.c_str());
+
+	if (!ModulePrint::WarningAddr)
+	{
+		SDR::Error::Make("Could not find console warning export");
+	}
+
+	SDR::Log::SetMessageFunction([](std::string&& text)
+	{
+		if (ModulePrint::MessageVariant == 0)
+		{
+			auto casted = (ModulePrint::Variant0::MessageType)ModulePrint::MessageAddr;
+			casted(text.c_str());
+		}
+	});
+
+	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, std::string&& text)
+	{
+		if (ModulePrint::MessageColorVariant == 0)
+		{
+			auto casted = (ModulePrint::Variant0::MessageColorType)ModulePrint::MessageColorAddr;
+			casted(col, text.c_str());
+		}
+	});
+
+	SDR::Log::SetWarningFunction([](std::string&& text)
+	{
+		if (ModulePrint::WarningVariant == 0)
+		{
+			auto casted = (ModulePrint::Variant0::WarningType)ModulePrint::WarningAddr;
+			casted(text.c_str());
+		}
+	});
+}
+
 SDR::Console::CommandPtr SDR::Console::MakeCommand(const char* name, CommandCallbackArgsType callback)
 {
 	return MakeGenericCommand(name, callback);

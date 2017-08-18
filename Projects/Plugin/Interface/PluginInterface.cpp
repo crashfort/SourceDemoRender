@@ -167,21 +167,6 @@ namespace
 		}
 	}
 
-	void MessageFunc(std::string&& text)
-	{
-
-	}
-
-	void MessageColorFunc(SDR::Shared::Color color, std::string&& text)
-	{
-
-	}
-
-	void WarningFunc(std::string&& text)
-	{
-
-	}
-
 	void RegisterLAV()
 	{
 		avcodec_register_all();
@@ -202,18 +187,11 @@ namespace
 
 bool SDR::Plugin::Load()
 {
-	SDR::Log::SetMessageFunction(MessageFunc);
-	SDR::Log::SetMessageColorFunction(MessageColorFunc);
-	SDR::Log::SetWarningFunction(WarningFunc);
-
-	Commands::Version();
-
-	SDR::Log::Message("SDR: Current game: %s\n", SDR::GetGameName());
-
 	try
 	{
 		SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
 		SDR::CallPluginStartupFunctions();
+		Console::Load();
 	}
 
 	catch (const SDR::Error::Exception& error)
@@ -221,7 +199,10 @@ bool SDR::Plugin::Load()
 		return false;
 	}
 
+	Commands::Version();
+	SDR::Log::Message("SDR: Current game: %s\n", SDR::GetGameName());
 	SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Source Demo Render loaded\n");
+
 	return true;
 }
 

@@ -45,6 +45,8 @@ namespace SDR::Console
 		std::unique_ptr<uint8_t[]> Blob;
 	};
 
+	void Load();
+
 	using CommandPtr = Command;
 
 	using CommandCallbackArgsType = void(*)(const void* args);
