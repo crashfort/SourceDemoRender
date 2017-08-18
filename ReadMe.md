@@ -145,15 +145,6 @@ This video editor can open everything SDR outputs and has detailed advanced sett
             <b>Default:</b> 0 <br/>
 		</td>
 	</tr>
-	<tr>
-		<td>sdr_game_suppressdebug</td>
-		<td>
-			Prevents engine output debug messages to reach the operating system.
-			<br/><br/>
-			<b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 1 <br/>
-		</td>
-	</tr>
 	</tbody>
 </table>
 

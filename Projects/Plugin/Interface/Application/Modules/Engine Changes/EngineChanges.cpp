@@ -10,47 +10,6 @@ namespace
 
 namespace
 {
-	namespace Variables
-	{
-		SDR::Console::VariablePtr SuppressDebugLog;
-
-		/*
-			Creation has to be delayed as the necessary console stuff isn't available earlier.
-		*/
-		SDR::PluginStartupFunctionAdder A1("EngineChanges: Console variables", []()
-		{
-			SuppressDebugLog = SDR::Console::MakeBool("sdr_game_suppressdebug", "1");
-			return true;
-		});
-	}
-
-	namespace ModuleOutputDebugString
-	{
-		void __stdcall Override(LPCSTR outputstring);
-
-		using ThisFunction = decltype(OutputDebugStringA)*;
-
-		SDR::HookModule<ThisFunction> ThisHook;
-
-		SDR::PluginStartupFunctionAdder Adder
-		(
-			"OutputDebugString Patch",
-			[]()
-			{
-				auto res = MH_CreateHookApiEx(L"kernel32.dll", "OutputDebugStringA", Override, &ThisHook.OriginalFunction, &ThisHook.TargetFunction);
-				return res == MH_OK;
-			}
-		);
-
-		void __stdcall Override(LPCSTR outputstring)
-		{
-			if (!Variables::SuppressDebugLog.GetBool())
-			{
-				ThisHook.GetOriginal()(outputstring);
-			}
-		}
-	}
-
 	namespace ModuleActivateMouse
 	{
 		/*
