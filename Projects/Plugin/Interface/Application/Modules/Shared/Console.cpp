@@ -297,10 +297,7 @@ namespace
 
 		if (ModuleConVar::Entries::Constructor3 == 0)
 		{
-			if (ModuleConVar::Variant == 0)
-			{
-				ModuleConVar::Variant0::Constructor3()(ret.Opaque, nullptr, name, value, flags, "", hasmin, min, hasmax, max);
-			}
+			ModuleConVar::Variant0::Constructor3()(ret.Opaque, nullptr, name, value, flags, "", hasmin, min, hasmax, max);
 		}
 
 		return ret;
@@ -323,10 +320,7 @@ namespace
 
 		if (ModuleConCommand::Entries::Constructor1 == 0)
 		{
-			if (ModuleConCommand::Variant == 0)
-			{
-				ModuleConCommand::Variant0::Constructor1()(ret.Opaque, nullptr, name, callback, "", 0, nullptr);
-			}
+			ModuleConCommand::Variant0::Constructor1()(ret.Opaque, nullptr, name, callback, "", 0, nullptr);
 		}
 
 		return ret;
