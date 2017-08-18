@@ -1,8 +1,6 @@
 #include "PrecompiledHeader.hpp"
 #include "Interface\Application\Application.hpp"
 
-#include "Interface\Application\Modules\Shared\EngineClient.hpp"
-
 namespace
 {
 	bool IsUnfocused = false;
