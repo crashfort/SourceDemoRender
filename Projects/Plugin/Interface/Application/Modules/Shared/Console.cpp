@@ -97,20 +97,20 @@ namespace
 			{
 				union
 				{
-					void* m_fnCommandCallbackV1;
-					void* m_fnCommandCallback;
-					void* m_pCommandCallback;
+					void* CommandCallbackV1;
+					void* CommandCallback;
+					void* CommandCallbackInterface;
 				};
 
 				union
 				{
-					void* m_fnCompletionCallback;
-					void* m_pCommandCompletionCallback;
+					void* CompletionCallback;
+					void* CommandCompletionCallback;
 				};
 
-				bool m_bHasCompletionCallback : 1;
-				bool m_bUsingNewCommandCallback : 1;
-				bool m_bUsingCommandCallbackInterface : 1;
+				bool HasCompletionCallback : 1;
+				bool UsingNewCommandCallback : 1;
+				bool UsingCommandCallbackInterface : 1;
 			};
 
 			using Constructor1Type = void(__fastcall*)
