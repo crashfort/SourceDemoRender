@@ -134,7 +134,6 @@
 		},
 		"ConCommandBase_Info":
 		{
-			"Comment": "Static CSS ConCommandBase vtable offset August 9 2017",
 			"Variant": 0
 		},
 		"CCommand_Info":
