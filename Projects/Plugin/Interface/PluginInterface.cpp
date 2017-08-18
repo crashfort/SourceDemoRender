@@ -190,8 +190,8 @@ bool SDR::Plugin::Load()
 	try
 	{
 		SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
-		SDR::CallPluginStartupFunctions();
 		Console::Load();
+		SDR::CallPluginStartupFunctions();
 	}
 
 	catch (const SDR::Error::Exception& error)
