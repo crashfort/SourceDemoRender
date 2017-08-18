@@ -4,6 +4,14 @@
 
 namespace
 {
+	struct
+	{
+		std::vector<SDR::Console::Command> Commands;
+	} GlobalState;
+}
+
+namespace
+{
 	namespace ModuleConCommandBase
 	{
 		int Variant;
@@ -575,14 +583,14 @@ void SDR::Console::Load()
 	});
 }
 
-SDR::Console::CommandPtr SDR::Console::MakeCommand(const char* name, CommandCallbackArgsType callback)
+void SDR::Console::MakeCommand(const char* name, CommandCallbackArgsType callback)
 {
-	return MakeGenericCommand(name, callback);
+	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
 }
 
-SDR::Console::CommandPtr SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callback)
+void SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callback)
 {
-	return MakeGenericCommand(name, callback);
+	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
 }
 
 SDR::Console::VariablePtr SDR::Console::MakeBool(const char* name, const char* value)
