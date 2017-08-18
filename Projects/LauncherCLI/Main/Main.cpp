@@ -484,34 +484,6 @@ namespace
 		InjectProcess(process.Get(), thread.Get(), dir, game);
 	}
 
-	void ShowLibraryVersion()
-	{
-		auto module = LoadLibraryA(LibraryNameNoPrefix);
-
-		if (!module)
-		{
-			printf_s("Could not load SDR library for version display\n");
-		}
-
-		else
-		{
-			auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(module, "SDR_LibraryVersion");
-
-			if (!func)
-			{
-				printf_s("Could not get SDR library version export function\n");
-			}
-
-			else
-			{
-				auto version = func();
-				printf_s("SDR library version: %d\n", version);
-			}
-		}
-
-		FreeLibrary(module);
-	}
-
 	void EnsureFileIsPresent(const char* name)
 	{
 		if (PathFileExistsA(name) == 0)
@@ -547,8 +519,6 @@ void main(int argc, char* argv[])
 	{
 		EnsureFileIsPresent(LibraryNameNoPrefix);
 		EnsureFileIsPresent(ConfigNameNoPrefix);
-
-		ShowLibraryVersion();
 
 		/*
 			Don't need our own name.
