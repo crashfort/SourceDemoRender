@@ -167,9 +167,7 @@ namespace
 		/*
 			Produced from ProcessAPC above in Release with machine code listing output.
 			Any change to ProcessAPC or InterProcessData will need a simulation rebuild in Release.
-		*/
-		
-		
+		*/		
 		uint8_t function[] =
 		{
 			0x55,
