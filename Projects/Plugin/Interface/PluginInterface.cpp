@@ -183,7 +183,31 @@ namespace
 
 	struct LoadFuncData
 	{
+		LoadFuncData()
+		{
+			LoadEvent = OpenEventA(EVENT_MODIFY_STATE, false, "SDR_LOADER");
+			Pipe = CreateFileA(R"(\\.\pipe\sdrpipe)", GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+		}
 		
+		~LoadFuncData()
+		{
+			SetEvent(LoadEvent);
+			DisconnectNamedPipe(Pipe);
+
+			CloseHandle(LoadEvent);
+			CloseHandle(Pipe);
+		}
+
+		void Write(const std::string& text)
+		{
+			DWORD written;
+			auto res = WriteFile(Pipe, text.c_str(), text.size(), &written, nullptr);
+
+			int a = 5;
+		}
+
+		HANDLE Pipe;
+		HANDLE LoadEvent;
 	};
 
 	LoadFuncData* LoadDataPtr = nullptr;
@@ -199,17 +223,17 @@ bool SDR::Plugin::Load()
 	*/
 	SDR::Log::SetMessageFunction([](std::string&& text)
 	{
-		
+		LoadDataPtr->Write(text);
 	});
 
 	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, std::string&& text)
 	{
-		
+		LoadDataPtr->Write(text);
 	});
 
 	SDR::Log::SetWarningFunction([](std::string&& text)
 	{
-		
+		LoadDataPtr->Write(text);
 	});
 
 	try
@@ -230,6 +254,7 @@ bool SDR::Plugin::Load()
 
 	catch (const SDR::Error::Exception& error)
 	{
+		LoadDataPtr->Write(error.Description);
 		return false;
 	}
 

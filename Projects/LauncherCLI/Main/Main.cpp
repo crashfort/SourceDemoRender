@@ -476,12 +476,38 @@ namespace
 
 		printf_s("Parameters: \"%s\"\n", params.c_str());
 
+		ScopedHandle pipe(CreateNamedPipeA(R"(\\.\pipe\sdrpipe)", PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 1024, 0, nullptr));
+		SDR::Error::MS::ThrowIfZero(pipe.Get(), "Could not create inbound pipe");
+
+		ScopedHandle event(CreateEventA(nullptr, false, false, "SDR_LOADER"));
+		SDR::Error::MS::ThrowIfZero(event.Get(), "Could not create loader event");
+
 		auto info = StartProcess(dir, exepath, game, params);
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
 
 		InjectProcess(process.Get(), thread.Get(), dir, game);
+
+		while (WaitForSingleObject(event.Get(), 10) != WAIT_OBJECT_0)
+		{
+			DWORD read = 0;
+			char buf[1024];
+
+			auto res = PeekNamedPipe(pipe.Get(), nullptr, sizeof(buf), &read, nullptr, nullptr);
+
+			if (res && read > 0)
+			{
+				std::memset(buf, 0, sizeof(buf));
+
+				res = ReadFile(pipe.Get(), buf, sizeof(buf), &read, nullptr);
+
+				if (res)
+				{
+					printf_s(buf);
+				}
+			}
+		}
 	}
 
 	void EnsureFileIsPresent(const char* name)
