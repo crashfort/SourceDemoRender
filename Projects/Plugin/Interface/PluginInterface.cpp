@@ -180,25 +180,58 @@ namespace
 
 		return true;
 	});
+
+	struct LoadFuncData
+	{
+		
+	};
+
+	LoadFuncData* LoadDataPtr = nullptr;
 }
 
 bool SDR::Plugin::Load()
 {
+	auto localdata = std::make_unique<LoadFuncData>();
+	LoadDataPtr = localdata.get();
+
+	/*
+		Temporary communication gates. All text output has to go to the launcher console.
+	*/
+	SDR::Log::SetMessageFunction([](std::string&& text)
+	{
+		
+	});
+
+	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, std::string&& text)
+	{
+		
+	});
+
+	SDR::Log::SetWarningFunction([](std::string&& text)
+	{
+		
+	});
+
 	try
 	{
 		SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
-		Console::Load();
+
+		Commands::Version();
+		SDR::Log::Message("SDR: Current game: %s\n", SDR::GetGameName());
+		SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Source Demo Render loaded\n");
+
 		SDR::CallPluginStartupFunctions();
+
+		/*
+			Give all output to the game console now.
+		*/
+		Console::Load();
 	}
 
 	catch (const SDR::Error::Exception& error)
 	{
 		return false;
 	}
-
-	Commands::Version();
-	SDR::Log::Message("SDR: Current game: %s\n", SDR::GetGameName());
-	SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Source Demo Render loaded\n");
 
 	return true;
 }
