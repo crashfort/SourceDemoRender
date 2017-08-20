@@ -186,7 +186,7 @@ namespace
 		LoadFuncData()
 		{
 			LoadEvent = OpenEventA(EVENT_MODIFY_STATE, false, "SDR_LOADER");
-			Pipe = CreateFileA(R"(\\.\pipe\sdrpipe)", GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+			Pipe = CreateFileA(R"(\\.\pipe\sdr_loader_pipe)", GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
 		}
 		
 		~LoadFuncData()

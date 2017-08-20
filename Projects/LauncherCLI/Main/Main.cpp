@@ -477,7 +477,7 @@ namespace
 
 		printf_s("Parameters: \"%s\"\n", params.c_str());
 
-		ScopedHandle pipe(CreateNamedPipeA(R"(\\.\pipe\sdrpipe)", PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 4096, 0, nullptr));
+		ScopedHandle pipe(CreateNamedPipeA(R"(\\.\pipe\sdr_loader_pipe)", PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 4096, 0, nullptr));
 		SDR::Error::MS::ThrowIfZero(pipe.Get(), "Could not create inbound pipe");
 
 		ScopedHandle event(CreateEventA(nullptr, false, false, "SDR_LOADER"));
