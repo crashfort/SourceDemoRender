@@ -539,6 +539,9 @@ namespace
 			}
 		};
 
+		/*
+			Wait until the end of SDR::Plugin::Load() and then read back all messages.
+		*/
 		waitevent();
 		readpipe();
 	}
