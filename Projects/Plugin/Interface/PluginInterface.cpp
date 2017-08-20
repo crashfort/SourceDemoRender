@@ -209,12 +209,12 @@ namespace
 		HANDLE Pipe;
 		HANDLE LoadEvent;
 	};
-
-	LoadFuncData* LoadDataPtr = nullptr;
 }
 
 bool SDR::Plugin::Load()
 {
+	static LoadFuncData* LoadDataPtr;
+
 	auto localdata = std::make_unique<LoadFuncData>();
 	LoadDataPtr = localdata.get();
 
