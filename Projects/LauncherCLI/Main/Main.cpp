@@ -168,6 +168,8 @@ namespace
 			Produced from ProcessAPC above in Release with machine code listing output.
 			Any change to ProcessAPC or InterProcessData will need a simulation rebuild in Release.
 		*/
+		
+		
 		uint8_t function[] =
 		{
 			0x55,
@@ -539,10 +541,13 @@ namespace
 			}
 		};
 
+		printf_s("Waiting for finished loading event\n");
+
 		/*
 			Wait until the end of SDR::Plugin::Load() and then read back all messages.
 		*/
 		waitevent();
+
 		readpipe();
 	}
 
