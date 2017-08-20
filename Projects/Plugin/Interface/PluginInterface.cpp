@@ -253,7 +253,6 @@ bool SDR::Plugin::Load()
 
 	catch (const SDR::Error::Exception& error)
 	{
-		LoadDataPtr->Write(error.Description);
 		return false;
 	}
 
