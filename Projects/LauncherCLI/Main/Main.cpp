@@ -147,6 +147,7 @@ namespace
 				if (Fail)
 				{
 					TerminateProcess(Process, 0);
+					SDR::Error::Make("Process exited");
 				}
 			}
 
