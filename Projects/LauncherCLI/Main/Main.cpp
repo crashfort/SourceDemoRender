@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <string>
+#include <algorithm>
 
 namespace
 {
@@ -476,7 +477,7 @@ namespace
 
 		printf_s("Parameters: \"%s\"\n", params.c_str());
 
-		ScopedHandle pipe(CreateNamedPipeA(R"(\\.\pipe\sdrpipe)", PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 1024, 0, nullptr));
+		ScopedHandle pipe(CreateNamedPipeA(R"(\\.\pipe\sdrpipe)", PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 1024 * 32, 0, nullptr));
 		SDR::Error::MS::ThrowIfZero(pipe.Get(), "Could not create inbound pipe");
 
 		ScopedHandle event(CreateEventA(nullptr, false, false, "SDR_LOADER"));
@@ -489,25 +490,57 @@ namespace
 
 		InjectProcess(process.Get(), thread.Get(), dir, game);
 
-		while (WaitForSingleObject(event.Get(), 10) != WAIT_OBJECT_0)
+		auto waitevent = [&]()
 		{
-			DWORD read = 0;
-			char buf[1024];
-
-			auto res = PeekNamedPipe(pipe.Get(), nullptr, sizeof(buf), &read, nullptr, nullptr);
-
-			if (res && read > 0)
+			auto res = WaitForSingleObject(event.Get(), INFINITE);
+			
+			if (res == WAIT_FAILED)
 			{
-				std::memset(buf, 0, sizeof(buf));
+				SDR::Error::Make("Could not wait for loader event");
+			}
+		};
 
-				res = ReadFile(pipe.Get(), buf, sizeof(buf), &read, nullptr);
+		auto readpipe = [&]()
+		{
+			DWORD avail = 0;
+			char buf[1024];
+			DWORD size = sizeof(buf);
 
-				if (res)
+			while (true)
+			{
+				auto res = PeekNamedPipe(pipe.Get(), nullptr, 0, nullptr, &avail, nullptr);
+
+				if (res && avail > 0)
 				{
-					printf_s(buf);
+					while (avail > 0)
+					{
+						std::memset(buf, 0, size);
+
+						DWORD read = 0;
+
+						auto min = std::min(size - 1, avail);
+						res = ReadFile(pipe.Get(), buf, min, &read, nullptr);
+
+						buf[min] = 0;
+
+						if (res)
+						{
+							printf_s(buf);
+						}
+
+						avail -= min;
+					}
+				}
+
+				else
+				{
+					break;
 				}
 			}
-		}
+		};
+
+		waitevent();
+		readpipe();
 	}
 
 	void EnsureFileIsPresent(const char* name)
