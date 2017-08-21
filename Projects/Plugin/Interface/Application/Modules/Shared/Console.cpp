@@ -320,7 +320,7 @@ namespace
 				"Console_Info",
 				[](const char* name, rapidjson::Value& value)
 				{					
-					Library = value["Library"].GetString();					
+					Library = value["Library"].GetString();
 
 					MessageVariant = value["MessageVariant"].GetInt();
 					MessageExport = value["MessageExport"].GetString();
