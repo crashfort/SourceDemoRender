@@ -363,7 +363,7 @@ namespace
 		return ret;
 	}
 
-	auto MakeGenericCommand(const char* name, void* callback)
+	auto CreateGenericCommand()
 	{
 		SDR::Console::Command ret;
 		size_t size = 0;
@@ -377,6 +377,13 @@ namespace
 		ret.Opaque = ret.Blob.get();
 
 		std::memset(ret.Opaque, 0, size);
+
+		return ret;
+	}
+
+	auto MakeGenericCommand(const char* name, SDR::Console::CommandCallbackVoidType callback)
+	{
+		auto ret = CreateGenericCommand();
 
 		if (ModuleConCommand::Entries::Constructor1 == 0)
 		{
@@ -581,11 +588,6 @@ void SDR::Console::Load()
 			casted(text.c_str());
 		}
 	});
-}
-
-void SDR::Console::MakeCommand(const char* name, CommandCallbackArgsType callback)
-{
-	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
 }
 
 void SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callback)
