@@ -158,7 +158,7 @@
 			"MessageExport": "Msg",
 
 			"MessageColorVariant": 0,
-			"MessageColorExport": "ConColorMsg",
+			"MessageColorExport": "?ConColorMsg@@YAXABVColor@@PBDZZ",
 
 			"WarningVariant": 0,
 			"WarningExport": "Warning"
