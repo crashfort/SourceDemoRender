@@ -503,9 +503,9 @@ namespace
 
 		auto readpipe = [&]()
 		{
-			DWORD avail = 0;
 			char buf[4096];
 			DWORD size = sizeof(buf);
+			DWORD avail = 0;
 
 			while (true)
 			{
