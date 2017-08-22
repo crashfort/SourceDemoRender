@@ -4,16 +4,18 @@ The program can be downloaded [here](https://github.com/crashfort/SourceDemoRend
 SDR offers the highest possible performance for recording movies by utilizing the GPU and all available threads. As opposed to other Source recording methods, SDR integrates itself into the engine and runs from the inside. Frames are kept on the GPU for processing which allows maximum performance. Many frames can be sampled together to form a good motion blur effect.
 
 ## Is my game supported?
-Since games might need special setup, they have to be added manually. You can [request your game](https://github.com/crashfort/SourceDemoRender/issues) for it to be added.
+Since games might need special setup, they have to be added manually. You can request your game [here](https://github.com/crashfort/SourceDemoRender/issues) or in [Discord](https://discord.gg/5t8D68c) for it to be added.
 
 Games that are added:
 * Counter-Strike: Source
 * Half-Life 2
 * Team Fortress 2
 * Momentum
+* Day of Defeat: Source
 
 Known games that don't work:
 * Garry's Mod - *No plugin_load support*
+* Counter-Strike: Global Offensive - *Uses stoneage D3D9 that doesn't support texture sharing*
 
 ## Prerequisites
 Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_d3d11_staging**, Windows 8.1 or later is required.

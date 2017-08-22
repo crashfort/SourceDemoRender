@@ -183,5 +183,10 @@
 	"momentum":
 	{
 		"Inherit": "cstrike"
+	},
+	
+	"dod":
+	{
+		"Inherit": "cstrike"
 	}
 }
