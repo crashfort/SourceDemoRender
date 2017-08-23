@@ -31,8 +31,8 @@ After you've extracted the archive you should navigate into the SDR directory an
 ## Launching
 The launcher ``LauncherCLI.exe`` takes the following parameters: ``<exe path> <startup params ...>``. To get the executable path you hold shift and right click the file then select ``Copy as path``, the quotes are required. Anything after will be passed to the game. Automatically appended parameters are ``-steam -insecure +sv_lan 1 -console``. Examples of executable paths:
 
-* steamapps\common\Half-Life 2\hl2.exe
 * steamapps\common\Counter-Strike Source\hl2.exe
+* steamapps\common\Half-Life 2\hl2.exe
 * steamapps\common\Source SDK Base 2013 Multiplayer\hl2.exe
 
 ## Instructions
