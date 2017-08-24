@@ -521,7 +521,7 @@ void SDR::Setup(const char* gamepath, const char* gamename)
 
 		if (!res)
 		{
-			SDR::Error::Make("Startup procedure %s failed"s);
+			SDR::Error::Make("Startup procedure %s failed", entry.Name);
 		}
 
 		++index;
