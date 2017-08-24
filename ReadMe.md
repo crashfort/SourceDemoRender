@@ -93,6 +93,12 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 			Displays the current library and game config versions.
 		</td>
 	</tr>
+	<tr>
+		<td>sdr_accept</td>
+		<td>
+			Context specific user agreement to perform a function.
+		</td>
+	</tr>
 	</tbody>
 </table>
 
