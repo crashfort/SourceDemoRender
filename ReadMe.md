@@ -96,7 +96,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	<tr>
 		<td>sdr_accept</td>
 		<td>
-			Context specific user agreement to perform a function.
+			Context specific user agreement to perform an action.
 		</td>
 	</tr>
 	</tbody>
