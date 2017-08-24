@@ -202,8 +202,6 @@ namespace
 				SetEvent(EventSuccess);
 			}
 
-			DisconnectNamedPipe(Pipe);
-
 			CloseHandle(EventSuccess);
 			CloseHandle(EventFailure);
 			CloseHandle(Pipe);
