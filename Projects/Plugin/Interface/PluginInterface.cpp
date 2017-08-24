@@ -10,6 +10,7 @@ extern "C"
 }
 
 #include <cpprest\http_client.h>
+#include <shellapi.h>
 
 namespace
 {
@@ -131,10 +132,18 @@ namespace
 						(
 							blue,
 							"SDR: A library update is available: (%d -> %d).\n"
-							"Visit https://github.com/crashfort/SourceDemoRender/releases\n",
+							"Use \"sdr_accept\" to open Github release page\n",
 							curversion,
 							webversion
 						);
+
+						SDR::Plugin::SetAcceptFunction([=]()
+						{
+							SDR::Log::Message("Upgrading from version %d to %d\n", curversion, webversion);
+
+							auto address = L"https://github.com/crashfort/SourceDemoRender/releases";
+							ShellExecuteW(nullptr, L"open", address, nullptr, nullptr, SW_SHOW);
+						});
 					}
 
 					else if (curversion > webversion)
@@ -162,6 +171,25 @@ namespace
 		{
 			UpdateProc();
 		}
+
+		namespace Accept
+		{
+			std::function<void()> Callback;
+
+			void Procedure()
+			{
+				if (Callback)
+				{
+					Callback();
+					Callback = nullptr;
+				}
+
+				else
+				{
+					SDR::Log::Message("SDR: Nothing to accept\n");
+				}
+			}
+		}
 	}
 
 	void RegisterLAV()
@@ -177,6 +205,7 @@ namespace
 	{
 		SDR::Console::MakeCommand("sdr_version", Commands::Version);
 		SDR::Console::MakeCommand("sdr_update", Commands::Update);
+		SDR::Console::MakeCommand("sdr_accept", Commands::Accept::Procedure);
 
 		return true;
 	});
@@ -269,6 +298,11 @@ void SDR::Plugin::Load()
 void SDR::Plugin::Unload()
 {
 	SDR::Close();
+}
+
+void SDR::Plugin::SetAcceptFunction(std::function<void()>&& func)
+{
+	Commands::Accept::Callback = std::move(func);
 }
 
 const char* SDR::GetGameName()
