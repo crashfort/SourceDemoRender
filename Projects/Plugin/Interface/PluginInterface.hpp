@@ -2,6 +2,6 @@
 
 namespace SDR::Plugin
 {
-	bool Load();
+	void Load();
 	void Unload();
 }

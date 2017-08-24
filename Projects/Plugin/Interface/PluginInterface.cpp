@@ -221,7 +221,7 @@ namespace
 	};
 }
 
-bool SDR::Plugin::Load()
+void SDR::Plugin::Load()
 {
 	static LoadFuncData* LoadDataPtr;
 
@@ -263,10 +263,7 @@ bool SDR::Plugin::Load()
 	catch (const SDR::Error::Exception& error)
 	{
 		localdata->Failure = true;
-		return false;
 	}
-
-	return true;
 }
 
 void SDR::Plugin::Unload()
