@@ -173,7 +173,7 @@ namespace
 	/*
 		Creation has to be delayed as the necessary console stuff isn't available earlier.
 	*/
-	SDR::PluginStartupFunctionAdder A1("PluginInterface: Console commands", []()
+	SDR::PluginStartupFunctionAdder A1("PluginInterface console commands", []()
 	{
 		SDR::Console::MakeCommand("sdr_version", Commands::Version);
 		SDR::Console::MakeCommand("sdr_update", Commands::Update);
