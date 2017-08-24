@@ -117,8 +117,8 @@ namespace
 					auto curversion = PluginVersion;
 					auto webversion = std::stoi(string);
 
-					auto green = SDR::Shared::Color(88, 255, 39, 255);
-					auto blue = SDR::Shared::Color(51, 167, 255, 255);
+					auto green = SDR::Shared::Color(88, 255, 39);
+					auto blue = SDR::Shared::Color(51, 167, 255);
 
 					if (curversion == webversion)
 					{
