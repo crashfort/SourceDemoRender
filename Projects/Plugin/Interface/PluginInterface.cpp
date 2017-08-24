@@ -212,9 +212,7 @@ namespace
 		void Write(const std::string& text)
 		{
 			DWORD written;
-			auto res = WriteFile(Pipe, text.c_str(), text.size(), &written, nullptr);
-
-			int a = 5;
+			WriteFile(Pipe, text.c_str(), text.size(), &written, nullptr);
 		}
 
 		HANDLE Pipe;
