@@ -29,8 +29,8 @@ extern "C"
 #include "Shaders\Blobs\YUV444.hpp"
 
 #include "Interface\Application\Modules\Shared\EngineClient.hpp"
-#include  "Interface\Application\Modules\Shared\MaterialSystem.hpp"
-#include  "Interface\Application\Modules\Shared\SourceGlobals.hpp"
+#include "Interface\Application\Modules\Shared\MaterialSystem.hpp"
+#include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
 
 namespace
 {
