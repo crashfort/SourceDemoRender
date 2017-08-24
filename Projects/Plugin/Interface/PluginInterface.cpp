@@ -185,16 +185,27 @@ namespace
 	{
 		LoadFuncData()
 		{
-			LoadEvent = OpenEventA(EVENT_MODIFY_STATE, false, "SDR_LOADER");
+			EventSuccess = OpenEventA(EVENT_MODIFY_STATE, false, "SDR_LOADER_SUCCESS");
+			EventFailure = OpenEventA(EVENT_MODIFY_STATE, false, "SDR_LOADER_FAIL");
 			Pipe = CreateFileA(R"(\\.\pipe\sdr_loader_pipe)", GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
 		}
 		
 		~LoadFuncData()
 		{
-			SetEvent(LoadEvent);
+			if (Failure)
+			{
+				SetEvent(EventFailure);
+			}
+
+			else
+			{
+				SetEvent(EventSuccess);
+			}
+
 			DisconnectNamedPipe(Pipe);
 
-			CloseHandle(LoadEvent);
+			CloseHandle(EventSuccess);
+			CloseHandle(EventFailure);
 			CloseHandle(Pipe);
 		}
 
@@ -207,7 +218,10 @@ namespace
 		}
 
 		HANDLE Pipe;
-		HANDLE LoadEvent;
+		
+		bool Failure = false;
+		HANDLE EventSuccess;
+		HANDLE EventFailure;
 	};
 }
 
@@ -239,6 +253,7 @@ bool SDR::Plugin::Load()
 	try
 	{
 		SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
+
 		SDR::CallPluginStartupFunctions();
 
 		Commands::Version();
@@ -253,6 +268,7 @@ bool SDR::Plugin::Load()
 
 	catch (const SDR::Error::Exception& error)
 	{
+		localdata->Failure = true;
 		return false;
 	}
 

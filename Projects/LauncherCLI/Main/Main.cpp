@@ -481,8 +481,11 @@ namespace
 		ScopedHandle pipe(CreateNamedPipeA(R"(\\.\pipe\sdr_loader_pipe)", PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 4096, 0, nullptr));
 		SDR::Error::MS::ThrowIfZero(pipe.Get(), "Could not create inbound pipe");
 
-		ScopedHandle event(CreateEventA(nullptr, false, false, "SDR_LOADER"));
-		SDR::Error::MS::ThrowIfZero(event.Get(), "Could not create loader event");
+		ScopedHandle eventsuccess(CreateEventA(nullptr, false, false, "SDR_LOADER_SUCCESS"));
+		SDR::Error::MS::ThrowIfZero(eventsuccess.Get(), "Could not create success loader event");
+
+		ScopedHandle eventfail(CreateEventA(nullptr, false, false, "SDR_LOADER_FAIL"));
+		SDR::Error::MS::ThrowIfZero(eventfail.Get(), "Could not create failure loader event");
 
 		auto info = StartProcess(dir, exepath, game, params);
 
@@ -493,11 +496,41 @@ namespace
 
 		auto waitevent = [&]()
 		{
-			auto res = WaitForSingleObject(event.Get(), INFINITE);
-			
-			if (res == WAIT_FAILED)
+			auto events =
 			{
-				SDR::Error::Make("Could not wait for loader event");
+				eventsuccess.Get(),
+				eventfail.Get()
+			};
+
+			auto waitres = WaitForMultipleObjects(events.size(), events.begin(), false, INFINITE);
+
+			if (waitres == WAIT_FAILED)
+			{
+				SDR::Error::MS::ThrowLastError("Could not wait for loader event");
+			}
+
+			auto maxwait = WAIT_OBJECT_0 + events.size();
+
+			if (waitres < maxwait)
+			{
+				auto index = waitres - WAIT_OBJECT_0;
+
+				/*
+					Success event.
+				*/
+				if (index == 0)
+				{
+					printf_s("SDR fully loaded\n");
+				}
+			
+				/*
+					Failure event.
+				*/
+				else if (index == 1)
+				{
+					TerminateProcess(process.Get(), 0);
+					printf_s("Could not remotely load SDR\n");
+				}
 			}
 		};
 
