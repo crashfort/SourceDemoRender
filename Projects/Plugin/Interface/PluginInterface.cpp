@@ -250,8 +250,6 @@ bool SDR::Plugin::Load()
 	{
 		SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
 
-		SDR::CallPluginStartupFunctions();
-
 		Commands::Version();
 		SDR::Log::Message("SDR: Current game: %s\n", SDR::GetGameName());
 		SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Source Demo Render loaded\n");

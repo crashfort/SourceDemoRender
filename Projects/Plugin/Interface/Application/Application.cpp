@@ -504,25 +504,7 @@ void SDR::Setup(const char* gamepath, const char* gamename)
 {
 	LoadLibraryIntercept::End();
 	Config::SetupGame(gamepath, gamename);
-}
 
-void SDR::Close()
-{
-	for (auto func : MainApplication.ShutdownFunctions)
-	{
-		func();
-	}
-
-	MH_Uninitialize();
-}
-
-void SDR::AddPluginStartupFunction(const StartupFuncData& data)
-{
-	MainApplication.StartupFunctions.emplace_back(data);
-}
-
-void SDR::CallPluginStartupFunctions()
-{
 	if (MainApplication.StartupFunctions.empty())
 	{
 		return;
@@ -546,6 +528,21 @@ void SDR::CallPluginStartupFunctions()
 	}
 
 	MainApplication.StartupFunctions.clear();
+}
+
+void SDR::Close()
+{
+	for (auto func : MainApplication.ShutdownFunctions)
+	{
+		func();
+	}
+
+	MH_Uninitialize();
+}
+
+void SDR::AddPluginStartupFunction(const StartupFuncData& data)
+{
+	MainApplication.StartupFunctions.emplace_back(data);
 }
 
 void SDR::AddPluginShutdownFunction(ShutdownFuncType function)

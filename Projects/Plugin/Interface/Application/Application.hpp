@@ -29,8 +29,6 @@ namespace SDR
 		}
 	};
 
-	void CallPluginStartupFunctions();
-
 	using ShutdownFuncType = void(*)();
 	void AddPluginShutdownFunction(ShutdownFuncType function);
 
