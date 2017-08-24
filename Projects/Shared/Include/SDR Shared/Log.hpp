@@ -16,15 +16,15 @@ namespace SDR::Log
 	void Warning(std::string&& text);
 
 	template <typename... Args>
-	void MessageColor(Shared::Color col, const char* format, Args&&... args)
-	{
-		MessageColor(col, String::GetFormattedString(format, std::forward<Args>(args)...));
-	}
-
-	template <typename... Args>
 	void Message(const char* format, Args&&... args)
 	{
 		Message(String::GetFormattedString(format, std::forward<Args>(args)...));
+	}
+
+	template <typename... Args>
+	void MessageColor(Shared::Color col, const char* format, Args&&... args)
+	{
+		MessageColor(col, String::GetFormattedString(format, std::forward<Args>(args)...));
 	}
 
 	template <typename... Args>
