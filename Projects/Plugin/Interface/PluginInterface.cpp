@@ -139,7 +139,7 @@ namespace
 
 						SDR::Plugin::SetAcceptFunction([=]()
 						{
-							SDR::Log::Message("Upgrading from version %d to %d\n", curversion, webversion);
+							SDR::Log::Message("SDR: Upgrading from version %d to %d\n", curversion, webversion);
 
 							auto address = L"https://github.com/crashfort/SourceDemoRender/releases";
 							ShellExecuteW(nullptr, L"open", address, nullptr, nullptr, SW_SHOW);
