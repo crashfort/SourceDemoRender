@@ -926,6 +926,13 @@ namespace
 							setcoeffs(yuvdata.CoeffV, +0.500000, -0.454153, -0.045847);
 						}
 
+						else if (reference->colorspace == AVCOL_SPC_BT2020_CL)
+						{
+							setcoeffs(yuvdata.CoeffY, +0.262700, +0.678000, +0.059300);
+							setcoeffs(yuvdata.CoeffU, -0.139630, -0.360370, +0.500000);
+							setcoeffs(yuvdata.CoeffV, +0.500000, -0.459786, -0.040214);
+						}
+
 						else
 						{
 							SDR::Error::Make("No matching YUV color space for coefficients");
@@ -1746,7 +1753,8 @@ namespace
 						auto table =
 						{
 							std::make_pair("601", AVCOL_SPC_BT470BG),
-							std::make_pair("709", AVCOL_SPC_BT709)
+							std::make_pair("709", AVCOL_SPC_BT709),
+							std::make_pair("2020", AVCOL_SPC_BT2020_CL)
 						};
 
 						linktabletovariable(Variables::Video::ColorSpace.GetString(), table, colorspace);
