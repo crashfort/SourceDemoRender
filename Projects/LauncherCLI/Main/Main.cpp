@@ -102,11 +102,11 @@ namespace
 		decltype(SetEvent)* SetEventAddr;
 		decltype(CloseHandle)* CloseHandleAddr;
 		
-		void* LibraryNameAddr;
-		void* ExportNameAddr;
-		void* EventNameAddr;
-		void* GamePathAddr;
-		void* GameNameAddr;
+		const char* LibraryNameAddr;
+		const char* ExportNameAddr;
+		const char* EventNameAddr;
+		const char* GamePathAddr;
+		const char* GameNameAddr;
 
 		SDR::API::InitializeCode Code;
 	};
@@ -120,11 +120,11 @@ namespace
 	{
 		auto data = (InterProcessData*)param;
 
-		auto library = (const char*)data->LibraryNameAddr;
-		auto loadexport = (const char*)data->ExportNameAddr;
-		auto path = (const char*)data->GamePathAddr;
-		auto game = (const char*)data->GameNameAddr;
-		auto eventname = (const char*)data->EventNameAddr;
+		auto library = data->LibraryNameAddr;
+		auto loadexport = data->ExportNameAddr;
+		auto path = data->GamePathAddr;
+		auto game = data->GameNameAddr;
+		auto eventname = data->EventNameAddr;
 
 		auto module = data->LoadLibraryAddr(library);
 		auto func = (SDR::API::SDR_Initialize)data->GetProcAddressAddr(module, loadexport);
