@@ -511,11 +511,11 @@ void SDR::Setup(const char* gamepath, const char* gamename)
 	}
 
 	auto count = MainApplication.StartupFunctions.size();
-	auto index = 0;
+	auto index = 1;
 
 	for (auto entry : MainApplication.StartupFunctions)
 	{
-		SDR::Log::Message("SDR: Startup procedure (%d/%d): %s\n", index + 1, count, entry.Name);
+		SDR::Log::Message("SDR: Startup procedure (%d/%d): %s\n", index, count, entry.Name);
 
 		entry.Function();
 
