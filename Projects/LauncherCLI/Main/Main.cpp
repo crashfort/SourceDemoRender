@@ -49,18 +49,18 @@ namespace
 		}
 
 		template <typename T>
-		uint8_t* PushMemory(const T& type)
+		auto PushMemory(const T& type)
 		{
 			return PushMemory(&type, sizeof(T));
 		}
 
-		uint8_t* PushString(const std::string& string)
+		auto PushString(const std::string& string)
 		{
 			return PushMemory(string.c_str(), string.size() + 1);
 		}
 
 		template <size_t Size>
-		uint8_t* PushString(char(&buffer)[Size])
+		auto PushString(char(&buffer)[Size])
 		{
 			return PushMemory(buffer, sizeof(buffer));
 		}
