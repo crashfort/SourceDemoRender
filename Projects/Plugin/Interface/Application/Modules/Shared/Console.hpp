@@ -27,8 +27,6 @@ namespace SDR::Console
 		std::unique_ptr<uint8_t[]> Blob;
 	};
 
-	using VariablePtr = Variable;
-
 	struct CommandArgs
 	{
 		CommandArgs(const void* ptr);
@@ -47,18 +45,16 @@ namespace SDR::Console
 
 	void Load();
 
-	using CommandPtr = Command;
-
 	using CommandCallbackArgsType = void(*)(const void* args);
 	using CommandCallbackVoidType = void(*)();
 
 	void MakeCommand(const char* name, CommandCallbackVoidType callback);
 
-	VariablePtr MakeBool(const char* name, const char* value);
+	Variable MakeBool(const char* name, const char* value);
 
-	VariablePtr MakeNumber(const char* name, const char* value, float min);
-	VariablePtr MakeNumber(const char* name, const char* value, float min, float max);
-	VariablePtr MakeNumberWithString(const char* name, const char* value, float min, float max);
+	Variable MakeNumber(const char* name, const char* value, float min);
+	Variable MakeNumber(const char* name, const char* value, float min, float max);
+	Variable MakeNumberWithString(const char* name, const char* value, float min, float max);
 
-	VariablePtr MakeString(const char* name, const char* value);
+	Variable MakeString(const char* name, const char* value);
 }

@@ -595,27 +595,27 @@ void SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callbac
 	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
 }
 
-SDR::Console::VariablePtr SDR::Console::MakeBool(const char* name, const char* value)
+SDR::Console::Variable SDR::Console::MakeBool(const char* name, const char* value)
 {
 	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, 0, true, 1);
 }
 
-SDR::Console::VariablePtr SDR::Console::MakeNumber(const char* name, const char* value, float min)
+SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value, float min)
 {
 	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, min);
 }
 
-SDR::Console::VariablePtr SDR::Console::MakeNumber(const char* name, const char* value, float min, float max)
+SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value, float min, float max)
 {
 	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, min, true, max);
 }
 
-SDR::Console::VariablePtr SDR::Console::MakeNumberWithString(const char* name, const char* value, float min, float max)
+SDR::Console::Variable SDR::Console::MakeNumberWithString(const char* name, const char* value, float min, float max)
 {
 	return MakeGenericVariable(name, value, 0, true, min, true, max);
 }
 
-SDR::Console::VariablePtr SDR::Console::MakeString(const char* name, const char* value)
+SDR::Console::Variable SDR::Console::MakeString(const char* name, const char* value)
 {
 	return MakeGenericVariable(name, value);
 }

@@ -36,35 +36,35 @@ namespace
 {
 	namespace Variables
 	{
-		SDR::Console::VariablePtr OutputDirectory;
-		SDR::Console::VariablePtr FlashWindow;
-		SDR::Console::VariablePtr ExitOnFinish;
-		SDR::Console::VariablePtr SuppressLog;
+		SDR::Console::Variable OutputDirectory;
+		SDR::Console::Variable FlashWindow;
+		SDR::Console::Variable ExitOnFinish;
+		SDR::Console::Variable SuppressLog;
 
 		namespace Video
 		{
-			SDR::Console::VariablePtr Framerate;
-			SDR::Console::VariablePtr ColorSpace;
+			SDR::Console::Variable Framerate;
+			SDR::Console::Variable ColorSpace;
 
 			namespace Sample
 			{
-				SDR::Console::VariablePtr Multiply;
-				SDR::Console::VariablePtr Exposure;
+				SDR::Console::Variable Multiply;
+				SDR::Console::Variable Exposure;
 			}
 
-			SDR::Console::VariablePtr Encoder;
-			SDR::Console::VariablePtr PixelFormat;
+			SDR::Console::Variable Encoder;
+			SDR::Console::Variable PixelFormat;
 
 			namespace D3D11
 			{
-				SDR::Console::VariablePtr Staging;
+				SDR::Console::Variable Staging;
 			}
 
 			namespace X264
 			{
-				SDR::Console::VariablePtr CRF;
-				SDR::Console::VariablePtr Preset;
-				SDR::Console::VariablePtr Intra;
+				SDR::Console::Variable CRF;
+				SDR::Console::Variable Preset;
+				SDR::Console::Variable Intra;
 			}
 		}
 
