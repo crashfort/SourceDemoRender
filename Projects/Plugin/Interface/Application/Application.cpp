@@ -517,12 +517,7 @@ void SDR::Setup(const char* gamepath, const char* gamename)
 	{
 		SDR::Log::Message("SDR: Startup procedure (%d/%d): %s\n", index + 1, count, entry.Name);
 
-		auto res = entry.Function();
-
-		if (!res)
-		{
-			SDR::Error::Make("Startup procedure %s failed", entry.Name);
-		}
+		entry.Function();
 
 		++index;
 	}

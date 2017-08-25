@@ -92,8 +92,6 @@ namespace
 			Video::X264::CRF = SDR::Console::MakeNumberWithString("sdr_x264_crf", "0", 0, 51);
 			Video::X264::Preset = SDR::Console::MakeString("sdr_x264_preset", "ultrafast");
 			Video::X264::Intra = SDR::Console::MakeBool("sdr_x264_intra", "1");
-
-			return true;
 		});
 	}
 }

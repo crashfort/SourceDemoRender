@@ -206,8 +206,6 @@ namespace
 		SDR::Console::MakeCommand("sdr_version", Commands::Version);
 		SDR::Console::MakeCommand("sdr_update", Commands::Update);
 		SDR::Console::MakeCommand("sdr_accept", Commands::Accept::Procedure);
-
-		return true;
 	});
 
 	struct LoadFuncData

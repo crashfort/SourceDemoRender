@@ -9,7 +9,7 @@ namespace SDR
 
 	struct StartupFuncData
 	{
-		using FuncType = bool(*)();
+		using FuncType = void(*)();
 
 		const char* Name;
 		FuncType Function;
