@@ -48,6 +48,12 @@ namespace
 			return retaddr;
 		}
 
+		template <typename T>
+		uint8_t* PushMemory(const T& type)
+		{
+			return PushMemory(&type, sizeof(T));
+		}
+
 		uint8_t* PushString(const std::string& string)
 		{
 			return PushMemory(string.c_str(), string.size() + 1);
@@ -221,7 +227,7 @@ namespace
 		/*
 			Memory location in other process.
 		*/
-		auto funcaddr = writer.PushMemory(function, sizeof(function));
+		auto funcaddr = writer.PushMemory(function);
 
 		InterProcessData data;
 		
@@ -245,7 +251,7 @@ namespace
 		
 		data.Code = SDR::API::InitializeCode::GeneralFailure;
 
-		auto dataaddr = writer.PushMemory(&data, sizeof(data));
+		auto dataaddr = writer.PushMemory(data);
 
 		/*
 			Enqueue the function to run on ResumeThread with parameter of InterProcessData.
