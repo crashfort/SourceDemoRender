@@ -277,7 +277,7 @@ namespace
 
 		struct ScopedEntry
 		{
-			ScopedEntry(Types::Type entry) : 
+			ScopedEntry(Types::Type entry) :
 				Target(Entries[entry]),
 				Start(GetTimeNow())
 			{
@@ -452,7 +452,7 @@ namespace
 		}
 
 		LAV::ScopedFormatContext FormatContext;
-		
+
 		/*
 			This gets freed when FormatContext gets destroyed.
 		*/
@@ -501,7 +501,7 @@ namespace
 		static bool WouldNewFrameOverflow()
 		{
 			PROCESS_MEMORY_COUNTERS desc = {};
-			
+
 			auto res = K32GetProcessMemoryInfo(GetCurrentProcess(), &desc, sizeof(desc));
 
 			if (res == 0)
@@ -634,7 +634,7 @@ namespace
 
 				Microsoft::WRL::ComPtr<ID3D11Buffer> SamplingConstantBuffer;
 				Microsoft::WRL::ComPtr<ID3D11ComputeShader> SamplingShader;
-				
+
 				/*
 					Shader for setting every UAV structure color to 0.
 				*/
@@ -663,7 +663,7 @@ namespace
 
 								Previously "CreateOffscreenPlainSurface" but that function
 								produced black output for some users.
-								
+
 								According to MSDN (https://msdn.microsoft.com/en-us/library/windows/desktop/ff476531(v=vs.85).aspx)
 								the flags for the texture needs to be RENDER_TARGET which I guess the previous function didn't set.
 								MSDN also mentions an non-existent SHADER_RESOURCE flag which seems safe to omit.
@@ -1284,7 +1284,7 @@ namespace
 
 					auto cbufs = { shared.DirectX11.SharedConstantBuffer.Get() };
 					context->CSSetConstantBuffers(0, 1, cbufs.begin());
-					
+
 					ConversionPtr->DynamicBind(context);
 
 					Dispatch(shared);
@@ -1348,7 +1348,7 @@ namespace
 		{
 			bool Enabled;
 			float Exposure;
-			
+
 			double TimePerSample;
 			double TimePerFrame;
 		} SamplingData;
@@ -1866,7 +1866,7 @@ namespace
 							auto preset = X264::Preset.GetString();
 							auto crf = X264::CRF.GetString();
 							auto intra = X264::Intra.GetBool();
-							
+
 							options.Set("preset", preset);
 							options.Set("crf", crf);
 
@@ -1890,7 +1890,7 @@ namespace
 					*/
 					movie.VideoStream = std::move(stream);
 				}
-					
+
 				catch (const SDR::Error::Exception& error)
 				{
 					CurrentMovie = {};
@@ -1923,7 +1923,7 @@ namespace
 
 				SDR::Console::Variable matqueuemode("mat_queue_mode");
 				movie.OldMatQueueModeValue = matqueuemode.GetInt();
-			
+
 				/*
 					Force single threaded processing or else there will be flickering.
 				*/
