@@ -50,7 +50,7 @@ Example of supported video containers:
 The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size.
 
 ## Guide
-SDR can output in YUV420, YUV444 and BGR0 formats with x264. Color space can be any of `601, 709, 2020`, for YUV video the color range is `full`.
+SDR can output in YUV420, YUV444 and BGR0 formats with x264. Color space can be `601` or `709`, for YUV video the color range is `full`.
 
 ### Vegas Pro
 This video editor cannot open:
@@ -66,7 +66,7 @@ If you wish to open an RGB video you have to do a workaround:
 * Above will create a VFW compatible file that [VirtualDub](http://virtualdub.org/) can open
 * Save with optional lossless encoder (not Lagarith) or uncompressed and open in Vegas Pro
 
-If you just use YUV420 you have to use the `709` or higher color space. If you also want to render using `x264vfw`, you have to set these advanced parameters to not lose any color (example with `709`):
+If you just use YUV420 you have to use the `709` color space. If you also want to render using `x264vfw`, you have to set these advanced parameters to not lose any color:
 
 `--colormatrix=bt709 --transfer=bt709 --colorprim=bt709 --range=pc`
 
@@ -243,7 +243,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		<td>
 			YUV color space. This value is handled differently in media, try experimenting. Not available in RGB video.
 			<br/><br/>
-            <b>Values:</b> 601, 709 or 2020 <br/>
+            <b>Values:</b> 601 or 709 <br/>
             <b>Default:</b> 709 <br/>
 		</td>
 	</tr>
