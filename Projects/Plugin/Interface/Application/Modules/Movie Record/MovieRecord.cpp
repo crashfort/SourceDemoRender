@@ -1771,13 +1771,13 @@ namespace
 						FormatsType PixelFormats;
 					};
 
-					const auto i420 = std::make_pair("i420", AV_PIX_FMT_YUV420P);
-					const auto i444 = std::make_pair("i444", AV_PIX_FMT_YUV444P);
+					const auto yuv420 = std::make_pair("yuv420", AV_PIX_FMT_YUV420P);
+					const auto yuv444 = std::make_pair("yuv444", AV_PIX_FMT_YUV444P);
 					const auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
 
 					VideoConfigurationData table[] =
 					{
-						VideoConfigurationData("libx264", {i420, i444}),
+						VideoConfigurationData("libx264", {yuv420, yuv444}),
 						VideoConfigurationData("libx264rgb", {bgr0}),
 					};
 

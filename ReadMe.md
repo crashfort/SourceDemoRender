@@ -188,7 +188,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 				<tbody>
 					<tr>
 						<td>libx264</td>
-						<td>i420, i444</td>
+						<td>yuv420, yuv444</td>
 					</tr>
 					<tr>
 						<td>libx264rgb</td>
