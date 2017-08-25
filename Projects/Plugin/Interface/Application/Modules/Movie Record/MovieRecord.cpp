@@ -1777,8 +1777,8 @@ namespace
 
 					VideoConfigurationData table[] =
 					{
-						VideoConfigurationData("libx264", {yuv420, yuv444}),
-						VideoConfigurationData("libx264rgb", {bgr0}),
+						VideoConfigurationData("libx264", { yuv420, yuv444 }),
+						VideoConfigurationData("libx264rgb", { bgr0 }),
 					};
 
 					const VideoConfigurationData* vidconfig = nullptr;
@@ -2106,7 +2106,7 @@ namespace
 						SDR::EngineClient::FlashWindow();
 					}
 
-					SDR::Log::MessageColor({88, 255, 39}, "SDR: Movie is now complete\n"s);
+					SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Movie is now complete\n"s);
 
 					int index = 0;
 
