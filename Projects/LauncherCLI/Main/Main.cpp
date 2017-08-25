@@ -2,6 +2,7 @@
 #include "SDR Shared\Error.hpp"
 #include "SDR Shared\File.hpp"
 #include "SDR Shared\Json.hpp"
+#include "SDR Shared\IPC.hpp"
 #include "SDR Plugin API\ExportTypes.hpp"
 #include "rapidjson\document.h"
 #include <Shlwapi.h>
@@ -269,44 +270,20 @@ namespace
 
 		printf_s("Waiting for signals\n");
 
-		auto handles =
-		{
-			event.Get(),
-			process
-		};
-
 		/*
 			Wait for the signal that it's safe to read back the status code, or if there
 			was an error and the process ended.
 		*/
-		auto waitres = WaitForMultipleObjects(handles.size(), handles.begin(), false, INFINITE);
+		auto target = SDR::IPC::WaitForOne({ event.Get(), process });
 
-		if (waitres == WAIT_FAILED)
+		if (target == event.Get())
 		{
-			SDR::Error::MS::ThrowLastError("Could not wait for launcher event");
+			printf_s("Received remote SDR signal\n");
 		}
 
-		auto maxwait = WAIT_OBJECT_0 + handles.size();
-
-		if (waitres < maxwait)
+		else if (target == process)
 		{
-			auto index = waitres - WAIT_OBJECT_0;
-
-			/*
-				Event handle.
-			*/
-			if (index == 0)
-			{
-				printf_s("Received remote SDR signal\n");
-			}
-			
-			/*
-				Process handle.
-			*/
-			else if (index == 1)
-			{
-				SDR::Error::Make("Process exited");
-			}
+			SDR::Error::Make("Process exited");
 		}
 
 		/*
@@ -502,35 +479,17 @@ namespace
 				eventfail.Get()
 			};
 
-			auto waitres = WaitForMultipleObjects(events.size(), events.begin(), false, INFINITE);
+			auto target = SDR::IPC::WaitForOne({ eventsuccess.Get(), eventfail.Get() });
 
-			if (waitres == WAIT_FAILED)
+			if (target == eventsuccess.Get())
 			{
-				SDR::Error::MS::ThrowLastError("Could not wait for loader event");
+				printf_s("SDR fully loaded\n");
 			}
 
-			auto maxwait = WAIT_OBJECT_0 + events.size();
-
-			if (waitres < maxwait)
+			else if (target == eventfail.Get())
 			{
-				auto index = waitres - WAIT_OBJECT_0;
-
-				/*
-					Success event.
-				*/
-				if (index == 0)
-				{
-					printf_s("SDR fully loaded\n");
-				}
-			
-				/*
-					Failure event.
-				*/
-				else if (index == 1)
-				{
-					TerminateProcess(process.Get(), 0);
-					printf_s("Could not remotely load SDR\n");
-				}
+				TerminateProcess(process.Get(), 0);
+				printf_s("Could not remotely load SDR\n");
 			}
 		};
 

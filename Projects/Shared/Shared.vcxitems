@@ -19,6 +19,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Color.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Error.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\File.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\IPC.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Json.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Log.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\String.hpp" />
@@ -29,6 +30,9 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Source\File.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Source\IPC.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Source\Log.cpp">
