@@ -46,7 +46,7 @@ namespace
 
 		catch (SDR::File::ScopedFile::ExceptionType status)
 		{
-			SDR::Error::Make("Could not get GameConfig version"s);
+			SDR::Error::Make("Could not get game config version"s);
 		}
 
 		return ret;
