@@ -35,6 +35,8 @@ The launcher ``LauncherCLI.exe`` takes the following parameters: ``<exe path> <s
 * steamapps\common\Half-Life 2\hl2.exe
 * steamapps\common\Source SDK Base 2013 Multiplayer\hl2.exe
 
+You can use ``LauncherCLI User.bat`` to aid launching. Edit the content to fit your game.
+
 ## Instructions
 When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. **Do not exit the game until you see a green message that says the movie is completed.**
 
