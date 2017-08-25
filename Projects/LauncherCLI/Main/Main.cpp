@@ -56,13 +56,13 @@ namespace
 
 		auto PushString(const std::string& string)
 		{
-			return PushMemory(string.c_str(), string.size() + 1);
+			return (const char*)PushMemory(string.c_str(), string.size() + 1);
 		}
 
 		template <size_t Size>
 		auto PushString(char(&buffer)[Size])
 		{
-			return PushMemory(buffer, sizeof(buffer));
+			return (const char*)PushMemory(buffer, sizeof(buffer));
 		}
 
 		HANDLE Process;
