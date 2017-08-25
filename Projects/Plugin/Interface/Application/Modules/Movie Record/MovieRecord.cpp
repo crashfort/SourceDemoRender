@@ -1938,6 +1938,8 @@ namespace
 				IsStoppingAsync = false;
 
 				movie.FrameBufferThreadHandle = std::thread(FrameBufferThread);
+
+				SDR::Log::Message("SDR: Started movie\n"s);
 			}
 		}
 
