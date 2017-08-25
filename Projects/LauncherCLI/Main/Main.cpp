@@ -31,7 +31,7 @@ namespace
 
 		}
 
-		uint8_t* PushMemory(const void* address, size_t size)
+		void* PushMemory(const void* address, size_t size)
 		{
 			SIZE_T written;
 
