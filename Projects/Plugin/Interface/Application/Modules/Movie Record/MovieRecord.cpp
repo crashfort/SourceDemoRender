@@ -2024,10 +2024,16 @@ namespace
 				*/
 				auto name = args.FullArgs();
 
-				do
+				while (true)
 				{
 					++name;
-				} while (*name != ' ');
+
+					if (*name == ' ')
+					{
+						++name;
+						break;
+					}
+				}
 
 				ModuleStartMovie::Common::Procedure(name, width, height);
 			}
