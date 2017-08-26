@@ -404,26 +404,6 @@ namespace SDR::Console
 		}
 	}
 
-	Variable::Variable(Variable&& other)
-	{
-		*this = std::move(other);
-	}
-
-	Variable::~Variable()
-	{
-
-	}
-
-	void Variable::operator=(Variable&& other)
-	{
-		if (this != &other)
-		{
-			Blob = std::move(other.Blob);
-			Opaque = other.Opaque;
-			other.Opaque = nullptr;
-		}
-	}
-
 	bool Variable::GetBool() const
 	{
 		return !!GetInt();

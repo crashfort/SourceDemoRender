@@ -9,10 +9,9 @@ namespace SDR::Console
 		Variable() = default;
 		Variable(const char* ref);
 		Variable(const Variable& other) = delete;
-		Variable(Variable&& other);
-		~Variable();
-
-		void operator=(Variable&& other);
+		Variable(Variable&& other) = default;
+		Variable& operator=(const Variable& other) = delete;
+		Variable& operator=(Variable&& other) = default;
 
 		bool GetBool() const;
 		int GetInt() const;
