@@ -350,9 +350,9 @@ namespace
 		char args[1024];
 		strcpy_s(args, exepath.c_str());
 		strcat_s(args, " ");
-		strcat_s(args, "-game ");
-		strcat_s(args, game.c_str());
-		strcat_s(args, " ");
+		strcat_s(args, "-game \"");
+		strcat_s(args, dir.c_str());
+		strcat_s(args, "\" ");
 		strcat_s(args, params.c_str());
 
 		STARTUPINFOA startinfo = {};
