@@ -337,16 +337,9 @@ namespace
 			template <typename T>
 			using TableType = std::initializer_list<std::pair<const T*, std::function<void()>>>;
 
-			void Load(HMODULE module, const char* name)
+			template <typename T>
+			void CheckTable(const TableType<T>& table, const T* name)
 			{
-				TableType<char> table =
-				{
-					std::make_pair("server.dll", []()
-					{
-						SDR::Plugin::Load();
-					})
-				};
-
 				for (auto& entry : table)
 				{
 					if (SDR::String::EndsWith(name, entry.first))
@@ -357,6 +350,19 @@ namespace
 				}
 			}
 
+			void Load(HMODULE module, const char* name)
+			{
+				TableType<char> table =
+				{
+					std::make_pair("server.dll", []()
+					{
+						SDR::Plugin::Load();
+					})
+				};
+
+				CheckTable(table, name);
+			}
+
 			void Load(HMODULE module, const wchar_t* name)
 			{
 				TableType<wchar_t> table =
@@ -364,14 +370,7 @@ namespace
 					
 				};
 
-				for (auto& entry : table)
-				{
-					if (SDR::String::EndsWith(name, entry.first))
-					{
-						entry.second();
-						break;
-					}
-				}
+				CheckTable(table, name);
 			}
 		}
 
