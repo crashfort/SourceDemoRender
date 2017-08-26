@@ -1175,6 +1175,9 @@ namespace
 					ConversionPtr->Create(device, reference);
 				}
 
+				/*
+					Between CS dispatches the resources should be unbound.
+				*/
 				void ResetShaderInputs(ID3D11DeviceContext* context)
 				{
 					/*
@@ -1191,6 +1194,9 @@ namespace
 					context->CSSetConstantBuffers(0, count, cbufs);
 				}
 
+				/*
+					Weighs a new engine frame onto the existing work buffer.
+				*/
 				void NewFrame(VideoStreamSharedData& shared, float weight)
 				{
 					auto context = shared.DirectX11.Context.Get();
@@ -1258,6 +1264,9 @@ namespace
 					ResetShaderInputs(context);
 				}
 
+				/*
+					Clears the work buffer to black color.
+				*/
 				void Clear(VideoStreamSharedData& shared)
 				{
 					auto context = shared.DirectX11.Context.Get();
@@ -1275,6 +1284,9 @@ namespace
 					ResetShaderInputs(context);
 				}
 
+				/*
+					Pass the latest engine frame directly into the work buffer.
+				*/
 				void Pass(VideoStreamSharedData& shared)
 				{
 					auto context = shared.DirectX11.Context.Get();
@@ -1295,6 +1307,9 @@ namespace
 					ResetShaderInputs(context);
 				}
 
+				/*
+					Converts to user format.
+				*/
 				void Conversion(VideoStreamSharedData& shared)
 				{
 					auto context = shared.DirectX11.Context.Get();
