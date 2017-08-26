@@ -1665,7 +1665,7 @@ namespace
 
 					while (next)
 					{
-						SDR::Log::Message("SDR: * %s\n", next->name);
+						SDR::Log::Message("SDR: %s\n", next->name);
 						next = av_codec_next(next);
 					}
 				}
