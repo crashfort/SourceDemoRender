@@ -25,7 +25,7 @@ namespace
 {
 	enum
 	{
-		PluginVersion = 19,
+		PluginVersion = 20,
 	};
 }
 
