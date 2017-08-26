@@ -290,6 +290,30 @@ namespace
 			TimePointType Start;
 			Entry& Target;
 		};
+
+		void Reset()
+		{
+			Entries.fill({});
+		}
+
+		void ShowResults()
+		{
+			int index = 0;
+
+			for (const auto& entry : Entries)
+			{
+				if (entry.Calls > 0)
+				{
+					auto name = Names[index];
+					auto avg = entry.TotalTime / entry.Calls;
+					auto ms = avg / 1.0ms;
+
+					SDR::Log::Message("SDR: %s (%u): avg %0.4f ms\n", name, entry.Calls, ms);
+				}
+
+				++index;
+			}
+		}
 	}
 
 	struct SDRVideoWriter
@@ -2016,7 +2040,7 @@ namespace
 					return;
 				}
 
-				Profile::Entries.fill({});
+				Profile::Reset();
 
 				/*
 					Retrieve everything after the initial "startmovie" token, in case
@@ -2125,21 +2149,7 @@ namespace
 
 					SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Movie is now complete\n"s);
 
-					int index = 0;
-
-					for (const auto& entry : Profile::Entries)
-					{
-						if (entry.Calls > 0)
-						{
-							auto name = Profile::Names[index];
-							auto avg = entry.TotalTime / entry.Calls;
-							auto ms = avg / 1.0ms;
-
-							SDR::Log::Message("SDR: %s (%u): avg %0.4f ms\n", name, entry.Calls, ms);
-						}
-
-						++index;
-					}
+					Profile::ShowResults();
 				};
 
 				if (async)
