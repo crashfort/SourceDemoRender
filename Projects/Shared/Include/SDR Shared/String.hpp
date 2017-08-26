@@ -26,7 +26,7 @@ namespace SDR::String
 
 	inline std::wstring FromUTF8(const char* input)
 	{
-		static 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+		static std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 		return converter.from_bytes(input);
 	}
 
