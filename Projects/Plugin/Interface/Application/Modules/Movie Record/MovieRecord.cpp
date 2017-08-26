@@ -1630,7 +1630,9 @@ namespace
 
 				PathAddBackslashA(final);
 
-				auto res = PathFileExistsA(final) == 1;
+				auto winstr = SDR::String::FromUTF8(final);
+
+				auto res = PathFileExistsW(winstr.c_str()) == 1;
 
 				if (!res)
 				{
@@ -2016,7 +2018,16 @@ namespace
 
 				Profile::Entries.fill({});
 
-				auto name = args.At(1);
+				/*
+					Retrieve everything after the initial "startmovie" token, in case
+					of special UTF8 names the ArgV is split.
+				*/
+				auto name = args.FullArgs();
+
+				do
+				{
+					++name;
+				} while (*name != ' ');
 
 				ModuleStartMovie::Common::Procedure(name, width, height);
 			}
