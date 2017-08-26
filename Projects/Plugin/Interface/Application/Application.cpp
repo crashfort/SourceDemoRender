@@ -194,7 +194,7 @@ namespace
 
 					if (!it->second.IsString())
 					{
-						SDR::Error::Make("SDR: %s inherit field not a string\n", targetgame->Name.c_str());
+						SDR::Error::Make("SDR: \"%s\" inherit field not a string\n", targetgame->Name.c_str());
 					}
 
 					std::string from = it->second.GetString();
@@ -233,7 +233,7 @@ namespace
 
 						if (!foundgame)
 						{
-							SDR::Error::Make("%s inherit target %s not found", targetgame->Name.c_str(), from.c_str());
+							SDR::Error::Make("\"%s\" inherit target \"%s\" not found", targetgame->Name.c_str(), from.c_str());
 						}
 					}
 
@@ -265,17 +265,17 @@ namespace
 
 						if (!res)
 						{
-							SDR::Error::Make("Could not enable module %s", handler.Name);
+							SDR::Error::Make("Could not enable module \"%s\"", handler.Name);
 						}
 
-						SDR::Log::Message("SDR: Enabled module %s\n", handler.Name);
+						SDR::Log::Message("SDR: Enabled module \"%s\"\n", handler.Name);
 						break;
 					}
 				}
 
 				if (!found)
 				{
-					SDR::Log::Warning("SDR: No handler found for %s\n", prop.first.c_str());
+					SDR::Log::Warning("SDR: No handler found for \"%s\"\n", prop.first.c_str());
 				}
 			}
 
@@ -515,7 +515,7 @@ void SDR::Setup(const char* gamepath, const char* gamename)
 
 	for (auto entry : MainApplication.StartupFunctions)
 	{
-		SDR::Log::Message("SDR: Startup procedure (%d/%d): %s\n", index, count, entry.Name);
+		SDR::Log::Message("SDR: Startup procedure (%d/%d): \"%s\"\n", index, count, entry.Name);
 
 		entry.Function();
 
@@ -693,14 +693,14 @@ int SDR::GetVariantFromJson(rapidjson::Value& value)
 
 void SDR::WarnAboutHookVariant(const char* name, int variant)
 {
-	SDR::Log::Warning("SDR: No such hook overload for %s in variant %d\n", name, variant);
+	SDR::Log::Warning("SDR: No such hook overload for \"%s\" in variant %d\n", name, variant);
 }
 
 bool SDR::WarnIfVariantOutOfBounds(const char* name, int variant, int max)
 {
 	if (variant < 0 || variant > max)
 	{
-		SDR::Log::Warning("SDR: Variant overload %d for %s not in bounds (%d max)\n", variant, max);
+		SDR::Log::Warning("SDR: Variant overload %d for \"%s\" not in bounds (%d max)\n", variant, max);
 		return true;
 	}
 
