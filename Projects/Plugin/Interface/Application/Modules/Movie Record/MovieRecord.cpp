@@ -1537,6 +1537,10 @@ namespace
 
 					rem += sampling.TimePerSample / sampling.TimePerFrame;
 
+					/*
+						Cast to float to prevent comparisons against 0.99999999998...
+					*/
+
 					if ((float)rem <= (1.0 - exposure))
 					{
 
