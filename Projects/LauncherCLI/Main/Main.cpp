@@ -350,9 +350,9 @@ namespace
 		char args[1024];
 		strcpy_s(args, exepath.c_str());
 		strcat_s(args, " ");
-		strcat_s(args, "-game ");
-		strcat_s(args, game.c_str());
-		strcat_s(args, " ");
+		strcat_s(args, "-game \"");
+		strcat_s(args, dir.c_str());
+		strcat_s(args, "\" ");
 		strcat_s(args, params.c_str());
 
 		STARTUPINFOA startinfo = {};
@@ -479,15 +479,14 @@ namespace
 
 		auto waitevent = [&]()
 		{
-			auto events =
+			auto target = SDR::IPC::WaitForOne({ process.Get(), eventsuccess.Get(), eventfail.Get() });
+
+			if (target == process.Get())
 			{
-				eventsuccess.Get(),
-				eventfail.Get()
-			};
+				SDR::Error::Make("Process exited");
+			}
 
-			auto target = SDR::IPC::WaitForOne({ eventsuccess.Get(), eventfail.Get() });
-
-			if (target == eventsuccess.Get())
+			else if (target == eventsuccess.Get())
 			{
 				printf_s("SDR fully loaded\n");
 			}
