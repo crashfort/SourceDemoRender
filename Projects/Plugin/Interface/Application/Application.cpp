@@ -1,6 +1,8 @@
 #include "PrecompiledHeader.hpp"
+#include "Interface\PluginInterface.hpp"
+#include "SDR Shared\Json.hpp"
+#include "SDR Plugin API\ExportTypes.hpp"
 #include "Application.hpp"
-#include "dbg.h"
 
 namespace
 {
@@ -16,9 +18,7 @@ namespace
 	namespace Memory
 	{
 		/*
-			Not accessing the STL iterators in debug mode
-			makes this run >10x faster, less sitting around
-			waiting for nothing.
+			Not accessing the STL iterators in debug mode makes this run >10x faster, less sitting around waiting for nothing.
 		*/
 		inline bool DataCompare(const uint8_t* data, const SDR::BytePattern::Entry* pattern, size_t patternlength)
 		{
@@ -194,8 +194,7 @@ namespace
 
 					if (!it->second.IsString())
 					{
-						Warning("SDR: %s inherit field not a string\n", targetgame->Name.c_str());
-						return;
+						SDR::Error::Make("SDR: \"%s\" inherit field not a string\n", targetgame->Name.c_str());
 					}
 
 					std::string from = it->second.GetString();
@@ -234,7 +233,7 @@ namespace
 
 						if (!foundgame)
 						{
-							SDR::Error::Make("%s inherit target %s not found", targetgame->Name.c_str(), from.c_str());
+							SDR::Error::Make("\"%s\" inherit target \"%s\" not found", targetgame->Name.c_str(), from.c_str());
 						}
 					}
 
@@ -250,82 +249,67 @@ namespace
 
 		void CallHandlers(GameData* game)
 		{
-			Msg("SDR: Creating %d modules\n", MainApplication.ModuleHandlers.size());
+			SDR::Log::Message("SDR: Creating %d modules\n", MainApplication.ModuleHandlers.size());
 
 			for (auto& prop : game->Properties)
 			{
-				bool foundhadler = false;
+				bool found = false;
 
 				for (auto& handler : MainApplication.ModuleHandlers)
 				{
 					if (prop.first == handler.Name)
 					{
-						foundhadler = true;
+						found = true;
 
 						auto res = handler.Function(handler.Name, prop.second);
 
 						if (!res)
 						{
-							SDR::Error::Make("Could not enable module %s", handler.Name);
+							SDR::Error::Make("Could not enable module \"%s\"", handler.Name);
 						}
 
-						Msg("SDR: Enabled module %s\n", handler.Name);
+						SDR::Log::Message("SDR: Enabled module \"%s\"\n", handler.Name);
 						break;
 					}
 				}
 
-				if (!foundhadler)
+				if (!found)
 				{
-					Warning("SDR: No handler found for %s\n", prop.first.c_str());
+					SDR::Log::Warning("SDR: No handler found for \"%s\"\n", prop.first.c_str());
 				}
 			}
+
+			MainApplication.ModuleHandlers.clear();
 		}
 
 		void SetupGame(const char* gamepath, const char* gamename)
 		{
-			char cfgpath[1024];
-		
-			strcpy_s(cfgpath, gamepath);
-			strcat_s(cfgpath, "SDR\\GameConfig.json");
-
-			SDR::Shared::ScopedFile config;
+			rapidjson::Document document;
 
 			try
 			{
-				config.Assign(cfgpath, "rb");
+				document = SDR::Json::FromFile(SDR::BuildPath("SDR\\GameConfig.json"));
 			}
 
-			catch (SDR::Shared::ScopedFile::ExceptionType status)
+			catch (SDR::File::ScopedFile::ExceptionType status)
 			{
 				SDR::Error::Make("Could not find game config");
 			}
 
-			auto data = config.ReadAll();
-			std::string strdata((const char*)data.data(), data.size());
-
-			rapidjson::Document document;
-			document.Parse(strdata.c_str());
-
 			GameData* currentgame = nullptr;
 
-			MemberLoop
-			(
-				document, [&](GameData::MemberIt gameit)
+			MemberLoop(document, [&](GameData::MemberIt gameit)
+			{
+				Configs.emplace_back();
+				auto& curgame = Configs.back();
+
+				curgame.Name = gameit->name.GetString();
+
+				MemberLoop(gameit->value, [&](GameData::MemberIt gamedata)
 				{
-					Configs.emplace_back();
-					auto& curgame = Configs.back();
-
-					curgame.Name = gameit->name.GetString();
-
-					MemberLoop
-					(
-						gameit->value, [&](GameData::MemberIt gamedata)
-						{
-							curgame.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
-						}
-					);
-				}
-			);
+					curgame.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
+				});
+			});
 
 			for (auto& game : Configs)
 			{
@@ -343,22 +327,204 @@ namespace
 
 			ResolveInherit(currentgame, document.GetAllocator());
 			CallHandlers(currentgame);
+		}
+	}
 
-			MainApplication.ModuleHandlers.clear();
+	namespace LoadLibraryIntercept
+	{
+		namespace Common
+		{
+			template <typename T>
+			using TableType = std::initializer_list<std::pair<const T*, std::function<void()>>>;
+
+			template <typename T>
+			void CheckTable(const TableType<T>& table, const T* name)
+			{
+				for (auto& entry : table)
+				{
+					if (SDR::String::EndsWith(name, entry.first))
+					{
+						entry.second();
+						break;
+					}
+				}
+			}
+
+			void Load(HMODULE module, const char* name)
+			{
+				TableType<char> table =
+				{
+					std::make_pair("server.dll", []()
+					{
+						/*
+							This should be changed in the future.
+						*/
+						SDR::Plugin::Load();
+					})
+				};
+
+				CheckTable(table, name);
+			}
+
+			void Load(HMODULE module, const wchar_t* name)
+			{
+				TableType<wchar_t> table =
+				{
+					
+				};
+
+				CheckTable(table, name);
+			}
+		}
+
+		namespace A
+		{
+			SDR::HookModule<decltype(LoadLibraryA)*> ThisHook;
+
+			HMODULE WINAPI Override(LPCSTR name)
+			{
+				auto ret = ThisHook.GetOriginal()(name);
+
+				if (ret)
+				{
+					Common::Load(ret, name);
+				}
+
+				return ret;
+			}
+		}
+
+		namespace ExA
+		{
+			SDR::HookModule<decltype(LoadLibraryExA)*> ThisHook;
+
+			HMODULE WINAPI Override(LPCSTR name, HANDLE file, DWORD flags)
+			{
+				auto ret = ThisHook.GetOriginal()(name, file, flags);
+
+				if (ret)
+				{
+					Common::Load(ret, name);
+				}
+
+				return ret;
+			}
+		}
+
+		namespace W
+		{
+			SDR::HookModule<decltype(LoadLibraryW)*> ThisHook;
+
+			HMODULE WINAPI Override(LPCWSTR name)
+			{
+				auto ret = ThisHook.GetOriginal()(name);
+
+				if (ret)
+				{
+					Common::Load(ret, name);
+				}
+
+				return ret;
+			}
+		}
+
+		namespace ExW
+		{
+			SDR::HookModule<decltype(LoadLibraryExW)*> ThisHook;
+
+			HMODULE WINAPI Override(LPCWSTR name, HANDLE file, DWORD flags)
+			{
+				auto ret = ThisHook.GetOriginal()(name, file, flags);
+
+				if (ret)
+				{
+					Common::Load(ret, name);
+				}
+
+				return ret;
+			}
+		}
+
+		void Start()
+		{
+			auto results =
+			{
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override),
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override),
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override),
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override),
+			};
+
+			for (auto res : results)
+			{
+				if (!res)
+				{
+					throw SDR::API::InitializeCode::CouldNotCreateLibraryIntercepts;
+				}
+			}
+
+			auto codes =
+			{
+				MH_EnableHook(A::ThisHook.TargetFunction),
+				MH_EnableHook(ExA::ThisHook.TargetFunction),
+				MH_EnableHook(W::ThisHook.TargetFunction),
+				MH_EnableHook(ExW::ThisHook.TargetFunction),
+			};
+
+			for (auto code : codes)
+			{
+				if (code != MH_OK)
+				{
+					throw SDR::API::InitializeCode::CouldNotEnableLibraryIntercepts;
+				}
+			}
+		}
+
+		void End()
+		{
+			MH_DisableHook(A::ThisHook.TargetFunction);
+			MH_DisableHook(ExA::ThisHook.TargetFunction);
+			MH_DisableHook(W::ThisHook.TargetFunction);
+			MH_DisableHook(ExW::ThisHook.TargetFunction);
 		}
 	}
 }
 
-void SDR::Setup(const char* gamepath, const char* gamename)
+void SDR::PreEngineSetup()
 {
 	auto res = MH_Initialize();
 
 	if (res != MH_OK)
 	{
-		SDR::Error::Make("Failed to initialize hooks");
+		throw SDR::API::InitializeCode::CouldNotInitializeHooks;
 	}
 
+	LoadLibraryIntercept::Start();
+}
+
+void SDR::Setup(const char* gamepath, const char* gamename)
+{
+	LoadLibraryIntercept::End();
 	Config::SetupGame(gamepath, gamename);
+
+	if (MainApplication.StartupFunctions.empty())
+	{
+		return;
+	}
+
+	auto count = MainApplication.StartupFunctions.size();
+	auto index = 1;
+
+	for (auto entry : MainApplication.StartupFunctions)
+	{
+		SDR::Log::Message("SDR: Startup procedure (%d/%d): \"%s\"\n", index, count, entry.Name);
+
+		entry.Function();
+
+		++index;
+	}
+
+	MainApplication.StartupFunctions.clear();
 }
 
 void SDR::Close()
@@ -374,33 +540,6 @@ void SDR::Close()
 void SDR::AddPluginStartupFunction(const StartupFuncData& data)
 {
 	MainApplication.StartupFunctions.emplace_back(data);
-}
-
-void SDR::CallPluginStartupFunctions()
-{
-	if (MainApplication.StartupFunctions.empty())
-	{
-		return;
-	}
-
-	auto count = MainApplication.StartupFunctions.size();
-	auto index = 0;
-
-	for (auto entry : MainApplication.StartupFunctions)
-	{
-		Msg("SDR: Startup procedure (%d/%d): %s\n", index + 1, count, entry.Name);
-
-		auto res = entry.Function();
-
-		if (!res)
-		{
-			SDR::Error::Make("Startup procedure %s failed");
-		}
-
-		++index;
-	}
-
-	MainApplication.StartupFunctions.clear();
 }
 
 void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
@@ -484,6 +623,16 @@ bool SDR::JsonHasVirtualIndexAndNamePtr(rapidjson::Value& value)
 	return false;
 }
 
+bool SDR::JsonHasVariant(rapidjson::Value& value)
+{
+	if (value.HasMember("Variant"))
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void* SDR::GetAddressFromJsonFlex(rapidjson::Value& value)
 {
 	if (JsonHasPattern(value))
@@ -503,6 +652,7 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 {
 	auto module = value["Module"].GetString();
 	auto patternstr = value["Pattern"].GetString();
+
 	int offset = 0;
 	bool isjump = false;
 
@@ -511,12 +661,6 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 
 		if (iter != value.MemberEnd())
 		{
-			if (!iter->value.IsNumber())
-			{
-				Warning("SDR: Offset field not a number\n");
-				return nullptr;
-			}
-
 			offset = iter->value.GetInt();
 		}
 	}
@@ -537,6 +681,32 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 	}
 
 	return address.Get();
+}
+
+int SDR::GetVariantFromJson(rapidjson::Value& value)
+{
+	if (JsonHasVariant(value))
+	{
+		return value["Variant"].GetInt();
+	}
+
+	return 0;
+}
+
+void SDR::WarnAboutHookVariant(const char* name, int variant)
+{
+	SDR::Log::Warning("SDR: No such hook overload for \"%s\" in variant %d\n", name, variant);
+}
+
+bool SDR::WarnIfVariantOutOfBounds(const char* name, int variant, int max)
+{
+	if (variant < 0 || variant > max)
+	{
+		SDR::Log::Warning("SDR: Variant overload %d for \"%s\" not in bounds (%d max)\n", variant, max);
+		return true;
+	}
+
+	return false;
 }
 
 void* SDR::GetVirtualAddressFromIndex(void* ptr, int index)
@@ -582,6 +752,8 @@ void SDR::ModuleShared::Registry::SetKeyValue(const char* name, uint32_t value)
 
 bool SDR::ModuleShared::Registry::GetKeyValue(const char* name, uint32_t* value)
 {
+	*value = 0;
+
 	for (auto& keyvalue : Config::Registry::KeyValues)
 	{
 		if (strcmp(keyvalue.Name, name) == 0)
@@ -598,4 +770,69 @@ bool SDR::ModuleShared::Registry::GetKeyValue(const char* name, uint32_t* value)
 	}
 
 	return false;
+}
+
+bool SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, rapidjson::Value& value, int maxvariant)
+{
+	auto addr = SDR::GetAddressFromJsonFlex(value);
+	auto variant = SDR::GetVariantFromJson(value);
+
+	if (WarnIfVariantOutOfBounds(name, variant, maxvariant))
+	{
+		return false;
+	}
+
+	return ModuleShared::SetFromAddress(entry, addr, variant);
+}
+
+bool SDR::CreateHookBare(HookModuleBare& hook, void* override, void* address)
+{
+	hook.TargetFunction = address;
+	hook.NewFunction = override;
+
+	auto res = MH_CreateHookEx(hook.TargetFunction, hook.NewFunction, &hook.OriginalFunction);
+
+	if (res != MH_OK)
+	{
+		return false;
+	}
+
+	res = MH_EnableHook(hook.TargetFunction);
+
+	if (res != MH_OK)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool SDR::CreateHookBareShort(HookModuleBare& hook, void* override, rapidjson::Value& value)
+{
+	auto address = GetAddressFromJsonPattern(value);
+	return CreateHookBare(hook, override, address);
+}
+
+bool SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare& hook, void* override)
+{
+	hook.NewFunction = override;
+	
+	auto res = MH_CreateHookApiEx(module, name, override, &hook.OriginalFunction, &hook.TargetFunction);
+
+	return res == MH_OK;
+}
+
+bool SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam>&& hooks, const char* name, rapidjson::Value& value)
+{
+	auto variant = SDR::GetVariantFromJson(value);
+	auto size = hooks.size();
+
+	if (WarnIfVariantOutOfBounds(name, variant, size))
+	{
+		return false;
+	}
+
+	auto target = *(hooks.begin() + variant);
+
+	return CreateHookBareShort(target.Hook, target.Override, value);
 }

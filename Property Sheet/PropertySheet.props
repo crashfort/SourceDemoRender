@@ -2,32 +2,25 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <SDR_2013SDK_ROOT>C:\VS\Source SDK 2013\</SDR_2013SDK_ROOT>
     <SDR_FFMPEG_ROOT>C:\msys64\home\CF\ffmpegbuild\</SDR_FFMPEG_ROOT>
     <SDR_RESTSDK_ROOT>C:\VS\3rd Party Libs\RESTSDK\</SDR_RESTSDK_ROOT>
-    <SDR_2013SDK_SP>$(SDR_2013SDK_ROOT)SP Source\</SDR_2013SDK_SP>
-    <SDR_2013SDK_MP>$(SDR_2013SDK_ROOT)MP Source\</SDR_2013SDK_MP>
     <SDR_RAPIDJSON_INCLUDE>C:\VS\3rd Party Libs\rapidjson\include\</SDR_RAPIDJSON_INCLUDE>
     <SDR_RWQUEUE_INCLUDE>C:\VS\3rd Party Libs\readerwriterqueue\include\</SDR_RWQUEUE_INCLUDE>
     <SDR_SHARED_INCLUDE>$(SolutionDir)Shared\Include\</SDR_SHARED_INCLUDE>
+    <SDR_API_INCLUDE>$(SolutionDir)Plugin API\Include\</SDR_API_INCLUDE>
   </PropertyGroup>
   <PropertyGroup />
-  <ItemDefinitionGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SDR_SHARED_INCLUDE);$(SDR_API_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
-    <BuildMacro Include="SDR_2013SDK_ROOT">
-      <Value>$(SDR_2013SDK_ROOT)</Value>
-    </BuildMacro>
     <BuildMacro Include="SDR_FFMPEG_ROOT">
       <Value>$(SDR_FFMPEG_ROOT)</Value>
     </BuildMacro>
     <BuildMacro Include="SDR_RESTSDK_ROOT">
       <Value>$(SDR_RESTSDK_ROOT)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_2013SDK_SP">
-      <Value>$(SDR_2013SDK_SP)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_2013SDK_MP">
-      <Value>$(SDR_2013SDK_MP)</Value>
     </BuildMacro>
     <BuildMacro Include="SDR_RAPIDJSON_INCLUDE">
       <Value>$(SDR_RAPIDJSON_INCLUDE)</Value>
@@ -37,6 +30,9 @@
     </BuildMacro>
     <BuildMacro Include="SDR_SHARED_INCLUDE">
       <Value>$(SDR_SHARED_INCLUDE)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SDR_API_INCLUDE">
+      <Value>$(SDR_API_INCLUDE)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

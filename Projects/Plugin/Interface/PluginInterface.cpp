@@ -1,5 +1,7 @@
 #include "PrecompiledHeader.hpp"
+#include "PluginInterface.hpp"
 #include "Application\Application.hpp"
+#include "SDR Plugin API\ExportTypes.hpp"
 
 extern "C"
 {
@@ -8,155 +10,37 @@ extern "C"
 }
 
 #include <cpprest\http_client.h>
+#include <shellapi.h>
 
 namespace
 {
 	namespace ModuleGameDir
 	{
-		namespace Types
-		{
-			using GetGameDir = void(__cdecl*)(char* dest, int length);
-		}
-
-		char FullPath[1024];
-		char GameName[128];
-
-		Types::GetGameDir GetGameDir;
-
-		void Set()
-		{
-			/*
-				Assume that this pattern will always exist.
-				It's deep in the engine that probably will never be changed anyway.
-			*/
-			auto patternstr = "55 8B EC 8B 45 08 85 C0 74 11 FF 75 0C 68 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 0C 5D C3";
-			auto pattern = SDR::GetPatternFromString(patternstr);
-
-			auto address = SDR::GetAddressFromPattern("engine.dll", pattern);
-			SDR::ModuleShared::SetFromAddress(GetGameDir, address);
-
-			if (!GetGameDir)
-			{
-				SDR::Error::Make("Could not find current game name");
-			}
-		}
+		std::string FullPath;
+		std::string GameName;
 	}
 }
 
 namespace
 {
-	class SourceDemoRenderPlugin final : public IServerPluginCallbacks
+	enum
 	{
-	public:
-		virtual bool Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory) override;
-		virtual void Unload() override;
-
-		virtual void Pause() override {}
-		virtual void UnPause() override {}
-
-		virtual const char* GetPluginDescription() override
-		{
-			return "Source Demo Render";
-		}
-
-		virtual void LevelInit(char const* mapname) override {}
-		virtual void ServerActivate(edict_t* edictlist, int edictcount, int maxclients) override {}
-		virtual void GameFrame(bool simulating ) override {}
-		virtual void LevelShutdown() override {}
-		virtual void ClientActive(edict_t* entity) override {}
-		virtual void ClientDisconnect(edict_t* entity) override {}		
-		virtual void ClientPutInServer(edict_t* entity, char const* playername) override {}
-		virtual void SetCommandClient(int index) override {}
-		virtual void ClientSettingsChanged(edict_t* entity) override {}
-
-		virtual PLUGIN_RESULT ClientConnect
-		(
-			bool* allowconnect,
-			edict_t* entity,
-			const char* name,
-			const char* address,
-			char* rejectreason,
-			int maxrejectlen
-		) override
-		{
-			return PLUGIN_CONTINUE;
-		}
-
-		virtual PLUGIN_RESULT ClientCommand(edict_t* entity, const CCommand& args) override
-		{
-			return PLUGIN_CONTINUE;
-		}
-
-		virtual PLUGIN_RESULT NetworkIDValidated(const char* username, const char* networkid) override
-		{
-			return PLUGIN_CONTINUE;
-		}
-
-		virtual void OnQueryCvarValueFinished
-		(
-			QueryCvarCookie_t cookie,
-			edict_t* playerentity,
-			EQueryCvarValueStatus status,
-			const char* cvarname,
-			const char* cvarvalue
-		) override {}
-
-		virtual void OnEdictAllocated(edict_t* entity) override {}
-		virtual void OnEdictFreed(const edict_t* entity) override {}
-
-		enum
-		{
-			PluginVersion = 19,
-		};
+		PluginVersion = 20,
 	};
+}
 
-	int GetGameConfigVersion()
-	{
-		int ret;
-
-		try
-		{
-			char path[1024];
-			strcpy_s(path, SDR::GetGamePath());
-			strcat(path, "SDR\\GameConfigLatest");
-
-			SDR::Shared::ScopedFile config(path, "rb");
-
-			auto content = config.ReadAll();
-			std::string str((const char*)content.data(), content.size());
-
-			ret = std::stoi(str);
-		}
-
-		catch (SDR::Shared::ScopedFile::ExceptionType status)
-		{
-			SDR::Error::Make("Could not get GameConfig version");
-		}
-
-		return ret;
-	}
-
+namespace
+{
 	namespace Commands
 	{
-		CON_COMMAND(sdr_version, "")
+		void Version()
 		{
-			Msg("SDR: Library version: %d\n", SourceDemoRenderPlugin::PluginVersion);
-
-			try
-			{
-				auto gcversion = GetGameConfigVersion();
-				Msg("SDR: Game config version: %d\n", gcversion);
-			}
-
-			catch (const SDR::Error::Exception& error)
-			{
-				return;
-			}
+			SDR::Log::Message("SDR: Library version: %d\n", PluginVersion);
 		}
 
 		concurrency::task<void> UpdateProc()
 		{
-			Msg("SDR: Checking for any available updates\n");
+			SDR::Log::Message("SDR: Checking for any available updates\n"s);
 
 			auto webrequest = [](const wchar_t* path, auto callback)
 			{
@@ -178,7 +62,7 @@ namespace
 
 					if (status != web::http::status_codes::OK)
 					{
-						Warning("SDR: Could not reach update repository\n");
+						SDR::Log::Warning("SDR: Could not reach update repository\n"s);
 						return;
 					}
 
@@ -199,32 +83,40 @@ namespace
 					*/
 					auto string = response.extract_utf8string(true).get();
 
-					auto curversion = SourceDemoRenderPlugin::PluginVersion;
+					auto curversion = PluginVersion;
 					auto webversion = std::stoi(string);
 
-					auto green = Color(88, 255, 39, 255);
-					auto blue = Color(51, 167, 255, 255);
+					auto green = SDR::Shared::Color(88, 255, 39);
+					auto blue = SDR::Shared::Color(51, 167, 255);
 
 					if (curversion == webversion)
 					{
-						ConColorMsg(green, "SDR: Using the latest library version\n");
+						SDR::Log::MessageColor(green, "SDR: Using the latest library version\n");
 					}
 
 					else if (curversion < webversion)
 					{
-						ConColorMsg
+						SDR::Log::MessageColor
 						(
 							blue,
 							"SDR: A library update is available: (%d -> %d).\n"
-							"Visit https://github.com/crashfort/SourceDemoRender/releases\n",
+							"Use \"sdr_accept\" to open Github release page\n",
 							curversion,
 							webversion
 						);
+
+						SDR::Plugin::SetAcceptFunction([=]()
+						{
+							SDR::Log::Message("SDR: Upgrading from version %d to %d\n", curversion, webversion);
+
+							auto address = L"https://github.com/crashfort/SourceDemoRender/releases";
+							ShellExecuteW(nullptr, L"open", address, nullptr, nullptr, SW_SHOW);
+						});
 					}
 
 					else if (curversion > webversion)
 					{
-						Msg("SDR: Local library newer than update repository?\n");
+						SDR::Log::Message("SDR: Local library newer than update repository?\n"s);
 					}
 				}
 			);
@@ -238,110 +130,200 @@ namespace
 
 				catch (const std::exception& error)
 				{
-					Msg("SDR: %s", error.what());
+					SDR::Log::Message("SDR: %s", error.what());
 				}
 			});
 		}
 
-		CON_COMMAND(sdr_update, "")
+		void Update()
 		{
 			UpdateProc();
 		}
+
+		namespace Accept
+		{
+			std::function<void()> Callback;
+
+			void Procedure()
+			{
+				if (Callback)
+				{
+					Callback();
+					Callback = nullptr;
+				}
+
+				else
+				{
+					SDR::Log::Message("SDR: Nothing to accept\n");
+				}
+			}
+		}
 	}
 
-	SourceDemoRenderPlugin ThisPlugin;
-	SDR::EngineInterfaces Interfaces;
-
-	template <typename T>
-	void CreateInterface(CreateInterfaceFn interfacefactory, const char* name, T*& outptr)
+	void RegisterLAV()
 	{
-		auto ptr = static_cast<T*>(interfacefactory(name, nullptr));
-
-		if (!ptr)
-		{
-			SDR::Error::Make("Could not get the %s interface");
-		}
-
-		outptr = ptr;
-	}
-
-	bool SourceDemoRenderPlugin::Load(CreateInterfaceFn interfacefactory, CreateInterfaceFn gameserverfactory)
-	{
-		try
-		{
-			ModuleGameDir::Set();
-		}
-
-		catch (const SDR::Error::Exception& error)
-		{
-			auto version = SourceDemoRenderPlugin::PluginVersion;
-
-			Warning("SDR: Could not get game name. Version: %d\n", version);
-			return false;
-		}
-
-		ModuleGameDir::GetGameDir(ModuleGameDir::FullPath, sizeof(ModuleGameDir::FullPath));
-
-		strcpy_s(ModuleGameDir::GameName, V_GetFileName(ModuleGameDir::FullPath));
-		strcat_s(ModuleGameDir::FullPath, "\\");
-
-		Commands::sdr_version({});
-
-		Msg("SDR: Current game: %s\n", ModuleGameDir::GameName);
-
 		avcodec_register_all();
 		av_register_all();
-
-		ConnectTier1Libraries(&interfacefactory, 1);
-		ConnectTier2Libraries(&interfacefactory, 1);
-		ConVar_Register();
-
-		try
-		{
-			CreateInterface(interfacefactory, VENGINE_CLIENT_INTERFACE_VERSION, Interfaces.EngineClient);
-
-			SDR::Setup(ModuleGameDir::FullPath, ModuleGameDir::GameName);
-			SDR::CallPluginStartupFunctions();
-		}
-
-		catch (const SDR::Error::Exception& error)
-		{
-			return false;
-		}
-
-		ConColorMsg(Color(88, 255, 39, 255), "SDR: Source Demo Render loaded\n");
-		return true;
 	}
 
-	void SourceDemoRenderPlugin::Unload()
+	/*
+		Creation has to be delayed as the necessary console stuff isn't available earlier.
+	*/
+	SDR::PluginStartupFunctionAdder A1("PluginInterface console commands", []()
 	{
-		SDR::Close();
+		SDR::Console::MakeCommand("sdr_version", Commands::Version);
+		SDR::Console::MakeCommand("sdr_update", Commands::Update);
+		SDR::Console::MakeCommand("sdr_accept", Commands::Accept::Procedure);
+	});
 
-		ConVar_Unregister();
-		DisconnectTier1Libraries();
-		DisconnectTier2Libraries();
+	struct LoadFuncData
+	{
+		LoadFuncData()
+		{
+			EventSuccess = OpenEventA(EVENT_MODIFY_STATE, false, "SDR_LOADER_SUCCESS");
+			EventFailure = OpenEventA(EVENT_MODIFY_STATE, false, "SDR_LOADER_FAIL");
+			Pipe = CreateFileA(R"(\\.\pipe\sdr_loader_pipe)", GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+		}
+		
+		~LoadFuncData()
+		{
+			if (Failure)
+			{
+				SetEvent(EventFailure);
+			}
+
+			else
+			{
+				SetEvent(EventSuccess);
+			}
+
+			CloseHandle(EventSuccess);
+			CloseHandle(EventFailure);
+			CloseHandle(Pipe);
+		}
+
+		void Write(const std::string& text)
+		{
+			DWORD written;
+			WriteFile(Pipe, text.c_str(), text.size(), &written, nullptr);
+		}
+
+		HANDLE Pipe;
+		
+		bool Failure = false;
+		HANDLE EventSuccess;
+		HANDLE EventFailure;
+	};
+}
+
+void SDR::Plugin::Load()
+{
+	static LoadFuncData* LoadDataPtr;
+
+	auto localdata = std::make_unique<LoadFuncData>();
+	LoadDataPtr = localdata.get();
+
+	/*
+		Temporary communication gates. All text output has to go to the launcher console.
+	*/
+	SDR::Log::SetMessageFunction([](std::string&& text)
+	{
+		LoadDataPtr->Write(text);
+	});
+
+	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, std::string&& text)
+	{
+		LoadDataPtr->Write(text);
+	});
+
+	SDR::Log::SetWarningFunction([](std::string&& text)
+	{
+		LoadDataPtr->Write(text);
+	});
+
+	try
+	{
+		SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
+
+		Commands::Version();
+		SDR::Log::Message("SDR: Current game: \"%s\"\n", SDR::GetGameName());
+		SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Source Demo Render loaded\n");
+
+		/*
+			Give all output to the game console now.
+		*/
+		Console::Load();
+	}
+
+	catch (const SDR::Error::Exception& error)
+	{
+		localdata->Failure = true;
 	}
 }
 
-EXPOSE_SINGLE_INTERFACE_GLOBALVAR
-(
-	SourceDemoRenderPlugin,
-	IServerPluginCallbacks,
-	INTERFACEVERSION_ISERVERPLUGINCALLBACKS,
-	ThisPlugin
-);
-
-const SDR::EngineInterfaces& SDR::GetEngineInterfaces()
+void SDR::Plugin::Unload()
 {
-	return Interfaces;
+	SDR::Close();
+}
+
+void SDR::Plugin::SetAcceptFunction(std::function<void()>&& func)
+{
+	Commands::Accept::Callback = std::move(func);
 }
 
 const char* SDR::GetGameName()
 {
-	return ModuleGameDir::GameName;
+	return ModuleGameDir::GameName.c_str();
 }
 
 const char* SDR::GetGamePath()
 {
-	return ModuleGameDir::FullPath;
+	return ModuleGameDir::FullPath.c_str();
+}
+
+bool SDR::IsGame(const char* test)
+{
+	return strcmp(GetGameName(), test) == 0;
+}
+
+std::string SDR::BuildPath(const char* file)
+{
+	std::string ret = GetGamePath();
+	ret += file;
+
+	return ret;
+}
+
+extern "C"
+{
+	__declspec(dllexport) int __cdecl SDR_LibraryVersion()
+	{
+		return PluginVersion;
+	}
+
+	/*
+		First actual pre-engine load function. Don't reference any
+		engine libraries here as they aren't loaded yet like in "Load".
+	*/
+	__declspec(dllexport) SDR::API::InitializeCode __cdecl SDR_Initialize(const char* path, const char* game)
+	{
+		ModuleGameDir::FullPath = path;
+		ModuleGameDir::GameName = game;
+
+		SDR::Error::SetPrintFormat("SDR: %s\n");
+
+		RegisterLAV();
+
+		try
+		{
+			SDR::PreEngineSetup();
+		}
+
+		catch (SDR::API::InitializeCode code)
+		{
+			return code;
+		}
+
+		return SDR::API::InitializeCode::Success;
+	}
 }

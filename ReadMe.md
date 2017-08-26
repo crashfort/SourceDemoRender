@@ -14,15 +14,12 @@ Games that are added:
 * Day of Defeat: Source
 
 Known games that don't work:
-* Garry's Mod - *No plugin_load support*
 * Counter-Strike: Global Offensive - *Uses stoneage D3D9 that doesn't support texture sharing*
 
 ## Prerequisites
 Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_d3d11_staging**, Windows 8.1 or later is required.
 
 ## Installing
-SDR comes in separate singleplayer and multiplayer versions which will only work with whatever SDK the game was built with. `SourceDemoRender.Multiplayer.dll` is for games such as Counter-Strike: Source and `SourceDemoRender.Singleplayer.dll` targets for example Half-Life 2.
-
 The content of the archive should go in the root game directory. Examples:
 
 * steamapps\common\Counter-Strike Source\cstrike\
@@ -31,14 +28,14 @@ The content of the archive should go in the root game directory. Examples:
 
 After you've extracted the archive you should navigate into the SDR directory and run the updater. It downloads the required game config data that is needed for game support.
 
-You can use the user ``.cfg`` files that comes with SDR as a base where to add your own settings. The loader files are the preferred way to load SDR. It is executed as follows:
+## Launching
+The launcher ``LauncherCLI.exe`` takes the following parameters: ``<exe path> <startup params ...>``. To get the executable path you hold shift and right click the file then select ``Copy as path``, the quotes are required. Anything after will be passed to the game. Automatically appended parameters are ``-steam -insecure +sv_lan 1 -console``. Examples of executable paths:
 
-* `exec sdr_user_mp` - For multiplayer games
-* `exec sdr_user_sp` - For singleplayer games
+* steamapps\common\Counter-Strike Source\hl2.exe
+* steamapps\common\Half-Life 2\hl2.exe
+* steamapps\common\Source SDK Base 2013 Multiplayer\hl2.exe
 
-The plugin can be loaded at the main menu or in demo playback, but must be before any call to `startmovie`. It's required to `exec sdr_unload` after you are done recording a particular map as the state does not carry over between demos.
-
-**You need to launch with -insecure for Source to be able to load plugins.**
+You can use ``LauncherCLI User.bat`` to aid launching. Edit the content to fit your game.
 
 ## Instructions
 When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. **Do not exit the game until you see a green message that says the movie is completed.**
@@ -53,11 +50,9 @@ Example of supported video containers:
 The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size.
 
 ## Guide
-
 SDR can output in YUV420, YUV444 and BGR0 formats with x264. Color space can be `601` or `709`, for YUV video the color range is `full`.
 
 ### Vegas Pro
-
 This video editor cannot open:
 * YUV444 or RGB video - *Use YUV420 or workaround for RGB below*
 * MKV containers - *Use MP4*
@@ -76,15 +71,12 @@ If you just use YUV420 you have to use the `709` color space. If you also want t
 `--colormatrix=bt709 --transfer=bt709 --colorprim=bt709 --range=pc`
 
 ### Adobe Premiere
-
 This video editor can open `libx264rgb` videos natively which is the recommended way as there are no possibilities of color loss. If you want to use YUV video you should use the `601` color space.
 
 ### Kdenlive
-
 This video editor can open everything SDR outputs and has detailed advanced settings for rendering.
 
 ## General commands
-
 <table>
 	<thead>
 		<th>Name</th>
@@ -103,11 +95,16 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 			Displays the current library and game config versions.
 		</td>
 	</tr>
+	<tr>
+		<td>sdr_accept</td>
+		<td>
+			Context specific user agreement to perform an action.
+		</td>
+	</tr>
 	</tbody>
 </table>
 
 ## General variables
-
 <table>
 	<thead>
 		<th>Name</th>
@@ -147,20 +144,10 @@ This video editor can open everything SDR outputs and has detailed advanced sett
             <b>Default:</b> 0 <br/>
 		</td>
 	</tr>
-	<tr>
-		<td>sdr_game_suppressdebug</td>
-		<td>
-			Prevents engine output debug messages to reach the operating system.
-			<br/><br/>
-			<b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 1 <br/>
-		</td>
-	</tr>
 	</tbody>
 </table>
 
 ## Video variables
-
 <table>
 	<thead>
 		<th>Name</th>
@@ -201,7 +188,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 				<tbody>
 					<tr>
 						<td>libx264</td>
-						<td>i420, i444</td>
+						<td>yuv420, yuv444</td>
 					</tr>
 					<tr>
 						<td>libx264rgb</td>
@@ -264,7 +251,6 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 </table>
 
 ## Sampling variables
-
 <table>
 	<thead>
 		<th>Name</th>

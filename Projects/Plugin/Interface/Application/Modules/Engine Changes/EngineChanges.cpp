@@ -3,66 +3,53 @@
 
 namespace
 {
-	namespace Variables
+	bool IsUnfocused = false;
+}
+
+namespace
+{
+	namespace ModuleEngineInfo
 	{
-		auto SuppressDebugLog = SDR::Shared::MakeBool("sdr_game_suppressdebug", "1");
-	}
+		/*
+			The offset of m_bActiveApp in CGame.
+		*/
+		int ActiveAppOffset;
 
-	namespace ModuleOutputDebugString
-	{
-		#pragma region Init
-
-		void __stdcall Override(LPCSTR outputstring);
-
-		using ThisFunction = decltype(OutputDebugStringA)*;
-
-		SDR::HookModule<ThisFunction> ThisHook;
-
-		SDR::PluginStartupFunctionAdder Adder
+		auto Adders = SDR::CreateAdders
 		(
-			"OutputDebugString Patch",
-			[]()
-			{
-				auto res = MH_CreateHookApiEx
-				(
-					L"kernel32.dll",
-					"OutputDebugStringA",
-					Override,
-					&ThisHook.OriginalFunction,
-					&ThisHook.TargetFunction
-				);
-
-				return true;
-			}
+			SDR::ModuleHandlerAdder
+			(
+				"Engine_Info",
+				[](const char* name, rapidjson::Value& value)
+				{
+					ActiveAppOffset = value["ActiveAppOffset"].GetInt();
+					return true;
+				}
+			)
 		);
-
-		#pragma endregion
-
-		void __stdcall Override(LPCSTR outputstring)
-		{
-			if (!Variables::SuppressDebugLog.GetBool())
-			{
-				ThisHook.GetOriginal()(outputstring);
-			}
-		}
 	}
-
-	struct TabData
-	{
-		bool IsUnfocused = false;
-	};
-
-	TabData EngineFocusData;
 
 	namespace ModuleActivateMouse
 	{
-		#pragma region Init
+		/*
+			This is needed because it's responsible for locking the mouse inside the window.
+		*/
 
-		void __cdecl Override();
+		namespace Variant0
+		{
+			void __cdecl NewFunction();
 
-		using ThisFunction = decltype(Override)*;
+			using OverrideType = decltype(NewFunction)*;
+			SDR::HookModule<OverrideType> ThisHook;
 
-		SDR::HookModule<ThisFunction> ThisHook;
+			void __cdecl NewFunction()
+			{
+				if (!IsUnfocused)
+				{
+					ThisHook.GetOriginal()();
+				}
+			}
+		}
 
 		auto Adders = SDR::CreateAdders
 		(
@@ -71,73 +58,48 @@ namespace
 				"ActivateMouse",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::CreateHookShort(ThisHook, Override, value);
+					return SDR::GenericHookVariantInit
+					(
+						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						name,
+						value
+					);
 				}
 			)
 		);
-
-		#pragma endregion
-
-		/*
-			This is needed because it's responsible for locking the mouse inside the window.
-		*/
-		void __cdecl Override()
-		{
-			if (!EngineFocusData.IsUnfocused)
-			{
-				ThisHook.GetOriginal()();
-			}
-		}
 	}
 
 	namespace ModuleAppActivate
 	{
-		/*
-			Structure from Source 2007.
-		*/
-		struct InputEvent_t
+		enum
 		{
-			int m_nType;
-			int m_nTick;
-			int m_nData;
-			int m_nData2;
-			int m_nData3;
+			VariantCount = 1
 		};
 
-		#pragma region Init
-
-		void __fastcall Override(void* thisptr, void* edx, const InputEvent_t& event);
-
-		using ThisFunction = decltype(Override)*;
-
-		SDR::HookModule<ThisFunction> ThisHook;
-
-		auto Adders = SDR::CreateAdders
-		(
-			SDR::ModuleHandlerAdder
-			(
-				"AppActivate",
-				[](const char* name, rapidjson::Value& value)
-				{
-					return SDR::CreateHookShort(ThisHook, Override, value);
-				}
-			)
-		);
-
-		#pragma endregion
-
-		void __fastcall Override(void* thisptr, void* edx, const InputEvent_t& event)
+		namespace Variant0
 		{
-			auto& interfaces = SDR::GetEngineInterfaces();
-
-			if (interfaces.EngineClient->IsPlayingDemo())
+			/*
+				Structure from Source 2007.
+			*/
+			struct InputEvent_t
 			{
-				EngineFocusData.IsUnfocused = event.m_nData == 0;
+				int m_nType;
+				int m_nTick;
+				int m_nData;
+				int m_nData2;
+				int m_nData3;
+			};
 
-				/*
-					52 is the offset of m_bActiveApp in CGame.
-				*/
-				auto& isactiveapp = *(bool*)((char*)(thisptr) + 52);
+			void __fastcall NewFunction(void* thisptr, void* edx, const InputEvent_t& event);
+
+			using OverrideType = decltype(NewFunction)*;
+			SDR::HookModule<OverrideType> ThisHook;
+
+			void __fastcall NewFunction(void* thisptr, void* edx, const InputEvent_t& event)
+			{
+				IsUnfocused = event.m_nData == 0;
+
+				auto& isactiveapp = *(bool*)((char*)(thisptr) + ModuleEngineInfo::ActiveAppOffset);
 
 				ThisHook.GetOriginal()(thisptr, edx, event);
 
@@ -146,16 +108,28 @@ namespace
 					FPS is lowered when the window is unfocused to save performance.
 					That also makes the processing slower if you are alt tabbed.
 				*/
-				if (EngineFocusData.IsUnfocused)
+				if (IsUnfocused)
 				{
 					isactiveapp = true;
 				}
 			}
-
-			else
-			{
-				ThisHook.GetOriginal()(thisptr, edx, event);
-			}
 		}
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"AppActivate",
+				[](const char* name, rapidjson::Value& value)
+				{
+					return SDR::GenericHookVariantInit
+					(
+						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						name,
+						value
+					);
+				}
+			)
+		);
 	}
 }

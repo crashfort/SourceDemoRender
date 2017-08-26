@@ -15,12 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Include\SDR Shared\File.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Source\File.cpp">
+    <ClCompile Include="Main\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

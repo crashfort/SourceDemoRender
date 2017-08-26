@@ -17,7 +17,7 @@ namespace
 
 		catch (const std::exception& error)
 		{
-			printf_s("SDR: %s", error.what());
+			printf_s("%s", error.what());
 		}
 	}
 
@@ -25,14 +25,13 @@ namespace
 		Downloads the latest game config files from Github.
 
 		Files:
-		https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Output/SDR/GameConfigLatest
 		https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json
 
 		Will place them in the running directory.
 	*/
 	void UpdateProc()
 	{
-		printf_s("SDR: Checking for any available updates\n");
+		printf_s("Checking for any available updates\n");
 
 		auto webrequest = [](const wchar_t* path, auto callback)
 		{
@@ -54,7 +53,7 @@ namespace
 
 				if (status != web::http::status_codes::OK)
 				{
-					printf_s("SDR: Could not reach update repository\n");
+					printf_s("Could not reach update repository\n");
 					return;
 				}
 
@@ -65,64 +64,35 @@ namespace
 			return task;
 		};
 
-		auto gcreq = webrequest
+		auto req = webrequest
 		(
-			L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfigLatest",
+			L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
 			[=](web::http::http_response&& response)
 			{
+				using Status = SDR::File::ScopedFile::ExceptionType;
+
 				/*
 					Content is only text, so extract it raw.
 				*/
 				auto string = response.extract_utf8string(true).get();
 
-				auto webversion = std::stoi(string);
+				try
+				{									
+					SDR::File::ScopedFile file(L"GameConfig.json", L"wb");
+					file.WriteText(string.c_str());
+				}
 
-				auto req = webrequest
-				(
-					L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
-					[=](web::http::http_response&& response)
-					{
-						using Status = SDR::Shared::ScopedFile::ExceptionType;
+				catch (Status status)
+				{
+					printf_s("Could not write GameConfig.json\n");
+					return;
+				}
 
-						/*
-							Content is only text, so extract it raw.
-						*/
-						auto string = response.extract_utf8string(true).get();
-
-						try
-						{									
-							SDR::Shared::ScopedFile file(L"GameConfig.json", L"wb");
-							file.WriteText(string.c_str());
-						}
-
-						catch (Status status)
-						{
-							printf_s("SDR: Could not write GameConfig.json\n");
-							return;
-						}
-
-						try
-						{
-							SDR::Shared::ScopedFile file(L"GameConfigLatest", L"wb");
-							file.WriteText("%d", webversion);
-						}
-
-						catch (Status status)
-						{
-							printf_s("SDR: Could not write GameConfigLatest\n");
-							return;
-						}
-
-						printf_s("SDR: Game config download complete\n");
-						printf_s("SDR: Now using version %d game config\n", webversion);
-					}
-				);
-
-				CatchDeferredErrors(req);
+				printf_s("Game config download complete\n");
 			}
 		);
 
-		CatchDeferredErrors(gcreq);
+		CatchDeferredErrors(req);
 	}
 }
 

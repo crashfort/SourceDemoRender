@@ -2,8 +2,9 @@
 #include <cstdio>
 #include <cstdint>
 #include <vector>
+#include <string>
 
-namespace SDR::Shared
+namespace SDR::File
 {
 	struct ScopedFile
 	{
@@ -14,7 +15,9 @@ namespace SDR::Shared
 
 		ScopedFile() = default;
 		ScopedFile(const char* path, const char* mode);
+		ScopedFile(const std::string& path, const char* mode);
 		ScopedFile(const wchar_t* path, const wchar_t* mode);
+		ScopedFile(const std::wstring& path, const wchar_t* mode);
 
 		~ScopedFile();
 
@@ -23,7 +26,9 @@ namespace SDR::Shared
 		explicit operator bool() const;
 
 		void Assign(const char* path, const char* mode);
+		void Assign(const std::string& path, const char* mode);
 		void Assign(const wchar_t* path, const wchar_t* mode);
+		void Assign(const std::wstring& path, const wchar_t* mode);
 
 		int GetStreamPosition() const;
 		void SeekAbsolute(size_t pos);
@@ -63,7 +68,7 @@ namespace SDR::Shared
 		}
 
 		template <typename... Types>
-		bool ReadSimple(Types&... args)
+		bool ReadSimple(Types&... args) const
 		{
 			size_t adder[] =
 			{
@@ -85,12 +90,13 @@ namespace SDR::Shared
 		}
 
 		template <typename T>
-		size_t ReadRegion(std::vector<T>& vec, int count = 1)
+		size_t ReadRegion(std::vector<T>& vec, int count = 1) const
 		{
 			return fread_s(&vec[0], vec.size() * sizeof(T), sizeof(T), count, Get());
 		}
 
 		std::vector<uint8_t> ReadAll();
+		std::string ReadString();
 
 		FILE* Handle = nullptr;
 	};

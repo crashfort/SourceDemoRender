@@ -1,0 +1,106 @@
+=================================================================================================
+
+Template for a hooked function module
+
+namespace Module
+{
+	namespace Common
+	{
+		void Procedure()
+		{
+			
+		}
+	}
+
+	enum
+	{
+		VariantCount = 1
+	};
+
+	namespace Variant0
+	{
+		void __cdecl NewFunction();
+
+		using OverrideType = decltype(NewFunction)*;
+		SDR::HookModule<OverrideType> ThisHook;
+
+		void __cdecl NewFunction()
+		{
+			Common::Procedure();
+		}
+	}
+
+	auto Adders = SDR::CreateAdders
+	(
+		SDR::ModuleHandlerAdder
+		(
+			"",
+			[](const char* name, rapidjson::Value& value)
+			{
+				return SDR::GenericHookVariantInit
+				(
+					{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+					name,
+					value
+				);
+			}
+		)
+	);
+}
+
+=================================================================================================
+
+Template for unknown object
+
+namespace Module
+{		
+	void* Ptr;
+
+	namespace Entries
+	{
+		SDR::ModuleShared::Variant::Entry Example;
+	}
+
+	enum
+	{
+		VariantCount = 1
+	};
+
+	namespace Variant0
+	{
+		using ExampleType = void(__cdecl*)();
+		SDR::ModuleShared::Variant::Function<ExampleType> Example(Entries::Example);
+	}
+
+	auto Adders = SDR::CreateAdders
+	(
+		SDR::ModuleHandlerAdder
+		(
+			"Ptr",
+			[](const char* name, rapidjson::Value& value)
+			{
+				auto address = SDR::GetAddressFromJsonPattern(value);
+
+				if (!address)
+				{
+					return false;
+				}
+
+				Ptr = **(void***)(address);
+
+				SDR::ModuleShared::Registry::SetKeyValue(name, Ptr);
+				return true;
+			}
+		),
+		SDR::ModuleHandlerAdder
+		(
+			"",
+			[](const char* name, rapidjson::Value& value)
+			{
+				return SDR::GenericVariantInit(Entries::Example, name, value, VariantCount);
+			}
+		)
+	);
+}
+
+=================================================================================================
