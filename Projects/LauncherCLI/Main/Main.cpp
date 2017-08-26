@@ -347,7 +347,7 @@ namespace
 	{
 		printf_s("Starting \"%s\"\n", game.c_str());
 
-		char args[SDR::File::NameSize];
+		char args[8192];
 		strcpy_s(args, exepath.c_str());
 		strcat_s(args, " ");
 		strcat_s(args, "-game \"");
