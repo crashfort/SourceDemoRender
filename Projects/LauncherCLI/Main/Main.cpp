@@ -485,9 +485,14 @@ namespace
 				eventfail.Get()
 			};
 
-			auto target = SDR::IPC::WaitForOne({ eventsuccess.Get(), eventfail.Get() });
+			auto target = SDR::IPC::WaitForOne({ process.Get(), eventsuccess.Get(), eventfail.Get() });
 
-			if (target == eventsuccess.Get())
+			if (target == process.Get())
+			{
+				SDR::Error::Make("Process exited");
+			}
+
+			else if (target == eventsuccess.Get())
 			{
 				printf_s("SDR fully loaded\n");
 			}
