@@ -31,43 +31,11 @@ namespace
 
 namespace
 {
-	int GetGameConfigVersion()
-	{
-		int ret;
-
-		try
-		{
-			SDR::File::ScopedFile config(SDR::BuildPath("SDR\\GameConfigLatest"), "rb");
-
-			auto str = config.ReadString();
-
-			ret = std::stoi(str);
-		}
-
-		catch (SDR::File::ScopedFile::ExceptionType status)
-		{
-			SDR::Error::Make("Could not get game config version"s);
-		}
-
-		return ret;
-	}
-
 	namespace Commands
 	{
 		void Version()
 		{
 			SDR::Log::Message("SDR: Library version: %d\n", PluginVersion);
-
-			try
-			{
-				auto gcversion = GetGameConfigVersion();
-				SDR::Log::Message("SDR: Game config version: %d\n", gcversion);
-			}
-
-			catch (const SDR::Error::Exception& error)
-			{
-				return;
-			}
 		}
 
 		concurrency::task<void> UpdateProc()
