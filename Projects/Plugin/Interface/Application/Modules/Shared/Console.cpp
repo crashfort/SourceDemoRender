@@ -530,6 +530,17 @@ namespace SDR::Console
 
 		return nullptr;
 	}
+
+	const char* CommandArgs::FullArgs() const
+	{
+		if (ModuleCCommand::Variant == 0)
+		{
+			auto ptr = (const ModuleCCommand::Variant0::Data*)Ptr;
+			return ptr->ArgSBuffer;
+		}
+
+		return nullptr;
+	}
 }
 
 void SDR::Console::Load()

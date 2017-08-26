@@ -33,6 +33,7 @@ namespace SDR::Console
 
 		int Count() const;
 		const char* At(int index) const;
+		const char* FullArgs() const;
 
 		const void* Ptr;
 	};
