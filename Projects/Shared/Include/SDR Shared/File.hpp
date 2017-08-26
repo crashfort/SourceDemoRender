@@ -6,6 +6,11 @@
 
 namespace SDR::File
 {
+	enum
+	{
+		NameSize = 4096
+	};
+
 	struct ScopedFile
 	{
 		enum class ExceptionType

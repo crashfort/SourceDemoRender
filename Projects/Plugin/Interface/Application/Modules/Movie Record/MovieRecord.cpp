@@ -1668,7 +1668,7 @@ namespace
 		{
 			void VerifyOutputDirectory(const char* path)
 			{
-				char final[1024];
+				char final[SDR::File::NameSize];
 				strcpy_s(final, path);
 
 				PathAddBackslashA(final);
@@ -1688,7 +1688,7 @@ namespace
 
 			std::string BuildVideoStreamName(const char* savepath, const char* filename)
 			{
-				char finalname[2048];
+				char finalname[SDR::File::NameSize];
 
 				PathCombineA(finalname, savepath, filename);
 

@@ -347,7 +347,7 @@ namespace
 	{
 		printf_s("Starting \"%s\"\n", game.c_str());
 
-		char args[1024];
+		char args[SDR::File::NameSize];
 		strcpy_s(args, exepath.c_str());
 		strcat_s(args, " ");
 		strcat_s(args, "-game \"");
@@ -434,7 +434,7 @@ namespace
 			SDR::Error::Make("Specified path at argument 0 not an executable\n");
 		}
 
-		char curdir[1024];
+		char curdir[SDR::File::NameSize];
 		SDR::Error::MS::ThrowIfZero(GetCurrentDirectoryA(sizeof(curdir), curdir), "Could not get current directory");
 
 		RemoveFileName(curdir);
