@@ -479,12 +479,6 @@ namespace
 
 		auto waitevent = [&]()
 		{
-			auto events =
-			{
-				eventsuccess.Get(),
-				eventfail.Get()
-			};
-
 			auto target = SDR::IPC::WaitForOne({ process.Get(), eventsuccess.Get(), eventfail.Get() });
 
 			if (target == process.Get())
