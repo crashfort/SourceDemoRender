@@ -356,6 +356,9 @@ namespace
 				{
 					std::make_pair("server.dll", []()
 					{
+						/*
+							This should be changed in the future.
+						*/
 						SDR::Plugin::Load();
 					})
 				};
