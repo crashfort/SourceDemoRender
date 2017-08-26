@@ -4,6 +4,10 @@
 
 namespace
 {
+	/*
+		Store commands in here because there's no point having a reference
+		to them from outside.
+	*/
 	struct
 	{
 		std::vector<SDR::Console::Command> Commands;
