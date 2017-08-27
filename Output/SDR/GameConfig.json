@@ -153,7 +153,7 @@
 		"Console_Info":
 		{
 			"Library": "tier0.dll",
-			
+
 			"MessageVariant": 0,
 			"MessageExport": "Msg",
 
@@ -179,12 +179,12 @@
 	{
 		"Inherit": "cstrike"
 	},
-	
+
 	"momentum":
 	{
 		"Inherit": "cstrike"
 	},
-	
+
 	"dod":
 	{
 		"Inherit": "cstrike"
