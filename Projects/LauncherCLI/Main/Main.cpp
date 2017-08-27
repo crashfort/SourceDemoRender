@@ -347,11 +347,17 @@ namespace
 	{
 		printf_s("Starting \"%s\"\n", game.c_str());
 
+		/*
+			Parameter should not have a trailing backslash as resources will fail to load.
+		*/
+		auto gameparamstr = dir;
+		gameparamstr.pop_back();
+
 		char args[8192];
 		strcpy_s(args, exepath.c_str());
 		strcat_s(args, " ");
 		strcat_s(args, "-game \"");
-		strcat_s(args, dir.c_str());
+		strcat_s(args, gameparamstr.c_str());
 		strcat_s(args, "\" ");
 		strcat_s(args, params.c_str());
 
