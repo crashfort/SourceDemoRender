@@ -12,6 +12,7 @@ Games that are added:
 * Team Fortress 2
 * Momentum
 * Day of Defeat: Source
+* Garry's Mod
 
 Known games that don't work:
 * Counter-Strike: Global Offensive - *Uses stoneage D3D9 that doesn't support texture sharing*
