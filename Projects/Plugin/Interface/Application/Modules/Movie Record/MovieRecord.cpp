@@ -1711,6 +1711,8 @@ namespace
 						SDR::Log::Message("SDR: %s\n", next->name);
 						next = av_codec_next(next);
 					}
+
+					SDR::Error::Make("Encoder not found");
 				}
 
 				else
@@ -1745,10 +1747,10 @@ namespace
 
 				auto& movie = CurrentMovie;
 
-				WarnAboutVariableValues();
-
 				try
 				{
+					WarnAboutVariableValues();
+
 					auto sdrpath = Variables::OutputDirectory.GetString();
 
 					/*
