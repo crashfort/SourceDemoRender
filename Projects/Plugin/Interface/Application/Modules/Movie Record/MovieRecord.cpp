@@ -1401,15 +1401,6 @@ namespace
 	std::atomic_bool ShouldStopFrameThread;
 	std::atomic_bool IsStoppingAsync;
 
-	void SDR_TryJoinFrameThread()
-	{
-		if (!ShouldStopFrameThread)
-		{
-			ShouldStopFrameThread = true;
-			CurrentMovie.FrameBufferThreadHandle.join();
-		}
-	}
-
 	bool SDR_ShouldRecord()
 	{
 		if (!CurrentMovie.IsStarted)
@@ -2148,7 +2139,11 @@ namespace
 
 				auto func = []()
 				{
-					SDR_TryJoinFrameThread();
+					if (!ShouldStopFrameThread)
+					{
+						ShouldStopFrameThread = true;
+						CurrentMovie.FrameBufferThreadHandle.join();
+					}
 
 					/*
 						Let the encoder finish all the delayed frames.
