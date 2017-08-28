@@ -2135,7 +2135,12 @@ namespace
 				SDR::Console::Variable matqueuemode("mat_queue_mode");
 				matqueuemode.SetValue(CurrentMovie.OldMatQueueModeValue);
 
-				SDR::Log::Message("SDR: Ending movie, if there are buffered frames this might take a moment\n"s);
+				SDR::Log::Message("SDR: Ending movie\n"s);
+
+				if (BufferedFrames > 0)
+				{
+					SDR::Log::Message("SDR: There are %d buffered frames remaining\n", BufferedFrames);
+				}
 
 				auto func = []()
 				{
