@@ -555,7 +555,7 @@ namespace
 			{
 				void Create(int width, int height)
 				{
-					uint32_t flags = 0;
+					uint32_t flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
 					#ifdef _DEBUG
 					flags |= D3D11_CREATE_DEVICE_DEBUG;
 					#endif
