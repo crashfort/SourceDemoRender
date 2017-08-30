@@ -2278,7 +2278,7 @@ namespace
 	}
 
 	/*
-		This function handles plugin_unload, and in the event that endmovie wasn't called.
+		This function handles the event when endmovie wasn't called on quit.
 		The cleaning up cannot be done asynchronously as the module itself gets unloaded.
 	*/
 	SDR::PluginShutdownFunctionAdder A1([]()
