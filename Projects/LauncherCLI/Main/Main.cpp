@@ -74,7 +74,7 @@ namespace
 		VirtualMemory(HANDLE process, size_t size, DWORD flags = MEM_COMMIT | MEM_RESERVE, DWORD protect = PAGE_EXECUTE_READWRITE) : Process(process)
 		{
 			Address = VirtualAllocEx(process, nullptr, size, flags, protect);
-			SDR::Error::ThrowIfNull(Address, "Could not allocate virtual memory");
+			SDR::Error::ThrowIfNull(Address, "Could not allocate virtual memory"s);
 		}
 
 		~VirtualMemory()
@@ -154,7 +154,7 @@ namespace
 				if (Fail)
 				{
 					TerminateProcess(Process, 0);
-					SDR::Error::Make("Process exited");
+					SDR::Error::Make("Process exited"s);
 				}
 			}
 
@@ -289,7 +289,7 @@ namespace
 
 		else if (target == process)
 		{
-			SDR::Error::Make("Process exited");
+			SDR::Error::Make("Process exited"s);
 		}
 
 		/*
@@ -400,7 +400,7 @@ namespace
 
 		catch (SDR::File::ScopedFile::ExceptionType status)
 		{
-			SDR::Error::Make("Could not find game config");
+			SDR::Error::Make("Could not find game config"s);
 		}
 
 		for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it)
@@ -414,7 +414,7 @@ namespace
 			}
 		}
 
-		SDR::Error::Make("Game not found in game config");
+		SDR::Error::Make("Game not found in game config"s);
 	}
 
 	void MainProcedure(int argc, char* argv[])
@@ -432,12 +432,12 @@ namespace
 
 		if (PathFileExistsA(exepath.c_str()) == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 does not exist\n");
+			SDR::Error::Make("Specified path at argument 0 does not exist\n"s);
 		}
 
 		if (PathMatchSpecA(exepath.c_str(), "*.exe") == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 not an executable\n");
+			SDR::Error::Make("Specified path at argument 0 not an executable\n"s);
 		}
 
 		char curdir[SDR::File::NameSize];
@@ -489,7 +489,7 @@ namespace
 
 			if (target == process.Get())
 			{
-				SDR::Error::Make("Process exited");
+				SDR::Error::Make("Process exited"s);
 			}
 
 			else if (target == eventsuccess.Get())

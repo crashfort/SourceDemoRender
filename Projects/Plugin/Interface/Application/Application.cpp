@@ -293,7 +293,7 @@ namespace
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
 			{
-				SDR::Error::Make("Could not find game config");
+				SDR::Error::Make("Could not find game config"s);
 			}
 
 			GameData* currentgame = nullptr;
@@ -322,7 +322,7 @@ namespace
 
 			if (!currentgame)
 			{
-				SDR::Error::Make("Could not find current game in game config");
+				SDR::Error::Make("Could not find current game in game config"s);
 			}
 
 			ResolveInherit(currentgame, document.GetAllocator());

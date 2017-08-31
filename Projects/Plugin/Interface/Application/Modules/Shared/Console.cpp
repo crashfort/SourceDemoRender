@@ -540,21 +540,21 @@ void SDR::Console::Load()
 
 	if (!ModulePrint::MessageAddr)
 	{
-		SDR::Error::Make("Could not find console message export");
+		SDR::Error::Make("Could not find console message export"s);
 	}
 
 	ModulePrint::MessageColorAddr = GetProcAddress(module, ModulePrint::MessageColorExport.c_str());
 
 	if (!ModulePrint::MessageColorAddr)
 	{
-		SDR::Error::Make("Could not find console color message export");
+		SDR::Error::Make("Could not find console color message export"s);
 	}
 
 	ModulePrint::WarningAddr = GetProcAddress(module, ModulePrint::WarningExport.c_str());
 
 	if (!ModulePrint::WarningAddr)
 	{
-		SDR::Error::Make("Could not find console warning export");
+		SDR::Error::Make("Could not find console warning export"s);
 	}
 
 	SDR::Log::SetMessageFunction([](std::string&& text)

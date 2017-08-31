@@ -151,7 +151,7 @@ namespace
 			{
 				Frame = av_frame_alloc();
 
-				SDR::Error::ThrowIfNull(Frame, "Could not allocate video frame");
+				SDR::Error::ThrowIfNull(Frame, "Could not allocate video frame"s);
 
 				Frame->format = format;
 				Frame->width = width;
@@ -342,7 +342,7 @@ namespace
 			Encoder = encoder;
 
 			Stream = avformat_new_stream(FormatContext.Get(), Encoder);
-			SDR::Error::ThrowIfNull(Stream, "Could not create video stream");
+			SDR::Error::ThrowIfNull(Stream, "Could not create video stream"s);
 
 			/*
 				Against what the new ffmpeg API incorrectly suggests, but is the right way.
@@ -950,7 +950,7 @@ namespace
 
 						else
 						{
-							SDR::Error::Make("No matching YUV color space for coefficients");
+							SDR::Error::Make("No matching YUV color space for coefficients"s);
 						}
 
 						D3D11_BUFFER_DESC cbufdesc = {};
@@ -1703,7 +1703,7 @@ namespace
 						next = av_codec_next(next);
 					}
 
-					SDR::Error::Make("Encoder not found");
+					SDR::Error::Make("Encoder not found"s);
 				}
 
 				else
