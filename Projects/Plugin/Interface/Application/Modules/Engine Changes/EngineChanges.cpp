@@ -22,8 +22,7 @@ namespace
 				"Engine_Info",
 				[](const char* name, rapidjson::Value& value)
 				{
-					ActiveAppOffset = value["ActiveAppOffset"].GetInt();
-					return true;
+					ActiveAppOffset = SDR::Json::GetInt(value, "ActiveAppOffset");
 				}
 			)
 		);
@@ -58,7 +57,7 @@ namespace
 				"ActivateMouse",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericHookVariantInit
+					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						name,
@@ -122,7 +121,7 @@ namespace
 				"AppActivate",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericHookVariantInit
+					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						name,
