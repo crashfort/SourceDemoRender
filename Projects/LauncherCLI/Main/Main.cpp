@@ -169,7 +169,7 @@ namespace
 
 		printf_s("Injecting into \"%s\"\n", game.c_str());
 
-		VirtualMemory memory(process, 1024);
+		VirtualMemory memory(process, 4096);
 		ProcessWriter writer(process, memory.Address);
 
 		/*
