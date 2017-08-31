@@ -1642,7 +1642,7 @@ namespace
 				"View_Render",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericHookVariantInit
+					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						name,
@@ -2009,7 +2009,7 @@ namespace
 				"StartMovie",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericHookVariantInit
+					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						name,
@@ -2100,7 +2100,7 @@ namespace
 				"StartMovieCommand",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericHookVariantInit
+					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						name,
@@ -2217,7 +2217,7 @@ namespace
 				"EndMovie",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericHookVariantInit
+					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						name,
@@ -2266,7 +2266,7 @@ namespace
 				"EndMovieCommand",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericHookVariantInit
+					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						name,
@@ -2326,7 +2326,7 @@ namespace
 				"SUpdateGuts",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericHookVariantInit
+					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						name,
