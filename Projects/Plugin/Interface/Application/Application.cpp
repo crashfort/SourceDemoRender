@@ -732,7 +732,6 @@ int SDR::GetVirtualIndexFromJson(rapidjson::Value& value)
 
 void* SDR::GetVirtualAddressFromJson(rapidjson::Value& value)
 {
-	auto instance = value["VTPtrName"].GetString();
 	auto instance = SDR::Json::GetString(value, "VTPtrName");
 
 	uint32_t ptrnum;
