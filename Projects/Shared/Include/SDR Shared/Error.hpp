@@ -3,6 +3,8 @@
 #include "Log.hpp"
 #include <comdef.h>
 
+using namespace std::string_literals;
+
 namespace SDR::Error
 {
 	struct Exception
@@ -43,6 +45,28 @@ namespace SDR::Error
 		if (ptr == nullptr)
 		{
 			Make(format, std::forward<Args>(args)...);
+		}
+	}
+
+	/*
+		For use with unrecoverable errors.
+	*/
+	inline void ThrowIfNull(const void* ptr, std::string&& text)
+	{
+		if (ptr == nullptr)
+		{
+			Make(std::move(text));
+		}
+	}
+
+	/*
+		For use with unrecoverable errors.
+	*/
+	inline void ThrowIfNull(const void* ptr)
+	{
+		if (ptr == nullptr)
+		{
+			Make("Null pointer"s);
 		}
 	}
 
