@@ -33,15 +33,9 @@ namespace
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
-					if (!address)
-					{
-						return false;
-					}
-
 					Ptr = **(void***)(address);
 
 					SDR::ModuleShared::Registry::SetKeyValue(name, Ptr);
-					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -49,7 +43,7 @@ namespace
 				"MaterialSystem_GetBackBufferDimensions",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::GetBackBufferDimensions, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::GetBackBufferDimensions, name, value, VariantCount);
 				}
 			)
 		);
