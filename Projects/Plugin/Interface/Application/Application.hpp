@@ -1,4 +1,6 @@
 #pragma once
+#include <array>
+#include "SDR Shared\Json.hpp"
 
 namespace SDR
 {
