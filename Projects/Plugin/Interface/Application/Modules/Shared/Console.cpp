@@ -47,7 +47,6 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
-					return true;
 				}
 			)
 		);
@@ -83,7 +82,6 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
-					return true;
 				}
 			)
 		);
@@ -142,7 +140,6 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
-					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -150,7 +147,7 @@ namespace
 				"ConCommand_Constructor1",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::Constructor1, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::Constructor1, name, value, VariantCount);
 				}
 			)
 		);
@@ -218,13 +215,11 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
-					NeverAsStringFlag = value["NeverAsStringFlag"].GetInt();
+					NeverAsStringFlag = SDR::Json::GetInt(value, "NeverAsStringFlag");
 					
-					VTIndex_SetValueString = value["VTIndex_SetValueString"].GetInt();
-					VTIndex_SetValueFloat = value["VTIndex_SetValueFloat"].GetInt();
-					VTIndex_SetValueInt = value["VTIndex_SetValueInt"].GetInt();
-
-					return true;
+					VTIndex_SetValueString = SDR::Json::GetInt(value, "VTIndex_SetValueString");
+					VTIndex_SetValueFloat = SDR::Json::GetInt(value, "VTIndex_SetValueFloat");
+					VTIndex_SetValueInt = SDR::Json::GetInt(value, "VTIndex_SetValueInt");
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -232,7 +227,7 @@ namespace
 				"ConVar_Constructor3",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::Constructor3, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::Constructor3, name, value, VariantCount);
 				}
 			)
 		);
@@ -267,15 +262,9 @@ namespace
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
-					if (!address)
-					{
-						return false;
-					}
-
 					Ptr = **(void***)(address);
 
 					SDR::ModuleShared::Registry::SetKeyValue(name, Ptr);
-					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -283,7 +272,7 @@ namespace
 				"Cvar_FindVar",
 				[](const char* name, rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::FindVar, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::FindVar, name, value, VariantCount);
 				}
 			)
 		);
@@ -323,19 +312,17 @@ namespace
 			(
 				"Console_Info",
 				[](const char* name, rapidjson::Value& value)
-				{					
-					Library = value["Library"].GetString();
+				{
+					Library = SDR::Json::GetString(value, "Library");
 
-					MessageVariant = value["MessageVariant"].GetInt();
-					MessageExport = value["MessageExport"].GetString();
+					MessageVariant = SDR::Json::GetInt(value, "MessageVariant");
+					MessageExport = SDR::Json::GetString(value, "MessageExport");
 
-					MessageColorVariant = value["MessageColorVariant"].GetInt();
-					MessageColorExport = value["MessageColorExport"].GetString();
+					MessageColorVariant = SDR::Json::GetInt(value, "MessageColorVariant");
+					MessageColorExport = SDR::Json::GetString(value, "MessageColorExport");
 
-					WarningVariant = value["WarningVariant"].GetInt();
-					WarningExport = value["WarningExport"].GetString();
-
-					return true;
+					WarningVariant = SDR::Json::GetInt(value, "WarningVariant");
+					WarningExport = SDR::Json::GetString(value, "WarningExport");
 				}
 			)
 		);
