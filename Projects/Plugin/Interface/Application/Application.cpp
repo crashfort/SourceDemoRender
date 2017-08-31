@@ -261,11 +261,15 @@ namespace
 					{
 						found = true;
 
-						auto res = handler.Function(handler.Name, prop.second);
+						try
+						{
+							handler.Function(handler.Name, prop.second);
+						}
 
-						if (!res)
+						catch (const SDR::Error::Exception& error)
 						{
 							SDR::Error::Make("Could not enable module \"%s\"", handler.Name);
+							throw;
 						}
 
 						SDR::Log::Message("SDR: Enabled module \"%s\"\n", handler.Name);
@@ -447,20 +451,17 @@ namespace
 
 		void Start()
 		{
-			auto results =
+			try
 			{
-				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override),
-				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override),
-				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override),
-				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override),
-			};
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override);
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override);
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override);
+				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override);
+			}
 
-			for (auto res : results)
+			catch (const SDR::Error::Exception& error)
 			{
-				if (!res)
-				{
-					throw SDR::API::InitializeCode::CouldNotCreateLibraryIntercepts;
-				}
+				throw SDR::API::InitializeCode::CouldNotCreateLibraryIntercepts;
 			}
 
 			auto codes =
@@ -650,8 +651,8 @@ void* SDR::GetAddressFromJsonFlex(rapidjson::Value& value)
 
 void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 {
-	auto module = value["Module"].GetString();
-	auto patternstr = value["Pattern"].GetString();
+	auto module = SDR::Json::GetString(value,"Module");
+	auto patternstr = SDR::Json::GetString(value, "Pattern");
 
 	int offset = 0;
 	bool isjump = false;
@@ -674,9 +675,13 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 
 	AddressFinder address(module, pattern, offset);
 
+	SDR::Error::ThrowIfNull(address.Get());
+
 	if (isjump)
 	{
 		RelativeJumpFunctionFinder jumper(address.Get());
+		SDR::Error::ThrowIfNull(jumper.Get());
+
 		return jumper.Get();
 	}
 
@@ -687,7 +692,7 @@ int SDR::GetVariantFromJson(rapidjson::Value& value)
 {
 	if (JsonHasVariant(value))
 	{
-		return value["Variant"].GetInt();
+		return SDR::Json::GetInt(value, "Variant");
 	}
 
 	return 0;
@@ -698,15 +703,12 @@ void SDR::WarnAboutHookVariant(const char* name, int variant)
 	SDR::Log::Warning("SDR: No such hook overload for \"%s\" in variant %d\n", name, variant);
 }
 
-bool SDR::WarnIfVariantOutOfBounds(const char* name, int variant, int max)
+void SDR::WarnIfVariantOutOfBounds(const char* name, int variant, int max)
 {
 	if (variant < 0 || variant > max)
 	{
-		SDR::Log::Warning("SDR: Variant overload %d for \"%s\" not in bounds (%d max)\n", variant, max);
-		return true;
+		SDR::Error::Make("SDR: Variant overload %d for \"%s\" not in bounds (%d max)\n", variant, max);
 	}
-
-	return false;
 }
 
 void* SDR::GetVirtualAddressFromIndex(void* ptr, int index)
@@ -725,22 +727,24 @@ void* SDR::GetVirtualAddressFromJson(void* ptr, rapidjson::Value& value)
 
 int SDR::GetVirtualIndexFromJson(rapidjson::Value& value)
 {
-	return value["VTIndex"].GetInt();
+	return SDR::Json::GetInt(value, "VTIndex");
 }
 
 void* SDR::GetVirtualAddressFromJson(rapidjson::Value& value)
 {
 	auto instance = value["VTPtrName"].GetString();
+	auto instance = SDR::Json::GetString(value, "VTPtrName");
 
 	uint32_t ptrnum;
 	auto res = ModuleShared::Registry::GetKeyValue(instance, &ptrnum);
 
 	if (!res)
 	{
-		return nullptr;
+		SDR::Error::Make("Could not find virtual object name"s);
 	}
 
 	auto ptr = (void*)ptrnum;
+	SDR::Error::ThrowIfNull(ptr);
 
 	return GetVirtualAddressFromJson(ptr, value);
 }
@@ -772,20 +776,17 @@ bool SDR::ModuleShared::Registry::GetKeyValue(const char* name, uint32_t* value)
 	return false;
 }
 
-bool SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, rapidjson::Value& value, int maxvariant)
+void SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, rapidjson::Value& value, int maxvariant)
 {
 	auto addr = SDR::GetAddressFromJsonFlex(value);
 	auto variant = SDR::GetVariantFromJson(value);
 
-	if (WarnIfVariantOutOfBounds(name, variant, maxvariant))
-	{
-		return false;
-	}
+	WarnIfVariantOutOfBounds(name, variant, maxvariant);
 
-	return ModuleShared::SetFromAddress(entry, addr, variant);
+	ModuleShared::SetFromAddress(entry, addr, variant);
 }
 
-bool SDR::CreateHookBare(HookModuleBare& hook, void* override, void* address)
+void SDR::CreateHookBare(HookModuleBare& hook, void* override, void* address)
 {
 	hook.TargetFunction = address;
 	hook.NewFunction = override;
@@ -794,45 +795,43 @@ bool SDR::CreateHookBare(HookModuleBare& hook, void* override, void* address)
 
 	if (res != MH_OK)
 	{
-		return false;
+		SDR::Error::Make("Could not create hook (\"%s\")", MH_StatusToString(res));
 	}
 
 	res = MH_EnableHook(hook.TargetFunction);
 
 	if (res != MH_OK)
 	{
-		return false;
+		SDR::Error::Make("Could not enable hook (\"%s\")", MH_StatusToString(res));
 	}
-
-	return true;
 }
 
-bool SDR::CreateHookBareShort(HookModuleBare& hook, void* override, rapidjson::Value& value)
+void SDR::CreateHookBareShort(HookModuleBare& hook, void* override, rapidjson::Value& value)
 {
 	auto address = GetAddressFromJsonPattern(value);
-	return CreateHookBare(hook, override, address);
+	CreateHookBare(hook, override, address);
 }
 
-bool SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare& hook, void* override)
+void SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare& hook, void* override)
 {
 	hook.NewFunction = override;
 	
 	auto res = MH_CreateHookApiEx(module, name, override, &hook.OriginalFunction, &hook.TargetFunction);
 
-	return res == MH_OK;
+	if (res != MH_OK)
+	{
+		SDR::Error::Make("Could not create API hook (\"%s\")", MH_StatusToString(res));
+	}
 }
 
-bool SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam>&& hooks, const char* name, rapidjson::Value& value)
+void SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam>&& hooks, const char* name, rapidjson::Value& value)
 {
 	auto variant = SDR::GetVariantFromJson(value);
 	auto size = hooks.size();
 
-	if (WarnIfVariantOutOfBounds(name, variant, size))
-	{
-		return false;
-	}
+	WarnIfVariantOutOfBounds(name, variant, size);
 
 	auto target = *(hooks.begin() + variant);
 
-	return CreateHookBareShort(target.Hook, target.Override, value);
+	CreateHookBareShort(target.Hook, target.Override, value);
 }
