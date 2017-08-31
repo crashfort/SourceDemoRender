@@ -17,14 +17,9 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
-
-					if (!address)
-					{
-						return false;
-					}
-
 					DX9Device = **(IDirect3DDevice9Ex***)(address);
-					return true;
+
+					SDR::Error::ThrowIfNull(DX9Device);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -33,14 +28,9 @@ namespace
 				[](const char* name, rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
-
-					if (!address)
-					{
-						return false;
-					}
-
 					DrawLoading = *(bool**)(address);
-					return true;
+
+					SDR::Error::ThrowIfNull(DrawLoading);
 				}
 			)
 		);
