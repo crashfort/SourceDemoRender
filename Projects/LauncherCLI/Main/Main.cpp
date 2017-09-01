@@ -93,37 +93,6 @@ namespace
 
 namespace
 {
-	struct InterProcessData
-	{
-		decltype(LoadLibraryA)* LoadLibraryAddr;
-		decltype(GetProcAddress)* GetProcAddressAddr;
-		
-		const char* LibraryNameAddr;
-		const char* ExportNameAddr;
-		const char* GamePathAddr;
-		const char* GameNameAddr;
-	};
-
-	/*
-		This is the code that will run in the other process.
-		No errors are checked because it would leave the process in an intermediate state.
-		On any error the process will automatically crash.
-	*/
-	VOID CALLBACK ProcessAPC(ULONG_PTR param)
-	{
-		auto data = (InterProcessData*)param;
-
-		auto library = data->LibraryNameAddr;
-		auto loadexport = data->ExportNameAddr;
-		auto path = data->GamePathAddr;
-		auto game = data->GameNameAddr;
-
-		auto module = data->LoadLibraryAddr(library);
-		auto func = (SDR::API::SDR_Initialize)data->GetProcAddressAddr(module, loadexport);
-
-		func(path, game);
-	}
-
 	struct ServerShadowStateData : SDR::API::ShadowState
 	{
 		ServerShadowStateData(SDR::API::StageType stage, const char* name)
@@ -227,6 +196,37 @@ namespace
 		const char* StageName;
 		SDR::API::StageType Stage;
 	};
+
+	struct InterProcessData
+	{
+		decltype(LoadLibraryA)* LoadLibraryAddr;
+		decltype(GetProcAddress)* GetProcAddressAddr;
+		
+		const char* LibraryNameAddr;
+		const char* ExportNameAddr;
+		const char* GamePathAddr;
+		const char* GameNameAddr;
+	};
+
+	/*
+		This is the code that will run in the other process.
+		No errors are checked because it would leave the process in an intermediate state.
+		On any error the process will automatically crash.
+	*/
+	VOID CALLBACK ProcessAPC(ULONG_PTR param)
+	{
+		auto data = (InterProcessData*)param;
+
+		auto library = data->LibraryNameAddr;
+		auto loadexport = data->ExportNameAddr;
+		auto path = data->GamePathAddr;
+		auto game = data->GameNameAddr;
+
+		auto module = data->LoadLibraryAddr(library);
+		auto func = (SDR::API::SDR_Initialize)data->GetProcAddressAddr(module, loadexport);
+
+		func(path, game);
+	}
 
 	void InjectProcess(HANDLE process, HANDLE thread, const std::string& path, const std::string& game)
 	{
