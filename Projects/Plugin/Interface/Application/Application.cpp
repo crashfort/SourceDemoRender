@@ -553,11 +553,18 @@ SDR::BytePattern SDR::GetPatternFromString(const char* input)
 {
 	BytePattern ret;
 
+	bool shouldbespace = false;
+
 	while (*input)
 	{
 		if (std::isspace(*input))
 		{
 			++input;
+		}
+
+		else if (shouldbespace)
+		{
+			SDR::Error::Make("Error in byte pattern string formatting, missing space after character pair"s);
 		}
 
 		BytePattern::Entry entry;
@@ -568,12 +575,16 @@ SDR::BytePattern SDR::GetPatternFromString(const char* input)
 			entry.Value = std::strtol(input, nullptr, 16);
 
 			input += 2;
+
+			shouldbespace = true;
 		}
 
 		else
 		{
 			entry.Unknown = true;
 			input += 2;
+
+			shouldbespace = true;
 		}
 
 		ret.Bytes.emplace_back(entry);
