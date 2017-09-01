@@ -496,7 +496,7 @@ namespace
 		{
 			void Procedure()
 			{
-
+				SDR::Plugin::Load();
 			}
 		}
 
