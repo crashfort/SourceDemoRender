@@ -643,7 +643,7 @@ void* SDR::GetAddressFromJsonFlex(const rapidjson::Value& value)
 
 void* SDR::GetAddressFromJsonPattern(const rapidjson::Value& value)
 {
-	auto module = SDR::Json::GetString(value,"Module");
+	auto module = SDR::Json::GetString(value, "Module");
 	auto patternstr = SDR::Json::GetString(value, "Pattern");
 
 	int offset = 0;
