@@ -468,7 +468,7 @@ namespace
 			{
 				if (code != MH_OK)
 				{
-					SDR::Error::Make("Could not enable library intercepts");
+					SDR::Error::Make("Could not enable library intercepts"s);
 				}
 			}
 		}

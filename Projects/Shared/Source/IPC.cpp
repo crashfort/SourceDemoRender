@@ -17,5 +17,5 @@ HANDLE SDR::IPC::WaitForOne(std::initializer_list<HANDLE> handles)
 		return *(handles.begin() + index);
 	}
 
-	SDR::Error::Make("Unmatched event index");
+	SDR::Error::Make("Unmatched event index"s);
 }
