@@ -273,7 +273,7 @@ namespace SDR
 		void* Override;
 	};
 
-	void GenericHookVariantInit(std::initializer_list<GenericHookInitParam>&& hooks, const char* name, const rapidjson::Value& value);
+	void GenericHookVariantInit(const std::initializer_list<GenericHookInitParam>& hooks, const char* name, const rapidjson::Value& value);
 
 	struct AddressFinder
 	{
