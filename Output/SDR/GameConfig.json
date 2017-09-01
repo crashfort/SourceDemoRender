@@ -177,13 +177,7 @@
 	},
 	"hl2":
 	{
-		"Inherit": "cstrike",
-		"EntryPoint":
-		{
-			"Comment": "",
-			"Module": "",
-			"Pattern": ""
-		}
+		"Inherit": "cstrike"
 	},
 	"tf":
 	{
