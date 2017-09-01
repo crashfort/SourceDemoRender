@@ -483,38 +483,6 @@ namespace
 	}
 }
 
-namespace
-{
-	namespace ModuleEntryPoint
-	{
-		enum
-		{
-			VariantCount = 1
-		};
-
-		namespace Common
-		{
-			void Procedure()
-			{
-				SDR::Plugin::Load();
-			}
-		}
-
-		namespace Variant0
-		{
-			void __cdecl NewFunction();
-
-			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
-
-			void __cdecl NewFunction()
-			{
-				Common::Procedure();
-			}
-		}
-	}
-}
-
 void SDR::PreEngineSetup()
 {
 	auto res = MH_Initialize();
@@ -522,24 +490,6 @@ void SDR::PreEngineSetup()
 	if (res != MH_OK)
 	{
 		SDR::Error::Make("Could not initialize hooks"s);
-	}
-
-	if (0)
-	{
-		auto document = Json::FromFile(BuildPath("SDR\\GameConfig.json"));
-		auto gamename = GetGameName();
-
-		auto entryname = "EntryPoint";
-
-		auto gameit = SDR::Json::GetIterator(document, gamename);
-		auto entryit = SDR::Json::GetIterator(gameit->value, entryname);
-
-		auto list =
-		{
-			SDR::GenericHookInitParam(ModuleEntryPoint::Variant0::ThisHook, ModuleEntryPoint::Variant0::NewFunction)
-		};
-
-		SDR::GenericHookVariantInit(list, entryname, entryit->value);
 	}
 
 	LoadLibraryIntercept::Start();
