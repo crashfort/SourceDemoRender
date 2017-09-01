@@ -15,6 +15,12 @@ namespace SDR::Error
 	void SetPrintFormat(const char* format);
 	void Print(const Exception& error);
 
+	struct ScopedContext
+	{
+		ScopedContext(std::string&& str);
+		~ScopedContext();
+	};
+
 	/*
 		For use with unrecoverable errors.
 	*/
