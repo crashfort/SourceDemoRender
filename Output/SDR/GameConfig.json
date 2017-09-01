@@ -1,6 +1,12 @@
 {
 	"cstrike":
 	{
+		"EntryPoint":
+		{
+			"Comment": "",
+			"Module": "",
+			"Pattern": ""
+		},
 		"ActivateMouse":
 		{
 			"Comment": "0x10216D80 static CSS IDA address June 3 2016",
@@ -171,7 +177,13 @@
 	},
 	"hl2":
 	{
-		"Inherit": "cstrike"
+		"Inherit": "cstrike",
+		"EntryPoint":
+		{
+			"Comment": "",
+			"Module": "",
+			"Pattern": ""
+		}
 	},
 	"tf":
 	{
