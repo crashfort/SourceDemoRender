@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <cstdio>
+#include <wrl.h>
 
 namespace SDR::API
 {
@@ -8,6 +9,18 @@ namespace SDR::API
 	{
 		Initialize,
 		Load,
+	};
+
+	struct ShadowState
+	{
+		using ScopedHandle = Microsoft::WRL::Wrappers::HandleT
+		<
+			Microsoft::WRL::Wrappers::HandleTraits::HANDLENullTraits
+		>;
+
+		ScopedHandle Pipe;
+		ScopedHandle EventSuccess;
+		ScopedHandle EventFailure;
 	};
 
 	template <size_t Size>

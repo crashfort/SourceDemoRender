@@ -124,7 +124,7 @@ namespace
 		func(path, game);
 	}
 
-	struct ServerShadowStateData
+	struct ServerShadowStateData : SDR::API::ShadowState
 	{
 		ServerShadowStateData(SDR::API::StageType stage, const char* name)
 		{
@@ -226,9 +226,6 @@ namespace
 
 		const char* StageName;
 		SDR::API::StageType Stage;
-		ScopedHandle Pipe;
-		ScopedHandle EventSuccess;
-		ScopedHandle EventFailure;
 	};
 
 	void InjectProcess(HANDLE process, HANDLE thread, const std::string& path, const std::string& game)

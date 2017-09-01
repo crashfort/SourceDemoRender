@@ -176,13 +176,8 @@ namespace
 		SDR::Console::MakeCommand("sdr_accept", Commands::Accept::Procedure);
 	});
 
-	struct LoadFuncData
+	struct LoadFuncData : SDR::API::ShadowState
 	{
-		using ScopedHandle = Microsoft::WRL::Wrappers::HandleT
-		<
-			Microsoft::WRL::Wrappers::HandleTraits::HANDLENullTraits
-		>;
-
 		void Create(SDR::API::StageType stage)
 		{
 			auto stagenum = (uint32_t)stage;
@@ -219,12 +214,8 @@ namespace
 			DWORD written;
 			WriteFile(Pipe.Get(), text.c_str(), text.size(), &written, nullptr);
 		}
-
-		ScopedHandle Pipe;
 		
 		bool Failure = false;
-		Microsoft::WRL::Wrappers::Event EventSuccess;
-		Microsoft::WRL::Wrappers::Event EventFailure;
 	};
 
 	auto CreateShadowLoadState(SDR::API::StageType stage)
