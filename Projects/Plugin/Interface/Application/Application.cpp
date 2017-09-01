@@ -451,18 +451,10 @@ namespace
 
 		void Start()
 		{
-			try
-			{
-				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override);
-				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override);
-				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override);
-				SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override);
-			}
-
-			catch (const SDR::Error::Exception& error)
-			{
-				throw SDR::API::InitializeCode::CouldNotCreateLibraryIntercepts;
-			}
+			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override);
+			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override);
+			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override);
+			SDR::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override);
 
 			auto codes =
 			{
@@ -476,7 +468,7 @@ namespace
 			{
 				if (code != MH_OK)
 				{
-					throw SDR::API::InitializeCode::CouldNotEnableLibraryIntercepts;
+					SDR::Error::Make("Could not enable library intercepts");
 				}
 			}
 		}
@@ -497,7 +489,7 @@ void SDR::PreEngineSetup()
 
 	if (res != MH_OK)
 	{
-		throw SDR::API::InitializeCode::CouldNotInitializeHooks;
+		SDR::Error::Make("Could not initialize hooks"s);
 	}
 
 	LoadLibraryIntercept::Start();
