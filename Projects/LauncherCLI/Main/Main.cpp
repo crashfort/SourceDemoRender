@@ -100,8 +100,6 @@ namespace
 			Stage = stage;
 			StageName = name;
 
-			auto stagenum = (uint32_t)Stage;
-
 			char pipename[256];
 			SDR::API::CreatePipeName(pipename, stage);
 
@@ -127,8 +125,6 @@ namespace
 
 		HANDLE WaitEvents(HANDLE process)
 		{
-			auto stagenum = (uint32_t)Stage;
-
 			printf_s("Waiting for stage \"%s\"\n", StageName);
 
 			auto target = SDR::IPC::WaitForOne({ process, EventSuccess.Get(), EventFailure.Get() });
