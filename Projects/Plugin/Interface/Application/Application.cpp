@@ -591,7 +591,7 @@ void* SDR::GetAddressFromPattern(const ModuleInformation& library, const BytePat
 	return Memory::FindPattern(library.MemoryBase, library.MemorySize, pattern);
 }
 
-bool SDR::JsonHasPattern(rapidjson::Value& value)
+bool SDR::JsonHasPattern(const rapidjson::Value& value)
 {
 	if (value.HasMember("Pattern"))
 	{
@@ -601,7 +601,7 @@ bool SDR::JsonHasPattern(rapidjson::Value& value)
 	return false;
 }
 
-bool SDR::JsonHasVirtualIndexOnly(rapidjson::Value& value)
+bool SDR::JsonHasVirtualIndexOnly(const rapidjson::Value& value)
 {
 	if (value.HasMember("VTIndex"))
 	{
@@ -611,7 +611,7 @@ bool SDR::JsonHasVirtualIndexOnly(rapidjson::Value& value)
 	return false;
 }
 
-bool SDR::JsonHasVirtualIndexAndNamePtr(rapidjson::Value& value)
+bool SDR::JsonHasVirtualIndexAndNamePtr(const rapidjson::Value& value)
 {
 	if (JsonHasVirtualIndexOnly(value))
 	{
@@ -624,7 +624,7 @@ bool SDR::JsonHasVirtualIndexAndNamePtr(rapidjson::Value& value)
 	return false;
 }
 
-bool SDR::JsonHasVariant(rapidjson::Value& value)
+bool SDR::JsonHasVariant(const rapidjson::Value& value)
 {
 	if (value.HasMember("Variant"))
 	{
@@ -634,7 +634,7 @@ bool SDR::JsonHasVariant(rapidjson::Value& value)
 	return false;
 }
 
-void* SDR::GetAddressFromJsonFlex(rapidjson::Value& value)
+void* SDR::GetAddressFromJsonFlex(const rapidjson::Value& value)
 {
 	if (JsonHasPattern(value))
 	{
@@ -649,7 +649,7 @@ void* SDR::GetAddressFromJsonFlex(rapidjson::Value& value)
 	return nullptr;
 }
 
-void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
+void* SDR::GetAddressFromJsonPattern(const rapidjson::Value& value)
 {
 	auto module = SDR::Json::GetString(value,"Module");
 	auto patternstr = SDR::Json::GetString(value, "Pattern");
@@ -688,7 +688,7 @@ void* SDR::GetAddressFromJsonPattern(rapidjson::Value& value)
 	return address.Get();
 }
 
-int SDR::GetVariantFromJson(rapidjson::Value& value)
+int SDR::GetVariantFromJson(const rapidjson::Value& value)
 {
 	if (JsonHasVariant(value))
 	{
@@ -719,18 +719,18 @@ void* SDR::GetVirtualAddressFromIndex(void* ptr, int index)
 	return address;
 }
 
-void* SDR::GetVirtualAddressFromJson(void* ptr, rapidjson::Value& value)
+void* SDR::GetVirtualAddressFromJson(void* ptr, const rapidjson::Value& value)
 {
 	auto index = GetVirtualIndexFromJson(value);
 	return GetVirtualAddressFromIndex(ptr, index);
 }
 
-int SDR::GetVirtualIndexFromJson(rapidjson::Value& value)
+int SDR::GetVirtualIndexFromJson(const rapidjson::Value& value)
 {
 	return SDR::Json::GetInt(value, "VTIndex");
 }
 
-void* SDR::GetVirtualAddressFromJson(rapidjson::Value& value)
+void* SDR::GetVirtualAddressFromJson(const rapidjson::Value& value)
 {
 	auto instance = SDR::Json::GetString(value, "VTPtrName");
 
@@ -775,7 +775,7 @@ bool SDR::ModuleShared::Registry::GetKeyValue(const char* name, uint32_t* value)
 	return false;
 }
 
-void SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, rapidjson::Value& value, int maxvariant)
+void SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, const rapidjson::Value& value, int maxvariant)
 {
 	auto addr = SDR::GetAddressFromJsonFlex(value);
 	auto variant = SDR::GetVariantFromJson(value);
@@ -805,7 +805,7 @@ void SDR::CreateHookBare(HookModuleBare& hook, void* override, void* address)
 	}
 }
 
-void SDR::CreateHookBareShort(HookModuleBare& hook, void* override, rapidjson::Value& value)
+void SDR::CreateHookBareShort(HookModuleBare& hook, void* override, const rapidjson::Value& value)
 {
 	auto address = GetAddressFromJsonPattern(value);
 	CreateHookBare(hook, override, address);
@@ -823,7 +823,7 @@ void SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare&
 	}
 }
 
-void SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam>&& hooks, const char* name, rapidjson::Value& value)
+void SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam>&& hooks, const char* name, const rapidjson::Value& value)
 {
 	auto variant = SDR::GetVariantFromJson(value);
 	auto size = hooks.size();

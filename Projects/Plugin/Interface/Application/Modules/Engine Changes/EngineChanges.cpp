@@ -20,7 +20,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"Engine_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					ActiveAppOffset = SDR::Json::GetInt(value, "ActiveAppOffset");
 				}
@@ -55,7 +55,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ActivateMouse",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
@@ -119,7 +119,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"AppActivate",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(

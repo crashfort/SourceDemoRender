@@ -1640,7 +1640,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"View_Render",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
@@ -2007,7 +2007,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"StartMovie",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
@@ -2098,7 +2098,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"StartMovieCommand",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
@@ -2215,7 +2215,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EndMovie",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
@@ -2264,7 +2264,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EndMovieCommand",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
@@ -2324,7 +2324,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"SUpdateGuts",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(

@@ -37,7 +37,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EngineClientPtr",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
@@ -49,7 +49,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EngineClient_ConsoleVisible",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericVariantInit(Entries::ConsoleVisible, name, value, VariantCount);
 				}
@@ -57,7 +57,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EngineClient_FlashWindow",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericVariantInit(Entries::FlashWindow, name, value, VariantCount);
 				}
@@ -65,7 +65,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EngineClient_ClientCommand",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericVariantInit(Entries::ClientCommand, name, value, VariantCount);
 				}

@@ -14,7 +14,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"D3D9_Device",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 					DX9Device = **(IDirect3DDevice9Ex***)(address);
@@ -25,7 +25,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"DrawLoading",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 					DrawLoading = *(bool**)(address);

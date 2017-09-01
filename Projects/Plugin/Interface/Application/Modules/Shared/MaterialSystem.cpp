@@ -29,7 +29,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialsPtr",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
@@ -41,7 +41,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialSystem_GetBackBufferDimensions",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericVariantInit(Entries::GetBackBufferDimensions, name, value, VariantCount);
 				}

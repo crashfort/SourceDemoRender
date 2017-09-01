@@ -44,7 +44,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ConCommandBase_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
 				}
@@ -79,7 +79,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"CCommand_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
 				}
@@ -137,7 +137,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ConCommand_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
 				}
@@ -145,7 +145,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ConCommand_Constructor1",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericVariantInit(Entries::Constructor1, name, value, VariantCount);
 				}
@@ -212,7 +212,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ConVar_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
 					NeverAsStringFlag = SDR::Json::GetInt(value, "NeverAsStringFlag");
@@ -225,7 +225,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ConVar_Constructor3",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericVariantInit(Entries::Constructor3, name, value, VariantCount);
 				}
@@ -258,7 +258,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"CvarPtr",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
@@ -270,7 +270,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"Cvar_FindVar",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					SDR::GenericVariantInit(Entries::FindVar, name, value, VariantCount);
 				}
@@ -311,7 +311,7 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"Console_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					Library = SDR::Json::GetString(value, "Library");
 
