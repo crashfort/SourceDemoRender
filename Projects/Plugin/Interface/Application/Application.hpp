@@ -74,9 +74,15 @@ namespace SDR
 	{
 		ModuleInformation(const char* name) : Name(name)
 		{
+			SDR::Error::ScopedContext e1("ModuleInformation"s);
+
 			MODULEINFO info;
 			
-			K32GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(name), &info, sizeof(info));
+			SDR::Error::MS::ThrowIfZero
+			(
+				K32GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(name), &info, sizeof(info)),
+				"Could not get module information for \"%s\"", name
+			);
 
 			MemoryBase = info.lpBaseOfDll;
 			MemorySize = info.SizeOfImage;
@@ -221,12 +227,17 @@ namespace SDR
 		template <typename T>
 		inline void SetFromAddress(T& obj, void* address)
 		{
+			SDR::Error::ScopedContext e1("SetFromAddress1"s);
+
 			SDR::Error::ThrowIfNull(address);
+			
 			obj = (T)address;
 		}
 
 		inline void SetFromAddress(Variant::Entry& entry, void* address, int variant)
 		{
+			SDR::Error::ScopedContext e1("SetFromAddress2"s);
+
 			SDR::Error::ThrowIfNull(address);
 
 			entry.Address = address;
@@ -279,7 +290,11 @@ namespace SDR
 	{
 		AddressFinder(const char* module, const BytePattern& pattern, int offset = 0)
 		{
+			SDR::Error::ScopedContext e1("AddressFinder"s);
+
 			auto addr = GetAddressFromPattern(module, pattern);
+
+			SDR::Error::ThrowIfNull(addr);
 
 			auto addrmod = static_cast<uint8_t*>(addr);
 
@@ -309,6 +324,10 @@ namespace SDR
 	{
 		RelativeJumpFunctionFinder(void* address)
 		{
+			SDR::Error::ScopedContext e1("RelativeJumpFunctionFinder"s);
+			
+			SDR::Error::ThrowIfNull(address);
+
 			auto addrmod = static_cast<uint8_t*>(address);
 
 			/*
@@ -330,6 +349,8 @@ namespace SDR
 			addrmod += offset;
 
 			Address = addrmod;
+
+			SDR::Error::ThrowIfNull(Address);
 		}
 
 		void* Get() const
