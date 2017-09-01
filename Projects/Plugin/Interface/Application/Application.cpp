@@ -560,6 +560,7 @@ SDR::BytePattern SDR::GetPatternFromString(const char* input)
 		if (std::isspace(*input))
 		{
 			++input;
+			shouldbespace = false;
 		}
 
 		else if (shouldbespace)
