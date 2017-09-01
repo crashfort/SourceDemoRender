@@ -126,11 +126,12 @@ namespace
 
 	struct ServerShadowStateData
 	{
-		ServerShadowStateData(SDR::API::StageType stage)
+		ServerShadowStateData(SDR::API::StageType stage, const char* name)
 		{
-			auto stagenum = (uint32_t)stage;
+			Stage = stage;
+			StageName = name;
 
-			printf_s("Creating stage %d\n", stagenum);
+			auto stagenum = (uint32_t)Stage;
 
 			char pipename[256];
 			SDR::API::CreatePipeName(pipename, stage);
@@ -150,7 +151,6 @@ namespace
 			ScopedHandle eventfail(CreateEventA(nullptr, false, false, failname));
 			SDR::Error::MS::ThrowIfZero(eventfail.Get(), "Could not create failure loader event in stage %d", stagenum);
 
-			Stage = stage;
 			Pipe = std::move(pipe);
 			EventSuccess = std::move(eventsuccess);
 			EventFailure = std::move(eventfail);
@@ -160,7 +160,7 @@ namespace
 		{
 			auto stagenum = (uint32_t)Stage;
 
-			printf_s("Waiting for stage %d\n", stagenum);
+			printf_s("Waiting for stage \"%s\"\n", StageName);
 
 			auto target = SDR::IPC::WaitForOne({ process, EventSuccess.Get(), EventFailure.Get() });
 
@@ -168,18 +168,18 @@ namespace
 
 			if (target == process)
 			{
-				SDR::Error::Make("Process exited at stage %d", stagenum);
+				SDR::Error::Make("Process exited at stage \"%s\"", StageName);
 			}
 
 			else if (target == EventSuccess.Get())
 			{
-				printf_s("Passed stage %d\n", stagenum);
+				printf_s("Passed stage \"%s\"\n", StageName);
 			}
 
 			else if (target == EventFailure.Get())
 			{
 				TerminateProcess(process, 0);
-				SDR::Error::Make("Could not pass stage %d", stagenum);
+				SDR::Error::Make("Could not pass stage \"%s\"", StageName);
 			}
 
 			return target;
@@ -224,6 +224,7 @@ namespace
 			}
 		}
 
+		const char* StageName;
 		SDR::API::StageType Stage;
 		ScopedHandle Pipe;
 		ScopedHandle EventSuccess;
@@ -303,7 +304,7 @@ namespace
 			"Could not queue APC for process"
 		);
 
-		ServerShadowStateData initstage(SDR::API::StageType::Initialize);
+		ServerShadowStateData initstage(SDR::API::StageType::Initialize, "Initialize");
 
 		/*
 			Our initialize function will now run inside the other process.
@@ -447,7 +448,7 @@ namespace
 
 		printf_s("Parameters: \"%s\"\n", params.c_str());
 
-		ServerShadowStateData loadstage(SDR::API::StageType::Load);
+		ServerShadowStateData loadstage(SDR::API::StageType::Load, "Load");
 
 		auto info = StartProcess(dir, exepath, game, params);
 
