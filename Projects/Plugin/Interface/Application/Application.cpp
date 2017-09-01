@@ -565,7 +565,7 @@ SDR::BytePattern SDR::GetPatternFromString(const char* input)
 
 		else if (shouldbespace)
 		{
-			SDR::Error::Make("Error in byte pattern string formatting, missing space after character pair"s);
+			SDR::Error::Make("Error in string byte pair formatting"s);
 		}
 
 		BytePattern::Entry entry;
