@@ -236,29 +236,29 @@ namespace SDR
 
 	void GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, const rapidjson::Value& value, int maxvariant);
 
-	void CreateHookBare(HookModuleBare& hook, void* override, void* address);
+	void CreateHookBare(const char* name, HookModuleBare& hook, void* override, void* address);
 
 	template <typename FuncType>
-	void CreateHook(HookModule<FuncType>& hook, FuncType override, void* address)
+	void CreateHook(const char* name, HookModule<FuncType>& hook, FuncType override, void* address)
 	{
-		CreateHookBare(hook, override, address);
+		CreateHookBare(name, hook, override, address);
 	}
 
 	template <typename FuncType>
-	void CreateHook(HookModule<FuncType>& hook, FuncType override, const char* module, const BytePattern& pattern)
+	void CreateHook(const char* name, HookModule<FuncType>& hook, FuncType override, const char* module, const BytePattern& pattern)
 	{
 		auto address = GetAddressFromPattern(module, pattern);
-		CreateHook(hook, override, address);
+		CreateHook(name, hook, override, address);
 	}
 
 	template <typename FuncType>
-	void CreateHookShort(HookModule<FuncType>& hook, FuncType override, const rapidjson::Value& value)
+	void CreateHookShort(const char* name, HookModule<FuncType>& hook, FuncType override, const rapidjson::Value& value)
 	{
 		auto address = GetAddressFromJsonPattern(value);
-		CreateHook(hook, override, address);
+		CreateHook(name, hook, override, address);
 	}
 
-	void CreateHookBareShort(HookModuleBare& hook, void* override, const rapidjson::Value& value);
+	void CreateHookBareShort(const char* name, HookModuleBare& hook, void* override, const rapidjson::Value& value);
 
 	void CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare& hook, void* override);
 

@@ -731,7 +731,7 @@ void* SDR::GetVirtualAddressFromJson(const rapidjson::Value& value)
 
 	if (!res)
 	{
-		SDR::Error::Make("Could not find virtual object name"s);
+		SDR::Error::Make("Could not find virtual object name \"%s\"", instance);
 	}
 
 	auto ptr = (void*)ptrnum;
@@ -777,7 +777,7 @@ void SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* na
 	ModuleShared::SetFromAddress(entry, addr, variant);
 }
 
-void SDR::CreateHookBare(HookModuleBare& hook, void* override, void* address)
+void SDR::CreateHookBare(const char* name, HookModuleBare& hook, void* override, void* address)
 {
 	hook.TargetFunction = address;
 	hook.NewFunction = override;
@@ -786,21 +786,21 @@ void SDR::CreateHookBare(HookModuleBare& hook, void* override, void* address)
 
 	if (res != MH_OK)
 	{
-		SDR::Error::Make("Could not create hook (\"%s\")", MH_StatusToString(res));
+		SDR::Error::Make("Could not create hook \"%s\" (\"%s\")", name, MH_StatusToString(res));
 	}
 
 	res = MH_EnableHook(hook.TargetFunction);
 
 	if (res != MH_OK)
 	{
-		SDR::Error::Make("Could not enable hook (\"%s\")", MH_StatusToString(res));
+		SDR::Error::Make("Could not enable hook \"%s\" (\"%s\")", name, MH_StatusToString(res));
 	}
 }
 
-void SDR::CreateHookBareShort(HookModuleBare& hook, void* override, const rapidjson::Value& value)
+void SDR::CreateHookBareShort(const char* name, HookModuleBare& hook, void* override, const rapidjson::Value& value)
 {
 	auto address = GetAddressFromJsonPattern(value);
-	CreateHookBare(hook, override, address);
+	CreateHookBare(name, hook, override, address);
 }
 
 void SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare& hook, void* override)
@@ -811,7 +811,7 @@ void SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare&
 
 	if (res != MH_OK)
 	{
-		SDR::Error::Make("Could not create API hook (\"%s\")", MH_StatusToString(res));
+		SDR::Error::Make("Could not create API hook \"%s\" (\"%s\")", name, MH_StatusToString(res));
 	}
 }
 
@@ -824,5 +824,5 @@ void SDR::GenericHookVariantInit(const std::initializer_list<GenericHookInitPara
 
 	auto target = *(hooks.begin() + variant);
 
-	CreateHookBareShort(target.Hook, target.Override, value);
+	CreateHookBareShort(name, target.Hook, target.Override, value);
 }
