@@ -38,5 +38,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Source\Log.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Source\String.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
 </Project>
