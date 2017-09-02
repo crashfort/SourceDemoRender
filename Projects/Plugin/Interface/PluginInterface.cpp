@@ -180,8 +180,6 @@ namespace
 	{
 		void Create(SDR::API::StageType stage)
 		{
-			auto stagenum = (uint32_t)stage;
-
 			auto pipename = SDR::API::CreatePipeName(stage);
 			auto successname = SDR::API::CreateEventSuccessName(stage);
 			auto failname = SDR::API::CreateEventFailureName(stage);
