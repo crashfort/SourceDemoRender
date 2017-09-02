@@ -45,15 +45,14 @@ namespace
 		{
 			SDR::Console::Variable Framerate;
 			SDR::Console::Variable ColorSpace;
+			SDR::Console::Variable Encoder;
+			SDR::Console::Variable PixelFormat;
 
 			namespace Sample
 			{
 				SDR::Console::Variable Multiply;
 				SDR::Console::Variable Exposure;
 			}
-
-			SDR::Console::Variable Encoder;
-			SDR::Console::Variable PixelFormat;
 
 			namespace D3D11
 			{
@@ -80,12 +79,11 @@ namespace
 
 			Video::Framerate = SDR::Console::MakeNumber("sdr_render_framerate", "60", 30, 1000);
 			Video::ColorSpace = SDR::Console::MakeString("sdr_movie_encoder_colorspace", "709");
+			Video::Encoder = SDR::Console::MakeString("sdr_movie_encoder", "libx264");
+			Video::PixelFormat = SDR::Console::MakeString("sdr_movie_encoder_pxformat", "");
 
 			Video::Sample::Multiply = SDR::Console::MakeNumber("sdr_sample_mult", "32", 0);
 			Video::Sample::Exposure = SDR::Console::MakeNumber("sdr_sample_exposure", "0.5", 0, 1);
-
-			Video::Encoder = SDR::Console::MakeString("sdr_movie_encoder", "libx264");
-			Video::PixelFormat = SDR::Console::MakeString("sdr_movie_encoder_pxformat", "");
 
 			Video::D3D11::Staging = SDR::Console::MakeBool("sdr_d3d11_staging", "1");
 
