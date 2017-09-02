@@ -57,17 +57,6 @@ namespace SDR::Error
 	/*
 		For use with unrecoverable errors.
 	*/
-	inline void ThrowIfNull(const void* ptr, std::string&& text)
-	{
-		if (ptr == nullptr)
-		{
-			Make(std::move(text));
-		}
-	}
-
-	/*
-		For use with unrecoverable errors.
-	*/
 	inline void ThrowIfNull(const void* ptr)
 	{
 		if (ptr == nullptr)

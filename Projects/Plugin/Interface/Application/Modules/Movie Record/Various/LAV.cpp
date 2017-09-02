@@ -45,7 +45,7 @@ void SDR::LAV::ScopedAVFrame::Assign(int width, int height, AVPixelFormat format
 {
 	Frame = av_frame_alloc();
 
-	Error::ThrowIfNull(Frame, "Could not allocate video frame"s);
+	Error::ThrowIfNull(Frame, "Could not allocate video frame");
 
 	Frame->format = format;
 	Frame->width = width;

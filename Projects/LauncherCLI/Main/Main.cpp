@@ -73,7 +73,7 @@ namespace
 		VirtualMemory(HANDLE process, size_t size, DWORD flags = MEM_COMMIT | MEM_RESERVE, DWORD protect = PAGE_EXECUTE_READWRITE) : Process(process)
 		{
 			Address = VirtualAllocEx(process, nullptr, size, flags, protect);
-			SDR::Error::ThrowIfNull(Address, "Could not allocate virtual memory"s);
+			SDR::Error::ThrowIfNull(Address, "Could not allocate virtual memory");
 		}
 
 		~VirtualMemory()

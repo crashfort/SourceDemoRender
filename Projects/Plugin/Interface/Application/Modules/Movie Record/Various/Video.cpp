@@ -26,7 +26,7 @@ void SDR::Video::Writer::SetEncoder(AVCodec* encoder)
 	Encoder = encoder;
 
 	Stream = avformat_new_stream(FormatContext.Get(), Encoder);
-	Error::ThrowIfNull(Stream, "Could not create video stream"s);
+	Error::ThrowIfNull(Stream, "Could not create video stream");
 
 	/*
 		Against what the new ffmpeg API incorrectly suggests, but is the right way.
