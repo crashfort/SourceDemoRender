@@ -16,7 +16,7 @@ SDR::LAV::ScopedFormatContext::~ScopedFormatContext()
 
 void SDR::LAV::ScopedFormatContext::Assign(const char* filename)
 {
-	SDR::Error::LAV::ThrowIfFailed
+	Error::LAV::ThrowIfFailed
 	(
 		avformat_alloc_output_context2(&Context, nullptr, nullptr, filename),
 		"Could not allocate output context for \"%s\"", filename
@@ -45,7 +45,7 @@ void SDR::LAV::ScopedAVFrame::Assign(int width, int height, AVPixelFormat format
 {
 	Frame = av_frame_alloc();
 
-	SDR::Error::ThrowIfNull(Frame, "Could not allocate video frame"s);
+	Error::ThrowIfNull(Frame, "Could not allocate video frame"s);
 
 	Frame->format = format;
 	Frame->width = width;
@@ -80,7 +80,7 @@ AVDictionary** SDR::LAV::ScopedAVDictionary::Get()
 
 void SDR::LAV::ScopedAVDictionary::Set(const char* key, const char* value, int flags)
 {
-	SDR::Error::LAV::ThrowIfFailed
+	Error::LAV::ThrowIfFailed
 	(
 		av_dict_set(Get(), key, value, flags),
 		"Could not set dictionary value { \"%s\" = \"%s\" }", key, value

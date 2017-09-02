@@ -8,7 +8,7 @@ void SDR::Video::Writer::OpenFileForWrite(const char* path)
 
 	if ((FormatContext->oformat->flags & AVFMT_NOFILE) == 0)
 	{
-		SDR::Error::LAV::ThrowIfFailed
+		Error::LAV::ThrowIfFailed
 		(
 			avio_open(&FormatContext->pb, path, AVIO_FLAG_WRITE),
 			"Could not open output file for \"%s\"", path
@@ -21,7 +21,7 @@ void SDR::Video::Writer::SetEncoder(AVCodec* encoder)
 	Encoder = encoder;
 
 	Stream = avformat_new_stream(FormatContext.Get(), Encoder);
-	SDR::Error::ThrowIfNull(Stream, "Could not create video stream"s);
+	Error::ThrowIfNull(Stream, "Could not create video stream"s);
 
 	/*
 		Against what the new ffmpeg API incorrectly suggests, but is the right way.
@@ -51,13 +51,13 @@ void SDR::Video::Writer::OpenEncoder(int framerate, AVDictionary** options)
 	CodecContext->time_base = timebase;
 	CodecContext->framerate = inversetime;
 
-	SDR::Error::LAV::ThrowIfFailed
+	Error::LAV::ThrowIfFailed
 	(
 		avcodec_open2(CodecContext, Encoder, options),
 		"Could not open video encoder"
 	);
 
-	SDR::Error::LAV::ThrowIfFailed
+	Error::LAV::ThrowIfFailed
 	(
 		avcodec_parameters_from_context(Stream->codecpar, CodecContext),
 		"Could not transfer encoder parameters to stream"
@@ -69,7 +69,7 @@ void SDR::Video::Writer::OpenEncoder(int framerate, AVDictionary** options)
 
 void SDR::Video::Writer::WriteHeader()
 {
-	SDR::Error::LAV::ThrowIfFailed
+	Error::LAV::ThrowIfFailed
 	(
 		avformat_write_header(FormatContext.Get(), nullptr),
 		"Could not write container header"
