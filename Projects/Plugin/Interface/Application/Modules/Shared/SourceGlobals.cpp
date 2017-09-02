@@ -17,8 +17,8 @@ namespace
 				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
+					
 					DX9Device = **(IDirect3DDevice9Ex***)(address);
-
 					SDR::Error::ThrowIfNull(DX9Device);
 				}
 			),
@@ -28,8 +28,8 @@ namespace
 				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
+					
 					DrawLoading = *(bool**)(address);
-
 					SDR::Error::ThrowIfNull(DrawLoading);
 				}
 			)

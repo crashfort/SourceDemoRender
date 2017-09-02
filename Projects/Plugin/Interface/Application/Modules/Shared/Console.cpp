@@ -263,6 +263,7 @@ namespace
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
 					Ptr = **(void***)(address);
+					SDR::Error::ThrowIfNull(Ptr);
 
 					SDR::ModuleShared::Registry::SetKeyValue(name, Ptr);
 				}
