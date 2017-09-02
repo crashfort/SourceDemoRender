@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <wrl.h>
+#include "SDR Shared\String.hpp"
 
 namespace SDR::API
 {
@@ -23,25 +24,22 @@ namespace SDR::API
 		ScopedHandle EventFailure;
 	};
 
-	template <size_t Size>
-	void CreatePipeName(char(&buffer)[Size], StageType stage)
+	inline std::string CreatePipeName(StageType stage)
 	{
 		auto stagenum = (uint32_t)stage;
-		sprintf_s(buffer, R"(\\.\pipe\sdr_loader_pipe_%d)", stagenum);
+		return String::GetFormattedString(R"(\\.\pipe\sdr_loader_pipe_%d)", stagenum);
 	}
 
-	template <size_t Size>
-	void CreateEventSuccessName(char(&buffer)[Size], StageType stage)
+	inline std::string CreateEventSuccessName(StageType stage)
 	{
 		auto stagenum = (uint32_t)stage;
-		sprintf_s(buffer, "SDR_LOADER_SUCCESS_%d", stagenum);
+		return String::GetFormattedString("SDR_LOADER_SUCCESS_%d", stagenum);
 	}
 
-	template <size_t Size>
-	void CreateEventFailureName(char(&buffer)[Size], StageType stage)
+	inline std::string CreateEventFailureName(StageType stage)
 	{
 		auto stagenum = (uint32_t)stage;
-		sprintf_s(buffer, "SDR_LOADER_FAIL_%d", stagenum);
+		return String::GetFormattedString("SDR_LOADER_FAIL_%d", stagenum);
 	}
 
 	using SDR_LibraryVersion = int(__cdecl*)();

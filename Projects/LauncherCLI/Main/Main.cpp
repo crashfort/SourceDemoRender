@@ -100,22 +100,17 @@ namespace
 			Stage = stage;
 			StageName = name;
 
-			char pipename[256];
-			SDR::API::CreatePipeName(pipename, stage);
+			auto pipename = SDR::API::CreatePipeName(stage);
+			auto successname = SDR::API::CreateEventSuccessName(stage);
+			auto failname = SDR::API::CreateEventFailureName(stage);
 
-			char successname[256];
-			SDR::API::CreateEventSuccessName(successname, stage);
-
-			char failname[256];
-			SDR::API::CreateEventFailureName(failname, stage);
-
-			ScopedHandle pipe(CreateNamedPipeA(pipename, PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 4096, 0, nullptr));
+			ScopedHandle pipe(CreateNamedPipeA(pipename.c_str(), PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 4096, 0, nullptr));
 			SDR::Error::MS::ThrowIfZero(pipe.Get(), "Could not create inbound pipe in stage \"%s\"", StageName);
 
-			ScopedHandle eventsuccess(CreateEventA(nullptr, false, false, successname));
+			ScopedHandle eventsuccess(CreateEventA(nullptr, false, false, successname.c_str()));
 			SDR::Error::MS::ThrowIfZero(eventsuccess.Get(), "Could not create success loader event in stage \"%s\"", StageName);
 
-			ScopedHandle eventfail(CreateEventA(nullptr, false, false, failname));
+			ScopedHandle eventfail(CreateEventA(nullptr, false, false, failname.c_str()));
 			SDR::Error::MS::ThrowIfZero(eventfail.Get(), "Could not create failure loader event in stage \"%s\"", StageName);
 
 			Pipe = std::move(pipe);

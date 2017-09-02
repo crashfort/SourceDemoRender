@@ -182,18 +182,13 @@ namespace
 		{
 			auto stagenum = (uint32_t)stage;
 
-			char pipename[256];
-			SDR::API::CreatePipeName(pipename, stage);
+			auto pipename = SDR::API::CreatePipeName(stage);
+			auto successname = SDR::API::CreateEventSuccessName(stage);
+			auto failname = SDR::API::CreateEventFailureName(stage);
 
-			char successname[256];
-			SDR::API::CreateEventSuccessName(successname, stage);
-
-			char failname[256];
-			SDR::API::CreateEventFailureName(failname, stage);
-
-			Pipe.Attach(CreateFileA(pipename, GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr));
-			EventSuccess.Attach(OpenEventA(EVENT_MODIFY_STATE, false, successname));
-			EventFailure.Attach(OpenEventA(EVENT_MODIFY_STATE, false, failname));
+			Pipe.Attach(CreateFileA(pipename.c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr));
+			EventSuccess.Attach(OpenEventA(EVENT_MODIFY_STATE, false, successname.c_str()));
+			EventFailure.Attach(OpenEventA(EVENT_MODIFY_STATE, false, failname.c_str()));
 		}
 		
 		~LoadFuncData()
