@@ -21,12 +21,10 @@ int SDR::Profile::RegisterProfiling(const char* name)
 
 std::chrono::nanoseconds SDR::Profile::GetTimeDifference(TimePointType start)
 {
-	using namespace std::chrono;
-
 	auto now = GetTimeNow();
 	auto difference = now - start;
 
-	auto time = duration_cast<nanoseconds>(difference);
+	auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(difference);
 
 	return time;
 }
