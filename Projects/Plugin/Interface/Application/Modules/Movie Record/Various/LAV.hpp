@@ -13,6 +13,8 @@ extern "C"
 	#include "libavformat\avformat.h"
 }
 
+#undef __STDC_CONSTANT_MACROS
+
 namespace SDR::LAV
 {
 	struct ScopedFormatContext
