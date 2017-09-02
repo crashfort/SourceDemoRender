@@ -1,6 +1,7 @@
 #include "Profile.hpp"
 #include "SDR Shared\Log.hpp"
 #include <vector>
+
 namespace
 {
 	std::vector<SDR::Profile::Entry> Entries;
