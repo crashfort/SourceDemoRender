@@ -1,5 +1,8 @@
 #pragma once
 
+/*
+	avutil below will complain about this not being defined.
+*/
 #define __STDC_CONSTANT_MACROS
 
 extern "C"
