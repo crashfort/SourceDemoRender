@@ -10,6 +10,12 @@
 #include "Interface\Application\Modules\Movie Record\Shaders\Blobs\YUV444.hpp"
 #include <functional>
 
+namespace LocalProfiling
+{
+	auto PushRGB = SDR::Profile::RegisterProfiling("PushRGB");
+	auto PushYUV = SDR::Profile::RegisterProfiling("PushYUV");
+}
+
 void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool sampling)
 {
 	uint32_t flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
@@ -239,7 +245,7 @@ void SDR::Stream::StreamBase::DirectX11Data::ConversionBGR0::DynamicBind(ID3D11D
 
 bool SDR::Stream::StreamBase::DirectX11Data::ConversionBGR0::Download(ID3D11DeviceContext* context, FutureData& item)
 {
-	Profile::ScopedEntry e1(Profile::Types::PushRGB);
+	Profile::ScopedEntry e1(LocalProfiling::PushRGB);
 
 	D3D11_MAPPED_SUBRESOURCE mapped;
 
@@ -345,7 +351,7 @@ void SDR::Stream::StreamBase::DirectX11Data::ConversionYUV::DynamicBind(ID3D11De
 
 bool SDR::Stream::StreamBase::DirectX11Data::ConversionYUV::Download(ID3D11DeviceContext* context, FutureData& item)
 {
-	Profile::ScopedEntry e1(Profile::Types::PushYUV);
+	Profile::ScopedEntry e1(LocalProfiling::PushYUV);
 
 	D3D11_MAPPED_SUBRESOURCE mappedy;
 	D3D11_MAPPED_SUBRESOURCE mappedu;

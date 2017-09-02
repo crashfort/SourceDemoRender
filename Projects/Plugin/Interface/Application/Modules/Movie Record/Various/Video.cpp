@@ -2,6 +2,11 @@
 #include "SDR Shared\Error.hpp"
 #include "Profile.hpp"
 
+namespace LocalProfiling
+{
+	auto Encode = SDR::Profile::RegisterProfiling("Encode");
+}
+
 void SDR::Video::Writer::OpenFileForWrite(const char* path)
 {
 	FormatContext.Assign(path);
@@ -100,7 +105,7 @@ void SDR::Video::Writer::SetFrameInput(PlaneType& planes)
 void SDR::Video::Writer::SendRawFrame()
 {
 	{
-		Profile::ScopedEntry e1(Profile::Types::Encode);
+		Profile::ScopedEntry e1(LocalProfiling::Encode);
 
 		Frame->pts = PresentationIndex;
 		PresentationIndex++;

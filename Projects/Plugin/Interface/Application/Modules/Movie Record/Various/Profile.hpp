@@ -6,17 +6,7 @@ using namespace std::chrono_literals;
 
 namespace SDR::Profile
 {
-	namespace Types
-	{
-		enum Type
-		{
-			PushYUV,
-			PushRGB,
-			Encode,
-
-			Count
-		};
-	}
+	int RegisterProfiling(const char* name);
 
 	inline auto GetTimeNow()
 	{
@@ -29,13 +19,14 @@ namespace SDR::Profile
 
 	struct Entry
 	{
+		const char* Name;
 		uint32_t Calls = 0;
 		std::chrono::nanoseconds TotalTime = 0ns;
 	};
 
 	struct ScopedEntry
 	{
-		ScopedEntry(Types::Type entry);
+		ScopedEntry(int index);
 		~ScopedEntry();
 
 		TimePointType Start;

@@ -1,16 +1,21 @@
 #include "Profile.hpp"
 #include "SDR Shared\Log.hpp"
-
+#include <vector>
 namespace
 {
-	const char* Names[] =
-	{
-		"PushYUV",
-		"PushRGB",
-		"Encode",
-	};
+	std::vector<SDR::Profile::Entry> Entries;
+}
 
-	std::array<SDR::Profile::Entry, SDR::Profile::Types::Count> Entries;
+int SDR::Profile::RegisterProfiling(const char* name)
+{
+	auto index = Entries.size();
+
+	SDR::Profile::Entry entry;
+	entry.Name = name;
+
+	Entries.emplace_back(entry);
+
+	return index;
 }
 
 std::chrono::nanoseconds SDR::Profile::GetTimeDifference(TimePointType start)
@@ -25,7 +30,7 @@ std::chrono::nanoseconds SDR::Profile::GetTimeDifference(TimePointType start)
 	return time;
 }
 
-SDR::Profile::ScopedEntry::ScopedEntry(Types::Type entry) : Target(Entries[entry]), Start(GetTimeNow())
+SDR::Profile::ScopedEntry::ScopedEntry(int index) : Target(Entries[index]), Start(GetTimeNow())
 {
 	++Target.Calls;
 }
@@ -37,7 +42,11 @@ SDR::Profile::ScopedEntry::~ScopedEntry()
 
 void SDR::Profile::Reset()
 {
-	Entries.fill({});
+	for (auto& entry : Entries)
+	{
+		entry.Calls = 0;
+		entry.TotalTime = 0ns;
+	}
 }
 
 void SDR::Profile::ShowResults()
@@ -48,11 +57,10 @@ void SDR::Profile::ShowResults()
 	{
 		if (entry.Calls > 0)
 		{
-			auto name = Names[index];
 			auto avg = entry.TotalTime / entry.Calls;
 			auto ms = avg / 1.0ms;
 
-			Log::Message("SDR: %s (%u): avg %0.4f ms\n", name, entry.Calls, ms);
+			Log::Message("SDR: %s (%u): avg %0.4f ms\n", entry.Name, entry.Calls, ms);
 		}
 
 		++index;
