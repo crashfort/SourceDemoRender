@@ -188,7 +188,7 @@ namespace
 			EventSuccess.Attach(OpenEventA(EVENT_MODIFY_STATE, false, successname.c_str()));
 			EventFailure.Attach(OpenEventA(EVENT_MODIFY_STATE, false, failname.c_str()));
 		}
-		
+
 		~LoadFuncData()
 		{
 			if (Failure)
@@ -207,7 +207,7 @@ namespace
 			DWORD written;
 			WriteFile(Pipe.Get(), text.c_str(), text.size(), &written, nullptr);
 		}
-		
+
 		bool Failure = false;
 	};
 
