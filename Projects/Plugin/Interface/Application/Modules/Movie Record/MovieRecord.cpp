@@ -485,6 +485,61 @@ namespace
 				}
 			}
 
+			void WarnAboutName(const char* filename)
+			{
+				auto wstr = SDR::String::FromUTF8(filename);				
+				auto ext = PathFindExtensionW(wstr.c_str());
+
+				auto containers =
+				{
+					".avi",
+					".mp4",
+					".mov",
+					".mkv"
+				};
+
+				auto showcontainers = [&]()
+				{
+					for (auto type : containers)
+					{
+						SDR::Log::Message("SDR: %s\n", type);
+					}
+				};
+
+				if (*ext == 0)
+				{
+					SDR::Log::Warning("SDR: No file extension. Available video containers:\n"s);
+
+					showcontainers();
+
+					SDR::Error::Make("Missing file extension"s);
+				}
+
+				else
+				{
+					auto extutf8 = SDR::String::ToUTF8(ext);
+					bool found = false;
+
+					for (auto type : containers)
+					{
+						if (_strcmpi(type, extutf8.c_str()) == 0)
+						{
+							found = true;
+							break;
+						}
+					}
+
+					if (!found)
+					{
+						SDR::Log::Warning("SDR: Unknown file extension. Available video containers:\n"s);
+
+						showcontainers();
+
+						SDR::Error::Make("Unknown file extension"s);
+					}
+				}
+			}
+
 			void Procedure(const char* filename, int width, int height)
 			{
 				CurrentMovie = {};
@@ -493,6 +548,7 @@ namespace
 
 				try
 				{
+					WarnAboutName(filename);
 					WarnAboutVariableValues();
 
 					auto sdrpath = Variables::OutputDirectory.GetString();
