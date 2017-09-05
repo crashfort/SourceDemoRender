@@ -441,12 +441,12 @@ namespace
 
 			void WarnAboutVariableValues()
 			{
-				auto newstr = Variables::Video::Encoder.GetString();
-				auto encoder = avcodec_find_encoder_by_name(newstr);
+				auto encoderstr = Variables::Video::Encoder.GetString();
+				auto encoder = avcodec_find_encoder_by_name(encoderstr);
 
 				if (!encoder)
 				{
-					SDR::Log::Warning("SDR: Encoder \"%s\" not found, available encoders:\n", newstr);
+					SDR::Log::Warning("SDR: Encoder \"%s\" not found, available encoders:\n", encoderstr);
 
 					auto next = av_codec_next(nullptr);
 
