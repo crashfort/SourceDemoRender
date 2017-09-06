@@ -317,8 +317,6 @@ extern "C"
 
 		SDR::Error::SetPrintFormat("SDR: %s\n");
 
-		RegisterLAV();
-
 		auto localdata = CreateShadowLoadState(SDR::API::StageType::Initialize);
 
 		try
@@ -329,6 +327,9 @@ extern "C"
 		catch (const SDR::Error::Exception& error)
 		{
 			localdata->Failure = true;
+			return;
 		}
+
+		RegisterLAV();
 	}
 }
