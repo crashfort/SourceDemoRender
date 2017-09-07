@@ -472,6 +472,23 @@ namespace
 
 		return;
 	}
+
+	void ShowLibraryVersion()
+	{
+		auto library = LoadLibraryA(LibraryNameNoPrefix);
+
+		if (!library)
+		{
+			SDR::Error::Make("Could not load SDR library for version display");
+		}
+
+		auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
+		auto version = func();
+
+		printf_s("SDR library version: %d\n", version);
+
+		FreeLibrary(library);
+	}
 }
 
 void main(int argc, char* argv[])
@@ -480,6 +497,8 @@ void main(int argc, char* argv[])
 	{
 		EnsureFileIsPresent(LibraryNameNoPrefix);
 		EnsureFileIsPresent(ConfigNameNoPrefix);
+
+		ShowLibraryVersion();
 
 		/*
 			Don't need our own name.
