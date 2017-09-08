@@ -39,7 +39,7 @@ The launcher ``LauncherCLI.exe`` takes the following parameters: ``<exe path> <s
 You can use ``LauncherCLI User.bat`` to aid launching. Edit the content to fit your game.
 
 ## Instructions
-When you are ready to create your movie just type `startmovie <name>` and then `endmovie` as usual. **Do not exit the game until you see a green message that says the movie is completed.**
+When you are ready to create your movie just type `startmovie <name>.<container>` and then `endmovie` as usual. **Do not exit the game until you see a green message that says the movie is completed.**
 
 Example of supported video containers:
 
