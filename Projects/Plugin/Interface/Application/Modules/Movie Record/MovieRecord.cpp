@@ -423,10 +423,7 @@ namespace
 
 				if (!res)
 				{
-					auto error = GetLastError();
-					auto hr = HRESULT_FROM_WIN32(error);
-
-					SDR::Error::MS::ThrowIfFailed(hr, "Could not access wanted output directory");
+					SDR::Error::MS::ThrowLastError("Could not access wanted output directory");
 				}
 			}
 
