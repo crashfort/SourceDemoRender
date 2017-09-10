@@ -269,8 +269,7 @@ bool SDR::Stream::StreamBase::DirectX11Data::ConversionBGR0::Download(ID3D11Devi
 
 	else
 	{
-		auto ptr = (uint8_t*)mapped.pData;
-		item.Planes[0].assign(ptr, ptr + mapped.RowPitch);
+		item.PoolHandles[0] = item.PoolPtr->Insert(mapped.pData, Buffer.Size);
 	}
 
 	Buffer.Unmap(context);
@@ -390,13 +389,12 @@ bool SDR::Stream::StreamBase::DirectX11Data::ConversionYUV::Download(ID3D11Devic
 
 	if (pass)
 	{
-		auto ptry = (uint8_t*)mappedy.pData;
-		auto ptru = (uint8_t*)mappedu.pData;
-		auto ptrv = (uint8_t*)mappedv.pData;
-
-		item.Planes[0].assign(ptry, ptry + mappedy.RowPitch);
-		item.Planes[1].assign(ptru, ptru + mappedu.RowPitch);
-		item.Planes[2].assign(ptrv, ptrv + mappedv.RowPitch);
+		item.PoolHandles = item.PoolPtr->Insert
+		({ 
+			std::make_pair(mappedy.pData, Y.Size),
+			std::make_pair(mappedu.pData, U.Size),
+			std::make_pair(mappedv.pData, V.Size)
+		});
 	}
 
 	Y.Unmap(context);

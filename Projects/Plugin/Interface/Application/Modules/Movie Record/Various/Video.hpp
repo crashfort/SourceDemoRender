@@ -2,7 +2,9 @@
 #include <array>
 #include <vector>
 #include <cstdint>
+
 #include "LAV.hpp"
+#include "Pool.hpp"
 
 namespace SDR::Video
 {
@@ -11,7 +13,7 @@ namespace SDR::Video
 		/*
 			At most, YUV formats will use all planes. RGB only uses 1.
 		*/
-		using PlaneType = std::array<std::vector<uint8_t>, 3>;
+		using PlaneType = std::array<void*, 3>;
 
 		void OpenFileForWrite(const char* path);
 		void SetEncoder(AVCodec* encoder);
@@ -20,7 +22,7 @@ namespace SDR::Video
 		void WriteHeader();
 		void WriteTrailer();
 
-		void SetFrameInput(PlaneType& planes);
+		void SetFrameInput(const PlaneType& planes);
 		void SendRawFrame();
 		void SendFlushFrame();
 

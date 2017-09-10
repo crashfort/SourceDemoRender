@@ -5,6 +5,7 @@
 
 #include "Various\Stream.hpp"
 #include "Various\Profile.hpp"
+#include "Various\Pool.hpp"
 #include "Interface\Application\Modules\Shared\EngineClient.hpp"
 #include "Interface\Application\Modules\Shared\MaterialSystem.hpp"
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
@@ -186,8 +187,34 @@ namespace
 			{
 				--BufferedFrames;
 
-				item.Writer->SetFrameInput(item.Planes);
+				SDR::Video::Writer::PlaneType planes;
+				planes.fill(nullptr);
+
+				int index = 0;
+				
+				for (const auto& handle : item.PoolHandles)
+				{
+					if (!handle)
+					{
+						break;
+					}
+
+					planes[index] = item.PoolHandles[index].Ptr;
+					++index;
+				}
+
+				item.Writer->SetFrameInput(planes);
 				item.Writer->SendRawFrame();
+
+				for (auto& handle : item.PoolHandles)
+				{
+					if (!handle)
+					{
+						break;
+					}
+
+					item.PoolPtr->Unlock(handle);
+				}
 			}
 		}
 	}
@@ -248,6 +275,7 @@ namespace
 				{
 					SDR::Stream::FutureData item;
 					item.Writer = &stream->Video;
+					item.PoolPtr = &stream->FramePool;
 
 					stream->DirectX11.Conversion(CurrentMovie.VideoStreamShared);
 					auto res = stream->DirectX11.Download(CurrentMovie.VideoStreamShared, item);
@@ -347,13 +375,7 @@ namespace
 					/*
 						Don't risk running out of memory. Just let the encoding finish so we start fresh with no buffered frames.
 					*/
-					if (MovieData::WouldNewFrameOverflow())
-					{
-						while (BufferedFrames)
-						{
-							std::this_thread::sleep_for(1ms);
-						}
-					}
+					movie.VideoStream->FramePool.WaitIfFull();
 
 					if (movie.VideoStream->FirstFrame)
 					{
@@ -675,6 +697,22 @@ namespace
 						}
 
 						stream->Video.Frame.Assign(width, height, pxformat, colorspace, colorrange);
+
+						int itemparts = 0;
+						size_t poolsize = 0;
+
+						for (auto entry : stream->Video.Frame->buf)
+						{
+							if (!entry)
+							{
+								break;
+							}
+
+							++itemparts;
+							poolsize += entry->size;
+						}
+
+						stream->FramePool.Create(poolsize, itemparts);
 
 						movie.VideoStreamShared.DirectX11.Create(width, height, MovieData::UseSampling());
 
