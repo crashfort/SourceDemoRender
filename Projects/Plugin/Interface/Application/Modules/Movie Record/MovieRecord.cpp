@@ -154,7 +154,7 @@ namespace
 	std::atomic_bool ShouldStopFrameThread;
 	std::atomic_bool IsStoppingAsync;
 
-	bool SDR_ShouldRecord()
+	bool ShouldRecord()
 	{
 		if (!CurrentMovie.IsStarted)
 		{
@@ -340,7 +340,7 @@ namespace
 			void Procedure()
 			{
 				auto& movie = CurrentMovie;
-				bool dopasses = SDR_ShouldRecord();
+				bool dopasses = ShouldRecord();
 
 				if (dopasses)
 				{
