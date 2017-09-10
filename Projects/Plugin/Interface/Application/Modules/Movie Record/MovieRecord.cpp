@@ -852,12 +852,7 @@ namespace
 
 				int width;
 				int height;
-
-				if (!SDR::MaterialSystem::GetBackBufferDimensions(width, height))
-				{
-					SDR::Log::Warning("SDR: Could not get backbuffer dimensions\n"s);
-					return;
-				}
+				SDR::MaterialSystem::GetBackBufferDimensions(width, height);
 
 				SDR::Profile::Reset();
 

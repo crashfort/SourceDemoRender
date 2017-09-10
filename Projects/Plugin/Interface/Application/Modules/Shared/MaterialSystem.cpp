@@ -56,17 +56,10 @@ void* SDR::MaterialSystem::GetPtr()
 	return ModuleMaterialSystem::Ptr;
 }
 
-bool SDR::MaterialSystem::GetBackBufferDimensions(int& width, int& height)
+void SDR::MaterialSystem::GetBackBufferDimensions(int& width, int& height)
 {
 	if (ModuleMaterialSystem::Entries::GetBackBufferDimensions == 0)
 	{
 		ModuleMaterialSystem::Variant0::GetBackBufferDimensions()(GetPtr(), nullptr, width, height);
 	}
-
-	else
-	{
-		return false;
-	}
-
-	return true;
 }
