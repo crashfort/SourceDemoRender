@@ -6,7 +6,12 @@ namespace
 {
 	namespace LocalProfiling
 	{
-		auto Encode = SDR::Profile::RegisterProfiling("Encode");
+		int Encode;
+
+		SDR::PluginStartupFunctionAdder A1("Video profiling", []()
+		{
+			Encode = SDR::Profile::RegisterProfiling("Encode");
+		});
 	}
 }
 

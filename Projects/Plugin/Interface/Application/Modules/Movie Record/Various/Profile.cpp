@@ -4,17 +4,20 @@
 
 namespace
 {
-	std::vector<SDR::Profile::Entry> Entries;
+	struct
+	{
+		std::vector<SDR::Profile::Entry> Entries;
+	} GlobalState;
 }
 
 int SDR::Profile::RegisterProfiling(const char* name)
 {
-	auto index = Entries.size();
+	auto index = GlobalState.Entries.size();
 
 	SDR::Profile::Entry entry;
 	entry.Name = name;
 
-	Entries.emplace_back(entry);
+	GlobalState.Entries.emplace_back(entry);
 
 	return index;
 }
@@ -29,7 +32,7 @@ std::chrono::nanoseconds SDR::Profile::GetTimeDifference(TimePointType start)
 	return time;
 }
 
-SDR::Profile::ScopedEntry::ScopedEntry(int index) : Target(Entries[index]), Start(GetTimeNow())
+SDR::Profile::ScopedEntry::ScopedEntry(int index) : Target(GlobalState.Entries[index]), Start(GetTimeNow())
 {
 	++Target.Calls;
 }
@@ -41,7 +44,7 @@ SDR::Profile::ScopedEntry::~ScopedEntry()
 
 void SDR::Profile::Reset()
 {
-	for (auto& entry : Entries)
+	for (auto& entry : GlobalState.Entries)
 	{
 		entry.Calls = 0;
 		entry.TotalTime = 0ns;
@@ -52,7 +55,7 @@ void SDR::Profile::ShowResults()
 {
 	int index = 0;
 
-	for (const auto& entry : Entries)
+	for (const auto& entry : GlobalState.Entries)
 	{
 		if (entry.Calls > 0)
 		{

@@ -1,6 +1,7 @@
 #pragma once
 #include <chrono>
 #include <array>
+#include "Interface\Application\Application.hpp"
 
 using namespace std::chrono_literals;
 

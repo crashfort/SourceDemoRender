@@ -14,8 +14,14 @@ namespace
 {
 	namespace LocalProfiling
 	{
-		auto PushRGB = SDR::Profile::RegisterProfiling("PushRGB");
-		auto PushYUV = SDR::Profile::RegisterProfiling("PushYUV");
+		int PushRGB;
+		int PushYUV;
+
+		SDR::PluginStartupFunctionAdder A1("Stream profiling", []()
+		{
+			PushRGB = SDR::Profile::RegisterProfiling("PushRGB");
+			PushYUV = SDR::Profile::RegisterProfiling("PushYUV");
+		});
 	}
 }
 
