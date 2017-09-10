@@ -148,7 +148,7 @@ void SDR::Stream::StreamBase::DirectX9Data::Create(IDirect3DDevice9Ex* device, i
 	SharedSurface.Create(device, width, height);
 }
 
-void SDR::Stream::StreamBase::DirectX11Data::GPUBuffer::Create(ID3D11Device* device, DXGI_FORMAT viewformat, int size, int numelements, bool staging)
+void SDR::Stream::StreamBase::DirectX11Data::GPUBuffer::Create(ID3D11Device* device, DXGI_FORMAT viewformat, size_t size, int numelements, bool staging)
 {
 	Staging = staging;
 
@@ -208,6 +208,8 @@ void SDR::Stream::StreamBase::DirectX11Data::GPUBuffer::Create(ID3D11Device* dev
 		device->CreateUnorderedAccessView(Buffer.Get(), &viewdesc, View.GetAddressOf()),
 		"Could not create UAV for generic GPU read buffer"
 	);
+
+	Size = size;
 }
 
 HRESULT SDR::Stream::StreamBase::DirectX11Data::GPUBuffer::Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped)
