@@ -508,17 +508,22 @@ void SDR::Setup(const char* gamepath, const char* gamename)
 	}
 
 	auto count = MainApplication.StartupFunctions.size();
-	auto index = 1;
 
 	for (auto entry : MainApplication.StartupFunctions)
 	{
-		SDR::Error::ScopedContext e1(entry.Name);
+		try
+		{
+			SDR::Error::ScopedContext e1(entry.Name);
+			entry.Function();
+		}
 
-		SDR::Log::Message("SDR: Startup procedure (%d/%d): \"%s\"\n", index, count, entry.Name);
+		catch (const SDR::Error::Exception& error)
+		{
+			SDR::Error::Make("Could not pass startup procedure \"%s\"", entry.Name);
+			throw;
+		}
 
-		entry.Function();
-
-		++index;
+		SDR::Log::Message("SDR: Passed startup procedure: \"%s\"\n", entry.Name);
 	}
 
 	MainApplication.StartupFunctions.clear();
