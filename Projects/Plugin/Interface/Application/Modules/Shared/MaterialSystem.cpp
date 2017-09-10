@@ -20,7 +20,7 @@ namespace
 
 		namespace Variant0
 		{
-			using GetBackBufferDimensionsType = bool(__fastcall*)(void* thisptr, void* edx, int& width, int& height);
+			using GetBackBufferDimensionsType = void(__fastcall*)(void* thisptr, void* edx, int& width, int& height);
 			SDR::ModuleShared::Variant::Function<GetBackBufferDimensionsType> GetBackBufferDimensions(Entries::GetBackBufferDimensions);
 		}
 
@@ -60,8 +60,13 @@ bool SDR::MaterialSystem::GetBackBufferDimensions(int& width, int& height)
 {
 	if (ModuleMaterialSystem::Entries::GetBackBufferDimensions == 0)
 	{
-		return ModuleMaterialSystem::Variant0::GetBackBufferDimensions()(GetPtr(), nullptr, width, height);
+		ModuleMaterialSystem::Variant0::GetBackBufferDimensions()(GetPtr(), nullptr, width, height);
 	}
 
-	return false;
+	else
+	{
+		return false;
+	}
+
+	return true;
 }
