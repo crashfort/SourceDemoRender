@@ -10,10 +10,13 @@
 #include "Interface\Application\Modules\Movie Record\Shaders\Blobs\YUV444.hpp"
 #include <functional>
 
-namespace LocalProfiling
+namespace
 {
-	auto PushRGB = SDR::Profile::RegisterProfiling("PushRGB");
-	auto PushYUV = SDR::Profile::RegisterProfiling("PushYUV");
+	namespace LocalProfiling
+	{
+		auto PushRGB = SDR::Profile::RegisterProfiling("PushRGB");
+		auto PushYUV = SDR::Profile::RegisterProfiling("PushYUV");
+	}
 }
 
 void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool sampling)

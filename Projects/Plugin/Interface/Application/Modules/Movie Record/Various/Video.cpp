@@ -2,9 +2,12 @@
 #include "SDR Shared\Error.hpp"
 #include "Profile.hpp"
 
-namespace LocalProfiling
+namespace
 {
-	auto Encode = SDR::Profile::RegisterProfiling("Encode");
+	namespace LocalProfiling
+	{
+		auto Encode = SDR::Profile::RegisterProfiling("Encode");
+	}
 }
 
 void SDR::Video::Writer::OpenFileForWrite(const char* path)
