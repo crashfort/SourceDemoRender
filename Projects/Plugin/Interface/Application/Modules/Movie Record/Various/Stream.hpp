@@ -117,7 +117,6 @@ namespace SDR::Stream
 				void Unmap(ID3D11DeviceContext* context);
 
 				bool Staging;
-				size_t Size;
 				Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
 				Microsoft::WRL::ComPtr<ID3D11Buffer> BufferStaging;
 				Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
