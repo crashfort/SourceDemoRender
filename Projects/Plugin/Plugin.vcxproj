@@ -116,6 +116,11 @@
     <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\table64.h" />
     <ClInclude Include="3rd Party Libraries\MinHook\src\trampoline.h" />
     <ClInclude Include="Interface\Application\Application.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBase.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\FutureData.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Profile.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\D3D11.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\LAV.hpp" />
@@ -152,6 +157,18 @@
     </ClCompile>
     <ClCompile Include="Interface\Application\Application.cpp" />
     <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp" />
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\LAV.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

@@ -4,20 +4,13 @@
 #include <wrl.h>
 #include <memory>
 
+#include "FutureData.hpp"
+#include "ConversionBase.hpp"
 #include "Video.hpp"
 #include "readerwriterqueue.h"
 
 namespace SDR::Stream
 {
-	/*
-		This structure is sent to the encoder thread from the capture thread.
-	*/
-	struct FutureData
-	{
-		SDR::Video::Writer* Writer;
-		SDR::Video::Writer::PlaneType Planes;
-	};
-
 	/*
 		A lock-free producer/consumer queue.
 	*/
@@ -84,66 +77,6 @@ namespace SDR::Stream
 
 		struct DirectX11Data
 		{
-			/*
-				Base for hardware conversion routines.
-			*/
-			struct ConversionBase
-			{
-				virtual ~ConversionBase() = default;
-
-				virtual void Create(ID3D11Device* device, AVFrame* reference, bool staging) = 0;
-
-				/*
-					States that need update every frame.
-				*/
-				virtual void DynamicBind(ID3D11DeviceContext* context) = 0;
-
-				/*
-					Try to retrieve data to CPU after an operation.
-				*/
-				virtual bool Download(ID3D11DeviceContext* context, FutureData& item) = 0;
-			};
-
-			/*
-				Hardware conversion shaders will store their data in this type.
-				It's readable by the CPU and the finished frame is expected to be in
-				the right format.
-			*/
-			struct GPUBuffer
-			{
-				void Create(ID3D11Device* device, DXGI_FORMAT viewformat, size_t size, int numelements, bool staging);
-
-				HRESULT Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped);
-				void Unmap(ID3D11DeviceContext* context);
-
-				bool Staging;
-				Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
-				Microsoft::WRL::ComPtr<ID3D11Buffer> BufferStaging;
-				Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> View;
-			};
-
-			struct ConversionBGR0 : ConversionBase
-			{
-				virtual void Create(ID3D11Device* device, AVFrame* reference, bool staging) override;
-				virtual void DynamicBind(ID3D11DeviceContext* context) override;
-				virtual bool Download(ID3D11DeviceContext* context, FutureData& item) override;
-
-				GPUBuffer Buffer;
-			};
-
-			struct ConversionYUV : ConversionBase
-			{
-				virtual void Create(ID3D11Device* device, AVFrame* reference, bool staging) override;
-				virtual void DynamicBind(ID3D11DeviceContext* context) override;
-				virtual bool Download(ID3D11DeviceContext* context, FutureData& item) override;
-
-				GPUBuffer Y;
-				GPUBuffer U;
-				GPUBuffer V;
-
-				Microsoft::WRL::ComPtr<ID3D11Buffer> ConstantBuffer;
-			};
-
 			void Create(ID3D11Device* device, HANDLE dx9handle, AVFrame* reference, bool staging);
 
 			/*
@@ -185,7 +118,7 @@ namespace SDR::Stream
 				Format specific buffer for format conversions. Handles
 				binding shader resources and downloading the finished frame.
 			*/
-			std::unique_ptr<ConversionBase> ConversionPtr;
+			std::unique_ptr<D3D11::ConversionBase> ConversionPtr;
 
 			/*
 				Varying shader, handled by FrameBuffer. Using frame data from WorkBuffer,

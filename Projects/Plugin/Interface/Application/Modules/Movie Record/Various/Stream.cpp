@@ -8,22 +8,9 @@
 #include "Interface\Application\Modules\Movie Record\Shaders\Blobs\Sampling.hpp"
 #include "Interface\Application\Modules\Movie Record\Shaders\Blobs\YUV420.hpp"
 #include "Interface\Application\Modules\Movie Record\Shaders\Blobs\YUV444.hpp"
+#include "ConversionBGR0.hpp"
+#include "ConversionYUV.hpp"
 #include <functional>
-
-namespace
-{
-	namespace LocalProfiling
-	{
-		int PushRGB;
-		int PushYUV;
-
-		SDR::PluginStartupFunctionAdder A1("Stream profiling", []()
-		{
-			PushRGB = SDR::Profile::RegisterProfiling("PushRGB");
-			PushYUV = SDR::Profile::RegisterProfiling("PushYUV");
-		});
-	}
-}
 
 void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool sampling)
 {
@@ -154,256 +141,6 @@ void SDR::Stream::StreamBase::DirectX9Data::Create(IDirect3DDevice9Ex* device, i
 	SharedSurface.Create(device, width, height);
 }
 
-void SDR::Stream::StreamBase::DirectX11Data::GPUBuffer::Create(ID3D11Device* device, DXGI_FORMAT viewformat, size_t size, int numelements, bool staging)
-{
-	Staging = staging;
-
-	/*
-		Staging requires two buffers, one that the GPU operates on and then
-		copies into another buffer that the CPU can read.
-	*/
-	if (Staging)
-	{
-		D3D11_BUFFER_DESC desc = {};
-		desc.ByteWidth = size;
-		desc.Usage = D3D11_USAGE_DEFAULT;
-		desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-
-		Error::MS::ThrowIfFailed
-		(
-			device->CreateBuffer(&desc, nullptr, Buffer.GetAddressOf()),
-			"Could not create generic GPU buffer for staging"
-		);
-
-		desc.BindFlags = 0;
-		desc.Usage = D3D11_USAGE_STAGING;
-		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-
-		Error::MS::ThrowIfFailed
-		(
-			device->CreateBuffer(&desc, nullptr, BufferStaging.GetAddressOf()),
-			"Could not create staging GPU read buffer"
-		);
-	}
-
-	/*
-		Other method only requires a single buffer that can be read by the CPU and written by the GPU.
-	*/
-	else
-	{
-		D3D11_BUFFER_DESC desc = {};
-		desc.ByteWidth = size;
-		desc.Usage = D3D11_USAGE_DEFAULT;
-		desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-
-		Error::MS::ThrowIfFailed
-		(
-			device->CreateBuffer(&desc, nullptr, Buffer.GetAddressOf()),
-			"Could not create generic GPU read buffer"
-		);
-	}
-
-	D3D11_UNORDERED_ACCESS_VIEW_DESC viewdesc = {};
-	viewdesc.Format = viewformat;
-	viewdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
-	viewdesc.Buffer.NumElements = numelements;
-
-	Error::MS::ThrowIfFailed
-	(
-		device->CreateUnorderedAccessView(Buffer.Get(), &viewdesc, View.GetAddressOf()),
-		"Could not create UAV for generic GPU read buffer"
-	);
-}
-
-HRESULT SDR::Stream::StreamBase::DirectX11Data::GPUBuffer::Map(ID3D11DeviceContext* context, D3D11_MAPPED_SUBRESOURCE* mapped)
-{
-	if (Staging)
-	{
-		context->CopyResource(BufferStaging.Get(), Buffer.Get());
-		return context->Map(BufferStaging.Get(), 0, D3D11_MAP_READ, 0, mapped);
-	}
-
-	return context->Map(Buffer.Get(), 0, D3D11_MAP_READ, 0, mapped);
-}
-
-void SDR::Stream::StreamBase::DirectX11Data::GPUBuffer::Unmap(ID3D11DeviceContext* context)
-{
-	if (Staging)
-	{
-		context->Unmap(BufferStaging.Get(), 0);
-		return;
-	}
-
-	context->Unmap(Buffer.Get(), 0);
-}
-
-void SDR::Stream::StreamBase::DirectX11Data::ConversionBGR0::Create(ID3D11Device* device, AVFrame* reference, bool staging)
-{
-	auto size = reference->buf[0]->size;
-	auto count = size / sizeof(uint32_t);
-
-	Buffer.Create(device, DXGI_FORMAT_R32_UINT, size, count, staging);
-}
-
-void SDR::Stream::StreamBase::DirectX11Data::ConversionBGR0::DynamicBind(ID3D11DeviceContext* context)
-{
-	auto uavs = { Buffer.View.Get() };
-	context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
-}
-
-bool SDR::Stream::StreamBase::DirectX11Data::ConversionBGR0::Download(ID3D11DeviceContext* context, FutureData& item)
-{
-	Profile::ScopedEntry e1(LocalProfiling::PushRGB);
-
-	D3D11_MAPPED_SUBRESOURCE mapped;
-
-	auto hr = Buffer.Map(context, &mapped);
-
-	if (FAILED(hr))
-	{
-		Log::Warning("SDR: Could not map DX11 RGB buffer\n"s);
-	}
-
-	else
-	{
-		auto ptr = (uint8_t*)mapped.pData;
-		item.Planes[0].assign(ptr, ptr + mapped.RowPitch);
-	}
-
-	Buffer.Unmap(context);
-
-	return SUCCEEDED(hr);
-}
-
-void SDR::Stream::StreamBase::DirectX11Data::ConversionYUV::Create(ID3D11Device* device, AVFrame* reference, bool staging)
-{
-	auto sizey = reference->buf[0]->size;
-	auto sizeu = reference->buf[1]->size;
-	auto sizev = reference->buf[2]->size;
-
-	Y.Create(device, DXGI_FORMAT_R8_UINT, sizey, sizey, staging);
-	U.Create(device, DXGI_FORMAT_R8_UINT, sizeu, sizeu, staging);
-	V.Create(device, DXGI_FORMAT_R8_UINT, sizev, sizev, staging);
-
-	/*
-		Matches YUVInputData in YUVShared.hlsl.
-	*/
-	__declspec(align(16)) struct
-	{
-		int Strides[3];
-		int Padding1;
-		float CoeffY[3];
-		int Padding2;
-		float CoeffU[3];
-		int Padding3;
-		float CoeffV[3];
-	} yuvdata;
-
-	yuvdata.Strides[0] = reference->linesize[0];
-	yuvdata.Strides[1] = reference->linesize[1];
-	yuvdata.Strides[2] = reference->linesize[2];
-
-	auto setcoeffs = [](auto& obj, float x, float y, float z)
-	{
-		obj[0] = x;
-		obj[1] = y;
-		obj[2] = z;
-	};
-
-	/*
-		https://msdn.microsoft.com/en-us/library/windows/desktop/ms698715.aspx
-	*/
-
-	if (reference->colorspace == AVCOL_SPC_BT470BG)
-	{
-		setcoeffs(yuvdata.CoeffY, +0.299000, +0.587000, +0.114000);
-		setcoeffs(yuvdata.CoeffU, -0.168736, -0.331264, +0.500000);
-		setcoeffs(yuvdata.CoeffV, +0.500000, -0.418688, -0.081312);
-	}
-
-	else if (reference->colorspace == AVCOL_SPC_BT709)
-	{
-		setcoeffs(yuvdata.CoeffY, +0.212600, +0.715200, +0.072200);
-		setcoeffs(yuvdata.CoeffU, -0.114572, -0.385428, +0.500000);
-		setcoeffs(yuvdata.CoeffV, +0.500000, -0.454153, -0.045847);
-	}
-
-	else
-	{
-		Error::Make("No matching YUV color space for coefficients"s);
-	}
-
-	D3D11_BUFFER_DESC cbufdesc = {};
-	cbufdesc.ByteWidth = sizeof(yuvdata);
-	cbufdesc.Usage = D3D11_USAGE_IMMUTABLE;
-	cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
-	cbufsubdesc.pSysMem = &yuvdata;
-
-	Error::MS::ThrowIfFailed
-	(
-		device->CreateBuffer(&cbufdesc, &cbufsubdesc, ConstantBuffer.GetAddressOf()),
-		"Could not create constant buffer for YUV GPU buffer"
-	);
-}
-
-void SDR::Stream::StreamBase::DirectX11Data::ConversionYUV::DynamicBind(ID3D11DeviceContext* context)
-{
-	auto cbufs = { ConstantBuffer.Get() };
-	context->CSSetConstantBuffers(1, 1, cbufs.begin());
-
-	auto uavs = { Y.View.Get(), U.View.Get(), V.View.Get() };
-	context->CSSetUnorderedAccessViews(0, 3, uavs.begin(), nullptr);
-}
-
-bool SDR::Stream::StreamBase::DirectX11Data::ConversionYUV::Download(ID3D11DeviceContext* context, FutureData& item)
-{
-	Profile::ScopedEntry e1(LocalProfiling::PushYUV);
-
-	D3D11_MAPPED_SUBRESOURCE mappedy;
-	D3D11_MAPPED_SUBRESOURCE mappedu;
-	D3D11_MAPPED_SUBRESOURCE mappedv;
-
-	auto hrs =
-	{
-		Y.Map(context, &mappedy),
-		U.Map(context, &mappedu),
-		V.Map(context, &mappedv)
-	};
-
-	bool pass = true;
-
-	for (auto res : hrs)
-	{
-		if (FAILED(res))
-		{
-			pass = false;
-
-			Log::Warning("SDR: Could not map DX11 YUV buffers\n"s);
-			break;
-		}
-	}
-
-	if (pass)
-	{
-		auto ptry = (uint8_t*)mappedy.pData;
-		auto ptru = (uint8_t*)mappedu.pData;
-		auto ptrv = (uint8_t*)mappedv.pData;
-
-		item.Planes[0].assign(ptry, ptry + mappedy.RowPitch);
-		item.Planes[1].assign(ptru, ptru + mappedu.RowPitch);
-		item.Planes[2].assign(ptrv, ptrv + mappedv.RowPitch);
-	}
-
-	Y.Unmap(context);
-	U.Unmap(context);
-	V.Unmap(context);
-
-	return pass;
-}
-
 void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE dx9handle, AVFrame* reference, bool staging)
 {
 	Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
@@ -478,7 +215,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 
 	struct RuleData
 	{
-		using FactoryType = std::function<std::unique_ptr<ConversionBase>()>;
+		using FactoryType = std::function<std::unique_ptr<D3D11::ConversionBase>()>;
 
 		RuleData
 		(
@@ -511,12 +248,12 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 
 	auto yuvfactory = []()
 	{
-		return std::make_unique<ConversionYUV>();
+		return std::make_unique<D3D11::ConversionYUV>();
 	};
 
 	auto bgr0factory = []()
 	{
-		return std::make_unique<ConversionBGR0>();
+		return std::make_unique<D3D11::ConversionBGR0>();
 	};
 
 	RuleData table[] =
