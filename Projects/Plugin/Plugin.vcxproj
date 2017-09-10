@@ -116,7 +116,6 @@
     <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\table64.h" />
     <ClInclude Include="3rd Party Libraries\MinHook\src\trampoline.h" />
     <ClInclude Include="Interface\Application\Application.hpp" />
-    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Pool.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Profile.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\D3D11.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\LAV.hpp" />
@@ -158,10 +157,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp" />
-    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\Pool.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\Profile.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

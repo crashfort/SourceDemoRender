@@ -94,18 +94,18 @@ void SDR::Video::Writer::WriteTrailer()
 	av_write_trailer(FormatContext.Get());
 }
 
-void SDR::Video::Writer::SetFrameInput(const PlaneType& planes)
+void SDR::Video::Writer::SetFrameInput(PlaneType& planes)
 {
 	int index = 0;
 
-	for (auto plane : planes)
+	for (auto& plane : planes)
 	{
-		if (!plane)
+		if (plane.empty())
 		{
 			break;
 		}
 
-		Frame->data[index] = (uint8_t*)plane;
+		Frame->data[index] = plane.data();
 		++index;
 	}
 }

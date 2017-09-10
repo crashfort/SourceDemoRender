@@ -5,8 +5,6 @@
 #include <memory>
 
 #include "Video.hpp"
-#include "Pool.hpp"
-
 #include "readerwriterqueue.h"
 
 namespace SDR::Stream
@@ -17,9 +15,7 @@ namespace SDR::Stream
 	struct FutureData
 	{
 		SDR::Video::Writer* Writer;
-		
-		SDR::Pool::FramePool* PoolPtr;
-		std::array<SDR::Pool::HandleData, 3> PoolHandles;
+		SDR::Video::Writer::PlaneType Planes;
 	};
 
 	/*
@@ -208,7 +204,6 @@ namespace SDR::Stream
 		} DirectX11;
 
 		SDR::Video::Writer Video;
-		SDR::Pool::FramePool FramePool;
 
 		/*
 			Skip first frame as it will always be black when capturing the engine backbuffer.
