@@ -72,21 +72,7 @@ namespace SDR
 
 	struct ModuleInformation
 	{
-		ModuleInformation(const char* name) : Name(name)
-		{
-			SDR::Error::ScopedContext e1("ModuleInformation"s);
-
-			MODULEINFO info;
-			
-			SDR::Error::MS::ThrowIfZero
-			(
-				K32GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(name), &info, sizeof(info)),
-				"Could not get module information for \"%s\"", name
-			);
-
-			MemoryBase = info.lpBaseOfDll;
-			MemorySize = info.SizeOfImage;
-		}
+		ModuleInformation(const char* name);
 
 		const char* Name;
 
