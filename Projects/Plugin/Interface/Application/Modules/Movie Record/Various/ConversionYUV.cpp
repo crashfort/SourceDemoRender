@@ -131,9 +131,9 @@ bool SDR::D3D11::ConversionYUV::Download(ID3D11DeviceContext* context, Stream::F
 		auto ptru = (uint8_t*)mappedu.pData;
 		auto ptrv = (uint8_t*)mappedv.pData;
 
-		item.Planes[0].assign(ptry, ptry + mappedy.RowPitch);
-		item.Planes[1].assign(ptru, ptru + mappedu.RowPitch);
-		item.Planes[2].assign(ptrv, ptrv + mappedv.RowPitch);
+		item.Planes[0].assign(ptry, ptry + Y.Size);
+		item.Planes[1].assign(ptru, ptru + U.Size);
+		item.Planes[2].assign(ptrv, ptrv + V.Size);
 	}
 
 	Y.Unmap(context);

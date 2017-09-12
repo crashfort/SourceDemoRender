@@ -45,7 +45,7 @@ bool SDR::D3D11::ConversionBGR0::Download(ID3D11DeviceContext* context, Stream::
 	else
 	{
 		auto ptr = (uint8_t*)mapped.pData;
-		item.Planes[0].assign(ptr, ptr + mapped.RowPitch);
+		item.Planes[0].assign(ptr, ptr + Buffer.Size);
 	}
 
 	Buffer.Unmap(context);
