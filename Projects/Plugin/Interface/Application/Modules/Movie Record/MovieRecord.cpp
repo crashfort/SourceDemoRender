@@ -594,7 +594,17 @@ namespace
 						linktabletovariable(Variables::Video::ColorSpace.GetString(), table, colorspace);
 					}
 
-					av_log_set_callback(LAVLogFunction);
+					if (Variables::SuppressLog.GetBool())
+					{
+						av_log_set_level(AV_LOG_QUIET);
+						av_log_set_callback(nullptr);
+					}
+
+					else
+					{
+						av_log_set_level(AV_LOG_INFO);
+						av_log_set_callback(LAVLogFunction);
+					}
 
 					auto stream = std::make_unique<SDR::Stream::StreamBase>();
 
