@@ -39,7 +39,7 @@ bool SDR::D3D11::ConversionBGR0::Download(ID3D11DeviceContext* context, Stream::
 
 	if (FAILED(hr))
 	{
-		Log::Warning("SDR: Could not map DX11 RGB buffer\n"s);
+		Log::Warning("SDR: Could not map D3D11 RGB buffer\n"s);
 	}
 
 	else

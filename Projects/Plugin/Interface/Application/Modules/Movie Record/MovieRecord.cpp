@@ -210,7 +210,7 @@ namespace
 
 				if (FAILED(hr))
 				{
-					SDR::Log::Warning("SDR: Could not get DX9 RT\n"s);
+					SDR::Log::Warning("SDR: Could not get D3D9 RT\n"s);
 					return false;
 				}
 
@@ -228,7 +228,7 @@ namespace
 
 				if (FAILED(hr))
 				{
-					SDR::Log::Warning("SDR: Could not copy DX9 RT -> DX11 RT\n"s);
+					SDR::Log::Warning("SDR: Could not copy D3D9 RT -> D3D11 RT\n"s);
 					return false;
 				}
 

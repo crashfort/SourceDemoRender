@@ -120,7 +120,7 @@ bool SDR::D3D11::ConversionYUV::Download(ID3D11DeviceContext* context, Stream::F
 		{
 			pass = false;
 
-			Log::Warning("SDR: Could not map DX11 YUV buffers\n"s);
+			Log::Warning("SDR: Could not map D3D11 YUV buffers\n"s);
 			break;
 		}
 	}
