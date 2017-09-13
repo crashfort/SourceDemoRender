@@ -8,6 +8,7 @@
 #include "Interface\Application\Modules\Shared\EngineClient.hpp"
 #include "Interface\Application\Modules\Shared\MaterialSystem.hpp"
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
+#include "Interface\PluginInterface.hpp"
 
 namespace
 {
@@ -555,7 +556,7 @@ namespace
 					*/
 					if (strlen(sdrpath) == 0)
 					{
-						sdrpath = SDR::GetGamePath();
+						sdrpath = SDR::Plugin::GetGamePath();
 					}
 
 					else

@@ -7,4 +7,11 @@ namespace SDR::Plugin
 	void Unload();
 
 	void SetAcceptFunction(std::function<void()>&& func);
+
+	const char* GetGamePath();
+	const char* GetGameName();
+
+	bool IsGame(const char* test);
+
+	std::string BuildPath(const char* file);
 }

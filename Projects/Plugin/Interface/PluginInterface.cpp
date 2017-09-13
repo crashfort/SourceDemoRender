@@ -248,10 +248,10 @@ void SDR::Plugin::Load()
 
 	try
 	{
-		SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
+		SDR::Setup(SDR::Plugin::GetGamePath(), SDR::Plugin::GetGameName());
 
 		Commands::Version();
-		SDR::Log::Message("SDR: Current game: \"%s\"\n", SDR::GetGameName());
+		SDR::Log::Message("SDR: Current game: \"%s\"\n", SDR::Plugin::GetGameName());
 		SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Source Demo Render loaded\n");
 
 		/*
@@ -276,22 +276,22 @@ void SDR::Plugin::SetAcceptFunction(std::function<void()>&& func)
 	Commands::Accept::Callback = std::move(func);
 }
 
-const char* SDR::GetGameName()
+const char* SDR::Plugin::GetGameName()
 {
 	return ModuleGameDir::GameName.c_str();
 }
 
-const char* SDR::GetGamePath()
+const char* SDR::Plugin::GetGamePath()
 {
 	return ModuleGameDir::FullPath.c_str();
 }
 
-bool SDR::IsGame(const char* test)
+bool SDR::Plugin::IsGame(const char* test)
 {
 	return strcmp(GetGameName(), test) == 0;
 }
 
-std::string SDR::BuildPath(const char* file)
+std::string SDR::Plugin::BuildPath(const char* file)
 {
 	std::string ret = GetGamePath();
 	ret += file;

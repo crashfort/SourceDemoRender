@@ -294,7 +294,7 @@ namespace
 
 			try
 			{
-				document = SDR::Json::FromFile(SDR::BuildPath("SDR\\GameConfig.json"));
+				document = SDR::Json::FromFile(SDR::Plugin::BuildPath("SDR\\GameConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)

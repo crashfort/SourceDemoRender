@@ -26,13 +26,3 @@ using namespace std::chrono_literals;
 #include "Interface\Application\Modules\Shared\Console.hpp"
 #include "SDR Shared\File.hpp"
 #include "SDR Shared\Error.hpp"
-
-namespace SDR
-{
-	const char* GetGamePath();
-	const char* GetGameName();
-	
-	bool IsGame(const char* test);
-
-	std::string BuildPath(const char* file);
-}
