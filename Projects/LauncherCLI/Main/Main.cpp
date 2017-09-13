@@ -19,7 +19,6 @@ namespace
 	char LibraryNameNoPrefix[] = "SourceDemoRender.dll";
 	char ConfigNameNoPrefix[] = "GameConfig.json";
 	char InitializeExportName[] = "SDR_Initialize";
-	char EventName[] = "SDR_LAUNCHER";
 }
 
 namespace
@@ -94,21 +93,106 @@ namespace
 
 namespace
 {
+	struct ServerShadowStateData : SDR::API::ShadowState
+	{
+		ServerShadowStateData(SDR::API::StageType stage, const char* name)
+		{
+			Stage = stage;
+			StageName = name;
+
+			auto pipename = SDR::API::CreatePipeName(stage);
+			auto successname = SDR::API::CreateEventSuccessName(stage);
+			auto failname = SDR::API::CreateEventFailureName(stage);
+
+			Pipe.Attach(CreateNamedPipeA(pipename.c_str(), PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 4096, 0, nullptr));
+			SDR::Error::MS::ThrowIfZero(Pipe.Get(), "Could not create inbound pipe in stage \"%s\"", StageName);
+
+			EventSuccess.Attach(CreateEventA(nullptr, false, false, successname.c_str()));
+			SDR::Error::MS::ThrowIfZero(EventSuccess.Get(), "Could not create success loader event in stage \"%s\"", StageName);
+
+			EventFailure.Attach(CreateEventA(nullptr, false, false, failname.c_str()));
+			SDR::Error::MS::ThrowIfZero(EventFailure.Get(), "Could not create failure loader event in stage \"%s\"", StageName);
+		}
+
+		HANDLE WaitEvents(HANDLE process)
+		{
+			printf_s("Waiting for stage \"%s\"\n", StageName);
+
+			auto target = SDR::IPC::WaitForOne({ process, EventSuccess.Get(), EventFailure.Get() });
+
+			ReadPipe();
+
+			if (target == process)
+			{
+				SDR::Error::Make("Process exited at stage \"%s\"", StageName);
+			}
+
+			else if (target == EventSuccess.Get())
+			{
+				printf_s("Passed stage \"%s\"\n", StageName);
+			}
+
+			else if (target == EventFailure.Get())
+			{
+				TerminateProcess(process, 0);
+				SDR::Error::Make("Could not pass stage \"%s\"", StageName);
+			}
+
+			return target;
+		}
+
+		void ReadPipe()
+		{
+			char buf[4096];
+			DWORD size = sizeof(buf);
+			DWORD avail = 0;
+
+			while (true)
+			{
+				auto res = PeekNamedPipe(Pipe.Get(), nullptr, 0, nullptr, &avail, nullptr);
+
+				if (res && avail > 0)
+				{
+					while (avail > 0)
+					{
+						std::memset(buf, 0, size);
+
+						DWORD read = 0;
+
+						auto min = std::min(size - 1, avail);
+						res = ReadFile(Pipe.Get(), buf, min, &read, nullptr);
+
+						buf[min] = 0;
+
+						if (res)
+						{
+							printf_s(buf);
+						}
+
+						avail -= min;
+					}
+				}
+
+				else
+				{
+					break;
+				}
+			}
+		}
+
+		const char* StageName;
+		SDR::API::StageType Stage;
+	};
+
 	struct InterProcessData
 	{
 		decltype(LoadLibraryA)* LoadLibraryAddr;
 		decltype(GetProcAddress)* GetProcAddressAddr;
-		decltype(OpenEventA)* OpenEventAddr;
-		decltype(SetEvent)* SetEventAddr;
-		decltype(CloseHandle)* CloseHandleAddr;
 		
 		const char* LibraryNameAddr;
 		const char* ExportNameAddr;
-		const char* EventNameAddr;
 		const char* GamePathAddr;
 		const char* GameNameAddr;
-
-		SDR::API::InitializeCode Code;
 	};
 
 	/*
@@ -124,52 +208,18 @@ namespace
 		auto loadexport = data->ExportNameAddr;
 		auto path = data->GamePathAddr;
 		auto game = data->GameNameAddr;
-		auto eventname = data->EventNameAddr;
 
 		auto module = data->LoadLibraryAddr(library);
 		auto func = (SDR::API::SDR_Initialize)data->GetProcAddressAddr(module, loadexport);
 
-		data->Code = func(path, game);
-
-		auto event = data->OpenEventAddr(EVENT_MODIFY_STATE, false, eventname);
-
-		/*
-			It's now safe to read the status code.
-		*/
-		data->SetEventAddr(event);
-		data->CloseHandleAddr(event);
+		func(path, game);
 	}
 
 	void InjectProcess(HANDLE process, HANDLE thread, const std::string& path, const std::string& game)
 	{
-		struct FailTerminateData
-		{
-			FailTerminateData(HANDLE process) : Process(process)
-			{
-
-			}
-
-			~FailTerminateData()
-			{
-				if (Fail)
-				{
-					TerminateProcess(Process, 0);
-					SDR::Error::Make("Process exited");
-				}
-			}
-
-			HANDLE Process;
-			bool Fail = true;
-		};
-
-		/*
-			Ensure the process is closed on any error.
-		*/
-		FailTerminateData terminator(process);
-
 		printf_s("Injecting into \"%s\"\n", game.c_str());
 
-		VirtualMemory memory(process, 1024);
+		VirtualMemory memory(process, 4096);
 		ProcessWriter writer(process, memory.Address);
 
 		/*
@@ -180,46 +230,28 @@ namespace
 		{
 			0x55,
 			0x8b, 0xec,
-			0x51,
-			0x8b, 0x4d, 0x08,
 			0x53,
+			0x8b, 0x5d, 0x08,
 			0x56,
 			0x57,
-			0x8b, 0x41, 0x1c,
-			0xff, 0x71, 0x14,
-			0x8b, 0x71, 0x18,
-			0x8b, 0x59, 0x20,
-			0x8b, 0x79, 0x24,
-			0x89, 0x45, 0xfc,
-			0x8b, 0x01,
+			0x8b, 0x43, 0x10,
+			0xff, 0x73, 0x08,
+			0x8b, 0x73, 0x0c,
+			0x8b, 0x7b, 0x14,
+			0x89, 0x45, 0x08,
+			0x8b, 0x03,
 			0xff, 0xd0,
 			0x56,
 			0x50,
-			0x8b, 0x45, 0x08,
-			0x8b, 0x40, 0x04,
+			0x8b, 0x43, 0x04,
 			0xff, 0xd0,
 			0x57,
-			0x53,
+			0xff, 0x75, 0x08,
 			0xff, 0xd0,
-			0x8b, 0x5d, 0x08,
 			0x83, 0xc4, 0x08,
-			0xff, 0x75, 0xfc,
-			0x89, 0x43, 0x28,
-			0x8b, 0x43, 0x08,
-			0x6a, 0x00,
-			0x6a, 0x02,
-			0xff, 0xd0,
-			0x8b, 0x4b, 0x0c,
-			0x8b, 0xf0,
-			0x56,
-			0xff, 0xd1,
-			0x8b, 0x43, 0x10,
-			0x56,
-			0xff, 0xd0,
 			0x5f,
 			0x5e,
 			0x5b,
-			0x8b, 0xe5,
 			0x5d,
 			0xc2, 0x04, 0x00,
 		};
@@ -236,9 +268,6 @@ namespace
 		*/
 		data.LoadLibraryAddr = LoadLibraryA;
 		data.GetProcAddressAddr = GetProcAddress;
-		data.OpenEventAddr = OpenEventA;
-		data.SetEventAddr = SetEvent;
-		data.CloseHandleAddr = CloseHandle;
 
 		/*
 			All referenced strings must be allocated in the other process too.
@@ -247,9 +276,6 @@ namespace
 		data.ExportNameAddr = writer.PushString(InitializeExportName);
 		data.GamePathAddr = writer.PushString(path);
 		data.GameNameAddr = writer.PushString(game);
-		data.EventNameAddr = writer.PushString(EventName);
-		
-		data.Code = SDR::API::InitializeCode::GeneralFailure;
 
 		auto dataaddr = writer.PushMemory(data);
 
@@ -262,78 +288,17 @@ namespace
 			"Could not queue APC for process"
 		);
 
-		/*
-			Event that will notify the completion of the initialize routine.
-		*/
-		ScopedHandle event(CreateEventA(nullptr, false, false, EventName));
-		
-		SDR::Error::MS::ThrowIfZero(event.Get(), "Could not create launcher sync event");
+		ServerShadowStateData initstage(SDR::API::StageType::Initialize, "Initialize");
 
 		/*
 			Our initialize function will now run inside the other process.
 		*/
 		ResumeThread(thread);
 
-		printf_s("Waiting for signals\n");
-
 		/*
-			Wait for the signal that it's safe to read back the status code, or if there
-			was an error and the process ended.
+			Wait for either success or failure signal or if there was an error and the process ended.
 		*/
-		auto target = SDR::IPC::WaitForOne({ event.Get(), process });
-
-		if (target == event.Get())
-		{
-			printf_s("Received remote SDR signal\n");
-		}
-
-		else if (target == process)
-		{
-			SDR::Error::Make("Process exited");
-		}
-
-		/*
-			Now read back the status code.
-		*/
-		SDR::Error::MS::ThrowIfZero
-		(
-			ReadProcessMemory(process, dataaddr, &data, sizeof(data), nullptr),
-			"Could not read process memory for status code"
-		);
-
-		switch (data.Code)
-		{
-			case SDR::API::InitializeCode::GeneralFailure:
-			{
-				printf_s("Could not remotely initialize SDR\n");
-				break;
-			}
-
-			case SDR::API::InitializeCode::Success:
-			{
-				printf_s("SDR initialized in \"%s\"\n", game.c_str());
-				terminator.Fail = false;
-				break;
-			}
-
-			case SDR::API::InitializeCode::CouldNotInitializeHooks:
-			{
-				printf_s("Could not initialize hooks inside SDR\n");
-				break;
-			}
-
-			case SDR::API::InitializeCode::CouldNotCreateLibraryIntercepts:
-			{
-				printf_s("Could not create library intercepts inside SDR\n");
-				break;
-			}
-
-			case SDR::API::InitializeCode::CouldNotEnableLibraryIntercepts:
-			{
-				printf_s("Could not enable library intercepts inside SDR\n");
-				break;
-			}
-		}
+		initstage.WaitEvents(process);
 	}
 
 	template <size_t Size>
@@ -400,7 +365,7 @@ namespace
 
 		catch (SDR::File::ScopedFile::ExceptionType status)
 		{
-			SDR::Error::Make("Could not find game config");
+			SDR::Error::Make("Could not find game config"s);
 		}
 
 		for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it)
@@ -414,7 +379,7 @@ namespace
 			}
 		}
 
-		SDR::Error::Make("Game not found in game config");
+		SDR::Error::Make("Game not found in game config"s);
 	}
 
 	void MainProcedure(int argc, char* argv[])
@@ -432,12 +397,12 @@ namespace
 
 		if (PathFileExistsA(exepath.c_str()) == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 does not exist\n");
+			SDR::Error::Make("Specified path at argument 0 does not exist\n"s);
 		}
 
 		if (PathMatchSpecA(exepath.c_str(), "*.exe") == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 not an executable\n");
+			SDR::Error::Make("Specified path at argument 0 not an executable\n"s);
 		}
 
 		char curdir[SDR::File::NameSize];
@@ -467,14 +432,7 @@ namespace
 
 		printf_s("Parameters: \"%s\"\n", params.c_str());
 
-		ScopedHandle pipe(CreateNamedPipeA(R"(\\.\pipe\sdr_loader_pipe)", PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 4096, 0, nullptr));
-		SDR::Error::MS::ThrowIfZero(pipe.Get(), "Could not create inbound pipe");
-
-		ScopedHandle eventsuccess(CreateEventA(nullptr, false, false, "SDR_LOADER_SUCCESS"));
-		SDR::Error::MS::ThrowIfZero(eventsuccess.Get(), "Could not create success loader event");
-
-		ScopedHandle eventfail(CreateEventA(nullptr, false, false, "SDR_LOADER_FAIL"));
-		SDR::Error::MS::ThrowIfZero(eventfail.Get(), "Could not create failure loader event");
+		ServerShadowStateData loadstage(SDR::API::StageType::Load, "Load");
 
 		auto info = StartProcess(dir, exepath, game, params);
 
@@ -483,74 +441,10 @@ namespace
 
 		InjectProcess(process.Get(), thread.Get(), dir, game);
 
-		auto waitevent = [&]()
-		{
-			auto target = SDR::IPC::WaitForOne({ process.Get(), eventsuccess.Get(), eventfail.Get() });
-
-			if (target == process.Get())
-			{
-				SDR::Error::Make("Process exited");
-			}
-
-			else if (target == eventsuccess.Get())
-			{
-				printf_s("SDR fully loaded\n");
-			}
-
-			else if (target == eventfail.Get())
-			{
-				TerminateProcess(process.Get(), 0);
-				printf_s("Could not remotely load SDR\n");
-			}
-		};
-
-		auto readpipe = [&]()
-		{
-			char buf[4096];
-			DWORD size = sizeof(buf);
-			DWORD avail = 0;
-
-			while (true)
-			{
-				auto res = PeekNamedPipe(pipe.Get(), nullptr, 0, nullptr, &avail, nullptr);
-
-				if (res && avail > 0)
-				{
-					while (avail > 0)
-					{
-						std::memset(buf, 0, size);
-
-						DWORD read = 0;
-
-						auto min = std::min(size - 1, avail);
-						res = ReadFile(pipe.Get(), buf, min, &read, nullptr);
-
-						buf[min] = 0;
-
-						if (res)
-						{
-							printf_s(buf);
-						}
-
-						avail -= min;
-					}
-				}
-
-				else
-				{
-					break;
-				}
-			}
-		};
-
-		printf_s("Waiting for finished loading event\n");
-
 		/*
 			Wait until the end of SDR::Plugin::Load() and then read back all messages.
 		*/
-		waitevent();
-
-		readpipe();
+		loadstage.WaitEvents(process.Get());
 	}
 
 	void EnsureFileIsPresent(const char* name)
@@ -566,19 +460,34 @@ namespace
 		InterProcessData data;
 		data.LoadLibraryAddr = LoadLibraryA;
 		data.GetProcAddressAddr = GetProcAddress;
-		data.OpenEventAddr = OpenEventA;
-		data.SetEventAddr = SetEvent;
-		data.CloseHandleAddr = CloseHandle;
 
 		data.LibraryNameAddr = LibraryName;
 		data.ExportNameAddr = InitializeExportName;
 		data.GamePathAddr = "i dont know";
 		data.GameNameAddr = "i dont know";
-		data.EventNameAddr = EventName;
 
 		QueueUserAPC(ProcessAPC, GetCurrentThread(), (ULONG_PTR)&data);
 
 		SleepEx(0, 1);
+
+		return;
+	}
+
+	void ShowLibraryVersion()
+	{
+		auto library = LoadLibraryA(LibraryNameNoPrefix);
+
+		if (!library)
+		{
+			SDR::Error::Make("Could not load SDR library for version display");
+		}
+
+		auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
+		auto version = func();
+
+		printf_s("SDR library version: %d\n", version);
+
+		FreeLibrary(library);
 	}
 }
 
@@ -588,6 +497,8 @@ void main(int argc, char* argv[])
 	{
 		EnsureFileIsPresent(LibraryNameNoPrefix);
 		EnsureFileIsPresent(ConfigNameNoPrefix);
+
+		ShowLibraryVersion();
 
 		/*
 			Don't need our own name.

@@ -17,7 +17,9 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Shared\Shared.vcxitems*{17324f58-4073-4e25-a5ed-2de6bc0b897e}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{45d41acc-2c3c-43d2-bc10-02aa73ffc7c7}*SharedItemsImports = 9
+		Plugin API\Plugin API.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
+		Plugin API\Plugin API.vcxitems*{b2dbce0d-417d-47d2-842c-4651f60231a7}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{b2dbce0d-417d-47d2-842c-4651f60231a7}*SharedItemsImports = 4
 		Plugin API\Plugin API.vcxitems*{f6a710b0-1dad-4087-b575-5512efeccc0f}*SharedItemsImports = 9
 	EndGlobalSection

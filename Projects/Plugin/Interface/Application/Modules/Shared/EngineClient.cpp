@@ -37,43 +37,38 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EngineClientPtr",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
-					if (!address)
-					{
-						return false;
-					}
-
 					Ptr = **(void***)(address);
+					SDR::Error::ThrowIfNull(Ptr);
 
 					SDR::ModuleShared::Registry::SetKeyValue(name, Ptr);
-					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
 			(
 				"EngineClient_ConsoleVisible",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::ConsoleVisible, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::ConsoleVisible, name, value, VariantCount);
 				}
 			),
 			SDR::ModuleHandlerAdder
 			(
 				"EngineClient_FlashWindow",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::FlashWindow, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::FlashWindow, name, value, VariantCount);
 				}
 			),
 			SDR::ModuleHandlerAdder
 			(
 				"EngineClient_ClientCommand",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::ClientCommand, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::ClientCommand, name, value, VariantCount);
 				}
 			)
 		);

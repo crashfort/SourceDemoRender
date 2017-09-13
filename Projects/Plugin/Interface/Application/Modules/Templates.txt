@@ -35,7 +35,7 @@ namespace Module
 		SDR::ModuleHandlerAdder
 		(
 			"",
-			[](const char* name, rapidjson::Value& value)
+			[](const char* name, const rapidjson::Value& value)
 			{
 				return SDR::GenericHookVariantInit
 				(
@@ -77,7 +77,7 @@ namespace Module
 		SDR::ModuleHandlerAdder
 		(
 			"Ptr",
-			[](const char* name, rapidjson::Value& value)
+			[](const char* name, const rapidjson::Value& value)
 			{
 				auto address = SDR::GetAddressFromJsonPattern(value);
 
@@ -95,7 +95,7 @@ namespace Module
 		SDR::ModuleHandlerAdder
 		(
 			"",
-			[](const char* name, rapidjson::Value& value)
+			[](const char* name, const rapidjson::Value& value)
 			{
 				return SDR::GenericVariantInit(Entries::Example, name, value, VariantCount);
 			}

@@ -25,7 +25,7 @@ namespace
 {
 	enum
 	{
-		PluginVersion = 20,
+		PluginVersion = 21,
 	};
 }
 
@@ -176,77 +176,82 @@ namespace
 		SDR::Console::MakeCommand("sdr_accept", Commands::Accept::Procedure);
 	});
 
-	struct LoadFuncData
+	struct LoadFuncData : SDR::API::ShadowState
 	{
-		LoadFuncData()
+		void Create(SDR::API::StageType stage)
 		{
-			EventSuccess = OpenEventA(EVENT_MODIFY_STATE, false, "SDR_LOADER_SUCCESS");
-			EventFailure = OpenEventA(EVENT_MODIFY_STATE, false, "SDR_LOADER_FAIL");
-			Pipe = CreateFileA(R"(\\.\pipe\sdr_loader_pipe)", GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+			auto pipename = SDR::API::CreatePipeName(stage);
+			auto successname = SDR::API::CreateEventSuccessName(stage);
+			auto failname = SDR::API::CreateEventFailureName(stage);
+
+			Pipe.Attach(CreateFileA(pipename.c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr));
+			EventSuccess.Attach(OpenEventA(EVENT_MODIFY_STATE, false, successname.c_str()));
+			EventFailure.Attach(OpenEventA(EVENT_MODIFY_STATE, false, failname.c_str()));
 		}
-		
+
 		~LoadFuncData()
 		{
 			if (Failure)
 			{
-				SetEvent(EventFailure);
+				SetEvent(EventFailure.Get());
 			}
 
 			else
 			{
-				SetEvent(EventSuccess);
+				SetEvent(EventSuccess.Get());
 			}
-
-			CloseHandle(EventSuccess);
-			CloseHandle(EventFailure);
-			CloseHandle(Pipe);
 		}
 
 		void Write(const std::string& text)
 		{
 			DWORD written;
-			WriteFile(Pipe, text.c_str(), text.size(), &written, nullptr);
+			WriteFile(Pipe.Get(), text.c_str(), text.size(), &written, nullptr);
 		}
 
-		HANDLE Pipe;
-		
 		bool Failure = false;
-		HANDLE EventSuccess;
-		HANDLE EventFailure;
 	};
+
+	auto CreateShadowLoadState(SDR::API::StageType stage)
+	{
+		static LoadFuncData* LoadDataPtr;
+
+		auto localdata = std::make_unique<LoadFuncData>();
+		localdata->Create(stage);
+
+		LoadDataPtr = localdata.get();
+
+		/*
+			Temporary communication gates. All text output has to go to the launcher console.
+		*/
+		SDR::Log::SetMessageFunction([](std::string&& text)
+		{
+			LoadDataPtr->Write(text);
+		});
+
+		SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, std::string&& text)
+		{
+			LoadDataPtr->Write(text);
+		});
+
+		SDR::Log::SetWarningFunction([](std::string&& text)
+		{
+			LoadDataPtr->Write(text);
+		});
+
+		return localdata;
+	}
 }
 
 void SDR::Plugin::Load()
 {
-	static LoadFuncData* LoadDataPtr;
-
-	auto localdata = std::make_unique<LoadFuncData>();
-	LoadDataPtr = localdata.get();
-
-	/*
-		Temporary communication gates. All text output has to go to the launcher console.
-	*/
-	SDR::Log::SetMessageFunction([](std::string&& text)
-	{
-		LoadDataPtr->Write(text);
-	});
-
-	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, std::string&& text)
-	{
-		LoadDataPtr->Write(text);
-	});
-
-	SDR::Log::SetWarningFunction([](std::string&& text)
-	{
-		LoadDataPtr->Write(text);
-	});
+	auto localdata = CreateShadowLoadState(SDR::API::StageType::Load);
 
 	try
 	{
-		SDR::Setup(SDR::GetGamePath(), SDR::GetGameName());
+		SDR::Setup(SDR::Plugin::GetGamePath(), SDR::Plugin::GetGameName());
 
 		Commands::Version();
-		SDR::Log::Message("SDR: Current game: \"%s\"\n", SDR::GetGameName());
+		SDR::Log::Message("SDR: Current game: \"%s\"\n", SDR::Plugin::GetGameName());
 		SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Source Demo Render loaded\n");
 
 		/*
@@ -271,22 +276,22 @@ void SDR::Plugin::SetAcceptFunction(std::function<void()>&& func)
 	Commands::Accept::Callback = std::move(func);
 }
 
-const char* SDR::GetGameName()
+const char* SDR::Plugin::GetGameName()
 {
 	return ModuleGameDir::GameName.c_str();
 }
 
-const char* SDR::GetGamePath()
+const char* SDR::Plugin::GetGamePath()
 {
 	return ModuleGameDir::FullPath.c_str();
 }
 
-bool SDR::IsGame(const char* test)
+bool SDR::Plugin::IsGame(const char* test)
 {
 	return strcmp(GetGameName(), test) == 0;
 }
 
-std::string SDR::BuildPath(const char* file)
+std::string SDR::Plugin::BuildPath(const char* file)
 {
 	std::string ret = GetGamePath();
 	ret += file;
@@ -305,25 +310,26 @@ extern "C"
 		First actual pre-engine load function. Don't reference any
 		engine libraries here as they aren't loaded yet like in "Load".
 	*/
-	__declspec(dllexport) SDR::API::InitializeCode __cdecl SDR_Initialize(const char* path, const char* game)
+	__declspec(dllexport) void __cdecl SDR_Initialize(const char* path, const char* game)
 	{
 		ModuleGameDir::FullPath = path;
 		ModuleGameDir::GameName = game;
 
 		SDR::Error::SetPrintFormat("SDR: %s\n");
 
-		RegisterLAV();
+		auto localdata = CreateShadowLoadState(SDR::API::StageType::Initialize);
 
 		try
 		{
 			SDR::PreEngineSetup();
 		}
 
-		catch (SDR::API::InitializeCode code)
+		catch (const SDR::Error::Exception& error)
 		{
-			return code;
+			localdata->Failure = true;
+			return;
 		}
 
-		return SDR::API::InitializeCode::Success;
+		RegisterLAV();
 	}
 }

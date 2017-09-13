@@ -20,7 +20,7 @@ namespace
 
 		namespace Variant0
 		{
-			using GetBackBufferDimensionsType = bool(__fastcall*)(void* thisptr, void* edx, int& width, int& height);
+			using GetBackBufferDimensionsType = void(__fastcall*)(void* thisptr, void* edx, int& width, int& height);
 			SDR::ModuleShared::Variant::Function<GetBackBufferDimensionsType> GetBackBufferDimensions(Entries::GetBackBufferDimensions);
 		}
 
@@ -29,27 +29,22 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialsPtr",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
-					if (!address)
-					{
-						return false;
-					}
-
 					Ptr = **(void***)(address);
+					SDR::Error::ThrowIfNull(Ptr);
 
 					SDR::ModuleShared::Registry::SetKeyValue(name, Ptr);
-					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialSystem_GetBackBufferDimensions",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::GetBackBufferDimensions, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::GetBackBufferDimensions, name, value, VariantCount);
 				}
 			)
 		);
@@ -61,12 +56,10 @@ void* SDR::MaterialSystem::GetPtr()
 	return ModuleMaterialSystem::Ptr;
 }
 
-bool SDR::MaterialSystem::GetBackBufferDimensions(int& width, int& height)
+void SDR::MaterialSystem::GetBackBufferDimensions(int& width, int& height)
 {
 	if (ModuleMaterialSystem::Entries::GetBackBufferDimensions == 0)
 	{
-		return ModuleMaterialSystem::Variant0::GetBackBufferDimensions()(GetPtr(), nullptr, width, height);
+		ModuleMaterialSystem::Variant0::GetBackBufferDimensions()(GetPtr(), nullptr, width, height);
 	}
-
-	return false;
 }

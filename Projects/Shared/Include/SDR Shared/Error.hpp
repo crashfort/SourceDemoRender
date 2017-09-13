@@ -3,6 +3,8 @@
 #include "Log.hpp"
 #include <comdef.h>
 
+using namespace std::string_literals;
+
 namespace SDR::Error
 {
 	struct Exception
@@ -12,6 +14,12 @@ namespace SDR::Error
 
 	void SetPrintFormat(const char* format);
 	void Print(const Exception& error);
+
+	struct ScopedContext
+	{
+		ScopedContext(std::string&& str);
+		~ScopedContext();
+	};
 
 	/*
 		For use with unrecoverable errors.
@@ -43,6 +51,17 @@ namespace SDR::Error
 		if (ptr == nullptr)
 		{
 			Make(format, std::forward<Args>(args)...);
+		}
+	}
+
+	/*
+		For use with unrecoverable errors.
+	*/
+	inline void ThrowIfNull(const void* ptr)
+	{
+		if (ptr == nullptr)
+		{
+			Make("Null pointer"s);
 		}
 	}
 

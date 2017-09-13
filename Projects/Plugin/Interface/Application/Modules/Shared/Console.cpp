@@ -44,10 +44,9 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ConCommandBase_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
-					return true;
 				}
 			)
 		);
@@ -80,10 +79,9 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"CCommand_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
-					return true;
 				}
 			)
 		);
@@ -139,18 +137,17 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ConCommand_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
-					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
 			(
 				"ConCommand_Constructor1",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::Constructor1, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::Constructor1, name, value, VariantCount);
 				}
 			)
 		);
@@ -215,24 +212,22 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"ConVar_Info",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					Variant = SDR::GetVariantFromJson(value);
-					NeverAsStringFlag = value["NeverAsStringFlag"].GetInt();
+					NeverAsStringFlag = SDR::Json::GetInt(value, "NeverAsStringFlag");
 					
-					VTIndex_SetValueString = value["VTIndex_SetValueString"].GetInt();
-					VTIndex_SetValueFloat = value["VTIndex_SetValueFloat"].GetInt();
-					VTIndex_SetValueInt = value["VTIndex_SetValueInt"].GetInt();
-
-					return true;
+					VTIndex_SetValueString = SDR::Json::GetInt(value, "VTIndex_SetValueString");
+					VTIndex_SetValueFloat = SDR::Json::GetInt(value, "VTIndex_SetValueFloat");
+					VTIndex_SetValueInt = SDR::Json::GetInt(value, "VTIndex_SetValueInt");
 				}
 			),
 			SDR::ModuleHandlerAdder
 			(
 				"ConVar_Constructor3",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::Constructor3, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::Constructor3, name, value, VariantCount);
 				}
 			)
 		);
@@ -263,27 +258,22 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"CvarPtr",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
-					if (!address)
-					{
-						return false;
-					}
-
 					Ptr = **(void***)(address);
+					SDR::Error::ThrowIfNull(Ptr);
 
 					SDR::ModuleShared::Registry::SetKeyValue(name, Ptr);
-					return true;
 				}
 			),
 			SDR::ModuleHandlerAdder
 			(
 				"Cvar_FindVar",
-				[](const char* name, rapidjson::Value& value)
+				[](const char* name, const rapidjson::Value& value)
 				{
-					return SDR::GenericVariantInit(Entries::FindVar, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::FindVar, name, value, VariantCount);
 				}
 			)
 		);
@@ -322,20 +312,18 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"Console_Info",
-				[](const char* name, rapidjson::Value& value)
-				{					
-					Library = value["Library"].GetString();
+				[](const char* name, const rapidjson::Value& value)
+				{
+					Library = SDR::Json::GetString(value, "Library");
 
-					MessageVariant = value["MessageVariant"].GetInt();
-					MessageExport = value["MessageExport"].GetString();
+					MessageVariant = SDR::Json::GetInt(value, "MessageVariant");
+					MessageExport = SDR::Json::GetString(value, "MessageExport");
 
-					MessageColorVariant = value["MessageColorVariant"].GetInt();
-					MessageColorExport = value["MessageColorExport"].GetString();
+					MessageColorVariant = SDR::Json::GetInt(value, "MessageColorVariant");
+					MessageColorExport = SDR::Json::GetString(value, "MessageColorExport");
 
-					WarningVariant = value["WarningVariant"].GetInt();
-					WarningExport = value["WarningExport"].GetString();
-
-					return true;
+					WarningVariant = SDR::Json::GetInt(value, "WarningVariant");
+					WarningExport = SDR::Json::GetString(value, "WarningExport");
 				}
 			)
 		);
@@ -540,21 +528,21 @@ void SDR::Console::Load()
 
 	if (!ModulePrint::MessageAddr)
 	{
-		SDR::Error::Make("Could not find console message export");
+		SDR::Error::Make("Could not find console message export"s);
 	}
 
 	ModulePrint::MessageColorAddr = GetProcAddress(module, ModulePrint::MessageColorExport.c_str());
 
 	if (!ModulePrint::MessageColorAddr)
 	{
-		SDR::Error::Make("Could not find console color message export");
+		SDR::Error::Make("Could not find console color message export"s);
 	}
 
 	ModulePrint::WarningAddr = GetProcAddress(module, ModulePrint::WarningExport.c_str());
 
 	if (!ModulePrint::WarningAddr)
 	{
-		SDR::Error::Make("Could not find console warning export");
+		SDR::Error::Make("Could not find console warning export"s);
 	}
 
 	SDR::Log::SetMessageFunction([](std::string&& text)

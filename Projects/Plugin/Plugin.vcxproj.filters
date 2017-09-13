@@ -66,6 +66,36 @@
     <ClInclude Include="Interface\PluginInterface.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\D3D11.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\LAV.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Profile.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Stream.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Video.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\FutureData.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBase.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main\Precompiled Header\PrecompiledHeader.cpp">
@@ -110,6 +140,30 @@
     <ClCompile Include="Interface\Application\Modules\Shared\Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\D3D11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\LAV.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\Profile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\Stream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\Video.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Interface\Application\Modules\Movie Record\Shaders\Sampling.hlsl" />
@@ -123,6 +177,7 @@
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl" />
     <None Include="Interface\Application\Modules\Movie Record\Shaders\Utility.hlsl" />
     <None Include="Interface\Application\Modules\Movie Record\Shaders\SharedAll.hlsl" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Interface\Application\Modules\Templates.txt" />

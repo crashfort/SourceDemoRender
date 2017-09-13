@@ -169,27 +169,22 @@
 			"ActiveAppOffset": 52
 		}
 	},
-
 	"hl2":
 	{
 		"Inherit": "cstrike"
 	},
-
 	"tf":
 	{
 		"Inherit": "cstrike"
 	},
-
 	"momentum":
 	{
 		"Inherit": "cstrike"
 	},
-
 	"dod":
 	{
 		"Inherit": "cstrike"
 	},
-
 	"garrysmod":
 	{
 		"Inherit": "cstrike",
