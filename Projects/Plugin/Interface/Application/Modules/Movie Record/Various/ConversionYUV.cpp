@@ -17,9 +17,9 @@ namespace
 
 void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, AVFrame* reference, bool staging)
 {
-	auto sizey = reference->buf[0]->size;
-	auto sizeu = reference->buf[1]->size;
-	auto sizev = reference->buf[2]->size;
+	auto sizey = reference->linesize[0] * reference->height;
+	auto sizeu = reference->linesize[1] * reference->height;
+	auto sizev = reference->linesize[2] * reference->height;
 
 	Y.Create(device, DXGI_FORMAT_R8_UINT, sizey, sizey, staging);
 	U.Create(device, DXGI_FORMAT_R8_UINT, sizeu, sizeu, staging);

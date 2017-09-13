@@ -17,7 +17,7 @@ namespace
 
 void SDR::D3D11::ConversionBGR0::Create(ID3D11Device* device, AVFrame* reference, bool staging)
 {
-	auto size = reference->buf[0]->size;
+	auto size = reference->linesize[0] * reference->height;
 	auto count = size / sizeof(uint32_t);
 
 	Buffer.Create(device, DXGI_FORMAT_R32_UINT, size, count, staging);

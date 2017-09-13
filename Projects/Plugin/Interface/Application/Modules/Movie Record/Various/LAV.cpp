@@ -53,7 +53,7 @@ void SDR::LAV::ScopedAVFrame::Assign(int width, int height, AVPixelFormat format
 	Frame->colorspace = colorspace;
 	Frame->color_range = colorrange;
 
-	av_frame_get_buffer(Frame, 32);
+	av_image_fill_linesizes(Frame->linesize, format, width);
 
 	Frame->pts = 0;
 }
