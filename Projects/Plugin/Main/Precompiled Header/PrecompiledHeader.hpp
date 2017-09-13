@@ -21,7 +21,7 @@
 
 using namespace std::chrono_literals;
 
-#include "MinHookCPP.hpp"
+#include "SDR Shared\MinHookCPP.hpp"
 
 #include "Interface\Application\Modules\Shared\Console.hpp"
 #include "SDR Shared\File.hpp"
