@@ -73,6 +73,7 @@ namespace SDR::Stream
 				It is shared with a DirectX 11 texture so we can run it through shaders.
 			*/
 			SharedSurfaceData SharedSurface;
+			Microsoft::WRL::ComPtr<IDirect3DSurface9> GameRenderTarget0;
 		} DirectX9;
 
 		struct DirectX11Data

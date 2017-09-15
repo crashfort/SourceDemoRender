@@ -139,6 +139,12 @@ void SDR::Stream::StreamBase::DirectX9Data::SharedSurfaceData::Create(IDirect3DD
 void SDR::Stream::StreamBase::DirectX9Data::Create(IDirect3DDevice9Ex* device, int width, int height)
 {
 	SharedSurface.Create(device, width, height);
+
+	Error::MS::ThrowIfFailed
+	(
+		device->GetRenderTarget(0, GameRenderTarget0.GetAddressOf()),
+		"SDR: Could not get D3D9 RT\n"
+	);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE dx9handle, AVFrame* reference, bool staging)

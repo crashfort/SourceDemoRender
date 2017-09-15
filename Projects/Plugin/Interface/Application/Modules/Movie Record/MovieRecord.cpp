@@ -202,25 +202,14 @@ namespace
 		{
 			bool CopyDX9ToDX11(SDR::Stream::StreamBase* stream)
 			{
-				HRESULT hr;
-				Microsoft::WRL::ComPtr<IDirect3DSurface9> surface;
-
 				auto dx9device = SDR::SourceGlobals::GetD3D9DeviceEx();
-
-				hr = dx9device->GetRenderTarget(0, surface.GetAddressOf());
-
-				if (FAILED(hr))
-				{
-					SDR::Log::Warning("SDR: Could not get D3D9 RT\n"s);
-					return false;
-				}
 
 				/*
 					The DX11 texture now contains this data.
 				*/
-				hr = dx9device->StretchRect
+				auto hr = dx9device->StretchRect
 				(
-					surface.Get(),
+					stream->DirectX9.GameRenderTarget0.Get(),
 					nullptr,
 					stream->DirectX9.SharedSurface.Surface.Get(),
 					nullptr,
