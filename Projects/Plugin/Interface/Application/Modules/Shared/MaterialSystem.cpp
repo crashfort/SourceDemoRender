@@ -13,11 +13,6 @@ namespace
 			SDR::ModuleShared::Variant::Entry GetBackBufferDimensions;
 		}
 
-		enum
-		{
-			VariantCount = 1
-		};
-
 		namespace Variant0
 		{
 			using GetBackBufferDimensionsType = void(__fastcall*)(void* thisptr, void* edx, int& width, int& height);
@@ -44,7 +39,7 @@ namespace
 				"MaterialSystem_GetBackBufferDimensions",
 				[](const char* name, const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::GetBackBufferDimensions, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::GetBackBufferDimensions, name, value);
 				}
 			)
 		);

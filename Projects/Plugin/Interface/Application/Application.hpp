@@ -177,7 +177,13 @@ namespace SDR
 					return Variant == other;
 				}
 
+				void Visit()
+				{
+					++VariantCount;
+				}
+
 				void* Address;
+				int VariantCount = 0;
 				int Variant;
 			};
 
@@ -188,7 +194,7 @@ namespace SDR
 
 				Function(Entry& entry) : TargetEntry(entry)
 				{
-
+					entry.Visit();
 				}
 
 				auto operator()() const
@@ -203,7 +209,7 @@ namespace SDR
 			{
 				HookFunction(Entry& entry) : TargetEntry(entry)
 				{
-
+					entry.Visit();
 				}
 
 				Entry& TargetEntry;
@@ -231,7 +237,7 @@ namespace SDR
 		}
 	}
 
-	void GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, const rapidjson::Value& value, int maxvariant);
+	void GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, const rapidjson::Value& value);
 
 	void CreateHookBare(const char* name, HookModuleBare& hook, void* override, void* address);
 

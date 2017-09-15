@@ -824,14 +824,14 @@ bool SDR::ModuleShared::Registry::GetKeyValue(const char* name, uint32_t* value)
 	return false;
 }
 
-void SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, const rapidjson::Value& value, int maxvariant)
+void SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, const rapidjson::Value& value)
 {
 	SDR::Error::ScopedContext e1("GenericVariantInit"s);
 
 	auto addr = SDR::GetAddressFromJsonFlex(value);
 	auto variant = SDR::GetVariantFromJson(value);
 
-	WarnIfVariantOutOfBounds(name, variant, maxvariant);
+	WarnIfVariantOutOfBounds(name, variant, entry.VariantCount);
 
 	ModuleShared::SetFromAddress(entry, addr, variant);
 }

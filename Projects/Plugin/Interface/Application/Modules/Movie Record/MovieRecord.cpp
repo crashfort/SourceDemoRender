@@ -370,11 +370,6 @@ namespace
 			}
 		}
 
-		enum
-		{
-			VariantCount = 1
-		};
-
 		namespace Variant0
 		{
 			void __fastcall NewFunction(void* thisptr, void* edx, void* rect);
@@ -799,11 +794,6 @@ namespace
 			}
 		}
 
-		enum
-		{
-			VariantCount = 1
-		};
-
 		namespace Variant0
 		{
 			/*
@@ -887,11 +877,6 @@ namespace
 				ModuleStartMovie::Common::Procedure(name, width, height);
 			}
 		}
-
-		enum
-		{
-			VariantCount = 1
-		};
 
 		namespace Variant0
 		{
@@ -1005,11 +990,6 @@ namespace
 			}
 		}
 
-		enum
-		{
-			VariantCount = 1
-		};
-
 		namespace Variant0
 		{
 			void __cdecl NewFunction();
@@ -1053,11 +1033,6 @@ namespace
 				ModuleEndMovie::Common::Procedure(true);
 			}
 		}
-
-		enum
-		{
-			VariantCount = 1
-		};
 
 		namespace Variant0
 		{
@@ -1111,11 +1086,6 @@ namespace
 
 	namespace ModuleSUpdateGuts
 	{
-		enum
-		{
-			VariantCount = 1
-		};
-
 		namespace Variant0
 		{
 			void __cdecl NewFunction(float mixahead);

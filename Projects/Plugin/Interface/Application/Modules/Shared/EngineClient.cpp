@@ -15,11 +15,6 @@ namespace
 			SDR::ModuleShared::Variant::Entry ClientCommand;
 		}
 
-		enum
-		{
-			VariantCount = 1
-		};
-
 		namespace Variant0
 		{
 			using ConsoleVisibleType = bool(__fastcall*)(void* thisptr, void* edx);
@@ -52,7 +47,7 @@ namespace
 				"EngineClient_ConsoleVisible",
 				[](const char* name, const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::ConsoleVisible, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::ConsoleVisible, name, value);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -60,7 +55,7 @@ namespace
 				"EngineClient_FlashWindow",
 				[](const char* name, const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::FlashWindow, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::FlashWindow, name, value);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -68,7 +63,7 @@ namespace
 				"EngineClient_ClientCommand",
 				[](const char* name, const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::ClientCommand, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::ClientCommand, name, value);
 				}
 			)
 		);

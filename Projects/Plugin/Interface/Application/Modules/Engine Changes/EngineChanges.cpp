@@ -70,11 +70,6 @@ namespace
 
 	namespace ModuleAppActivate
 	{
-		enum
-		{
-			VariantCount = 1
-		};
-
 		namespace Variant0
 		{
 			/*

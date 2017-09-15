@@ -20,11 +20,6 @@ namespace
 	{
 		int Variant;
 
-		enum
-		{
-			VariantCount = 1
-		};
-
 		namespace Variant0
 		{
 			struct Data
@@ -96,11 +91,6 @@ namespace
 			SDR::ModuleShared::Variant::Entry Constructor1;
 		}
 
-		enum
-		{
-			VariantCount = 1
-		};
-
 		namespace Variant0
 		{
 			struct Data : ModuleConCommandBase::Variant0::Data
@@ -147,7 +137,7 @@ namespace
 				"ConCommand_Constructor1",
 				[](const char* name, const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::Constructor1, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::Constructor1, name, value);
 				}
 			)
 		);
@@ -165,11 +155,6 @@ namespace
 		{
 			SDR::ModuleShared::Variant::Entry Constructor3;
 		}
-
-		enum
-		{
-			VariantCount = 1
-		};
 
 		namespace Variant0
 		{
@@ -227,7 +212,7 @@ namespace
 				"ConVar_Constructor3",
 				[](const char* name, const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::Constructor3, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::Constructor3, name, value);
 				}
 			)
 		);
@@ -241,11 +226,6 @@ namespace
 		{
 			SDR::ModuleShared::Variant::Entry FindVar;
 		}
-
-		enum
-		{
-			VariantCount = 1
-		};
 
 		namespace Variant0
 		{
@@ -273,7 +253,7 @@ namespace
 				"Cvar_FindVar",
 				[](const char* name, const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::FindVar, name, value, VariantCount);
+					SDR::GenericVariantInit(Entries::FindVar, name, value);
 				}
 			)
 		);
@@ -294,11 +274,6 @@ namespace
 		int WarningVariant;
 		std::string WarningExport;
 		void* WarningAddr;
-
-		enum
-		{
-			VariantCount = 1
-		};
 
 		namespace Variant0
 		{
