@@ -748,7 +748,7 @@ void SDR::WarnIfVariantOutOfBounds(const char* name, int variant, int max)
 {
 	SDR::Error::ScopedContext e1("WarnIfVariantOutOfBounds"s);
 
-	if (variant < 0 || variant > max)
+	if (variant < 0 || variant >= max)
 	{
 		SDR::Error::Make("SDR: Variant overload %d for \"%s\" not in bounds (%d max)\n", variant, max);
 	}
