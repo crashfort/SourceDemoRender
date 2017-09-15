@@ -77,11 +77,11 @@ namespace
 			*/
 			struct InputEvent_t
 			{
-				int m_nType;
-				int m_nTick;
-				int m_nData;
-				int m_nData2;
-				int m_nData3;
+				int Type;
+				int Tick;
+				int Data;
+				int Data2;
+				int Data3;
 			};
 
 			void __fastcall NewFunction(void* thisptr, void* edx, const InputEvent_t& event);
@@ -91,7 +91,7 @@ namespace
 
 			void __fastcall NewFunction(void* thisptr, void* edx, const InputEvent_t& event)
 			{
-				IsUnfocused = event.m_nData == 0;
+				IsUnfocused = event.Data == 0;
 
 				auto& isactiveapp = *(bool*)((char*)(thisptr) + ModuleEngineInfo::ActiveAppOffset);
 
