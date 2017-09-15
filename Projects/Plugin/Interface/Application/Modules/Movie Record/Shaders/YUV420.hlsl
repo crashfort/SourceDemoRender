@@ -11,7 +11,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	float3 pix = WorkBuffer[index].Color;
 
 	/*
-		FFMpeg frames are flipped.
+		FFmpeg frames are flipped.
 	*/
 	int yuvposy = Dimensions.y - pos.y - 1;
 

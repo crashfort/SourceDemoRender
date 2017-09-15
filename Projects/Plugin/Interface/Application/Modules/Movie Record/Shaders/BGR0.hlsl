@@ -39,7 +39,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 	uint2 pos = dtid.xy;
 
 	/*
-		FFMpeg frames are flipped.
+		FFmpeg frames are flipped.
 	*/
 	pos.y = Dimensions.y - pos.y - 1;
 

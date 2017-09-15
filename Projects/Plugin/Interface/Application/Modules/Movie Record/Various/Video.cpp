@@ -37,7 +37,7 @@ void SDR::Video::Writer::SetEncoder(AVCodec* encoder)
 	Error::ThrowIfNull(Stream, "Could not create video stream");
 
 	/*
-		Against what the new ffmpeg API incorrectly suggests, but is the right way.
+		Against what the new FFmpeg API incorrectly suggests, but is the right way.
 	*/
 	CodecContext = Stream->codec;
 }
