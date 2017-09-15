@@ -397,12 +397,12 @@ namespace
 
 		if (PathFileExistsA(exepath.c_str()) == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 does not exist\n"s);
+			SDR::Error::Make("Specified path at argument 0 does not exist"s);
 		}
 
 		if (PathMatchSpecA(exepath.c_str(), "*.exe") == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 not an executable\n"s);
+			SDR::Error::Make("Specified path at argument 0 not an executable"s);
 		}
 
 		char curdir[SDR::File::NameSize];
