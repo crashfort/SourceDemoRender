@@ -75,7 +75,7 @@ namespace
 			/*
 				Structure from Source 2007.
 			*/
-			struct InputEvent_t
+			struct InputEvent
 			{
 				int Type;
 				int Tick;
@@ -84,12 +84,12 @@ namespace
 				int Data3;
 			};
 
-			void __fastcall NewFunction(void* thisptr, void* edx, const InputEvent_t& event);
+			void __fastcall NewFunction(void* thisptr, void* edx, const InputEvent& event);
 
 			using OverrideType = decltype(NewFunction)*;
 			SDR::HookModule<OverrideType> ThisHook;
 
-			void __fastcall NewFunction(void* thisptr, void* edx, const InputEvent_t& event)
+			void __fastcall NewFunction(void* thisptr, void* edx, const InputEvent& event)
 			{
 				IsUnfocused = event.Data == 0;
 
