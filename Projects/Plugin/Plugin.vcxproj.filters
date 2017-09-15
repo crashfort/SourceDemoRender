@@ -21,33 +21,6 @@
     <ClInclude Include="Interface\Application\Application.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="3rd Party Libraries\MinHook\include\MinHook.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="3rd Party Libraries\MinHook\include\MinHookCPP.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\hde32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\hde64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\pstdint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\table32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="3rd Party Libraries\MinHook\src\HDE\table64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="3rd Party Libraries\MinHook\src\buffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="3rd Party Libraries\MinHook\src\trampoline.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Main\Precompiled Header\TargetVersion.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -105,21 +78,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Interface\Application\Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="3rd Party Libraries\MinHook\src\HDE\hde32.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="3rd Party Libraries\MinHook\src\HDE\hde64.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="3rd Party Libraries\MinHook\src\buffer.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="3rd Party Libraries\MinHook\src\hook.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="3rd Party Libraries\MinHook\src\trampoline.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp">
