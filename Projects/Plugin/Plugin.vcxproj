@@ -275,9 +275,6 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="Interface\Application\Modules\Templates.txt" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\Packages\minhook.1.3.3\build\native\minhook.targets" Condition="Exists('..\..\Packages\minhook.1.3.3\build\native\minhook.targets')" />
