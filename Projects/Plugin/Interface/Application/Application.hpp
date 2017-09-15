@@ -172,13 +172,13 @@ namespace SDR
 		{
 			struct Entry
 			{
-				void* Address;
-				int Variant;
-
 				bool operator==(int other) const
 				{
 					return Variant == other;
 				}
+
+				void* Address;
+				int Variant;
 			};
 
 			template <typename T>
