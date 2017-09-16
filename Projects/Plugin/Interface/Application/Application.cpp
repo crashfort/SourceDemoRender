@@ -880,7 +880,7 @@ void SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare&
 	}
 }
 
-void SDR::GenericHookVariantInit(const std::initializer_list<GenericHookInitParam>& hooks, const char* name, const rapidjson::Value& value)
+void SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const char* name, const rapidjson::Value& value)
 {
 	SDR::Error::ScopedContext e1("GenericHookVariantInit"s);
 
