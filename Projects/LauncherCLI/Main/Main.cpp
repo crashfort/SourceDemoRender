@@ -108,10 +108,10 @@ namespace
 			SDR::Error::MS::ThrowIfZero(Pipe.Get(), "Could not create inbound pipe in stage \"%s\"", StageName);
 
 			EventSuccess.Attach(CreateEventA(nullptr, false, false, successname.c_str()));
-			SDR::Error::MS::ThrowIfZero(EventSuccess.Get(), "Could not create success loader event in stage \"%s\"", StageName);
+			SDR::Error::MS::ThrowIfZero(EventSuccess.Get(), "Could not create success event in stage \"%s\"", StageName);
 
 			EventFailure.Attach(CreateEventA(nullptr, false, false, failname.c_str()));
-			SDR::Error::MS::ThrowIfZero(EventFailure.Get(), "Could not create failure loader event in stage \"%s\"", StageName);
+			SDR::Error::MS::ThrowIfZero(EventFailure.Get(), "Could not create failure event in stage \"%s\"", StageName);
 		}
 
 		HANDLE WaitEvents(HANDLE process)
