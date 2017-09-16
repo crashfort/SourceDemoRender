@@ -97,7 +97,6 @@ namespace
 	{
 		ServerShadowStateData(SDR::API::StageType stage, const char* name)
 		{
-			Stage = stage;
 			StageName = name;
 
 			auto pipename = SDR::API::CreatePipeName(stage);
@@ -179,7 +178,6 @@ namespace
 		}
 
 		const char* StageName;
-		SDR::API::StageType Stage;
 	};
 
 	struct InterProcessData
