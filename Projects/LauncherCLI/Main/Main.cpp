@@ -473,7 +473,10 @@ namespace
 
 	void ShowLibraryVersion()
 	{
-		auto library = LoadLibraryA(LibraryNameNoPrefix);
+		/*
+			Safe because nothing external is referenced.
+		*/
+		auto library = LoadLibraryExA(LibraryNameNoPrefix, nullptr, DONT_RESOLVE_DLL_REFERENCES);
 
 		if (!library)
 		{
