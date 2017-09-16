@@ -114,7 +114,7 @@ namespace
 			SDR::Error::MS::ThrowIfZero(EventFailure.Get(), "Could not create failure event in stage \"%s\"", StageName);
 		}
 
-		HANDLE WaitEvents(HANDLE process)
+		void WaitEvents(HANDLE process)
 		{
 			printf_s("Waiting for stage \"%s\"\n", StageName);
 
@@ -137,8 +137,6 @@ namespace
 				TerminateProcess(process, 0);
 				SDR::Error::Make("Could not pass stage \"%s\"", StageName);
 			}
-
-			return target;
 		}
 
 		void ReadPipe()
