@@ -93,7 +93,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	<tr>
 		<td>sdr_version</td>
 		<td>
-			Displays the current library and game config versions.
+			Displays the current library version.
 		</td>
 	</tr>
 	<tr>
