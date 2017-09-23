@@ -565,7 +565,7 @@ namespace
 				}
 			}
 
-			void Procedure(const char* filename, int width, int height)
+			std::string TrimFilename(const char* filename)
 			{
 				std::string newname = filename;
 
@@ -590,6 +590,12 @@ namespace
 					newname = newname.substr(newname.find_first_not_of(' ', 0));
 				}
 
+				return newname;
+			}
+
+			void Procedure(const char* filename, int width, int height)
+			{
+				auto newname = TrimFilename(filename);
 				filename = newname.c_str();
 
 				CurrentMovie = {};
