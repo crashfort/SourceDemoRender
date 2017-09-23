@@ -473,43 +473,12 @@ namespace
 					https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
 				*/
 
-				auto symbols =
-				{
-					L'<',
-					L'>',
-					L':',
-					L'\"',
-					L'/',
-					L'\\',
-					L'|',
-					L'?',
-					L'*'
-				};
+				auto symbols = { L'<', L'>', L':', L'\"', L'/', L'\\', L'|', L'?', L'*' };
 
 				auto names =
 				{
-					L"CON",
-					L"PRN",
-					L"AUX",
-					L"NUL",
-					L"COM1",
-					L"COM2",
-					L"COM3",
-					L"COM4",
-					L"COM5",
-					L"COM6",
-					L"COM7",
-					L"COM8",
-					L"COM9",
-					L"LPT1",
-					L"LPT2",
-					L"LPT3",
-					L"LPT4",
-					L"LPT5",
-					L"LPT6",
-					L"LPT7",
-					L"LPT8",
-					L"LPT9"
+					L"CON", L"PRN", L"AUX", L"NUL", L"COM1", L"COM2", L"COM3", L"COM4", L"COM5", L"COM6", L"COM7",
+					L"COM8", L"COM9", L"LPT1", L"LPT2", L"LPT3", L"LPT4", L"LPT5", L"LPT6", L"LPT7", L"LPT8", L"LPT9"
 				};
 
 				auto wstr = SDR::String::FromUTF8(filename);
@@ -528,7 +497,6 @@ namespace
 					if (_wcsicmp(reserved, onlyname.c_str()) == 0)
 					{
 						auto display = SDR::String::ToUTF8(reserved);
-
 						SDR::Error::Make("File has reserved name: \"%s\"", display.c_str());
 					}
 				}
