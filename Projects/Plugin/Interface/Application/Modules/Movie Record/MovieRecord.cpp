@@ -524,6 +524,31 @@ namespace
 
 			void Procedure(const char* filename, int width, int height)
 			{
+				std::string newname = filename;
+
+				if (std::isspace(newname.back()))
+				{
+					for (auto it = newname.rbegin(); it != newname.rend(); ++it)
+					{
+						if (std::isspace(*it))
+						{
+							newname.pop_back();
+						}
+
+						else
+						{
+							break;
+						}
+					}
+				}
+
+				if (std::isspace(newname.front()))
+				{
+					newname = newname.substr(newname.find_first_not_of(' ', 0));
+				}
+
+				filename = newname.c_str();
+
 				CurrentMovie = {};
 
 				auto& movie = CurrentMovie;
