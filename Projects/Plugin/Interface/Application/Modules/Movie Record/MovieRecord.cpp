@@ -447,13 +447,7 @@ namespace
 					{
 						auto newstr = Variables::Video::X264::Preset.GetString();
 
-						auto slowpresets =
-						{
-							"slow",
-							"slower",
-							"veryslow",
-							"placebo"
-						};
+						auto slowpresets = { "slow", "slower", "veryslow", "placebo" };
 
 						for (auto preset : slowpresets)
 						{
@@ -515,13 +509,7 @@ namespace
 				auto wstr = SDR::String::FromUTF8(filename);				
 				auto ext = PathFindExtensionW(wstr.c_str());
 
-				auto containers =
-				{
-					".avi",
-					".mp4",
-					".mov",
-					".mkv"
-				};
+				auto containers = { ".avi", ".mp4", ".mov", ".mkv" };
 
 				auto showcontainers = [&]()
 				{
