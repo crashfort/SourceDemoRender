@@ -467,7 +467,7 @@ namespace
 				}
 			}
 
-			void WarnAboutName(const char* filename)
+			void WarnAboutExtension(const char* filename)
 			{
 				auto wstr = SDR::String::FromUTF8(filename);				
 				auto ext = PathFindExtensionW(wstr.c_str());
@@ -530,7 +530,7 @@ namespace
 
 				try
 				{
-					WarnAboutName(filename);
+					WarnAboutExtension(filename);
 					WarnAboutVariableValues();
 
 					auto sdrpath = Variables::OutputDirectory.GetString();
