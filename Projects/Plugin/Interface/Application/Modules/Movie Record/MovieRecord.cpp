@@ -467,6 +467,81 @@ namespace
 				}
 			}
 
+			void WarnAboutName(const char* filename)
+			{
+				/*
+					https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+				*/
+
+				auto symbols =
+				{
+					L'<',
+					L'>',
+					L':',
+					L'\"',
+					L'/',
+					L'\\',
+					L'|',
+					L'?',
+					L'*'
+				};
+
+				auto names =
+				{
+					L"CON",
+					L"PRN",
+					L"AUX",
+					L"NUL",
+					L"COM1",
+					L"COM2",
+					L"COM3",
+					L"COM4",
+					L"COM5",
+					L"COM6",
+					L"COM7",
+					L"COM8",
+					L"COM9",
+					L"LPT1",
+					L"LPT2",
+					L"LPT3",
+					L"LPT4",
+					L"LPT5",
+					L"LPT6",
+					L"LPT7",
+					L"LPT8",
+					L"LPT9"
+				};
+
+				auto wstr = SDR::String::FromUTF8(filename);
+				auto onlyname = wstr.substr(0, wstr.find_first_of(L'.'));
+
+				for (auto symbol : symbols)
+				{
+					if (onlyname.find(symbol) != std::wstring::npos)
+					{
+						SDR::Error::Make("File has illegal symbol: \"%c\"", symbol);
+					}
+				}
+
+				for (auto reserved : names)
+				{
+					if (_wcsicmp(reserved, onlyname.c_str()) == 0)
+					{
+						auto display = SDR::String::ToUTF8(reserved);
+
+						SDR::Error::Make("File has reserved name: \"%s\"", display.c_str());
+					}
+				}
+
+				Microsoft::WRL::Wrappers::HandleT<Microsoft::WRL::Wrappers::HandleTraits::HANDLETraits> file;
+				file.Attach(CreateFileW(wstr.c_str(), 0, 0, nullptr, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, nullptr));
+
+				if (!file.IsValid())
+				{
+					SDR::Error::MS::ThrowLastError("Could not create file, name probably invalid");
+				}
+			}
+
 			void WarnAboutExtension(const char* filename)
 			{
 				auto wstr = SDR::String::FromUTF8(filename);				
@@ -556,6 +631,7 @@ namespace
 				try
 				{
 					WarnAboutExtension(filename);
+					WarnAboutName(filename);
 					WarnAboutVariableValues();
 
 					auto sdrpath = Variables::OutputDirectory.GetString();
