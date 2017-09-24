@@ -265,7 +265,7 @@ namespace
 						{
 							SDR::Error::ScopedContext e1(handler.Name);
 
-							handler.Function(handler.Name, prop.second);
+							handler.Function(prop.second);
 						}
 
 						catch (const SDR::Error::Exception& error)
@@ -739,12 +739,12 @@ int SDR::GetVariantFromJson(const rapidjson::Value& value)
 	return 0;
 }
 
-void SDR::WarnAboutHookVariant(const char* name, int variant)
+void SDR::WarnAboutHookVariant(int variant)
 {
-	SDR::Log::Warning("SDR: No such hook overload for \"%s\" in variant %d\n", name, variant);
+	SDR::Log::Warning("SDR: No such hook overload in variant %d\n", variant);
 }
 
-void SDR::WarnIfVariantOutOfBounds(const char* name, int variant, int max)
+void SDR::WarnIfVariantOutOfBounds(int variant, int max)
 {
 	SDR::Error::ScopedContext e1("WarnIfVariantOutOfBounds"s);
 
@@ -824,19 +824,19 @@ bool SDR::ModuleShared::Registry::GetKeyValue(const char* name, uint32_t* value)
 	return false;
 }
 
-void SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const char* name, const rapidjson::Value& value)
+void SDR::GenericVariantInit(ModuleShared::Variant::Entry& entry, const rapidjson::Value& value)
 {
 	SDR::Error::ScopedContext e1("GenericVariantInit"s);
 
 	auto addr = SDR::GetAddressFromJsonFlex(value);
 	auto variant = SDR::GetVariantFromJson(value);
 
-	WarnIfVariantOutOfBounds(name, variant, entry.VariantCount);
+	WarnIfVariantOutOfBounds(variant, entry.VariantCount);
 
 	ModuleShared::SetFromAddress(entry, addr, variant);
 }
 
-void SDR::CreateHookBare(const char* name, HookModuleBare& hook, void* override, void* address)
+void SDR::CreateHookBare(HookModuleBare& hook, void* override, void* address)
 {
 	SDR::Error::ScopedContext e1("CreateHookBare"s);
 
@@ -847,23 +847,23 @@ void SDR::CreateHookBare(const char* name, HookModuleBare& hook, void* override,
 
 	if (res != MH_OK)
 	{
-		SDR::Error::Make("Could not create hook \"%s\" (\"%s\")", name, MH_StatusToString(res));
+		SDR::Error::Make("Could not create hook (\"%s\")", MH_StatusToString(res));
 	}
 
 	res = MH_EnableHook(hook.TargetFunction);
 
 	if (res != MH_OK)
 	{
-		SDR::Error::Make("Could not enable hook \"%s\" (\"%s\")", name, MH_StatusToString(res));
+		SDR::Error::Make("Could not enable hook (\"%s\")", MH_StatusToString(res));
 	}
 }
 
-void SDR::CreateHookBareShort(const char* name, HookModuleBare& hook, void* override, const rapidjson::Value& value)
+void SDR::CreateHookBareShort(HookModuleBare& hook, void* override, const rapidjson::Value& value)
 {
 	SDR::Error::ScopedContext e1("CreateHookBareShort"s);
 
 	auto address = GetAddressFromJsonPattern(value);
-	CreateHookBare(name, hook, override, address);
+	CreateHookBare(hook, override, address);
 }
 
 void SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare& hook, void* override)
@@ -880,16 +880,16 @@ void SDR::CreateHookAPI(const wchar_t* module, const char* name, HookModuleBare&
 	}
 }
 
-void SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const char* name, const rapidjson::Value& value)
+void SDR::GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const rapidjson::Value& value)
 {
 	SDR::Error::ScopedContext e1("GenericHookVariantInit"s);
 
 	auto variant = SDR::GetVariantFromJson(value);
 	auto size = hooks.size();
 
-	WarnIfVariantOutOfBounds(name, variant, size);
+	WarnIfVariantOutOfBounds(variant, size);
 
 	auto target = *(hooks.begin() + variant);
 
-	CreateHookBareShort(name, target.Hook, target.Override, value);
+	CreateHookBareShort(target.Hook, target.Override, value);
 }

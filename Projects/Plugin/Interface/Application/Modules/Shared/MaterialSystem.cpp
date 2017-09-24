@@ -24,22 +24,22 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialsPtr",
-				[](const char* name, const rapidjson::Value& value)
+				[](const rapidjson::Value& value)
 				{
 					auto address = SDR::GetAddressFromJsonPattern(value);
 
 					Ptr = **(void***)(address);
 					SDR::Error::ThrowIfNull(Ptr);
 
-					SDR::ModuleShared::Registry::SetKeyValue(name, Ptr);
+					SDR::ModuleShared::Registry::SetKeyValue("MaterialsPtr", Ptr);
 				}
 			),
 			SDR::ModuleHandlerAdder
 			(
 				"MaterialSystem_GetBackBufferDimensions",
-				[](const char* name, const rapidjson::Value& value)
+				[](const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::GetBackBufferDimensions, name, value);
+					SDR::GenericVariantInit(Entries::GetBackBufferDimensions, value);
 				}
 			)
 		);

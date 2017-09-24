@@ -378,12 +378,11 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"View_Render",
-				[](const char* name, const rapidjson::Value& value)
+				[](const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
-						name,
 						value
 					);
 				}
@@ -867,12 +866,11 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"StartMovie",
-				[](const char* name, const rapidjson::Value& value)
+				[](const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
-						name,
 						value
 					);
 				}
@@ -948,12 +946,11 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"StartMovieCommand",
-				[](const char* name, const rapidjson::Value& value)
+				[](const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
-						name,
 						value
 					);
 				}
@@ -1060,12 +1057,11 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EndMovie",
-				[](const char* name, const rapidjson::Value& value)
+				[](const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
-						name,
 						value
 					);
 				}
@@ -1104,12 +1100,11 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"EndMovieCommand",
-				[](const char* name, const rapidjson::Value& value)
+				[](const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
-						name,
 						value
 					);
 				}
@@ -1159,12 +1154,11 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"SUpdateGuts",
-				[](const char* name, const rapidjson::Value& value)
+				[](const rapidjson::Value& value)
 				{
 					SDR::GenericHookVariantInit
 					(
 						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
-						name,
 						value
 					);
 				}
