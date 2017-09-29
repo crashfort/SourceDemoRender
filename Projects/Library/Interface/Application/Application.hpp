@@ -17,28 +17,28 @@ namespace SDR
 		FuncType Function;
 	};
 
-	void AddPluginStartupFunction(const StartupFuncData& data);
+	void AddStartupFunction(const StartupFuncData& data);
 
-	struct PluginStartupFunctionAdder
+	struct StartupFunctionAdder
 	{
-		PluginStartupFunctionAdder(const char* name, StartupFuncData::FuncType function)
+		StartupFunctionAdder(const char* name, StartupFuncData::FuncType function)
 		{
 			StartupFuncData data;
 			data.Name = name;
 			data.Function = function;
 
-			AddPluginStartupFunction(data);
+			AddStartupFunction(data);
 		}
 	};
 
 	using ShutdownFuncType = void(*)();
-	void AddPluginShutdownFunction(ShutdownFuncType function);
+	void AddShutdownFunction(ShutdownFuncType function);
 
-	struct PluginShutdownFunctionAdder
+	struct ShutdownFunctionAdder
 	{
-		PluginShutdownFunctionAdder(ShutdownFuncType function)
+		ShutdownFunctionAdder(ShutdownFuncType function)
 		{
-			AddPluginShutdownFunction(function);
+			AddShutdownFunction(function);
 		}
 	};
 

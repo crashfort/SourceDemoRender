@@ -36,9 +36,6 @@
     <ClInclude Include="Interface\Application\Modules\Shared\Console.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interface\PluginInterface.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\D3D11.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -69,12 +66,12 @@
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Interface\LibraryInterface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main\Precompiled Header\PrecompiledHeader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Interface\PluginInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Interface\Application\Application.cpp">
@@ -120,6 +117,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\LibraryInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

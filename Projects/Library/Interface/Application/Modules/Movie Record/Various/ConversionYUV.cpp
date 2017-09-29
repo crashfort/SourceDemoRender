@@ -8,7 +8,7 @@ namespace
 	{
 		int PushYUV;
 
-		SDR::PluginStartupFunctionAdder A1("YUV profiling", []()
+		SDR::StartupFunctionAdder A1("YUV profiling", []()
 		{
 			PushYUV = SDR::Profile::RegisterProfiling("PushYUV");
 		});

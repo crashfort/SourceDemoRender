@@ -1,7 +1,7 @@
 #include "PrecompiledHeader.hpp"
-#include "PluginInterface.hpp"
+#include "LibraryInterface.hpp"
 #include "Application\Application.hpp"
-#include "SDR Plugin API\ExportTypes.hpp"
+#include "SDR Library API\ExportTypes.hpp"
 
 extern "C"
 {
@@ -25,7 +25,7 @@ namespace
 {
 	enum
 	{
-		PluginVersion = 21,
+		LibraryVersion = 21,
 	};
 }
 
@@ -35,7 +35,7 @@ namespace
 	{
 		void Version()
 		{
-			SDR::Log::Message("SDR: Library version: %d\n", PluginVersion);
+			SDR::Log::Message("SDR: Library version: %d\n", LibraryVersion);
 		}
 
 		concurrency::task<void> UpdateProc()
@@ -83,7 +83,7 @@ namespace
 					*/
 					auto string = response.extract_utf8string(true).get();
 
-					auto curversion = PluginVersion;
+					auto curversion = LibraryVersion;
 					auto webversion = std::stoi(string);
 
 					auto green = SDR::Shared::Color(88, 255, 39);
@@ -105,7 +105,7 @@ namespace
 							webversion
 						);
 
-						SDR::Plugin::SetAcceptFunction([=]()
+						SDR::Library::SetAcceptFunction([=]()
 						{
 							SDR::Log::Message("SDR: Upgrading from version %d to %d\n", curversion, webversion);
 
@@ -169,7 +169,7 @@ namespace
 	/*
 		Creation has to be delayed as the necessary console stuff isn't available earlier.
 	*/
-	SDR::PluginStartupFunctionAdder A1("PluginInterface console commands", []()
+	SDR::StartupFunctionAdder A1("LibraryInterface console commands", []()
 	{
 		SDR::Console::MakeCommand("sdr_version", Commands::Version);
 		SDR::Console::MakeCommand("sdr_update", Commands::Update);
@@ -242,13 +242,13 @@ namespace
 	}
 }
 
-void SDR::Plugin::Load()
+void SDR::Library::Load()
 {
 	auto localdata = CreateShadowLoadState(SDR::API::StageType::Load);
 
 	try
 	{
-		SDR::Setup(SDR::Plugin::GetGamePath(), SDR::Plugin::GetGameName());
+		SDR::Setup(SDR::Library::GetGamePath(), SDR::Library::GetGameName());
 		SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Source Demo Render loaded\n");
 
 		/*
@@ -263,32 +263,32 @@ void SDR::Plugin::Load()
 	}
 }
 
-void SDR::Plugin::Unload()
+void SDR::Library::Unload()
 {
 	SDR::Close();
 }
 
-void SDR::Plugin::SetAcceptFunction(std::function<void()>&& func)
+void SDR::Library::SetAcceptFunction(std::function<void()>&& func)
 {
 	Commands::Accept::Callback = std::move(func);
 }
 
-const char* SDR::Plugin::GetGameName()
+const char* SDR::Library::GetGameName()
 {
 	return ModuleGameDir::GameName.c_str();
 }
 
-const char* SDR::Plugin::GetGamePath()
+const char* SDR::Library::GetGamePath()
 {
 	return ModuleGameDir::FullPath.c_str();
 }
 
-bool SDR::Plugin::IsGame(const char* test)
+bool SDR::Library::IsGame(const char* test)
 {
 	return strcmp(GetGameName(), test) == 0;
 }
 
-std::string SDR::Plugin::BuildPath(const char* file)
+std::string SDR::Library::BuildPath(const char* file)
 {
 	std::string ret = GetGamePath();
 	ret += file;
@@ -300,7 +300,7 @@ extern "C"
 {
 	__declspec(dllexport) int __cdecl SDR_LibraryVersion()
 	{
-		return PluginVersion;
+		return LibraryVersion;
 	}
 
 	/*

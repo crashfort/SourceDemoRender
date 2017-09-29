@@ -8,7 +8,7 @@ namespace
 	{
 		int Encode;
 
-		SDR::PluginStartupFunctionAdder A1("Video profiling", []()
+		SDR::StartupFunctionAdder A1("Video profiling", []()
 		{
 			Encode = SDR::Profile::RegisterProfiling("Encode");
 		});

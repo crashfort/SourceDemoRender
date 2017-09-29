@@ -1,7 +1,7 @@
 #pragma once
 #include <functional>
 
-namespace SDR::Plugin
+namespace SDR::Library
 {
 	void Load();
 	void Unload();

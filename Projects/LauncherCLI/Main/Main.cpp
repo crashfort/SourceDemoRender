@@ -3,7 +3,7 @@
 #include "SDR Shared\File.hpp"
 #include "SDR Shared\Json.hpp"
 #include "SDR Shared\IPC.hpp"
-#include "SDR Plugin API\ExportTypes.hpp"
+#include "SDR Library API\ExportTypes.hpp"
 #include "rapidjson\document.h"
 #include <Shlwapi.h>
 #include <wrl.h>
@@ -438,7 +438,7 @@ namespace
 		InjectProcess(process.Get(), thread.Get(), dir, game);
 
 		/*
-			Wait until the end of SDR::Plugin::Load() and then read back all messages.
+			Wait until the end of SDR::Library::Load() and then read back all messages.
 		*/
 		loadstage.WaitEvents(process.Get());
 	}

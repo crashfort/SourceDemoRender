@@ -8,7 +8,7 @@ namespace
 	{
 		int PushRGB;
 
-		SDR::PluginStartupFunctionAdder A1("RGB profiling", []()
+		SDR::StartupFunctionAdder A1("RGB profiling", []()
 		{
 			PushRGB = SDR::Profile::RegisterProfiling("PushRGB");
 		});

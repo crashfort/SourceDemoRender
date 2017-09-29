@@ -1,7 +1,7 @@
 #include "PrecompiledHeader.hpp"
-#include "Interface\PluginInterface.hpp"
+#include "Interface\LibraryInterface.hpp"
 #include "SDR Shared\Json.hpp"
-#include "SDR Plugin API\ExportTypes.hpp"
+#include "SDR Library API\ExportTypes.hpp"
 #include "Application.hpp"
 
 namespace
@@ -294,7 +294,7 @@ namespace
 
 			try
 			{
-				document = SDR::Json::FromFile(SDR::Plugin::BuildPath("SDR\\GameConfig.json"));
+				document = SDR::Json::FromFile(SDR::Library::BuildPath("SDR\\GameConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
@@ -365,7 +365,7 @@ namespace
 						/*
 							This should be changed in the future.
 						*/
-						SDR::Plugin::Load();
+						SDR::Library::Load();
 					})
 				};
 
@@ -539,12 +539,12 @@ void SDR::Close()
 	MH_Uninitialize();
 }
 
-void SDR::AddPluginStartupFunction(const StartupFuncData& data)
+void SDR::AddStartupFunction(const StartupFuncData& data)
 {
 	MainApplication.StartupFunctions.emplace_back(data);
 }
 
-void SDR::AddPluginShutdownFunction(ShutdownFuncType function)
+void SDR::AddShutdownFunction(ShutdownFuncType function)
 {
 	MainApplication.ShutdownFunctions.emplace_back(function);
 }

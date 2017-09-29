@@ -8,7 +8,7 @@
 #include "Interface\Application\Modules\Shared\EngineClient.hpp"
 #include "Interface\Application\Modules\Shared\MaterialSystem.hpp"
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
-#include "Interface\PluginInterface.hpp"
+#include "Interface\LibraryInterface.hpp"
 
 namespace
 {
@@ -48,7 +48,7 @@ namespace
 		/*
 			Creation has to be delayed as the necessary console stuff isn't available earlier.
 		*/
-		SDR::PluginStartupFunctionAdder A1("MovieRecord console variables", []()
+		SDR::StartupFunctionAdder A1("MovieRecord console variables", []()
 		{
 			OutputDirectory = SDR::Console::MakeString("sdr_outputdir", "");
 			FlashWindow = SDR::Console::MakeBool("sdr_endmovieflash", "0");
@@ -602,7 +602,7 @@ namespace
 					*/
 					if (strlen(sdrpath) == 0)
 					{
-						sdrpath = SDR::Plugin::GetGamePath();
+						sdrpath = SDR::Library::GetGamePath();
 					}
 
 					else
@@ -1116,7 +1116,7 @@ namespace
 		This function handles the event when endmovie wasn't called on quit.
 		The cleaning up cannot be done asynchronously as the module itself gets unloaded.
 	*/
-	SDR::PluginShutdownFunctionAdder A1([]()
+	SDR::ShutdownFunctionAdder A1([]()
 	{
 		if (IsStoppingAsync)
 		{
