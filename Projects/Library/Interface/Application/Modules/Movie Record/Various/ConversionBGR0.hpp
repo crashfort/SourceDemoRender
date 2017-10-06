@@ -6,7 +6,7 @@ namespace SDR::D3D11
 {
 	struct ConversionBGR0 : ConversionBase
 	{
-		virtual void Create(ID3D11Device* device, AVFrame* reference, bool staging) override;
+		virtual void Create(ID3D11Device* device, const AVFrame* reference, bool staging) override;
 		virtual void DynamicBind(ID3D11DeviceContext* context) override;
 		virtual bool Download(ID3D11DeviceContext* context, Stream::FutureData& item) override;
 

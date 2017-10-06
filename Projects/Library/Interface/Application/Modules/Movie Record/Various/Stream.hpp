@@ -79,7 +79,7 @@ namespace SDR::Stream
 
 		struct DirectX11Data
 		{
-			void Create(ID3D11Device* device, HANDLE dx9handle, AVFrame* reference, bool staging);
+			void Create(ID3D11Device* device, HANDLE dx9handle, const AVFrame* reference, bool staging);
 
 			/*
 				Between CS dispatches the resources should be unbound.

@@ -15,7 +15,7 @@ namespace
 	}
 }
 
-void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, AVFrame* reference, bool staging)
+void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, const AVFrame* reference, bool staging)
 {
 	auto sizey = reference->linesize[0] * reference->height;
 	auto sizeu = reference->linesize[1] * reference->height;

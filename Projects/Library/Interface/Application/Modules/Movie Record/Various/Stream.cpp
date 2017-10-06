@@ -147,7 +147,7 @@ void SDR::Stream::StreamBase::DirectX9Data::Create(IDirect3DDevice9Ex* device, i
 	);
 }
 
-void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE dx9handle, AVFrame* reference, bool staging)
+void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE dx9handle, const AVFrame* reference, bool staging)
 {
 	Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
 

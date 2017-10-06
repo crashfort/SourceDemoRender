@@ -15,7 +15,7 @@ namespace
 	}
 }
 
-void SDR::D3D11::ConversionBGR0::Create(ID3D11Device* device, AVFrame* reference, bool staging)
+void SDR::D3D11::ConversionBGR0::Create(ID3D11Device* device, const AVFrame* reference, bool staging)
 {
 	auto size = reference->linesize[0] * reference->height;
 	auto count = size / sizeof(uint32_t);

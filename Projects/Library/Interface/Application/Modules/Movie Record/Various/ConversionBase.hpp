@@ -13,7 +13,7 @@ namespace SDR::D3D11
 	{
 		virtual ~ConversionBase() = default;
 
-		virtual void Create(ID3D11Device* device, AVFrame* reference, bool staging) = 0;
+		virtual void Create(ID3D11Device* device, const AVFrame* reference, bool staging) = 0;
 
 		/*
 			States that need update every frame.
