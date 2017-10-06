@@ -986,7 +986,7 @@ namespace
 
 				if (BufferedFrames > 0)
 				{
-					SDR::Log::Message("SDR: There are %d buffered frames remaining\n", BufferedFrames);
+					SDR::Log::Message("SDR: There are %d buffered frames remaining\n", BufferedFrames.load());
 				}
 
 				auto func = []()
