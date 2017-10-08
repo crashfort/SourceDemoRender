@@ -279,3 +279,42 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	</tbody>
 </table>
 
+## Sampling demo
+<table>
+	<tr>
+		<td></td>
+		<th>16</th>
+		<th>32</th>
+		<th>64</th>
+		<th>128</th>
+	</tr>
+	<tr>
+		<th>0.25</th>
+		<td>Link</td>
+		<td>Link</td>
+		<td>Link</td>
+		<td>Link</td>
+	</tr>
+    <tr>
+		<th>0.50</th>
+		<td>Link</td>
+		<td>Link</td>
+		<td>Link</td>
+		<td>Link</td>
+	</tr>
+    <tr>
+		<th>0.75</th>
+		<td>Link</td>
+		<td>Link</td>
+		<td>Link</td>
+		<td>Link</td>
+	</tr>
+    <tr>
+		<th>1.00</th>
+		<td>Link</td>
+		<td>Link</td>
+		<td>Link</td>
+		<td>Link</td>
+	</tr>
+</table>
+
