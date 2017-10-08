@@ -290,31 +290,31 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	</tr>
 	<tr>
 		<th>0.25</th>
-		<td>Link</td>
-		<td>Link</td>
-		<td>Link</td>
-		<td>Link</td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/16_025.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/32_025.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/64_025.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/128_025.png"/></td>
 	</tr>
     <tr>
 		<th>0.50</th>
-		<td>Link</td>
-		<td>Link</td>
-		<td>Link</td>
-		<td>Link</td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/16_050.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/32_050.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/64_050.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/128_050.png"/></td>
 	</tr>
     <tr>
 		<th>0.75</th>
-		<td>Link</td>
-		<td>Link</td>
-		<td>Link</td>
-		<td>Link</td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/16_075.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/32_075.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/64_075.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/128_075.png"/></td>
 	</tr>
     <tr>
 		<th>1.00</th>
-		<td>Link</td>
-		<td>Link</td>
-		<td>Link</td>
-		<td>Link</td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/16_100.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/32_100.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/64_100.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/128_100.png"/></td>
 	</tr>
 </table>
 
