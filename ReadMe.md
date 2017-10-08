@@ -280,6 +280,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 </table>
 
 ## Sampling demo
+In this demo an object is rotating 6 times per second. This is a fast moving object, so higher **sdr_sample_mult** will remove banding that occurs with lower multiplications at cost of slower recording times. For slower scenes you may get away with a lower multiplication. Exposure is dependant on what type of scene you wish to convey.
 <table>
 	<tr>
 		<td></td>
