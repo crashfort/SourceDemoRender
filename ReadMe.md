@@ -115,7 +115,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	<tr>
 		<td>sdr_outputdir</td>
 		<td>
-			Path where to save the video. The directory structure must exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the game root.
+			Path where to save the video. The directory structure must exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the SDR folder.
 		</td>
 	</tr>
 	<tr>
