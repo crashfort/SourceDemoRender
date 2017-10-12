@@ -1,6 +1,8 @@
 {
 	"cstrike":
 	{
+		"DisplayName": "Counter-Strike: Source",
+
 		"ActivateMouse":
 		{
 			"Comment": "0x10216D80 static CSS IDA address June 3 2016",
@@ -171,31 +173,38 @@
 	},
 	"hl2":
 	{
-		"Inherit": "cstrike"
+		"Inherit": "cstrike",
+		"DisplayName": "Half-Life 2"
 	},
 	"episodic":
 	{
-		"Inherit": "cstrike"
+		"Inherit": "cstrike",
+		"DisplayName": "Half-Life 2: Episode One"
 	},
 	"ep2":
 	{
-		"Inherit": "cstrike"
+		"Inherit": "cstrike",
+		"DisplayName": "Half-Life 2: Episode Two"
 	},
 	"tf":
 	{
-		"Inherit": "cstrike"
+		"Inherit": "cstrike",
+		"DisplayName": "Team Fortress 2"
 	},
 	"momentum":
 	{
-		"Inherit": "cstrike"
+		"Inherit": "cstrike",
+		"DisplayName": "Momentum"
 	},
 	"dod":
 	{
-		"Inherit": "cstrike"
+		"Inherit": "cstrike",
+		"DisplayName": "Day of Defeat: Source"
 	},
 	"garrysmod":
 	{
 		"Inherit": "cstrike",
+		"DisplayName": "Garry's Mod",
 
 		"MaterialsPtr":
 		{
