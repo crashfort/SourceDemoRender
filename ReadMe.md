@@ -115,7 +115,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	<tr>
 		<td>sdr_outputdir</td>
 		<td>
-			Path where to save the video. The directory structure must exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the game root.
+			Path where to save the video. The directory structure must exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the SDR folder.
 		</td>
 	</tr>
 	<tr>
@@ -277,5 +277,47 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		</td>
 	</tr>
 	</tbody>
+</table>
+
+## Sampling demo
+In this demo an object is rotating 6 times per second. This is a fast moving object, so higher **sdr_sample_mult** will remove banding that occurs with lower multiplications at cost of slower recording times. For slower scenes you may get away with a lower multiplication. Exposure is dependant on what type of scene you wish to convey.
+
+The X axis is the multiplication and the Y axis is the exposure.
+<table>
+	<tr>
+		<td></td>
+		<th>16</th>
+		<th>32</th>
+		<th>64</th>
+		<th>128</th>
+	</tr>
+	<tr>
+		<th>0.25</th>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/16_025.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/32_025.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/64_025.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/128_025.png"/></td>
+	</tr>
+    <tr>
+		<th>0.50</th>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/16_050.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/32_050.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/64_050.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/128_050.png"/></td>
+	</tr>
+    <tr>
+		<th>0.75</th>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/16_075.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/32_075.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/64_075.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/128_075.png"/></td>
+	</tr>
+    <tr>
+		<th>1.00</th>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/16_100.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/32_100.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/64_100.png"/></td>
+		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-standalone/Media/Sampling%20Demo/128_100.png"/></td>
+	</tr>
 </table>
 

@@ -7,7 +7,7 @@
     <SDR_RAPIDJSON_INCLUDE>C:\VS\3rd Party Libs\rapidjson\include\</SDR_RAPIDJSON_INCLUDE>
     <SDR_RWQUEUE_INCLUDE>C:\VS\3rd Party Libs\readerwriterqueue\include\</SDR_RWQUEUE_INCLUDE>
     <SDR_SHARED_INCLUDE>$(SolutionDir)Shared\Include\</SDR_SHARED_INCLUDE>
-    <SDR_API_INCLUDE>$(SolutionDir)Plugin API\Include\</SDR_API_INCLUDE>
+    <SDR_API_INCLUDE>$(SolutionDir)Library API\Include\</SDR_API_INCLUDE>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>

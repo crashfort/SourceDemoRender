@@ -3,7 +3,7 @@
 #include "SDR Shared\File.hpp"
 #include "SDR Shared\Json.hpp"
 #include "SDR Shared\IPC.hpp"
-#include "SDR Plugin API\ExportTypes.hpp"
+#include "SDR Library API\ExportTypes.hpp"
 #include "rapidjson\document.h"
 #include <Shlwapi.h>
 #include <wrl.h>
@@ -97,7 +97,6 @@ namespace
 	{
 		ServerShadowStateData(SDR::API::StageType stage, const char* name)
 		{
-			Stage = stage;
 			StageName = name;
 
 			auto pipename = SDR::API::CreatePipeName(stage);
@@ -108,13 +107,13 @@ namespace
 			SDR::Error::MS::ThrowIfZero(Pipe.Get(), "Could not create inbound pipe in stage \"%s\"", StageName);
 
 			EventSuccess.Attach(CreateEventA(nullptr, false, false, successname.c_str()));
-			SDR::Error::MS::ThrowIfZero(EventSuccess.Get(), "Could not create success loader event in stage \"%s\"", StageName);
+			SDR::Error::MS::ThrowIfZero(EventSuccess.Get(), "Could not create success event in stage \"%s\"", StageName);
 
 			EventFailure.Attach(CreateEventA(nullptr, false, false, failname.c_str()));
-			SDR::Error::MS::ThrowIfZero(EventFailure.Get(), "Could not create failure loader event in stage \"%s\"", StageName);
+			SDR::Error::MS::ThrowIfZero(EventFailure.Get(), "Could not create failure event in stage \"%s\"", StageName);
 		}
 
-		HANDLE WaitEvents(HANDLE process)
+		void WaitEvents(HANDLE process)
 		{
 			printf_s("Waiting for stage \"%s\"\n", StageName);
 
@@ -137,8 +136,6 @@ namespace
 				TerminateProcess(process, 0);
 				SDR::Error::Make("Could not pass stage \"%s\"", StageName);
 			}
-
-			return target;
 		}
 
 		void ReadPipe()
@@ -181,7 +178,6 @@ namespace
 		}
 
 		const char* StageName;
-		SDR::API::StageType Stage;
 	};
 
 	struct InterProcessData
@@ -397,12 +393,12 @@ namespace
 
 		if (PathFileExistsA(exepath.c_str()) == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 does not exist\n"s);
+			SDR::Error::Make("Specified path at argument 0 does not exist"s);
 		}
 
 		if (PathMatchSpecA(exepath.c_str(), "*.exe") == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 not an executable\n"s);
+			SDR::Error::Make("Specified path at argument 0 not an executable"s);
 		}
 
 		char curdir[SDR::File::NameSize];
@@ -442,7 +438,7 @@ namespace
 		InjectProcess(process.Get(), thread.Get(), dir, game);
 
 		/*
-			Wait until the end of SDR::Plugin::Load() and then read back all messages.
+			Wait until the end of SDR::Library::Load() and then read back all messages.
 		*/
 		loadstage.WaitEvents(process.Get());
 	}
@@ -475,7 +471,10 @@ namespace
 
 	void ShowLibraryVersion()
 	{
-		auto library = LoadLibraryA(LibraryNameNoPrefix);
+		/*
+			Safe because nothing external is referenced.
+		*/
+		auto library = LoadLibraryExA(LibraryNameNoPrefix, nullptr, DONT_RESOLVE_DLL_REFERENCES);
 
 		if (!library)
 		{
