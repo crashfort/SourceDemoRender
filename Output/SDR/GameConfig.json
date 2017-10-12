@@ -173,6 +173,10 @@
 	{
 		"Inherit": "cstrike"
 	},
+	"episodic":
+	{
+		"Inherit": "cstrike"
+	},
 	"ep2":
 	{
 		"Inherit": "cstrike"

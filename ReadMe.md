@@ -9,6 +9,7 @@ Since games might need special setup, they have to be added manually. You can re
 Games that are added:
 * Counter-Strike: Source
 * Half-Life 2
+* Half-Life 2: Episode One
 * Half-Life 2: Episode Two
 * Team Fortress 2
 * Momentum
