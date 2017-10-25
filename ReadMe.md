@@ -50,7 +50,7 @@ Example of supported video containers:
 * `startmovie test.mov`
 * `startmovie test.mkv`
 
-The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size.
+The default video encoder is ``libx264rgb`` which will produce an RGB video with no color loss. Other available is ``libx264`` for YUV video. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size.
 
 ## Guide
 SDR can output in YUV420, YUV444 and BGR0 formats with x264. Color space can be `601` or `709`, for YUV video the color range is `full`.
@@ -172,7 +172,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 			Desired video encoder.
 			<br/><br/>
 			<b>Values:</b> libx264, libx264rgb <br/>
-            <b>Default:</b> libx264 <br/>
+            <b>Default:</b> libx264rgb <br/>
 		</td>
 	</tr>
 	<tr>

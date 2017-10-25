@@ -57,7 +57,7 @@ namespace
 
 			Video::Framerate = SDR::Console::MakeNumber("sdr_render_framerate", "60", 30, 1000);
 			Video::ColorSpace = SDR::Console::MakeString("sdr_movie_encoder_colorspace", "709");
-			Video::Encoder = SDR::Console::MakeString("sdr_movie_encoder", "libx264");
+			Video::Encoder = SDR::Console::MakeString("sdr_movie_encoder", "libx264rgb");
 			Video::PixelFormat = SDR::Console::MakeString("sdr_movie_encoder_pxformat", "");
 
 			Video::Sample::Multiply = SDR::Console::MakeNumber("sdr_sample_mult", "32", 0);
