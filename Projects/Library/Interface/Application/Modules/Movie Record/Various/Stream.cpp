@@ -23,7 +23,6 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 
 	/*
 		https://msdn.microsoft.com/en-us/library/windows/desktop/ff476082.aspx
-
 		Not providing a feature level array makes it try 11.0 first and then lesser feature levels.
 	*/
 	Error::MS::ThrowIfFailed
@@ -43,8 +42,6 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 		),
 		"Could not create D3D11 device"
 	);
-
-	Log::Message("SDR: Selected D3D11 feature level: %d\n", createdlevel);
 
 	if (createdlevel < D3D_FEATURE_LEVEL_11_0)
 	{
