@@ -204,8 +204,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		D3D11_BUFFER_DESC bufdesc = {};
 		bufdesc.ByteWidth = px * size;
 		bufdesc.Usage = D3D11_USAGE_DEFAULT;
-		bufdesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-		bufdesc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
+		bufdesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
 		bufdesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 		bufdesc.StructureByteStride = size;
 
