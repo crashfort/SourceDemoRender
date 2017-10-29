@@ -12,6 +12,17 @@
 #include "ConversionYUV.hpp"
 #include <functional>
 
+namespace
+{
+	void WarnAboutFeatureLevel(D3D_FEATURE_LEVEL level)
+	{
+		if (level < D3D_FEATURE_LEVEL_11_0)
+		{
+			SDR::Error::Make("D3D11 feature level %d not compatible, minimum is %d", level, D3D_FEATURE_LEVEL_11_0);
+		}
+	}
+}
+
 void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool sampling)
 {
 	uint32_t flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
@@ -43,10 +54,7 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 		"Could not create D3D11 device"
 	);
 
-	if (createdlevel < D3D_FEATURE_LEVEL_11_0)
-	{
-		Error::Make("Minimum D3D11 feature level is %d", D3D_FEATURE_LEVEL_11_0);
-	}
+	WarnAboutFeatureLevel(createdlevel);
 
 	/*
 		Divisors must match number of threads in SharedAll.hlsl.
