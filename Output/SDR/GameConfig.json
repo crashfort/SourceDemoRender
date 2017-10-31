@@ -3,18 +3,6 @@
 	{
 		"DisplayName": "Counter-Strike: Source",
 
-		"ActivateMouse":
-		{
-			"Comment": "0x10216D80 static CSS IDA address June 3 2016",
-			"Module": "engine.dll",
-			"Pattern": "83 3D ?? ?? ?? ?? ?? 74 4F 8B 0D ?? ?? ?? ?? 8B 01 8B 40 40 FF D0 84 C0 75 0B 8B 0D ?? ?? ?? ?? 8B 01 FF 60 3C"
-		},
-		"AppActivate":
-		{
-			"Comment": "0x102013C0 static CSS IDA address June 3 2016",
-			"Module": "engine.dll",
-			"Pattern": "55 8B EC 8B 45 08 83 78 08 00 0F 95 C0 0F B6 C0 89 45 08 5D E9 ?? ?? ?? ??"
-		},
 		"MaterialsPtr":
 		{
 			"Comment": "0x101FFFAF static CSS IDA address May 29 2017",
