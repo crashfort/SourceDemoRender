@@ -102,6 +102,7 @@ namespace
 		bool IsStarted = false;
 
 		int OldMatQueueModeValue;
+		int OldEngineSleepTime;
 
 		/*
 			Whether to use an extra intermediate buffer for GPU -> CPU transfer.
@@ -829,9 +830,14 @@ namespace
 				*/
 				matqueuemode.SetValue(0);
 
+				SDR::Console::Variable nofocustime("engine_no_focus_sleep");
+				movie.OldEngineSleepTime = nofocustime.GetInt();
+
 				/*
-					Make room for some entries in the queues.
+					Allow fast processing when game window is not focused.
 				*/
+				nofocustime.SetValue(0);
+
 				movie.VideoQueue = std::make_unique<SDR::Stream::QueueType>(256);
 
 				movie.IsStarted = true;
@@ -981,6 +987,9 @@ namespace
 
 				SDR::Console::Variable matqueuemode("mat_queue_mode");
 				matqueuemode.SetValue(CurrentMovie.OldMatQueueModeValue);
+
+				SDR::Console::Variable nofocustime("engine_no_focus_sleep");
+				nofocustime.SetValue(CurrentMovie.OldEngineSleepTime);
 
 				SDR::Log::Message("SDR: Ending movie\n"s);
 
