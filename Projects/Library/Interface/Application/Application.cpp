@@ -253,6 +253,14 @@ namespace
 
 			for (auto& prop : game->Properties)
 			{
+				/*
+					Ignore this, it's only used by the launcher.
+				*/
+				if (prop.first == "DisplayName")
+				{
+					continue;
+				}
+
 				bool found = false;
 
 				for (auto& handler : MainApplication.ModuleHandlers)
