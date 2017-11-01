@@ -61,7 +61,7 @@ namespace LauncherUI
 		private void SaveGames()
 		{
 			var saverestore = new SaveRestoreData();
-			saverestore.Games = new List<GameData>(GameComboBox.Items.Cast<GameData>().ToList());
+			saverestore.Games = GameComboBox.Items.Cast<GameData>().ToList();
 			saverestore.LaunchParameters = LaunchOptionsTextBox.Text;
 			saverestore.SelectedIndex = GameComboBox.SelectedIndex;
 
