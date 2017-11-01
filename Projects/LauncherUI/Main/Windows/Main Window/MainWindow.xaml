@@ -26,7 +26,7 @@
 		</StackPanel>
 		<StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="32" Margin="5,0,105,0">
 			<TextBlock FontSize="15" VerticalAlignment="Center">
-				<Hyperlink NavigateUri="https://github.com/crashfort/SourceDemoRender/" RequestNavigate="Hyperlink_RequestNavigate">Github</Hyperlink>
+				<Hyperlink NavigateUri="https://github.com/crashfort/SourceDemoRender/" RequestNavigate="Hyperlink_RequestNavigate">GitHub</Hyperlink>
 			</TextBlock>
 			<TextBlock FontSize="15" Margin="10,0,0,0" VerticalAlignment="Center">
 				<Hyperlink NavigateUri="https://twitch.streamlabs.com/crashfort/" RequestNavigate="Hyperlink_RequestNavigate">Donate</Hyperlink>
