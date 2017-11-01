@@ -12,6 +12,17 @@
 #include "ConversionYUV.hpp"
 #include <functional>
 
+namespace
+{
+	void WarnAboutFeatureLevel(D3D_FEATURE_LEVEL level)
+	{
+		if (level < D3D_FEATURE_LEVEL_11_0)
+		{
+			SDR::Error::Make("D3D11 feature level %d not compatible, minimum is %d", level, D3D_FEATURE_LEVEL_11_0);
+		}
+	}
+}
+
 void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool sampling)
 {
 	uint32_t flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
@@ -19,6 +30,12 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 	flags |= D3D11_CREATE_DEVICE_DEBUG;
 	#endif
 
+	D3D_FEATURE_LEVEL createdlevel;
+
+	/*
+		https://msdn.microsoft.com/en-us/library/windows/desktop/ff476082.aspx
+		Not providing a feature level array makes it try 11.0 first and then lesser feature levels.
+	*/
 	Error::MS::ThrowIfFailed
 	(
 		D3D11CreateDevice
@@ -31,11 +48,13 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 			0,
 			D3D11_SDK_VERSION,
 			Device.GetAddressOf(),
-			nullptr,
+			&createdlevel,
 			Context.GetAddressOf()
 		),
 		"Could not create D3D11 device"
 	);
+
+	WarnAboutFeatureLevel(createdlevel);
 
 	/*
 		Divisors must match number of threads in SharedAll.hlsl.
@@ -185,8 +204,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		D3D11_BUFFER_DESC bufdesc = {};
 		bufdesc.ByteWidth = px * size;
 		bufdesc.Usage = D3D11_USAGE_DEFAULT;
-		bufdesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-		bufdesc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
+		bufdesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
 		bufdesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 		bufdesc.StructureByteStride = size;
 

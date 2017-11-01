@@ -80,9 +80,6 @@
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Engine Changes\EngineChanges.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Shared\EngineClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

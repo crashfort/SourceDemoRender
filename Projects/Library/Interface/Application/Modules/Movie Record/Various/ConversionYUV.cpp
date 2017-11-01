@@ -30,13 +30,8 @@ void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, const AVFrame* refe
 	*/
 	__declspec(align(16)) struct
 	{
-		int Strides[3];
-		int Padding1;
-		float CoeffY[3];
-		int Padding2;
-		float CoeffU[3];
-		int Padding3;
-		float CoeffV[3];
+		int Strides[4];
+		float Coeffs[3][3];
 	} yuvdata;
 
 	yuvdata.Strides[0] = reference->linesize[0];
@@ -56,16 +51,16 @@ void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, const AVFrame* refe
 
 	if (reference->colorspace == AVCOL_SPC_BT470BG)
 	{
-		setcoeffs(yuvdata.CoeffY, +0.299000, +0.587000, +0.114000);
-		setcoeffs(yuvdata.CoeffU, -0.168736, -0.331264, +0.500000);
-		setcoeffs(yuvdata.CoeffV, +0.500000, -0.418688, -0.081312);
+		setcoeffs(yuvdata.Coeffs[0], +0.299000, +0.587000, +0.114000);
+		setcoeffs(yuvdata.Coeffs[1], -0.168736, -0.331264, +0.500000);
+		setcoeffs(yuvdata.Coeffs[2], +0.500000, -0.418688, -0.081312);
 	}
 
 	else if (reference->colorspace == AVCOL_SPC_BT709)
 	{
-		setcoeffs(yuvdata.CoeffY, +0.212600, +0.715200, +0.072200);
-		setcoeffs(yuvdata.CoeffU, -0.114572, -0.385428, +0.500000);
-		setcoeffs(yuvdata.CoeffV, +0.500000, -0.454153, -0.045847);
+		setcoeffs(yuvdata.Coeffs[0], +0.212600, +0.715200, +0.072200);
+		setcoeffs(yuvdata.Coeffs[1], -0.114572, -0.385428, +0.500000);
+		setcoeffs(yuvdata.Coeffs[2], +0.500000, -0.454153, -0.045847);
 	}
 
 	else

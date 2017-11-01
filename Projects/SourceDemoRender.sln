@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LauncherCLI", "LauncherCLI\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library API", "Library API\Library API.vcxitems", "{F6A710B0-1DAD-4087-B575-5512EFECCC0F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LauncherUI", "LauncherUI\LauncherUI.csproj", "{B83A1D7B-6838-44AA-872A-EF22F89F389F}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Shared\Shared.vcxitems*{17324f58-4073-4e25-a5ed-2de6bc0b897e}*SharedItemsImports = 4
@@ -40,6 +42,10 @@ Global
 		{B2DBCE0D-417D-47D2-842C-4651F60231A7}.Debug|x86.Build.0 = Debug|Win32
 		{B2DBCE0D-417D-47D2-842C-4651F60231A7}.Release|x86.ActiveCfg = Release|Win32
 		{B2DBCE0D-417D-47D2-842C-4651F60231A7}.Release|x86.Build.0 = Release|Win32
+		{B83A1D7B-6838-44AA-872A-EF22F89F389F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B83A1D7B-6838-44AA-872A-EF22F89F389F}.Debug|x86.Build.0 = Debug|Any CPU
+		{B83A1D7B-6838-44AA-872A-EF22F89F389F}.Release|x86.ActiveCfg = Release|Any CPU
+		{B83A1D7B-6838-44AA-872A-EF22F89F389F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

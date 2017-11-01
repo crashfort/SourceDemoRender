@@ -57,7 +57,7 @@ namespace
 
 			Video::Framerate = SDR::Console::MakeNumber("sdr_render_framerate", "60", 30, 1000);
 			Video::ColorSpace = SDR::Console::MakeString("sdr_movie_encoder_colorspace", "709");
-			Video::Encoder = SDR::Console::MakeString("sdr_movie_encoder", "libx264");
+			Video::Encoder = SDR::Console::MakeString("sdr_movie_encoder", "libx264rgb");
 			Video::PixelFormat = SDR::Console::MakeString("sdr_movie_encoder_pxformat", "");
 
 			Video::Sample::Multiply = SDR::Console::MakeNumber("sdr_sample_mult", "32", 0);
@@ -102,6 +102,7 @@ namespace
 		bool IsStarted = false;
 
 		int OldMatQueueModeValue;
+		int OldEngineSleepTime;
 
 		/*
 			Whether to use an extra intermediate buffer for GPU -> CPU transfer.
@@ -394,10 +395,10 @@ namespace
 	{
 		namespace Common
 		{
-			void VerifyOutputDirectory(const char* path)
+			void VerifyOutputDirectory(const std::string& path)
 			{
 				char final[SDR::File::NameSize];
-				strcpy_s(final, path);
+				strcpy_s(final, path.c_str());
 
 				PathAddBackslashA(final);
 
@@ -411,13 +412,13 @@ namespace
 				}
 			}
 
-			std::string BuildVideoStreamName(const char* savepath, const char* filename)
+			std::string BuildVideoStreamName(const std::string& savepath, const char* filename)
 			{
 				char finalname[SDR::File::NameSize];
 
-				PathCombineA(finalname, savepath, filename);
+				PathCombineA(finalname, savepath.c_str(), filename);
 
-				return {finalname};
+				return { finalname };
 			}
 
 			void WarnAboutVariableValues()
@@ -595,14 +596,14 @@ namespace
 					WarnAboutName(filename);
 					WarnAboutVariableValues();
 
-					auto sdrpath = Variables::OutputDirectory.GetString();
+					std::string sdrpath = Variables::OutputDirectory.GetString();
 
 					/*
 						No desired path, use game root.
 					*/
-					if (strlen(sdrpath) == 0)
+					if (sdrpath.empty())
 					{
-						sdrpath = SDR::Library::GetGamePath();
+						sdrpath = SDR::Library::BuildPath("SDR\\");
 					}
 
 					else
@@ -829,9 +830,14 @@ namespace
 				*/
 				matqueuemode.SetValue(0);
 
+				SDR::Console::Variable nofocustime("engine_no_focus_sleep");
+				movie.OldEngineSleepTime = nofocustime.GetInt();
+
 				/*
-					Make room for some entries in the queues.
+					Allow fast processing when game window is not focused.
 				*/
+				nofocustime.SetValue(0);
+
 				movie.VideoQueue = std::make_unique<SDR::Stream::QueueType>(256);
 
 				movie.IsStarted = true;
@@ -981,6 +987,9 @@ namespace
 
 				SDR::Console::Variable matqueuemode("mat_queue_mode");
 				matqueuemode.SetValue(CurrentMovie.OldMatQueueModeValue);
+
+				SDR::Console::Variable nofocustime("engine_no_focus_sleep");
+				nofocustime.SetValue(CurrentMovie.OldEngineSleepTime);
 
 				SDR::Log::Message("SDR: Ending movie\n"s);
 

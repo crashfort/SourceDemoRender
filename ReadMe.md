@@ -32,6 +32,8 @@ The content of the archive should go in the root game directory. Examples:
 After you've extracted the archive you should navigate into the SDR directory and run the updater. It downloads the required game config data that is needed for game support.
 
 ## Launching
+
+### Batch files
 The launcher ``LauncherCLI.exe`` takes the following parameters: ``<exe path> <startup params ...>``. To get the executable path you hold shift and right click the file then select ``Copy as path``, the quotes are required. Anything after will be passed to the game. Automatically appended parameters are ``-steam -insecure +sv_lan 1 -console``. Examples of executable paths:
 
 * steamapps\common\Counter-Strike Source\hl2.exe
@@ -39,6 +41,11 @@ The launcher ``LauncherCLI.exe`` takes the following parameters: ``<exe path> <s
 * steamapps\common\Source SDK Base 2013 Multiplayer\hl2.exe
 
 You can use ``LauncherCLI User.bat`` to aid launching. Edit the content to fit your game.
+
+### User interface
+The launcher ``LauncherUI.exe`` comes as a separate download on the releases page. This launcher does not have to be in a specific game directory and can be run from anywhere. When adding a new game, you have to specify its SDR directory along with its executable file path. Games are saved and can quickly be selected another time.
+
+![Launcher UI Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-ui/Media/Launcher%20UI/MainWindow.png)
 
 ## Instructions
 When you are ready to create your movie just type `startmovie <name>.<container>` and then `endmovie` as usual. **Do not exit the game until you see a green message that says the movie is completed.**
@@ -50,7 +57,7 @@ Example of supported video containers:
 * `startmovie test.mov`
 * `startmovie test.mkv`
 
-The default video encoder is ``libx264``. Other available is ``libx264rgb`` which will produce an RGB video with no color loss. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size.
+The default video encoder is ``libx264rgb`` which will produce an RGB video with no color loss. Other available is ``libx264`` for YUV video. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size.
 
 ## Guide
 SDR can output in YUV420, YUV444 and BGR0 formats with x264. Color space can be `601` or `709`, for YUV video the color range is `full`.
@@ -172,7 +179,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 			Desired video encoder.
 			<br/><br/>
 			<b>Values:</b> libx264, libx264rgb <br/>
-            <b>Default:</b> libx264 <br/>
+            <b>Default:</b> libx264rgb <br/>
 		</td>
 	</tr>
 	<tr>

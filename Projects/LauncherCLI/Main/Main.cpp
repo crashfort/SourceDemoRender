@@ -213,8 +213,6 @@ namespace
 
 	void InjectProcess(HANDLE process, HANDLE thread, const std::string& path, const std::string& game)
 	{
-		printf_s("Injecting into \"%s\"\n", game.c_str());
-
 		VirtualMemory memory(process, 4096);
 		ProcessWriter writer(process, memory.Address);
 
@@ -306,8 +304,6 @@ namespace
 
 	PROCESS_INFORMATION StartProcess(const std::string& dir, const std::string& exepath, const std::string& game, const std::string& params)
 	{
-		printf_s("Starting \"%s\"\n", game.c_str());
-
 		/*
 			Parameter should not have a trailing backslash as resources will fail to load.
 		*/
@@ -348,7 +344,7 @@ namespace
 		return procinfo;
 	}
 
-	void VerifyGameName(const std::string& name)
+	std::string GetDisplayName(const std::string& name)
 	{
 		printf_s("Searching game config for matching name\n");
 
@@ -366,12 +362,18 @@ namespace
 
 		for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it)
 		{
-			auto gamename = it->name.GetString();
+			std::string gamename = it->name.GetString();
 			
 			if (gamename == name)
 			{
-				printf_s("Found \"%s\" in game config\n", gamename);
-				return;
+				if (it->value.HasMember("DisplayName"))
+				{
+					gamename = it->value["DisplayName"].GetString();
+				}
+
+				printf_s("Found \"%s\" in game config\n", gamename.c_str());
+				
+				return gamename;
 			}
 		}
 
@@ -409,14 +411,14 @@ namespace
 		std::string game = PathFindFileNameA(curdir);
 		game.pop_back();
 
-		VerifyGameName(game);
+		auto displayname = GetDisplayName(game);
 
 		auto params = "-steam -insecure +sv_lan 1 -console"s;
 		printf_s("Appending parameters: \"%s\"\n", params.c_str());
 		
 		std::string dir = curdir;
 
-		printf_s("Game: \"%s\"\n", game.c_str());
+		printf_s("Game: \"%s\"\n", displayname.c_str());
 		printf_s("Executable path: \"%s\"\n", exepath.c_str());
 		printf_s("Directory: \"%s\"\n", dir.c_str());
 
@@ -430,11 +432,13 @@ namespace
 
 		ServerShadowStateData loadstage(SDR::API::StageType::Load, "Load");
 
+		printf_s("Starting \"%s\"\n", displayname.c_str());
 		auto info = StartProcess(dir, exepath, game, params);
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
 
+		printf_s("Injecting into \"%s\"\n", displayname.c_str());
 		InjectProcess(process.Get(), thread.Get(), dir, game);
 
 		/*
