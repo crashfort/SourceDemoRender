@@ -24,17 +24,15 @@
 			<Label Content="Launch Options" Margin="0,10,0,0" FontSize="15"/>
 			<TextBox x:Name="LaunchOptionsTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center"/>
 		</StackPanel>
-		<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8,0,16,7">
-			<TextBlock FontSize="15">
+		<StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="32" Margin="5,0,105,0">
+			<TextBlock FontSize="15" VerticalAlignment="Center">
 				<Hyperlink NavigateUri="https://github.com/crashfort/SourceDemoRender/" RequestNavigate="Hyperlink_RequestNavigate">Github</Hyperlink>
 			</TextBlock>
-			<TextBlock FontSize="15" Margin="16,0,0,0">
+			<TextBlock FontSize="15" Margin="10,0,0,0" VerticalAlignment="Center">
 				<Hyperlink NavigateUri="https://twitch.streamlabs.com/crashfort/" RequestNavigate="Hyperlink_RequestNavigate">Donate</Hyperlink>
 			</TextBlock>
+			<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center" Margin="10,0,0,0"/>
 		</StackPanel>
-		<Grid VerticalAlignment="Bottom" Margin="139,0,105,0" Height="32">
-			<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center"/>
-		</Grid>
 		<Button HorizontalAlignment="Right" VerticalAlignment="Bottom" x:Name="LaunchButton" Content="Launch" Padding="0" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />
 	</Grid>
 </Window>
