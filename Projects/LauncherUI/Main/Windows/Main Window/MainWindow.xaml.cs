@@ -187,6 +187,7 @@ namespace LauncherUI
 
 			if (!System.IO.File.Exists(configpath))
 			{
+				dialog.SDRDirTextBox.Focus();
 				throw new Exception("Game config does not exist in SDR folder.");
 			}
 
