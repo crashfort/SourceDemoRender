@@ -223,5 +223,10 @@ namespace LauncherUI
 				throw new Exception(format);
 			}
 		}
+
+		private void GameComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)
+		{
+			ErrorText.Text = "";
+		}
 	}
 }

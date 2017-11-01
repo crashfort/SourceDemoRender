@@ -15,7 +15,7 @@
 					<ColumnDefinition Width="*"/>
 					<ColumnDefinition Width="Auto" />
 				</Grid.ColumnDefinitions>
-				<ComboBox x:Name="GameComboBox" Height="32" VerticalContentAlignment="Center" FontSize="15"/>
+				<ComboBox x:Name="GameComboBox" Height="32" VerticalContentAlignment="Center" FontSize="15" SelectionChanged="GameComboBox_SelectionChanged"/>
 				<StackPanel Orientation="Horizontal" Grid.Column="1">
 					<Button Height="32" Content="Add" Margin="10,0,0,0" Padding="16,0" FontSize="15" Click="AddGameButton_Click"/>
 					<Button Height="32" Content="Remove" Margin="10,0,0,0" Padding="16,0" FontSize="15" Click="RemoveGameButton_Click"/>
