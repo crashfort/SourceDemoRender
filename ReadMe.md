@@ -45,7 +45,7 @@ You can use ``LauncherCLI User.bat`` to aid launching. Edit the content to fit y
 ### User interface
 The launcher ``LauncherUI.exe`` comes as a separate download on the releases page. This launcher does not have to be in a specific game directory and can be run from anywhere. When adding a new game, you have to specify its SDR directory along with its executable file path. Games are saved and can quickly be selected another time.
 
-![Launcher UI Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/dev-ui/Media/Launcher%20UI/MainWindow.png)
+![Launcher UI Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Launcher%20UI/MainWindow.png)
 
 ## Instructions
 When you are ready to create your movie just type `startmovie <name>.<container>` and then `endmovie` as usual. **Do not exit the game until you see a green message that says the movie is completed.**
