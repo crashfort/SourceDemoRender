@@ -1,0 +1,38 @@
+﻿<Window x:Class="LauncherUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LauncherUI"
+        mc:Ignorable="d"
+        Title="SDR Launcher UI" Height="300" Width="640" MinWidth="640" MinHeight="300" BorderThickness="0" Closing="Window_Closing" WindowStartupLocation="CenterScreen">
+	<Grid Margin="10">
+		<StackPanel>
+			<TextBlock x:Name="textBlock" TextWrapping="Wrap" Text="Select your game and set optional launch options." Padding="0" FontSize="15"/>
+			<Label Content="Game" Margin="0,20,0,0" FontSize="15"/>
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+				<ComboBox x:Name="GameComboBox" Height="32" VerticalContentAlignment="Center" FontSize="15" SelectionChanged="GameComboBox_SelectionChanged"/>
+				<StackPanel Orientation="Horizontal" Grid.Column="1">
+					<Button Height="32" Content="Add" Margin="10,0,0,0" Padding="16,0" FontSize="15" Click="AddGameButton_Click"/>
+					<Button Height="32" Content="Remove" Margin="10,0,0,0" Padding="16,0" FontSize="15" Click="RemoveGameButton_Click"/>
+				</StackPanel>
+			</Grid>
+			<Label Content="Launch Options" Margin="0,10,0,0" FontSize="15"/>
+			<TextBox x:Name="LaunchOptionsTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center"/>
+		</StackPanel>
+		<StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="32" Margin="5,0,105,0">
+			<TextBlock FontSize="15" VerticalAlignment="Center">
+				<Hyperlink NavigateUri="https://github.com/crashfort/SourceDemoRender/" RequestNavigate="Hyperlink_RequestNavigate">Github</Hyperlink>
+			</TextBlock>
+			<TextBlock FontSize="15" Margin="10,0,0,0" VerticalAlignment="Center">
+				<Hyperlink NavigateUri="https://twitch.streamlabs.com/crashfort/" RequestNavigate="Hyperlink_RequestNavigate">Donate</Hyperlink>
+			</TextBlock>
+			<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center" Margin="10,0,0,0"/>
+		</StackPanel>
+		<Button HorizontalAlignment="Right" VerticalAlignment="Bottom" x:Name="LaunchButton" Content="Launch" Padding="0" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />
+	</Grid>
+</Window>
