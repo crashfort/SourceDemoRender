@@ -30,12 +30,12 @@
 				</Grid>
 			</StackPanel>
 		</StackPanel>
-		<Grid VerticalAlignment="Bottom" Margin="0,0,221,0" Height="32">
+		<Grid VerticalAlignment="Bottom" Margin="5,0,221,0" Height="32">
 			<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center"/>
 		</Grid>
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
 			<Button x:Name="OKButton" Content="OK" Padding="0" Width="100" FontSize="15" Click="OKButton_Click" Height="32"/>
-			<Button x:Name="CancelButton" Content="Cancel" Padding="0" Margin="16,0,0,0" Width="100" FontSize="15" Click="CancelButton_Click" Height="32"/>
+			<Button x:Name="CancelButton" Content="Cancel" Padding="0" Margin="10,0,0,0" Width="100" FontSize="15" Click="CancelButton_Click" Height="32"/>
 		</StackPanel>
 	</Grid>
 </Window>
