@@ -18,7 +18,7 @@
 				<ComboBox x:Name="GameComboBox" Height="32" VerticalContentAlignment="Center" FontSize="15" SelectionChanged="GameComboBox_SelectionChanged"/>
 				<StackPanel Orientation="Horizontal" Grid.Column="1">
 					<Button Height="32" Content="Add" Margin="10,0,0,0" Width="100" FontSize="15" Click="AddGameButton_Click"/>
-					<Button Height="32" Content="Remove" Margin="10,0,0,0" Width="100" FontSize="15" Click="RemoveGameButton_Click"/>
+					<Button Height="32" Content="Remove" Margin="10,0,0,0" Width="100" FontSize="15" Click="RemoveGameButton_Click" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}"/>
 				</StackPanel>
 			</Grid>
 			<Label Content="Launch Options" Margin="0,10,0,0" FontSize="15"/>
