@@ -33,6 +33,8 @@
 			</TextBlock>
 			<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center" Margin="10,0,0,0"/>
 		</StackPanel>
-		<Button HorizontalAlignment="Right" VerticalAlignment="Bottom" x:Name="LaunchButton" Content="Launch" Padding="0" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+			<Button x:Name="LaunchButton" Content="Launch" Padding="0" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />			
+		</StackPanel>
 	</Grid>
 </Window>
