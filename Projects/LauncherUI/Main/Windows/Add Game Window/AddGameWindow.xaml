@@ -17,7 +17,7 @@
 						<ColumnDefinition Width="Auto" />
 					</Grid.ColumnDefinitions>
 					<TextBox x:Name="GameExeTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center"/>
-					<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Padding="16,0" FontSize="15" Click="ExeBrowse_Click"/>
+					<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Width="100" FontSize="15" Click="ExeBrowse_Click"/>
 				</Grid>
 				<Label Content="SDR Directory" Margin="0,10,0,0" FontSize="15"/>
 				<Grid Grid.Row="2" Grid.Column="1">
@@ -26,7 +26,7 @@
 						<ColumnDefinition Width="Auto" />
 					</Grid.ColumnDefinitions>
 					<TextBox x:Name="SDRDirTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center"/>
-					<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Padding="16,0" FontSize="15" Click="SDRBrowse_Click"/>
+					<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Width="100" FontSize="15" Click="SDRBrowse_Click"/>
 				</Grid>
 			</StackPanel>
 		</StackPanel>
@@ -34,8 +34,8 @@
 			<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center"/>
 		</Grid>
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-			<Button x:Name="OKButton" Content="OK" Padding="0" Width="100" FontSize="15" Click="OKButton_Click" Height="32"/>
-			<Button x:Name="CancelButton" Content="Cancel" Padding="0" Margin="10,0,0,0" Width="100" FontSize="15" Click="CancelButton_Click" Height="32"/>
+			<Button x:Name="OKButton" Content="OK" Width="100" FontSize="15" Click="OKButton_Click" Height="32"/>
+			<Button x:Name="CancelButton" Content="Cancel" Margin="10,0,0,0" Width="100" FontSize="15" Click="CancelButton_Click" Height="32"/>
 		</StackPanel>
 	</Grid>
 </Window>
