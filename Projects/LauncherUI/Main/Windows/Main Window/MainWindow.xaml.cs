@@ -100,6 +100,12 @@ namespace LauncherUI
 				return;
 			}
 
+			if (!System.IO.File.Exists(System.IO.Path.Combine(sdrpath, "SourceDemoRender.dll")))
+			{
+				ErrorText.Text = "SourceDemoRender.dll does not exist in SDR folder.";
+				return;
+			}
+
 			var launcher = System.IO.Path.Combine(sdrpath, "LauncherCLI.exe");
 
 			if (!System.IO.File.Exists(launcher))
@@ -181,6 +187,18 @@ namespace LauncherUI
 			{
 				dialog.GameExeTextBox.Focus();
 				throw new Exception("Specified executable path does not exist.");
+			}
+
+			if (!System.IO.File.Exists(System.IO.Path.Combine(args.SDRPath, "SourceDemoRender.dll")))
+			{
+				dialog.SDRDirTextBox.Focus();
+				throw new Exception("SourceDemoRender.dll does not exist in SDR folder.");
+			}
+
+			if (!System.IO.File.Exists(System.IO.Path.Combine(args.SDRPath, "LauncherCLI.exe")))
+			{
+				dialog.SDRDirTextBox.Focus();
+				throw new Exception("LauncherCLI.exe does not exist in SDR folder.");
 			}
 
 			var configpath = System.IO.Path.Combine(args.SDRPath, "GameConfig.json");
