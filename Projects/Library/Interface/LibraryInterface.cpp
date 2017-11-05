@@ -25,7 +25,7 @@ namespace
 {
 	enum
 	{
-		LibraryVersion = 23,
+		LibraryVersion = 24,
 	};
 }
 
