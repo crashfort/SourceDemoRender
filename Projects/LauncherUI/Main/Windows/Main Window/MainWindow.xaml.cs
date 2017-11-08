@@ -189,6 +189,14 @@ namespace LauncherUI
 				throw new Exception("Specified executable path does not exist.");
 			}
 
+			var sdrpathinfo = new System.IO.DirectoryInfo(args.SDRPath);
+
+			if (sdrpathinfo.Name != "SDR")
+			{
+				dialog.SDRDirTextBox.Focus();
+				throw new Exception("Specified SDR path is not related to SDR.");
+			}
+
 			if (!System.IO.File.Exists(System.IO.Path.Combine(args.SDRPath, "SourceDemoRender.dll")))
 			{
 				dialog.SDRDirTextBox.Focus();
