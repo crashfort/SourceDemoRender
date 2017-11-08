@@ -148,7 +148,7 @@ namespace LauncherUI
 			var index = GameComboBox.SelectedIndex;
 
 			GameComboBox.Items.RemoveAt(index);
-			GameComboBox.SelectedIndex = index - 1;
+			GameComboBox.SelectedIndex = Math.Max(index - 1, 0);
 
 			SaveGames();
 		}
