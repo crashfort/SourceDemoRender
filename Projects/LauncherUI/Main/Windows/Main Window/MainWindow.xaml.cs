@@ -159,7 +159,7 @@ namespace LauncherUI
 			{
 				var game = (GameData)item;
 
-				if (game.Details.Equals(args))
+				if (game.Details.SDRPath == args.SDRPath)
 				{
 					return true;
 				}
