@@ -30,12 +30,18 @@
 				</Grid>
 			</StackPanel>
 		</StackPanel>
-		<Grid VerticalAlignment="Bottom" Margin="5,0,215,0" Height="32">
-			<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center"/>
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+			<Grid VerticalAlignment="Bottom" Height="32" Grid.Column="0" Margin="5,0,10,0">
+				<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center"/>
+			</Grid>
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Column="1">
+				<Button x:Name="OKButton" Content="OK" Width="100" FontSize="15" Click="OKButton_Click" Height="32"/>
+				<Button x:Name="CancelButton" Content="Cancel" Margin="10,0,0,0" Width="100" FontSize="15" Click="CancelButton_Click" Height="32"/>
+			</StackPanel>
 		</Grid>
-		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-			<Button x:Name="OKButton" Content="OK" Width="100" FontSize="15" Click="OKButton_Click" Height="32"/>
-			<Button x:Name="CancelButton" Content="Cancel" Margin="10,0,0,0" Width="100" FontSize="15" Click="CancelButton_Click" Height="32"/>
-		</StackPanel>
 	</Grid>
 </Window>

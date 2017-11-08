@@ -24,19 +24,25 @@
 			<Label Content="Launch Options" Margin="0,10,0,0" FontSize="15"/>
 			<TextBox x:Name="LaunchOptionsTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center"/>
 		</StackPanel>
-		<StackPanel Orientation="Vertical" VerticalAlignment="Bottom" Margin="5,0,105,0">
-			<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center" Height="32" />
-			<StackPanel Orientation="Horizontal" Height="32">
-				<TextBlock FontSize="15" VerticalAlignment="Center">
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+			<StackPanel Orientation="Vertical" VerticalAlignment="Bottom" Margin="5,0,10,0" Grid.Column="0">
+				<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center" Height="32" />
+				<StackPanel Orientation="Horizontal" Height="32">
+					<TextBlock FontSize="15" VerticalAlignment="Center">
 				<Hyperlink NavigateUri="https://github.com/crashfort/SourceDemoRender/" RequestNavigate="Hyperlink_RequestNavigate">GitHub</Hyperlink>
-				</TextBlock>
-				<TextBlock FontSize="15" Margin="10,0,0,0" VerticalAlignment="Center">
+					</TextBlock>
+					<TextBlock FontSize="15" Margin="10,0,0,0" VerticalAlignment="Center">
 				<Hyperlink NavigateUri="https://twitch.streamlabs.com/crashfort/" RequestNavigate="Hyperlink_RequestNavigate">Donate</Hyperlink>
-				</TextBlock>
+					</TextBlock>
+				</StackPanel>
 			</StackPanel>
-		</StackPanel>
-		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-			<Button x:Name="LaunchButton" Content="Launch" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />
-		</StackPanel>
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Column="1">
+				<Button x:Name="LaunchButton" Content="Launch" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />
+			</StackPanel>
+		</Grid>
 	</Grid>
 </Window>
