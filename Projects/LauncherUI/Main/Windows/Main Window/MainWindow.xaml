@@ -36,7 +36,7 @@
 				<Hyperlink NavigateUri="https://github.com/crashfort/SourceDemoRender/" RequestNavigate="Hyperlink_RequestNavigate">GitHub</Hyperlink>
 					</TextBlock>
 					<TextBlock FontSize="15" Margin="10,0,0,0" VerticalAlignment="Center">
-				<Hyperlink NavigateUri="https://twitch.streamlabs.com/crashfort/" RequestNavigate="Hyperlink_RequestNavigate">Donate</Hyperlink>
+				<Hyperlink NavigateUri="https://streamlabs.com/crashfort/" RequestNavigate="Hyperlink_RequestNavigate">Donate</Hyperlink>
 					</TextBlock>
 				</StackPanel>
 			</StackPanel>
