@@ -30,7 +30,7 @@
 				</Grid>
 			</StackPanel>
 		</StackPanel>
-		<Grid VerticalAlignment="Bottom" Margin="5,0,221,0" Height="32">
+		<Grid VerticalAlignment="Bottom" Margin="5,0,215,0" Height="32">
 			<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center"/>
 		</Grid>
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
