@@ -254,6 +254,15 @@ namespace LauncherUI
 		private void GameComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)
 		{
 			ErrorText.Text = "";
+
+			if (GameComboBox.Items.IsEmpty)
+			{
+				GameComboBox.ToolTip = null;
+				return;
+			}
+
+			var obj = (GameData)GameComboBox.SelectedItem;
+			GameComboBox.ToolTip = string.Format("{0}\n{1}\n{2}", obj.DisplayName, obj.Details.ExecutablePath, obj.Details.SDRPath);
 		}
 	}
 }
