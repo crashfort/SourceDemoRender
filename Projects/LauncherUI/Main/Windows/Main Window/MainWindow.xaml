@@ -36,7 +36,7 @@
 			</StackPanel>
 		</StackPanel>
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-			<Button x:Name="LaunchButton" Content="Launch" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />			
+			<Button x:Name="LaunchButton" Content="Launch" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />
 		</StackPanel>
 	</Grid>
 </Window>
