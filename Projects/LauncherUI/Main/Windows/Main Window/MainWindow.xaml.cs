@@ -212,26 +212,20 @@ namespace LauncherUI
 				throw new Exception("Specified SDR path is not related to SDR.");
 			}
 
-			if (!System.IO.File.Exists(System.IO.Path.Combine(args.SDRPath, "SourceDemoRender.dll")))
-			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("SourceDemoRender.dll does not exist in SDR folder.");
-			}
+			var files = new string[] { "SourceDemoRender.dll", "LauncherCLI.exe", "GameConfig.json" };
 
-			if (!System.IO.File.Exists(System.IO.Path.Combine(args.SDRPath, "LauncherCLI.exe")))
+			foreach (var name in files)
 			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("LauncherCLI.exe does not exist in SDR folder.");
+				if (!System.IO.File.Exists(System.IO.Path.Combine(args.SDRPath, name)))
+				{
+					dialog.SDRDirTextBox.Focus();
+
+					var format = string.Format("File \"{0}\" does not exist in SDR folder.", name);
+					throw new Exception(format);
+				}
 			}
 
 			var configpath = System.IO.Path.Combine(args.SDRPath, "GameConfig.json");
-
-			if (!System.IO.File.Exists(configpath))
-			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("Game config does not exist in SDR folder.");
-			}
-
 			var content = System.IO.File.ReadAllText(configpath, System.Text.Encoding.UTF8);
 			var document = System.Json.JsonValue.Parse(content);
 			var parentdir = System.IO.Directory.GetParent(args.SDRPath);
