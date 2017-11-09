@@ -221,34 +221,46 @@ namespace LauncherUI
 			var document = System.Json.JsonValue.Parse(content);
 			var parentdir = System.IO.Directory.GetParent(args.SDRPath);
 
-			if (document.ContainsKey(parentdir.Name))
-			{
-				var gamejson = document[parentdir.Name];
-
-				if (gamejson.ContainsKey("DisplayName"))
-				{
-					var gamedata = new GameData();
-					gamedata.Details = args;
-					gamedata.DisplayName = gamejson["DisplayName"];
-
-					var index = GameComboBox.Items.Add(gamedata);
-					GameComboBox.SelectedIndex = index;
-
-					SaveGames();
-				}
-
-				else
-				{
-					var format = string.Format("Game config does not contain \"DisplayName\" member for game \"{0}\".", parentdir.Name);
-					throw new Exception(format);
-				}
-			}
-
-			else
+			if (!document.ContainsKey(parentdir.Name))
 			{
 				var format = string.Format("Game \"{0}\" does not exist in game config.", parentdir.Name);
 				throw new Exception(format);
 			}
+
+			var gamejson = document[parentdir.Name];
+
+			if (!gamejson.ContainsKey("DisplayName"))
+			{
+				var format = string.Format("Game config does not contain \"DisplayName\" member for game \"{0}\".", parentdir.Name);
+				throw new Exception(format);
+			}
+
+			string displayname = gamejson["DisplayName"];
+
+			if (!gamejson.ContainsKey("ExecutableName"))
+			{
+				var format = string.Format("Game config does not contain \"ExecutableName\" member for game \"{0}\".", displayname);
+				throw new Exception(format);
+			}
+
+			string exename = gamejson["ExecutableName"];
+			var fileinfo = new System.IO.FileInfo(args.ExecutablePath);
+			var userexe = System.IO.Path.GetFileNameWithoutExtension(fileinfo.Name);
+
+			if (userexe != exename)
+			{
+				var format = string.Format("Executable name for \"{0}\" should be \"{1}\".", displayname, exename);
+				throw new Exception(format);
+			}
+
+			var gamedata = new GameData();
+			gamedata.Details = args;
+			gamedata.DisplayName = gamejson["DisplayName"];
+
+			var index = GameComboBox.Items.Add(gamedata);
+			GameComboBox.SelectedIndex = index;
+
+			SaveGames();
 		}
 
 		private void GameComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)

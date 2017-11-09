@@ -2,6 +2,7 @@
 	"cstrike":
 	{
 		"DisplayName": "Counter-Strike: Source",
+		"ExecutableName": "hl2",
 
 		"MaterialsPtr":
 		{
@@ -157,37 +158,44 @@
 	"hl2":
 	{
 		"Inherit": "cstrike",
-		"DisplayName": "Half-Life 2"
+		"DisplayName": "Half-Life 2",
+		"ExecutableName": "hl2"
 	},
 	"episodic":
 	{
 		"Inherit": "cstrike",
-		"DisplayName": "Half-Life 2: Episode One"
+		"DisplayName": "Half-Life 2: Episode One",
+		"ExecutableName": "hl2"
 	},
 	"ep2":
 	{
 		"Inherit": "cstrike",
-		"DisplayName": "Half-Life 2: Episode Two"
+		"DisplayName": "Half-Life 2: Episode Two",
+		"ExecutableName": "hl2"
 	},
 	"tf":
 	{
 		"Inherit": "cstrike",
-		"DisplayName": "Team Fortress 2"
+		"DisplayName": "Team Fortress 2",
+		"ExecutableName": "hl2"
 	},
 	"momentum":
 	{
 		"Inherit": "cstrike",
-		"DisplayName": "Momentum"
+		"DisplayName": "Momentum",
+		"ExecutableName": "hl2"
 	},
 	"dod":
 	{
 		"Inherit": "cstrike",
-		"DisplayName": "Day of Defeat: Source"
+		"DisplayName": "Day of Defeat: Source",
+		"ExecutableName": "hl2"
 	},
 	"garrysmod":
 	{
 		"Inherit": "cstrike",
 		"DisplayName": "Garry's Mod",
+		"ExecutableName": "hl2",
 
 		"MaterialsPtr":
 		{
