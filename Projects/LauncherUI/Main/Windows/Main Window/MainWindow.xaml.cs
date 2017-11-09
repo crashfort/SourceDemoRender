@@ -295,7 +295,7 @@ namespace LauncherUI
 			*/
 			if (obj != null)
 			{
-				GameComboBox.ToolTip = string.Format("{0}\n{1}\n{2}", obj.DisplayName, obj.Details.ExecutablePath, obj.Details.SDRPath);
+				GameComboBox.ToolTip = string.Format("{0}\n\nExecutable\n{1}\n\nSDR\n{2}", obj.DisplayName, obj.Details.ExecutablePath, obj.Details.SDRPath);
 			}
 		}
 	}
