@@ -274,7 +274,14 @@ namespace LauncherUI
 			}
 
 			var obj = (GameData)GameComboBox.SelectedItem;
-			GameComboBox.ToolTip = string.Format("{0}\n{1}\n{2}", obj.DisplayName, obj.Details.ExecutablePath, obj.Details.SDRPath);
+
+			/*
+				This event gets called twice on removal, only use the second time.
+			*/
+			if (obj != null)
+			{
+				GameComboBox.ToolTip = string.Format("{0}\n{1}\n{2}", obj.DisplayName, obj.Details.ExecutablePath, obj.Details.SDRPath);
+			}
 		}
 	}
 }
