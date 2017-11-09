@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LauncherUI"
         mc:Ignorable="d"
-        Title="Add Game" Height="300" Width="640" WindowStartupLocation="CenterOwner" MinWidth="640" MinHeight="300" ShowInTaskbar="False">
+        Title="Add Game" Height="300" Width="960" WindowStartupLocation="CenterOwner" MinWidth="640" MinHeight="300" ShowInTaskbar="False">
 	<Grid Margin="10">
 		<StackPanel Orientation="Vertical">
 			<TextBlock TextWrapping="Wrap" Text="Add a new game for future use." FontSize="15"/>
