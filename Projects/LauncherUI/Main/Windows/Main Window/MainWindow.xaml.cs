@@ -175,16 +175,16 @@ namespace LauncherUI
 			args.SDRPath = args.SDRPath.Trim();
 			args.ExecutablePath = args.ExecutablePath.Trim();
 
-			if (args.ExecutablePath.Length == 0)
-			{
-				dialog.GameExeTextBox.Focus();
-				throw new Exception("Executable path is empty.");
-			}
-
 			if (args.SDRPath.Length == 0)
 			{
 				dialog.SDRDirTextBox.Focus();
 				throw new Exception("SDR path is empty.");
+			}
+
+			if (args.ExecutablePath.Length == 0)
+			{
+				dialog.GameExeTextBox.Focus();
+				throw new Exception("Executable path is empty.");
 			}
 
 			if (IsGameAddedAlready(args))
