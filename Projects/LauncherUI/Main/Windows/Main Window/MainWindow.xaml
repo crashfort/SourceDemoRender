@@ -30,7 +30,9 @@
 				<ColumnDefinition Width="Auto" />
 			</Grid.ColumnDefinitions>
 			<StackPanel Orientation="Vertical" VerticalAlignment="Bottom" Margin="5,0,10,0" Grid.Column="0">
-				<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center" Height="32" />
+				<Grid Height="32">
+					<TextBlock x:Name="ErrorText" TextWrapping="Wrap" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center" TextTrimming="WordEllipsis"/>
+				</Grid>
 				<StackPanel Orientation="Horizontal" Height="32">
 					<TextBlock FontSize="15" VerticalAlignment="Center">
 				<Hyperlink NavigateUri="https://github.com/crashfort/SourceDemoRender/" RequestNavigate="Hyperlink_RequestNavigate">GitHub</Hyperlink>
