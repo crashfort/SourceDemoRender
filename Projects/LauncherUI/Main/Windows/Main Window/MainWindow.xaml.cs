@@ -264,7 +264,7 @@ namespace LauncherUI
 
 			var gamedata = new GameData();
 			gamedata.Details = args;
-			gamedata.DisplayName = gamejson["DisplayName"];
+			gamedata.DisplayName = displayname;
 
 			var index = GameComboBox.Items.Add(gamedata);
 			GameComboBox.SelectedIndex = index;
