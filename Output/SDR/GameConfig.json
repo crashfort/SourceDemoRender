@@ -2,7 +2,7 @@
 	"cstrike":
 	{
 		"DisplayName": "Counter-Strike: Source",
-		"ExecutableName": "hl2",
+		"ExecutableName": "Counter-Strike Source\\hl2.exe",
 
 		"MaterialsPtr":
 		{
@@ -159,43 +159,43 @@
 	{
 		"Inherit": "cstrike",
 		"DisplayName": "Half-Life 2",
-		"ExecutableName": "hl2"
+		"ExecutableName": "Half-Life 2\\hl2.exe"
 	},
 	"episodic":
 	{
 		"Inherit": "cstrike",
 		"DisplayName": "Half-Life 2: Episode One",
-		"ExecutableName": "hl2"
+		"ExecutableName": "Half-Life 2\\hl2.exe"
 	},
 	"ep2":
 	{
 		"Inherit": "cstrike",
 		"DisplayName": "Half-Life 2: Episode Two",
-		"ExecutableName": "hl2"
+		"ExecutableName": "Half-Life 2\\hl2.exe"
 	},
 	"tf":
 	{
 		"Inherit": "cstrike",
 		"DisplayName": "Team Fortress 2",
-		"ExecutableName": "hl2"
+		"ExecutableName": "Team Fortress 2\\hl2.exe"
 	},
 	"momentum":
 	{
 		"Inherit": "cstrike",
 		"DisplayName": "Momentum",
-		"ExecutableName": "hl2"
+		"ExecutableName": "Source SDK Base 2013 Multiplayer\\hl2.exe"
 	},
 	"dod":
 	{
 		"Inherit": "cstrike",
 		"DisplayName": "Day of Defeat: Source",
-		"ExecutableName": "hl2"
+		"ExecutableName": "Day of Defeat Source\\hl2.exe"
 	},
 	"garrysmod":
 	{
 		"Inherit": "cstrike",
 		"DisplayName": "Garry's Mod",
-		"ExecutableName": "hl2",
+		"ExecutableName": "GarrysMod\\hl2.exe",
 
 		"MaterialsPtr":
 		{

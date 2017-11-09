@@ -244,10 +244,10 @@ namespace LauncherUI
 			}
 
 			string exename = gamejson["ExecutableName"];
-			var fileinfo = new System.IO.FileInfo(args.ExecutablePath);
-			var userexe = System.IO.Path.GetFileNameWithoutExtension(fileinfo.Name);
 
-			if (userexe != exename)
+			var fileinfo = new System.IO.FileInfo(args.ExecutablePath);
+
+			if (!fileinfo.FullName.EndsWith(exename))
 			{
 				var format = string.Format("Executable name for \"{0}\" should be \"{1}\".", displayname, exename);
 				throw new Exception(format);
