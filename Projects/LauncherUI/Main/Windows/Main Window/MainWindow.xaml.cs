@@ -9,20 +9,9 @@ namespace LauncherUI
 {
 	public partial class MainWindow : Window
 	{
-		class GameData
-		{
-			public string DisplayName;
-			public AddGameWindow.GameAddData Details;
-
-			public override string ToString()
-			{
-				return DisplayName;
-			}
-		}
-
 		class SaveRestoreData
 		{
-			public List<GameData> Games;
+			public List<AddGameWindow.GameData> Games;
 			public int SelectedIndex = 0;
 			public string LaunchParameters;
 		}
@@ -55,13 +44,13 @@ namespace LauncherUI
 			InitializeComponent();
 			AddGamesToList();
 
-			ErrorText.Text = "";
+			ErrorText.Text = null;
 		}
 
 		private void SaveGames()
 		{
 			var saverestore = new SaveRestoreData();
-			saverestore.Games = GameComboBox.Items.Cast<GameData>().ToList();
+			saverestore.Games = GameComboBox.Items.Cast<AddGameWindow.GameData>().ToList();
 			saverestore.LaunchParameters = LaunchOptionsTextBox.Text;
 			saverestore.SelectedIndex = GameComboBox.SelectedIndex;
 
@@ -84,9 +73,9 @@ namespace LauncherUI
 		private void LaunchButton_Click(object sender, RoutedEventArgs args)
 		{
 			var options = LaunchOptionsTextBox.Text.Trim();
-			var game = (GameData)GameComboBox.SelectedItem;
-			var sdrpath = game.Details.SDRPath;
-			var exepath = game.Details.ExecutablePath;
+			var game = (AddGameWindow.GameData)GameComboBox.SelectedItem;
+			var sdrpath = game.SDRPath;
+			var exepath = game.ExecutablePath;
 
 			if (!System.IO.Directory.Exists(sdrpath))
 			{
@@ -121,24 +110,25 @@ namespace LauncherUI
 
 			Process.Start(info);
 
-			ErrorText.Text = "";
+			ErrorText.Text = null;
 		}
 
 		private void AddGameButton_Click(object sender, RoutedEventArgs args)
 		{
-			ErrorText.Text = "";
-
 			var dialog = new AddGameWindow();
 			dialog.Owner = this;
 
+			dialog.ExistingGames = GameComboBox.Items.Cast<AddGameWindow.GameData>().ToList();
 			dialog.OnGameAdded += OnGameAdded;
 
 			dialog.ShowDialog();
+
+			ErrorText.Text = null;
 		}
 
 		private void RemoveGameButton_Click(object sender, RoutedEventArgs args)
 		{
-			ErrorText.Text = "";
+			ErrorText.Text = null;
 
 			if (GameComboBox.SelectedItem == null)
 			{
@@ -153,120 +143,9 @@ namespace LauncherUI
 			SaveGames();
 		}
 
-		private bool IsGameAddedAlready(AddGameWindow.GameAddData args)
+		private void OnGameAdded(object sender, AddGameWindow.GameData args)
 		{
-			foreach (var item in GameComboBox.Items)
-			{
-				var game = (GameData)item;
-
-				if (game.Details.SDRPath == args.SDRPath)
-				{
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		private void OnGameAdded(object sender, AddGameWindow.GameAddData args)
-		{
-			var dialog = (AddGameWindow)sender;
-
-			args.SDRPath = args.SDRPath.Trim();
-			args.ExecutablePath = args.ExecutablePath.Trim();
-
-			if (args.SDRPath.Length == 0)
-			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("SDR path is empty.");
-			}
-
-			if (args.ExecutablePath.Length == 0)
-			{
-				dialog.GameExeTextBox.Focus();
-				throw new Exception("Executable path is empty.");
-			}
-
-			if (IsGameAddedAlready(args))
-			{
-				throw new Exception("Game is already added.");
-			}
-
-			if (!System.IO.Directory.Exists(args.SDRPath))
-			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("Specified SDR path does not exist.");
-			}
-
-			if (!System.IO.File.Exists(args.ExecutablePath))
-			{
-				dialog.GameExeTextBox.Focus();
-				throw new Exception("Specified executable path does not exist.");
-			}
-
-			var sdrpathinfo = new System.IO.DirectoryInfo(args.SDRPath);
-
-			if (sdrpathinfo.Name != "SDR")
-			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("Specified SDR path is not related to SDR.");
-			}
-
-			var files = new string[] { "SourceDemoRender.dll", "LauncherCLI.exe", "GameConfig.json" };
-
-			foreach (var name in files)
-			{
-				if (!System.IO.File.Exists(System.IO.Path.Combine(args.SDRPath, name)))
-				{
-					dialog.SDRDirTextBox.Focus();
-
-					var format = string.Format("File \"{0}\" does not exist in SDR folder.", name);
-					throw new Exception(format);
-				}
-			}
-
-			var configpath = System.IO.Path.Combine(args.SDRPath, "GameConfig.json");
-			var content = System.IO.File.ReadAllText(configpath, System.Text.Encoding.UTF8);
-			var document = System.Json.JsonValue.Parse(content);
-			var parentdir = System.IO.Directory.GetParent(args.SDRPath);
-
-			if (!document.ContainsKey(parentdir.Name))
-			{
-				var format = string.Format("Game \"{0}\" does not exist in game config.", parentdir.Name);
-				throw new Exception(format);
-			}
-
-			var gamejson = document[parentdir.Name];
-
-			if (!gamejson.ContainsKey("DisplayName"))
-			{
-				var format = string.Format("Game config does not contain \"DisplayName\" member for game \"{0}\".", parentdir.Name);
-				throw new Exception(format);
-			}
-
-			string displayname = gamejson["DisplayName"];
-
-			if (!gamejson.ContainsKey("ExecutableName"))
-			{
-				var format = string.Format("Game config does not contain \"ExecutableName\" member for game \"{0}\".", displayname);
-				throw new Exception(format);
-			}
-
-			string exename = gamejson["ExecutableName"];
-
-			var fileinfo = new System.IO.FileInfo(args.ExecutablePath);
-
-			if (!fileinfo.FullName.EndsWith(exename))
-			{
-				var format = string.Format("Executable name for \"{0}\" should be \"{1}\".", displayname, exename);
-				throw new Exception(format);
-			}
-
-			var gamedata = new GameData();
-			gamedata.Details = args;
-			gamedata.DisplayName = displayname;
-
-			var index = GameComboBox.Items.Add(gamedata);
+			var index = GameComboBox.Items.Add(args);
 			GameComboBox.SelectedIndex = index;
 
 			SaveGames();
@@ -274,7 +153,7 @@ namespace LauncherUI
 
 		private void GameComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)
 		{
-			ErrorText.Text = "";
+			ErrorText.Text = null;
 
 			if (GameComboBox.Items.IsEmpty)
 			{
@@ -282,14 +161,14 @@ namespace LauncherUI
 				return;
 			}
 
-			var obj = (GameData)GameComboBox.SelectedItem;
+			var obj = (AddGameWindow.GameData)GameComboBox.SelectedItem;
 
 			/*
 				This event gets called twice on removal, only use the second time.
 			*/
 			if (obj != null)
 			{
-				GameComboBox.ToolTip = string.Format("{0}\n\nExecutable\n{1}\n\nSDR\n{2}", obj.DisplayName, obj.Details.ExecutablePath, obj.Details.SDRPath);
+				GameComboBox.ToolTip = string.Format("{0}\n\nExecutable\n{1}\n\nSDR\n{2}", obj.DisplayName, obj.ExecutablePath, obj.SDRPath);
 			}
 		}
 	}

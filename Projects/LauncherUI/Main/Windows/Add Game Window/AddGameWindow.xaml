@@ -10,24 +10,28 @@
 		<StackPanel Orientation="Vertical">
 			<TextBlock TextWrapping="Wrap" Text="Add a new game for future use." FontSize="15"/>
 			<StackPanel VerticalAlignment="Stretch" Orientation="Vertical">
-				<Label Content="SDR Directory" Margin="0,10,0,0" FontSize="15"/>
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*"/>
-						<ColumnDefinition Width="Auto" />
-					</Grid.ColumnDefinitions>
-					<TextBox x:Name="SDRDirTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center"/>
-					<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Width="100" FontSize="15" Click="SDRBrowse_Click"/>
-				</Grid>
-				<Label Content="Game Executable" Margin="0,10,0,0" FontSize="15"/>
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*"/>
-						<ColumnDefinition Width="Auto" />
-					</Grid.ColumnDefinitions>
-					<TextBox x:Name="GameExeTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center"/>
-					<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Width="100" FontSize="15" Click="ExeBrowse_Click"/>
-				</Grid>
+				<StackPanel x:Name="SDRDirectoryGrid">
+					<Label Content="SDR Directory" Margin="0,10,0,0" FontSize="15"/>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+						<TextBox x:Name="SDRDirTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center" IsReadOnly="True"/>
+						<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Width="100" FontSize="15" Click="SDRBrowse_Click"/>
+					</Grid>
+				</StackPanel>
+				<StackPanel x:Name="GameExeGrid" IsEnabled="False">
+					<Label Content="Game Executable" Margin="0,10,0,0" FontSize="15"/>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+						<TextBox x:Name="GameExeTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center" IsReadOnly="True"/>
+						<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Width="100" FontSize="15" Click="ExeBrowse_Click"/>
+					</Grid>
+				</StackPanel>
 			</StackPanel>
 		</StackPanel>
 		<Grid>
@@ -39,7 +43,7 @@
 				<TextBlock x:Name="ErrorText" Text="TextBlock" FontSize="15" Foreground="#FFC30000" VerticalAlignment="Center" TextTrimming="WordEllipsis"/>
 			</Grid>
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Column="1">
-				<Button x:Name="OKButton" Content="OK" Width="100" FontSize="15" Click="OKButton_Click" Height="32"/>
+				<Button x:Name="OKButton" Content="OK" Width="100" FontSize="15" Click="OKButton_Click" Height="32" IsEnabled="False"/>
 				<Button x:Name="CancelButton" Content="Cancel" Margin="10,0,0,0" Width="100" FontSize="15" Click="CancelButton_Click" Height="32"/>
 			</StackPanel>
 		</Grid>
