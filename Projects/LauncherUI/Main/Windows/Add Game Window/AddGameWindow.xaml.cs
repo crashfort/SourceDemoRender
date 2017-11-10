@@ -66,13 +66,11 @@ namespace LauncherUI
 			{
 				if (sdrpath.Length == 0)
 				{
-					SDRDirTextBox.Focus();
 					throw new Exception("SDR path is empty.");
 				}
 
 				if (!System.IO.Directory.Exists(sdrpath))
 				{
-					SDRDirTextBox.Focus();
 					throw new Exception("Specified SDR path does not exist.");
 				}
 
@@ -80,7 +78,6 @@ namespace LauncherUI
 
 				if (sdrpathinfo.Name != "SDR")
 				{
-					SDRDirTextBox.Focus();
 					throw new Exception("Specified SDR path is not related to SDR.");
 				}
 
@@ -90,8 +87,6 @@ namespace LauncherUI
 				{
 					if (!System.IO.File.Exists(System.IO.Path.Combine(sdrpath, name)))
 					{
-						SDRDirTextBox.Focus();
-
 						var format = string.Format("File \"{0}\" does not exist in SDR folder.", name);
 						throw new Exception(format);
 					}
@@ -175,13 +170,11 @@ namespace LauncherUI
 			{
 				if (exepath.Length == 0)
 				{
-					GameExeTextBox.Focus();
 					throw new Exception("Executable path is empty.");
 				}
 
 				if (!System.IO.File.Exists(exepath))
 				{
-					GameExeTextBox.Focus();
 					throw new Exception("Specified executable path does not exist.");
 				}
 
