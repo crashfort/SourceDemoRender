@@ -41,17 +41,7 @@ namespace LauncherUI
 			data.SDRPath = SDRDirTextBox.Text.Trim();
 			data.ExecutablePath = GameExeTextBox.Text.Trim();
 
-			try
-			{
-				OnGameAdded(this, data);
-			}
-
-			catch (Exception error)
-			{
-				ErrorText.Text = error.Message;
-				return;
-			}
-
+			OnGameAdded(this, data);
 			Close();
 		}
 
