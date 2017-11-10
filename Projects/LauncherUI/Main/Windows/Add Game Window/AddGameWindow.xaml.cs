@@ -166,7 +166,9 @@ namespace LauncherUI
 			var dialog = new OpenFileDialog();
 			dialog.Title = "Select Game Executable";
 			dialog.Multiselect = false;
-			dialog.Filter = "Executables (*.exe)|*.exe";
+
+			var targetname = System.IO.Path.GetFileName(CurrentVerifyGame.ExpectedExecutableName);
+			dialog.Filter = string.Format("{0} ({1})|{1}", CurrentVerifyGame.DisplayName, targetname);
 
 			var res = dialog.ShowDialog();
 
