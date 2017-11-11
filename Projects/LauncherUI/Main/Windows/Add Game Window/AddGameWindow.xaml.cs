@@ -38,8 +38,8 @@ namespace LauncherUI
 		{
 			var data = new GameData();
 			data.DisplayName = CurrentVerifyGame.DisplayName;
-			data.SDRPath = SDRDirTextBox.Text.Trim();
-			data.ExecutablePath = GameExeTextBox.Text.Trim();
+			data.SDRPath = SDRDirTextBox.Text;
+			data.ExecutablePath = GameExeTextBox.Text;
 
 			OnGameAdded(this, data);
 			Close();
