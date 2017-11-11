@@ -20,7 +20,7 @@ namespace LauncherUI
 			}
 		}
 
-		private struct CurrentGameVerifyData
+		struct CurrentGameVerifyData
 		{
 			public string DisplayName;
 			public string ExpectedExecutableName;
@@ -34,7 +34,7 @@ namespace LauncherUI
 			ErrorText.Text = null;
 		}
 
-		private void OKButton_Click(object sender, RoutedEventArgs args)
+		void OKButton_Click(object sender, RoutedEventArgs args)
 		{
 			var data = new GameData();
 			data.DisplayName = CurrentVerifyGame.DisplayName;
@@ -45,7 +45,7 @@ namespace LauncherUI
 			Close();
 		}
 
-		private void CancelButton_Click(object sender, RoutedEventArgs args)
+		void CancelButton_Click(object sender, RoutedEventArgs args)
 		{
 			Close();
 		}
@@ -53,7 +53,7 @@ namespace LauncherUI
 		public List<GameData> ExistingGames;
 		public event EventHandler<GameData> OnGameAdded;
 
-		private void OnSDRDirectorySelected(string sdrpath)
+		void OnSDRDirectorySelected(string sdrpath)
 		{
 			ErrorText.Text = null;
 			OKButton.IsEnabled = false;
@@ -139,7 +139,7 @@ namespace LauncherUI
 			GameExeGrid.IsEnabled = true;
 		}
 
-		private void SDRBrowse_Click(object sender, RoutedEventArgs args)
+		void SDRBrowse_Click(object sender, RoutedEventArgs args)
 		{
 			var dialog = new CommonOpenFileDialog();
 			dialog.Title = "Select SDR Folder";
@@ -159,7 +159,7 @@ namespace LauncherUI
 			}
 		}
 
-		private void OnGameExecutableSelected(string exepath)
+		void OnGameExecutableSelected(string exepath)
 		{
 			ErrorText.Text = null;
 			OKButton.IsEnabled = false;
@@ -196,7 +196,7 @@ namespace LauncherUI
 			OKButton.IsEnabled = true;
 		}
 
-		private void ExeBrowse_Click(object sender, RoutedEventArgs args)
+		void ExeBrowse_Click(object sender, RoutedEventArgs args)
 		{
 			var dialog = new OpenFileDialog();
 			dialog.Title = "Select Game Executable";

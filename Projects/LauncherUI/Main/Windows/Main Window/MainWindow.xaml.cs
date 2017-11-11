@@ -16,7 +16,7 @@ namespace LauncherUI
 			public string LaunchParameters;
 		}
 
-		private void AddGamesToList()
+		void AddGamesToList()
 		{
 			if (!System.IO.File.Exists("LauncherUIData.json"))
 			{
@@ -47,7 +47,7 @@ namespace LauncherUI
 			ErrorText.Text = null;
 		}
 
-		private void SaveGames()
+		void SaveGames()
 		{
 			var saverestore = new SaveRestoreData();
 			saverestore.Games = GameComboBox.Items.Cast<AddGameWindow.GameData>().ToList();
@@ -59,18 +59,18 @@ namespace LauncherUI
 			System.IO.File.WriteAllText("LauncherUIData.json", json, System.Text.Encoding.UTF8);
 		}
 
-		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs args)
+		void Window_Closing(object sender, System.ComponentModel.CancelEventArgs args)
 		{
 			SaveGames();
 		}
 
-		private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs args)
+		void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs args)
 		{
 			Process.Start(new ProcessStartInfo(args.Uri.AbsoluteUri));
 			args.Handled = true;
 		}
 
-		private void LaunchButton_Click(object sender, RoutedEventArgs args)
+		void LaunchButton_Click(object sender, RoutedEventArgs args)
 		{
 			var options = LaunchOptionsTextBox.Text.Trim();
 			var game = (AddGameWindow.GameData)GameComboBox.SelectedItem;
@@ -113,7 +113,7 @@ namespace LauncherUI
 			ErrorText.Text = null;
 		}
 
-		private void AddGameButton_Click(object sender, RoutedEventArgs args)
+		void AddGameButton_Click(object sender, RoutedEventArgs args)
 		{
 			var dialog = new AddGameWindow();
 			dialog.Owner = this;
@@ -126,7 +126,7 @@ namespace LauncherUI
 			ErrorText.Text = null;
 		}
 
-		private void RemoveGameButton_Click(object sender, RoutedEventArgs args)
+		void RemoveGameButton_Click(object sender, RoutedEventArgs args)
 		{
 			ErrorText.Text = null;
 
@@ -143,7 +143,7 @@ namespace LauncherUI
 			SaveGames();
 		}
 
-		private void OnGameAdded(object sender, AddGameWindow.GameData args)
+		void OnGameAdded(object sender, AddGameWindow.GameData args)
 		{
 			var index = GameComboBox.Items.Add(args);
 			GameComboBox.SelectedIndex = index;
@@ -151,7 +151,7 @@ namespace LauncherUI
 			SaveGames();
 		}
 
-		private void GameComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)
+		void GameComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)
 		{
 			ErrorText.Text = null;
 
