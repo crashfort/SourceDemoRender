@@ -586,7 +586,7 @@ SDR::BytePattern SDR::GetPatternFromString(const char* input)
 
 	while (*input)
 	{
-		if (std::isspace(*input))
+		if (SDR::String::IsSpace(*input))
 		{
 			++input;
 			shouldbespace = false;

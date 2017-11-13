@@ -557,11 +557,11 @@ namespace
 			{
 				std::string newname = filename;
 
-				if (std::isspace(newname.back()))
+				if (SDR::String::IsSpace(newname.back()))
 				{
 					for (auto it = newname.rbegin(); it != newname.rend(); ++it)
 					{
-						if (std::isspace(*it))
+						if (SDR::String::IsSpace(*it))
 						{
 							newname.pop_back();
 						}
@@ -573,7 +573,7 @@ namespace
 					}
 				}
 
-				if (std::isspace(newname.front()))
+				if (SDR::String::IsSpace(newname.front()))
 				{
 					newname = newname.substr(newname.find_first_not_of(' ', 0));
 				}
