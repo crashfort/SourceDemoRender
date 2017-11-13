@@ -7,7 +7,6 @@
 #include "rapidjson\document.h"
 #include <Shlwapi.h>
 #include <wrl.h>
-#include <conio.h>
 #include <cstdio>
 #include <cstdint>
 #include <string>
@@ -519,5 +518,5 @@ void main(int argc, char* argv[])
 
 	printf_s("You can close this window now\n");
 
-	_getch();
+	std::getchar();
 }

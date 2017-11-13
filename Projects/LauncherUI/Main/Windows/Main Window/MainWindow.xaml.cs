@@ -9,25 +9,14 @@ namespace LauncherUI
 {
 	public partial class MainWindow : Window
 	{
-		class GameData
-		{
-			public string DisplayName;
-			public AddGameWindow.GameAddData Details;
-
-			public override string ToString()
-			{
-				return DisplayName;
-			}
-		}
-
 		class SaveRestoreData
 		{
-			public List<GameData> Games;
+			public List<AddGameWindow.GameData> Games;
 			public int SelectedIndex = 0;
 			public string LaunchParameters;
 		}
 
-		private void AddGamesToList()
+		void AddGamesToList()
 		{
 			if (!System.IO.File.Exists("LauncherUIData.json"))
 			{
@@ -55,13 +44,13 @@ namespace LauncherUI
 			InitializeComponent();
 			AddGamesToList();
 
-			ErrorText.Text = "";
+			ErrorText.Text = null;
 		}
 
-		private void SaveGames()
+		void SaveGames()
 		{
 			var saverestore = new SaveRestoreData();
-			saverestore.Games = GameComboBox.Items.Cast<GameData>().ToList();
+			saverestore.Games = GameComboBox.Items.Cast<AddGameWindow.GameData>().ToList();
 			saverestore.LaunchParameters = LaunchOptionsTextBox.Text;
 			saverestore.SelectedIndex = GameComboBox.SelectedIndex;
 
@@ -70,23 +59,23 @@ namespace LauncherUI
 			System.IO.File.WriteAllText("LauncherUIData.json", json, System.Text.Encoding.UTF8);
 		}
 
-		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs args)
+		void Window_Closing(object sender, System.ComponentModel.CancelEventArgs args)
 		{
 			SaveGames();
 		}
 
-		private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs args)
+		void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs args)
 		{
 			Process.Start(new ProcessStartInfo(args.Uri.AbsoluteUri));
 			args.Handled = true;
 		}
 
-		private void LaunchButton_Click(object sender, RoutedEventArgs args)
+		void LaunchButton_Click(object sender, RoutedEventArgs args)
 		{
 			var options = LaunchOptionsTextBox.Text.Trim();
-			var game = (GameData)GameComboBox.SelectedItem;
-			var sdrpath = game.Details.SDRPath;
-			var exepath = game.Details.ExecutablePath;
+			var game = (AddGameWindow.GameData)GameComboBox.SelectedItem;
+			var sdrpath = game.SDRPath;
+			var exepath = game.ExecutablePath;
 
 			if (!System.IO.Directory.Exists(sdrpath))
 			{
@@ -121,24 +110,25 @@ namespace LauncherUI
 
 			Process.Start(info);
 
-			ErrorText.Text = "";
+			ErrorText.Text = null;
 		}
 
-		private void AddGameButton_Click(object sender, RoutedEventArgs args)
+		void AddGameButton_Click(object sender, RoutedEventArgs args)
 		{
-			ErrorText.Text = "";
-
 			var dialog = new AddGameWindow();
 			dialog.Owner = this;
 
+			dialog.ExistingGames = GameComboBox.Items.Cast<AddGameWindow.GameData>().ToList();
 			dialog.OnGameAdded += OnGameAdded;
 
 			dialog.ShowDialog();
+
+			ErrorText.Text = null;
 		}
 
-		private void RemoveGameButton_Click(object sender, RoutedEventArgs args)
+		void RemoveGameButton_Click(object sender, RoutedEventArgs args)
 		{
-			ErrorText.Text = "";
+			ErrorText.Text = null;
 
 			if (GameComboBox.SelectedItem == null)
 			{
@@ -148,104 +138,38 @@ namespace LauncherUI
 			var index = GameComboBox.SelectedIndex;
 
 			GameComboBox.Items.RemoveAt(index);
-			GameComboBox.SelectedIndex = index - 1;
+			GameComboBox.SelectedIndex = Math.Max(index - 1, 0);
 
 			SaveGames();
 		}
 
-		private bool IsGameAddedAlready(AddGameWindow.GameAddData args)
+		void OnGameAdded(object sender, AddGameWindow.GameData args)
 		{
-			foreach (var item in GameComboBox.Items)
-			{
-				var game = (GameData)item;
+			var index = GameComboBox.Items.Add(args);
+			GameComboBox.SelectedIndex = index;
 
-				if (game.Details.Equals(args))
-				{
-					return true;
-				}
-			}
-
-			return false;
+			SaveGames();
 		}
 
-		private void OnGameAdded(object sender, AddGameWindow.GameAddData args)
+		void GameComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)
 		{
-			var dialog = (AddGameWindow)sender;
+			ErrorText.Text = null;
 
-			if (IsGameAddedAlready(args))
+			if (GameComboBox.Items.IsEmpty)
 			{
-				throw new Exception("Game is already added.");
+				GameComboBox.ToolTip = null;
+				return;
 			}
 
-			if (!System.IO.Directory.Exists(args.SDRPath))
+			var obj = (AddGameWindow.GameData)GameComboBox.SelectedItem;
+
+			/*
+				This event gets called twice on removal, only use the second time.
+			*/
+			if (obj != null)
 			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("Specified SDR path does not exist.");
+				GameComboBox.ToolTip = string.Format("{0}\n\nExecutable\n{1}\n\nSDR\n{2}", obj.DisplayName, obj.ExecutablePath, obj.SDRPath);
 			}
-
-			if (!System.IO.File.Exists(args.ExecutablePath))
-			{
-				dialog.GameExeTextBox.Focus();
-				throw new Exception("Specified executable path does not exist.");
-			}
-
-			if (!System.IO.File.Exists(System.IO.Path.Combine(args.SDRPath, "SourceDemoRender.dll")))
-			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("SourceDemoRender.dll does not exist in SDR folder.");
-			}
-
-			if (!System.IO.File.Exists(System.IO.Path.Combine(args.SDRPath, "LauncherCLI.exe")))
-			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("LauncherCLI.exe does not exist in SDR folder.");
-			}
-
-			var configpath = System.IO.Path.Combine(args.SDRPath, "GameConfig.json");
-
-			if (!System.IO.File.Exists(configpath))
-			{
-				dialog.SDRDirTextBox.Focus();
-				throw new Exception("Game config does not exist in SDR folder.");
-			}
-
-			var content = System.IO.File.ReadAllText(configpath, System.Text.Encoding.UTF8);
-			var document = System.Json.JsonValue.Parse(content);
-			var parentdir = System.IO.Directory.GetParent(args.SDRPath);
-
-			if (document.ContainsKey(parentdir.Name))
-			{
-				var gamejson = document[parentdir.Name];
-
-				if (gamejson.ContainsKey("DisplayName"))
-				{
-					var gamedata = new GameData();
-					gamedata.Details = args;
-					gamedata.DisplayName = gamejson["DisplayName"];
-
-					var index = GameComboBox.Items.Add(gamedata);
-					GameComboBox.SelectedIndex = index;
-
-					SaveGames();
-				}
-
-				else
-				{
-					var format = string.Format("Game config does not contain \"DisplayName\" member for game \"{0}\".", parentdir.Name);
-					throw new Exception(format);
-				}
-			}
-
-			else
-			{
-				var format = string.Format("Game \"{0}\" does not exist in game config.", parentdir.Name);
-				throw new Exception(format);
-			}
-		}
-
-		private void GameComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)
-		{
-			ErrorText.Text = "";
 		}
 	}
 }
