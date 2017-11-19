@@ -46,6 +46,8 @@ You can use ``LauncherCLI User.bat`` to aid launching. Edit the content to fit y
 ### User interface
 The launcher ``LauncherUI.exe`` comes as a separate download on the releases page. This launcher does not have to be in a specific game directory and can be run from anywhere. When adding a new game, you have to specify its SDR directory along with its executable file path. Games are saved and can quickly be selected another time.
 
+**You must run as administrator.**
+
 ![Launcher UI Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Launcher%20UI/MainWindow.png)
 
 ## Instructions
