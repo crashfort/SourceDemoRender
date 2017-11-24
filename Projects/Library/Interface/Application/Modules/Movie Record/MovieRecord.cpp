@@ -17,14 +17,18 @@ namespace
 		SDR::Console::Variable OutputDirectory;
 		SDR::Console::Variable FlashWindow;
 		SDR::Console::Variable ExitOnFinish;
-		SDR::Console::Variable SuppressLog;
 
 		namespace Video
 		{
 			SDR::Console::Variable Framerate;
-			SDR::Console::Variable ColorSpace;
+			SDR::Console::Variable YUVColorSpace;
 			SDR::Console::Variable Encoder;
 			SDR::Console::Variable PixelFormat;
+
+			namespace LAV
+			{
+				SDR::Console::Variable SuppressLog;
+			}
 
 			namespace Sample
 			{
@@ -53,21 +57,22 @@ namespace
 			OutputDirectory = SDR::Console::MakeString("sdr_outputdir", "");
 			FlashWindow = SDR::Console::MakeBool("sdr_endmovieflash", "0");
 			ExitOnFinish = SDR::Console::MakeBool("sdr_endmoviequit", "0");
-			SuppressLog = SDR::Console::MakeBool("sdr_movie_suppresslog", "1");
 
-			Video::Framerate = SDR::Console::MakeNumber("sdr_render_framerate", "60", 30, 1000);
-			Video::ColorSpace = SDR::Console::MakeString("sdr_movie_encoder_colorspace", "709");
-			Video::Encoder = SDR::Console::MakeString("sdr_movie_encoder", "libx264rgb");
-			Video::PixelFormat = SDR::Console::MakeString("sdr_movie_encoder_pxformat", "");
+			Video::Framerate = SDR::Console::MakeNumber("sdr_video_fps", "60", 30, 1000);
+			Video::YUVColorSpace = SDR::Console::MakeString("sdr_video_yuvspace", "709");
+			Video::Encoder = SDR::Console::MakeString("sdr_video_encoder", "libx264rgb");
+			Video::PixelFormat = SDR::Console::MakeString("sdr_video_pxformat", "");
 
-			Video::Sample::Multiply = SDR::Console::MakeNumber("sdr_sample_mult", "32", 0);
-			Video::Sample::Exposure = SDR::Console::MakeNumber("sdr_sample_exposure", "0.5", 0, 1);
+			Video::LAV::SuppressLog = SDR::Console::MakeBool("sdr_video_lav_suppresslog", "1");
 
-			Video::D3D11::Staging = SDR::Console::MakeBool("sdr_d3d11_staging", "1");
+			Video::Sample::Multiply = SDR::Console::MakeNumber("sdr_video_sample_mult", "32", 0);
+			Video::Sample::Exposure = SDR::Console::MakeNumber("sdr_video_sample_exposure", "0.5", 0, 1);
 
-			Video::X264::CRF = SDR::Console::MakeNumberWithString("sdr_x264_crf", "0", 0, 51);
-			Video::X264::Preset = SDR::Console::MakeString("sdr_x264_preset", "ultrafast");
-			Video::X264::Intra = SDR::Console::MakeBool("sdr_x264_intra", "1");
+			Video::D3D11::Staging = SDR::Console::MakeBool("sdr_video_d3d11_staging", "1");
+
+			Video::X264::CRF = SDR::Console::MakeNumberWithString("sdr_video_x264_crf", "0", 0, 51);
+			Video::X264::Preset = SDR::Console::MakeString("sdr_video_x264_preset", "ultrafast");
+			Video::X264::Intra = SDR::Console::MakeBool("sdr_video_x264_intra", "1");
 		});
 	}
 }
@@ -76,7 +81,7 @@ namespace
 {	
 	void LAVLogFunction(void* avcl, int level, const char* fmt, va_list vl)
 	{
-		if (!Variables::SuppressLog.GetBool())
+		if (!Variables::Video::LAV::SuppressLog.GetBool())
 		{
 			/*
 				989 max limit according to
@@ -557,11 +562,11 @@ namespace
 			{
 				std::string newname = filename;
 
-				if (std::isspace(newname.back()))
+				if (SDR::String::IsSpace(newname.back()))
 				{
 					for (auto it = newname.rbegin(); it != newname.rend(); ++it)
 					{
-						if (std::isspace(*it))
+						if (SDR::String::IsSpace(*it))
 						{
 							newname.pop_back();
 						}
@@ -573,7 +578,7 @@ namespace
 					}
 				}
 
-				if (std::isspace(newname.front()))
+				if (SDR::String::IsSpace(newname.front()))
 				{
 					newname = newname.substr(newname.find_first_not_of(' ', 0));
 				}
@@ -599,11 +604,11 @@ namespace
 					std::string sdrpath = Variables::OutputDirectory.GetString();
 
 					/*
-						No desired path, use game root.
+						No desired path, use resource root.
 					*/
 					if (sdrpath.empty())
 					{
-						sdrpath = SDR::Library::BuildPath("SDR\\");
+						sdrpath = SDR::Library::GetResourcePath();
 					}
 
 					else
@@ -639,10 +644,10 @@ namespace
 							std::make_pair("709", AVCOL_SPC_BT709)
 						};
 
-						linktabletovariable(Variables::Video::ColorSpace.GetString(), table, colorspace);
+						linktabletovariable(Variables::Video::YUVColorSpace.GetString(), table, colorspace);
 					}
 
-					if (Variables::SuppressLog.GetBool())
+					if (Variables::Video::LAV::SuppressLog.GetBool())
 					{
 						av_log_set_level(AV_LOG_QUIET);
 						av_log_set_callback(nullptr);

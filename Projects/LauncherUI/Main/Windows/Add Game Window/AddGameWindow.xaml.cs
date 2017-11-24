@@ -11,7 +11,7 @@ namespace LauncherUI
 		public class GameData
 		{
 			public string DisplayName;
-			public string SDRPath;
+			public string GamePath;
 			public string ExecutablePath;
 
 			public override string ToString()
@@ -38,7 +38,7 @@ namespace LauncherUI
 		{
 			var data = new GameData();
 			data.DisplayName = CurrentVerifyGame.DisplayName;
-			data.SDRPath = SDRDirTextBox.Text;
+			data.GamePath = GameDirTextBox.Text;
 			data.ExecutablePath = GameExeTextBox.Text;
 
 			OnGameAdded(this, data);
@@ -53,69 +53,51 @@ namespace LauncherUI
 		public List<GameData> ExistingGames;
 		public event EventHandler<GameData> OnGameAdded;
 
-		void OnSDRDirectorySelected(string sdrpath)
+		void OnGameDirectorySelected(string gamepath)
 		{
 			ErrorText.Text = null;
 			OKButton.IsEnabled = false;
 			GameExeGrid.IsEnabled = false;
 			GameExeTextBox.Text = null;
 
-			SDRDirTextBox.Text = sdrpath;
-
 			try
 			{
-				if (sdrpath.Length == 0)
+				if (gamepath.Length == 0)
 				{
-					throw new Exception("SDR path is empty.");
+					throw new Exception("Game path text is empty.");
 				}
 
-				if (!System.IO.Directory.Exists(sdrpath))
+				if (!System.IO.Directory.Exists(gamepath))
 				{
-					throw new Exception("Specified SDR path does not exist.");
-				}
-
-				var sdrpathinfo = new System.IO.DirectoryInfo(sdrpath);
-
-				if (sdrpathinfo.Name != "SDR")
-				{
-					throw new Exception("Specified SDR path is not related to SDR.");
-				}
-
-				var files = new string[] { "SourceDemoRender.dll", "LauncherCLI.exe", "GameConfig.json" };
-
-				foreach (var name in files)
-				{
-					if (!System.IO.File.Exists(System.IO.Path.Combine(sdrpath, name)))
-					{
-						var format = string.Format("File \"{0}\" does not exist in SDR folder.", name);
-						throw new Exception(format);
-					}
+					throw new Exception("Specified game path does not exist.");
 				}
 
 				foreach (var game in ExistingGames)
 				{
-					if (game.SDRPath == sdrpath)
+					if (game.GamePath == gamepath)
 					{
 						throw new Exception("Game is already added.");
 					}
 				}
 
-				var configpath = System.IO.Path.Combine(sdrpath, "GameConfig.json");
-				var content = System.IO.File.ReadAllText(configpath, System.Text.Encoding.UTF8);
+				var configpath = System.IO.Path.Combine("GameConfig.json");
+				var content = System.IO.File.ReadAllText(configpath, new System.Text.UTF8Encoding(false));
 				var document = System.Json.JsonValue.Parse(content);
-				var parentdir = System.IO.Directory.GetParent(sdrpath);
+				var dirinfo = new System.IO.DirectoryInfo(gamepath);
 
-				if (!document.ContainsKey(parentdir.Name))
+				var searcher = string.Format("{0}\\{1}", dirinfo.Parent.Name, dirinfo.Name);
+
+				if (!document.ContainsKey(searcher))
 				{
-					var format = string.Format("Game \"{0}\" does not exist in game config.", parentdir.Name);
+					var format = string.Format("Game \"{0}\" does not exist in game config.", searcher);
 					throw new Exception(format);
 				}
 
-				var gamejson = document[parentdir.Name];
+				var gamejson = document[searcher];
 
 				if (!gamejson.ContainsKey("DisplayName"))
 				{
-					var format = string.Format("Game config does not contain \"DisplayName\" member for game \"{0}\".", parentdir.Name);
+					var format = string.Format("Game config does not contain \"DisplayName\" member for game \"{0}\".", searcher);
 					throw new Exception(format);
 				}
 
@@ -136,13 +118,14 @@ namespace LauncherUI
 				return;
 			}
 
+			GameDirTextBox.Text = gamepath;
 			GameExeGrid.IsEnabled = true;
 		}
 
-		void SDRBrowse_Click(object sender, RoutedEventArgs args)
+		void GamePathBrowse_Click(object sender, RoutedEventArgs args)
 		{
 			var dialog = new CommonOpenFileDialog();
-			dialog.Title = "Select SDR Folder";
+			dialog.Title = "Select Game Directory";
 			dialog.IsFolderPicker = true;
 			dialog.AddToMostRecentlyUsedList = false;
 			dialog.AllowNonFileSystemItems = false;
@@ -155,7 +138,7 @@ namespace LauncherUI
 
 			if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
 			{
-				OnSDRDirectorySelected(dialog.FileName.Trim());
+				OnGameDirectorySelected(dialog.FileName.Trim());
 			}
 		}
 
@@ -163,8 +146,6 @@ namespace LauncherUI
 		{
 			ErrorText.Text = null;
 			OKButton.IsEnabled = false;
-
-			GameExeTextBox.Text = exepath;
 
 			try
 			{
@@ -193,6 +174,7 @@ namespace LauncherUI
 				return;
 			}
 
+			GameExeTextBox.Text = exepath;
 			OKButton.IsEnabled = true;
 		}
 

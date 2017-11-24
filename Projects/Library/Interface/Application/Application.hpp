@@ -6,7 +6,7 @@ namespace SDR
 {
 	void PreEngineSetup();
 
-	void Setup(const char* gamepath, const char* gamename);
+	void Setup();
 	void Close();
 
 	struct StartupFuncData

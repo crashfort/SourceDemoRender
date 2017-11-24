@@ -14,9 +14,8 @@
 
 namespace
 {
-	char LibraryName[] = R"(SDR\SourceDemoRender.dll)";
-	char LibraryNameNoPrefix[] = "SourceDemoRender.dll";
-	char ConfigNameNoPrefix[] = "GameConfig.json";
+	char LibraryName[] = "SourceDemoRender.dll";
+	char GameConfigName[] = "GameConfig.json";
 	char InitializeExportName[] = "SDR_Initialize";
 }
 
@@ -186,8 +185,8 @@ namespace
 		
 		const char* LibraryNameAddr;
 		const char* ExportNameAddr;
+		const char* ResourcePathAddr;
 		const char* GamePathAddr;
-		const char* GameNameAddr;
 	};
 
 	/*
@@ -201,8 +200,8 @@ namespace
 
 		auto library = data->LibraryNameAddr;
 		auto loadexport = data->ExportNameAddr;
-		auto path = data->GamePathAddr;
-		auto game = data->GameNameAddr;
+		auto path = data->ResourcePathAddr;
+		auto game = data->GamePathAddr;
 
 		auto module = data->LoadLibraryAddr(library);
 		auto func = (SDR::API::SDR_Initialize)data->GetProcAddressAddr(module, loadexport);
@@ -210,7 +209,7 @@ namespace
 		func(path, game);
 	}
 
-	void InjectProcess(HANDLE process, HANDLE thread, const std::string& path, const std::string& game)
+	void InjectProcess(HANDLE process, HANDLE thread, const std::string& resourcepath, const std::string& gamepath)
 	{
 		VirtualMemory memory(process, 4096);
 		ProcessWriter writer(process, memory.Address);
@@ -265,10 +264,10 @@ namespace
 		/*
 			All referenced strings must be allocated in the other process too.
 		*/
-		data.LibraryNameAddr = writer.PushString(LibraryName);
+		data.LibraryNameAddr = writer.PushString(resourcepath + LibraryName);
 		data.ExportNameAddr = writer.PushString(InitializeExportName);
-		data.GamePathAddr = writer.PushString(path);
-		data.GameNameAddr = writer.PushString(game);
+		data.ResourcePathAddr = writer.PushString(resourcepath);
+		data.GamePathAddr = writer.PushString(gamepath);
 
 		auto dataaddr = writer.PushMemory(data);
 
@@ -301,19 +300,13 @@ namespace
 		strcat_s(buffer, "\\");
 	}
 
-	PROCESS_INFORMATION StartProcess(const std::string& dir, const std::string& exepath, const std::string& game, const std::string& params)
+	PROCESS_INFORMATION StartProcess(const std::string& dir, const std::string& exepath, const std::string& params)
 	{
-		/*
-			Parameter should not have a trailing backslash as resources will fail to load.
-		*/
-		auto gameparamstr = dir;
-		gameparamstr.pop_back();
-
 		char args[8192];
 		strcpy_s(args, exepath.c_str());
 		strcat_s(args, " ");
 		strcat_s(args, "-game \"");
-		strcat_s(args, gameparamstr.c_str());
+		strcat_s(args, dir.c_str());
 		strcat_s(args, "\" ");
 		strcat_s(args, params.c_str());
 
@@ -343,7 +336,7 @@ namespace
 		return procinfo;
 	}
 
-	std::string GetDisplayName(const std::string& name)
+	std::string GetDisplayName(const char* gamepath)
 	{
 		printf_s("Searching game config for matching name\n");
 
@@ -351,7 +344,7 @@ namespace
 
 		try
 		{
-			document = SDR::Json::FromFile(ConfigNameNoPrefix);
+			document = SDR::Json::FromFile(GameConfigName);
 		}
 
 		catch (SDR::File::ScopedFile::ExceptionType status)
@@ -361,16 +354,13 @@ namespace
 
 		for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it)
 		{
-			std::string gamename = it->name.GetString();
+			auto gamename = it->name.GetString();
 			
-			if (gamename == name)
+			if (SDR::String::EndsWith(gamepath, gamename))
 			{
-				if (it->value.HasMember("DisplayName"))
-				{
-					gamename = it->value["DisplayName"].GetString();
-				}
+				gamename = SDR::Json::GetString(it->value, "DisplayName");
 
-				printf_s("Found \"%s\" in game config\n", gamename.c_str());
+				printf_s("Found \"%s\" in game config\n", gamename);
 				
 				return gamename;
 			}
@@ -379,66 +369,57 @@ namespace
 		SDR::Error::Make("Game not found in game config"s);
 	}
 
-	void MainProcedure(int argc, char* argv[])
+	void MainProcedure(const std::string& exepath, const std::string& gamepath, const std::string& params)
 	{
-		if (argc < 1)
-		{
-			printf_s("Arguments: <exe path> <startup params ...>\n");
-			return;
-		}
-
-		std::string exepath = argv[0];
-
-		argc -= 1;
-		argv += 1;
-
 		if (PathFileExistsA(exepath.c_str()) == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 does not exist"s);
+			SDR::Error::Make("Specified path at /GAME does not exist"s);
 		}
 
 		if (PathMatchSpecA(exepath.c_str(), "*.exe") == 0)
 		{
-			SDR::Error::Make("Specified path at argument 0 not an executable"s);
+			SDR::Error::Make("Specified path at /GAME not an executable"s);
+		}
+
+		if (PathFileExistsA(gamepath.c_str()) == 0)
+		{
+			SDR::Error::Make("Specified path at /PATH does not exist"s);
+		}
+
+		if (PathIsDirectoryA(gamepath.c_str()) == 0)
+		{
+			SDR::Error::Make("Specified path at /PATH not a directory"s);
 		}
 
 		char curdir[SDR::File::NameSize];
 		SDR::Error::MS::ThrowIfZero(GetCurrentDirectoryA(sizeof(curdir), curdir), "Could not get current directory");
+		strcat_s(curdir, "\\");
 
-		RemoveFileName(curdir);
+		/*
+			Parameter should not have a trailing backslash as resources will fail to load.
+		*/
+		char gamefolder[SDR::File::NameSize];
+		strcpy_s(gamefolder, gamepath.c_str());
 
-		std::string game = PathFindFileNameA(curdir);
-		game.pop_back();
-
-		auto displayname = GetDisplayName(game);
-
-		auto params = "-steam -insecure +sv_lan 1 -console"s;
-		printf_s("Appending parameters: \"%s\"\n", params.c_str());
-		
-		std::string dir = curdir;
+		auto displayname = GetDisplayName(gamefolder);
 
 		printf_s("Game: \"%s\"\n", displayname.c_str());
-		printf_s("Executable path: \"%s\"\n", exepath.c_str());
-		printf_s("Directory: \"%s\"\n", dir.c_str());
-
-		for (size_t i = 0; i < argc; i++)
-		{
-			params += ' ';
-			params += argv[i];
-		}
+		printf_s("Executable: \"%s\"\n", exepath.c_str());
+		printf_s("Directory: \"%s\"\n", gamefolder);
+		printf_s("Resource: \"%s\"\n", curdir);
 
 		printf_s("Parameters: \"%s\"\n", params.c_str());
 
 		ServerShadowStateData loadstage(SDR::API::StageType::Load, "Load");
 
 		printf_s("Starting \"%s\"\n", displayname.c_str());
-		auto info = StartProcess(dir, exepath, game, params);
+		auto info = StartProcess(gamefolder, exepath, params);
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
 
 		printf_s("Injecting into \"%s\"\n", displayname.c_str());
-		InjectProcess(process.Get(), thread.Get(), dir, game);
+		InjectProcess(process.Get(), thread.Get(), curdir, gamefolder);
 
 		/*
 			Wait until the end of SDR::Library::Load() and then read back all messages.
@@ -462,8 +443,8 @@ namespace
 
 		data.LibraryNameAddr = LibraryName;
 		data.ExportNameAddr = InitializeExportName;
+		data.ResourcePathAddr = "i dont know";
 		data.GamePathAddr = "i dont know";
-		data.GameNameAddr = "i dont know";
 
 		QueueUserAPC(ProcessAPC, GetCurrentThread(), (ULONG_PTR)&data);
 
@@ -477,7 +458,7 @@ namespace
 		/*
 			Safe because nothing external is referenced.
 		*/
-		auto library = LoadLibraryExA(LibraryNameNoPrefix, nullptr, DONT_RESOLVE_DLL_REFERENCES);
+		auto library = LoadLibraryExA(LibraryName, nullptr, DONT_RESOLVE_DLL_REFERENCES);
 
 		if (!library)
 		{
@@ -497,18 +478,65 @@ void main(int argc, char* argv[])
 {
 	try
 	{
-		EnsureFileIsPresent(LibraryNameNoPrefix);
-		EnsureFileIsPresent(ConfigNameNoPrefix);
-
-		ShowLibraryVersion();
-
 		/*
 			Don't need our own name.
 		*/
 		argv++;
 		argc--;
 
-		MainProcedure(argc, argv);
+		ShowLibraryVersion();
+
+		/*
+			/GAME "" /PARAMS "" /
+		*/
+		if (argc < 1)
+		{
+			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PATH \"<game path>\" /PARAMS \"<startup params>\"");
+		}
+
+		std::string exepath;
+		std::string gamepath;
+		std::string params = "-steam -insecure +sv_lan 1 -console"s;
+		
+		printf_s("Appending parameters: \"%s\"\n", params.c_str());
+
+		for (size_t i = 0; i < argc; i++)
+		{
+			if (SDR::String::IsEqual(argv[i], "/GAME"))
+			{
+				exepath = argv[++i];
+				continue;
+			}
+
+			if (SDR::String::IsEqual(argv[i], "/PATH"))
+			{
+				gamepath = argv[++i];
+				continue;
+			}
+
+			if (SDR::String::IsEqual(argv[i], "/PARAMS"))
+			{
+				params += ' ';
+				params += argv[++i];
+				
+				continue;
+			}
+		}
+
+		if (exepath.empty())
+		{
+			SDR::Error::Make("Required switch \"/GAME\" not found");
+		}
+
+		if (gamepath.empty())
+		{
+			SDR::Error::Make("Required switch \"/PATH\" not found");
+		}
+
+		EnsureFileIsPresent(LibraryName);
+		EnsureFileIsPresent(GameConfigName);
+
+		MainProcedure(exepath, gamepath, params);
 	}
 
 	catch (const SDR::Error::Exception& error)

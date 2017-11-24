@@ -10,15 +10,15 @@
 		<StackPanel Orientation="Vertical">
 			<TextBlock TextWrapping="Wrap" Text="Add a new game for future use." FontSize="15"/>
 			<StackPanel VerticalAlignment="Stretch" Orientation="Vertical">
-				<StackPanel x:Name="SDRDirectoryGrid">
-					<Label Content="SDR Directory" Margin="0,10,0,0" FontSize="15"/>
+				<StackPanel x:Name="GameDirectoryGrid">
+					<Label Content="Game Directory" Margin="0,10,0,0" FontSize="15"/>
 					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*"/>
 							<ColumnDefinition Width="Auto" />
 						</Grid.ColumnDefinitions>
-						<TextBox x:Name="SDRDirTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center" IsReadOnly="True"/>
-						<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Width="100" FontSize="15" Click="SDRBrowse_Click"/>
+						<TextBox x:Name="GameDirTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center" IsReadOnly="True"/>
+						<Button Grid.Column="1" Height="32" Content="Browse" Margin="10,0,0,0" Width="100" FontSize="15" Click="GamePathBrowse_Click"/>
 					</Grid>
 				</StackPanel>
 				<StackPanel x:Name="GameExeGrid" IsEnabled="False">

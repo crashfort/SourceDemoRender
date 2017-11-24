@@ -43,4 +43,15 @@ namespace SDR::String
 		auto start = str + sourcelength - endlength;
 		return std::char_traits<T>::compare(start, end, endlength) == 0;
 	}
+
+	template <typename T>
+	bool IsSpace(T character)
+	{
+		return character == ' ';
+	}
+
+	inline bool IsEqual(const char* first, const char* other)
+	{
+		return strcmp(first, other) == 0;
+	}
 }

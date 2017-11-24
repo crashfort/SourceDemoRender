@@ -9,15 +9,12 @@ extern "C"
 	#include "libavformat\avformat.h"
 }
 
-#include <cpprest\http_client.h>
-#include <shellapi.h>
-
 namespace
 {
 	namespace ModuleGameDir
 	{
-		std::string FullPath;
-		std::string GameName;
+		std::string ResourcePath;
+		std::string GamePath;
 	}
 }
 
@@ -25,7 +22,7 @@ namespace
 {
 	enum
 	{
-		LibraryVersion = 24,
+		LibraryVersion = 25,
 	};
 }
 
@@ -36,127 +33,6 @@ namespace
 		void Version()
 		{
 			SDR::Log::Message("SDR: Library version: %d\n", LibraryVersion);
-		}
-
-		concurrency::task<void> UpdateProc()
-		{
-			SDR::Log::Message("SDR: Checking for any available updates\n"s);
-
-			auto webrequest = [](const wchar_t* path, auto callback)
-			{
-				auto task = concurrency::create_task([=]()
-				{
-					auto address = L"https://raw.githubusercontent.com/";
-
-					web::http::client::http_client_config config;
-					config.set_timeout(5s);
-
-					web::http::client::http_client webclient(address, config);
-
-					web::http::uri_builder pathbuilder(path);
-
-					auto task = webclient.request(web::http::methods::GET, pathbuilder.to_string());
-					auto response = task.get();
-
-					auto status = response.status_code();
-
-					if (status != web::http::status_codes::OK)
-					{
-						SDR::Log::Warning("SDR: Could not reach update repository\n"s);
-						return;
-					}
-
-					auto ready = response.content_ready();
-					callback(ready.get());
-				});
-
-				return task;
-			};
-
-			auto libreq = webrequest
-			(
-				L"/crashfort/SourceDemoRender/master/Version/Latest",
-				[](web::http::http_response&& response)
-				{
-					/*
-						Content is only text, so extract it raw.
-					*/
-					auto string = response.extract_utf8string(true).get();
-
-					auto curversion = LibraryVersion;
-					auto webversion = std::stoi(string);
-
-					auto green = SDR::Shared::Color(88, 255, 39);
-					auto blue = SDR::Shared::Color(51, 167, 255);
-
-					if (curversion == webversion)
-					{
-						SDR::Log::MessageColor(green, "SDR: Using the latest library version\n");
-					}
-
-					else if (curversion < webversion)
-					{
-						SDR::Log::MessageColor
-						(
-							blue,
-							"SDR: A library update is available: (%d -> %d).\n"
-							"Use \"sdr_accept\" to open Github release page\n",
-							curversion,
-							webversion
-						);
-
-						SDR::Library::SetAcceptFunction([=]()
-						{
-							SDR::Log::Message("SDR: Upgrading from version %d to %d\n", curversion, webversion);
-
-							auto address = L"https://github.com/crashfort/SourceDemoRender/releases";
-							ShellExecuteW(nullptr, L"open", address, nullptr, nullptr, SW_SHOW);
-						});
-					}
-
-					else if (curversion > webversion)
-					{
-						SDR::Log::Message("SDR: Local library newer than update repository?\n"s);
-					}
-				}
-			);
-
-			return concurrency::create_task([libreq]()
-			{
-				try
-				{
-					libreq.wait();
-				}
-
-				catch (const std::exception& error)
-				{
-					SDR::Log::Message("SDR: %s", error.what());
-				}
-			});
-		}
-
-		void Update()
-		{
-			UpdateProc();
-		}
-
-		namespace Accept
-		{
-			std::function<void()> Callback;
-
-			void Procedure()
-			{
-				if (Callback)
-				{
-					Callback();
-					Callback = nullptr;
-				}
-
-				else
-				{
-					SDR::Log::Message("SDR: Nothing to accept\n");
-				}
-			}
 		}
 	}
 
@@ -172,8 +48,6 @@ namespace
 	SDR::StartupFunctionAdder A1("LibraryInterface console commands", []()
 	{
 		SDR::Console::MakeCommand("sdr_version", Commands::Version);
-		SDR::Console::MakeCommand("sdr_update", Commands::Update);
-		SDR::Console::MakeCommand("sdr_accept", Commands::Accept::Procedure);
 	});
 
 	struct LoadFuncData : SDR::API::ShadowState
@@ -248,7 +122,7 @@ void SDR::Library::Load()
 
 	try
 	{
-		SDR::Setup(SDR::Library::GetGamePath(), SDR::Library::GetGameName());
+		SDR::Setup();
 		SDR::Log::Message("SDR: Source Demo Render loaded\n");
 
 		/*
@@ -268,29 +142,19 @@ void SDR::Library::Unload()
 	SDR::Close();
 }
 
-void SDR::Library::SetAcceptFunction(std::function<void()>&& func)
-{
-	Commands::Accept::Callback = std::move(func);
-}
-
-const char* SDR::Library::GetGameName()
-{
-	return ModuleGameDir::GameName.c_str();
-}
-
 const char* SDR::Library::GetGamePath()
 {
-	return ModuleGameDir::FullPath.c_str();
+	return ModuleGameDir::GamePath.c_str();
 }
 
-bool SDR::Library::IsGame(const char* test)
+const char* SDR::Library::GetResourcePath()
 {
-	return strcmp(GetGameName(), test) == 0;
+	return ModuleGameDir::ResourcePath.c_str();
 }
 
-std::string SDR::Library::BuildPath(const char* file)
+std::string SDR::Library::BuildResourcePath(const char* file)
 {
-	std::string ret = GetGamePath();
+	std::string ret = GetResourcePath();
 	ret += file;
 
 	return ret;
@@ -307,10 +171,10 @@ extern "C"
 		First actual pre-engine load function. Don't reference any
 		engine libraries here as they aren't loaded yet like in "Load".
 	*/
-	__declspec(dllexport) void __cdecl SDR_Initialize(const char* path, const char* game)
+	__declspec(dllexport) void __cdecl SDR_Initialize(const char* respath, const char* gamepath)
 	{
-		ModuleGameDir::FullPath = path;
-		ModuleGameDir::GameName = game;
+		ModuleGameDir::ResourcePath = respath;
+		ModuleGameDir::GamePath = gamepath;
 
 		SDR::Error::SetPrintFormat("SDR: %s\n");
 

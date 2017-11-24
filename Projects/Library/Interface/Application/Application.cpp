@@ -254,9 +254,14 @@ namespace
 			for (auto& prop : game->Properties)
 			{
 				/*
-					Ignore this, it's only used by the launcher.
+					Ignore these, they are only used by the launcher.
 				*/
 				if (prop.first == "DisplayName")
+				{
+					continue;
+				}
+
+				else if (prop.first == "ExecutableName")
 				{
 					continue;
 				}
@@ -296,13 +301,13 @@ namespace
 			MainApplication.ModuleHandlers.clear();
 		}
 
-		void SetupGame(const char* gamepath, const char* gamename)
+		void SetupGame()
 		{
 			rapidjson::Document document;
 
 			try
 			{
-				document = SDR::Json::FromFile(SDR::Library::BuildPath("SDR\\GameConfig.json"));
+				document = SDR::Json::FromFile(SDR::Library::BuildResourcePath("GameConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
@@ -325,9 +330,11 @@ namespace
 				});
 			});
 
+			auto gamename = SDR::Library::GetGamePath();
+
 			for (auto& game : Configs)
 			{
-				if (game.Name == gamename)
+				if (SDR::String::EndsWith(gamename, game.Name.c_str()))
 				{
 					currentgame = &game;
 					break;
@@ -505,10 +512,10 @@ void SDR::PreEngineSetup()
 	LoadLibraryIntercept::Start();
 }
 
-void SDR::Setup(const char* gamepath, const char* gamename)
+void SDR::Setup()
 {
 	LoadLibraryIntercept::End();
-	Config::SetupGame(gamepath, gamename);
+	Config::SetupGame();
 
 	if (MainApplication.StartupFunctions.empty())
 	{
@@ -586,7 +593,7 @@ SDR::BytePattern SDR::GetPatternFromString(const char* input)
 
 	while (*input)
 	{
-		if (std::isspace(*input))
+		if (SDR::String::IsSpace(*input))
 		{
 			++input;
 			shouldbespace = false;
