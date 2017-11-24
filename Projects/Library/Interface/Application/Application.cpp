@@ -254,9 +254,14 @@ namespace
 			for (auto& prop : game->Properties)
 			{
 				/*
-					Ignore this, it's only used by the launcher.
+					Ignore these, they are only used by the launcher.
 				*/
 				if (prop.first == "DisplayName")
+				{
+					continue;
+				}
+
+				else if (prop.first == "ExecutableName")
 				{
 					continue;
 				}
