@@ -11,13 +11,6 @@
 #include <cstdint>
 #include <string>
 #include <algorithm>
-#include <cctype>
-
-#include <ppltasks.h>
-#include <cpprest\http_client.h>
-#include <shellapi.h>
-
-using namespace std::chrono_literals;
 
 namespace
 {
@@ -467,7 +460,7 @@ namespace
 		return;
 	}
 
-	int GetAndShowLibraryVersion()
+	void ShowLibraryVersion()
 	{
 		/*
 			Safe because nothing external is referenced.
@@ -485,150 +478,6 @@ namespace
 		printf_s("SDR library version: %d\n", version);
 
 		FreeLibrary(library);
-
-		return version;
-	}
-
-	template <typename Func>
-	auto GitHubWebRequest(const wchar_t* path, Func callback)
-	{
-		auto task = concurrency::create_task([=]()
-		{
-			auto address = L"https://raw.githubusercontent.com/";
-
-			web::http::client::http_client_config config;
-			config.set_timeout(5s);
-
-			web::http::client::http_client webclient(address, config);
-
-			web::http::uri_builder pathbuilder(path);
-
-			auto task = webclient.request(web::http::methods::GET, pathbuilder.to_string());
-			auto response = task.get();
-
-			auto status = response.status_code();
-
-			if (status != web::http::status_codes::OK)
-			{
-				SDR::Log::Warning("Could not reach update repository\n"s);
-				return;
-			}
-
-			auto ready = response.content_ready();
-			callback(ready.get());
-		});
-
-		return task;
-	}
-
-	std::string ExtractWebRequestUTF8String(const web::http::http_response& response)
-	{
-		/*
-			Content is only text, so extract it raw.
-		*/
-		auto task = response.extract_utf8string(true);
-		auto string = task.get();
-
-		return string;
-	}
-
-	void CheckLibraryUpdate(int localversion)
-	{
-		printf_s("Checking for any available library updates\n");
-
-		auto libreq = GitHubWebRequest
-		(
-			L"/crashfort/SourceDemoRender/master/Version/Latest",
-			[=](web::http::http_response&& response)
-			{
-				auto string = ExtractWebRequestUTF8String(response);
-
-				auto curversion = localversion;
-				auto webversion = std::stoi(string);
-
-				if (curversion == webversion)
-				{
-					printf_s("Using the latest library version\n");
-				}
-
-				else if (curversion < webversion)
-				{
-					printf_s
-					(
-						"A library update is available: (%d -> %d).\n"
-						"Open Github release page? y / n\n",
-						curversion,
-						webversion
-					);
-
-					char input;
-					std::cin >> input;
-
-					input == std::tolower(input);
-
-					if (input == 'y')
-					{
-						auto address = L"https://github.com/crashfort/SourceDemoRender/releases";
-						ShellExecuteW(nullptr, L"open", address, nullptr, nullptr, SW_SHOW);
-
-						SDR::Error::Make("Closing program for update procedure");
-					}
-				}
-
-				else if (curversion > webversion)
-				{
-					printf_s("Local library newer than update repository?\n");
-				}
-			}
-		);
-
-		try
-		{
-			libreq.wait();
-		}
-
-		catch (const std::exception& error)
-		{
-			SDR::Error::Make(error.what());
-		}
-	}
-
-	void UpdateGameConfig()
-	{
-		printf_s("Checking for any available game config updates\n");
-
-		auto req = GitHubWebRequest
-		(
-			L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
-			[=](web::http::http_response&& response)
-			{
-				auto string = ExtractWebRequestUTF8String(response);
-
-				try
-				{									
-					SDR::File::ScopedFile file(L"GameConfig.json", L"wb");
-					file.WriteText(string.c_str());
-				}
-
-				catch (SDR::File::ScopedFile::ExceptionType status)
-				{
-					printf_s("Could not write GameConfig.json\n");
-					return;
-				}
-
-				printf_s("Game config download complete\n");
-			}
-		);
-
-		try
-		{
-			req.wait();
-		}
-
-		catch (const std::exception& error)
-		{
-			SDR::Error::Make("%s", error.what());
-		}
 	}
 }
 
@@ -642,6 +491,8 @@ void main(int argc, char* argv[])
 		argv++;
 		argc--;
 
+		ShowLibraryVersion();
+
 		/*
 			/GAME "" /PARAMS "" /
 		*/
@@ -650,7 +501,6 @@ void main(int argc, char* argv[])
 			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PATH \"<game path>\" /PARAMS \"<startup params>\" optional arguments: /NOUPDATE");
 		}
 
-		bool doupdate = true;
 		std::string exepath;
 		std::string gamepath;
 		std::string params = "-steam -insecure +sv_lan 1 -console"s;
@@ -674,11 +524,6 @@ void main(int argc, char* argv[])
 				params += ' ';
 				params += argv[++i];
 			}
-
-			else if (SDR::String::IsEqual(argv[i], "/NOUPDATE"))
-			{
-				doupdate = false;
-			}
 		}
 
 		if (exepath.empty())
@@ -692,20 +537,6 @@ void main(int argc, char* argv[])
 		}
 
 		EnsureFileIsPresent(LibraryName);
-
-		auto version = GetAndShowLibraryVersion();
-
-		if (doupdate)
-		{
-			CheckLibraryUpdate(version);
-			UpdateGameConfig();
-		}
-
-		else
-		{
-			printf_s("Skipping updates");
-		}
-
 		EnsureFileIsPresent(GameConfigName);
 
 		MainProcedure(exepath, gamepath, params);
