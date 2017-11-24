@@ -498,7 +498,7 @@ void main(int argc, char* argv[])
 		*/
 		if (argc < 1)
 		{
-			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PATH \"<game path>\" /PARAMS \"<startup params>\" optional arguments: /NOUPDATE");
+			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PATH \"<game path>\" /PARAMS \"<startup params>\"");
 		}
 
 		std::string exepath;
