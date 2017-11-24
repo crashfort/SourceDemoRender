@@ -604,11 +604,11 @@ namespace
 					std::string sdrpath = Variables::OutputDirectory.GetString();
 
 					/*
-						No desired path, use game root.
+						No desired path, use resource root.
 					*/
 					if (sdrpath.empty())
 					{
-						sdrpath = SDR::Library::GetGamePath();
+						sdrpath = SDR::Library::GetResourcePath();
 					}
 
 					else

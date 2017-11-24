@@ -192,7 +192,7 @@ namespace
 		
 		const char* LibraryNameAddr;
 		const char* ExportNameAddr;
-		const char* GamePathAddr;
+		const char* ResourcePathAddr;
 		const char* GameNameAddr;
 	};
 
@@ -207,7 +207,7 @@ namespace
 
 		auto library = data->LibraryNameAddr;
 		auto loadexport = data->ExportNameAddr;
-		auto path = data->GamePathAddr;
+		auto path = data->ResourcePathAddr;
 		auto game = data->GameNameAddr;
 
 		auto module = data->LoadLibraryAddr(library);
@@ -273,7 +273,7 @@ namespace
 		*/
 		data.LibraryNameAddr = writer.PushString(resourcepath + LibraryName);
 		data.ExportNameAddr = writer.PushString(InitializeExportName);
-		data.GamePathAddr = writer.PushString(resourcepath);
+		data.ResourcePathAddr = writer.PushString(resourcepath);
 		data.GameNameAddr = writer.PushString(game);
 
 		auto dataaddr = writer.PushMemory(data);
@@ -457,7 +457,7 @@ namespace
 
 		data.LibraryNameAddr = LibraryName;
 		data.ExportNameAddr = InitializeExportName;
-		data.GamePathAddr = "i dont know";
+		data.ResourcePathAddr = "i dont know";
 		data.GameNameAddr = "i dont know";
 
 		QueueUserAPC(ProcessAPC, GetCurrentThread(), (ULONG_PTR)&data);

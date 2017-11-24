@@ -13,7 +13,7 @@ namespace
 {
 	namespace ModuleGameDir
 	{
-		std::string FullPath;
+		std::string ResourcePath;
 		std::string GameName;
 	}
 }
@@ -122,7 +122,7 @@ void SDR::Library::Load()
 
 	try
 	{
-		SDR::Setup(SDR::Library::GetGamePath(), SDR::Library::GetGameName());
+		SDR::Setup();
 		SDR::Log::Message("SDR: Source Demo Render loaded\n");
 
 		/*
@@ -147,9 +147,9 @@ const char* SDR::Library::GetGameName()
 	return ModuleGameDir::GameName.c_str();
 }
 
-const char* SDR::Library::GetGamePath()
+const char* SDR::Library::GetResourcePath()
 {
-	return ModuleGameDir::FullPath.c_str();
+	return ModuleGameDir::ResourcePath.c_str();
 }
 
 bool SDR::Library::IsGame(const char* test)
@@ -157,9 +157,9 @@ bool SDR::Library::IsGame(const char* test)
 	return strcmp(GetGameName(), test) == 0;
 }
 
-std::string SDR::Library::BuildPath(const char* file)
+std::string SDR::Library::BuildResourcePath(const char* file)
 {
-	std::string ret = GetGamePath();
+	std::string ret = GetResourcePath();
 	ret += file;
 
 	return ret;
@@ -178,7 +178,7 @@ extern "C"
 	*/
 	__declspec(dllexport) void __cdecl SDR_Initialize(const char* path, const char* game)
 	{
-		ModuleGameDir::FullPath = path;
+		ModuleGameDir::ResourcePath = path;
 		ModuleGameDir::GameName = game;
 
 		SDR::Error::SetPrintFormat("SDR: %s\n");

@@ -296,13 +296,13 @@ namespace
 			MainApplication.ModuleHandlers.clear();
 		}
 
-		void SetupGame(const char* gamepath, const char* gamename)
+		void SetupGame()
 		{
 			rapidjson::Document document;
 
 			try
 			{
-				document = SDR::Json::FromFile(SDR::Library::BuildPath("GameConfig.json"));
+				document = SDR::Json::FromFile(SDR::Library::BuildResourcePath("GameConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
@@ -324,6 +324,8 @@ namespace
 					curgame.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
 				});
 			});
+
+			auto gamename = SDR::Library::GetGameName();
 
 			for (auto& game : Configs)
 			{
@@ -505,10 +507,10 @@ void SDR::PreEngineSetup()
 	LoadLibraryIntercept::Start();
 }
 
-void SDR::Setup(const char* gamepath, const char* gamename)
+void SDR::Setup()
 {
 	LoadLibraryIntercept::End();
-	Config::SetupGame(gamepath, gamename);
+	Config::SetupGame();
 
 	if (MainApplication.StartupFunctions.empty())
 	{
