@@ -209,7 +209,7 @@ namespace
 		func(path, game);
 	}
 
-	void InjectProcess(HANDLE process, HANDLE thread, const std::string& path, const std::string& game, const std::string& resourcepath)
+	void InjectProcess(HANDLE process, HANDLE thread, const std::string& resourcepath, const std::string& game)
 	{
 		VirtualMemory memory(process, 4096);
 		ProcessWriter writer(process, memory.Address);
@@ -407,12 +407,10 @@ namespace
 		std::string game = PathFindFileNameA(gamefolder);
 
 		auto displayname = GetDisplayName(game);
-		
-		std::string dir = gamefolder;
 
 		printf_s("Game: \"%s\"\n", displayname.c_str());
 		printf_s("Executable: \"%s\"\n", exepath.c_str());
-		printf_s("Directory: \"%s\"\n", dir.c_str());
+		printf_s("Directory: \"%s\"\n", gamefolder);
 		printf_s("Resource: \"%s\"\n", curdir);
 
 		printf_s("Parameters: \"%s\"\n", params.c_str());
@@ -420,13 +418,13 @@ namespace
 		ServerShadowStateData loadstage(SDR::API::StageType::Load, "Load");
 
 		printf_s("Starting \"%s\"\n", displayname.c_str());
-		auto info = StartProcess(dir, exepath, game, params);
+		auto info = StartProcess(gamefolder, exepath, game, params);
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
 
 		printf_s("Injecting into \"%s\"\n", displayname.c_str());
-		InjectProcess(process.Get(), thread.Get(), dir, game, curdir);
+		InjectProcess(process.Get(), thread.Get(), curdir, game);
 
 		/*
 			Wait until the end of SDR::Library::Load() and then read back all messages.
@@ -512,17 +510,21 @@ void main(int argc, char* argv[])
 			if (SDR::String::IsEqual(argv[i], "/GAME"))
 			{
 				exepath = argv[++i];
+				continue;
 			}
 
 			if (SDR::String::IsEqual(argv[i], "/PATH"))
 			{
 				gamepath = argv[++i];
+				continue;
 			}
 
-			else if (SDR::String::IsEqual(argv[i], "/PARAMS"))
+			if (SDR::String::IsEqual(argv[i], "/PARAMS"))
 			{
 				params += ' ';
 				params += argv[++i];
+				
+				continue;
 			}
 		}
 
