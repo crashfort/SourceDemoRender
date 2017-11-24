@@ -533,6 +533,17 @@ namespace
 		return task;
 	}
 
+	std::string ExtractWebRequestUTF8String(const web::http::http_response& response)
+	{
+		/*
+			Content is only text, so extract it raw.
+		*/
+		auto task = response.extract_utf8string(true);
+		auto string = task.get();
+
+		return string;
+	}
+
 	void CheckLibraryUpdate(int localversion)
 	{
 		printf_s("Checking for any available library updates\n");
@@ -542,10 +553,7 @@ namespace
 			L"/crashfort/SourceDemoRender/master/Version/Latest",
 			[=](web::http::http_response&& response)
 			{
-				/*
-					Content is only text, so extract it raw.
-				*/
-				auto string = response.extract_utf8string(true).get();
+				auto string = ExtractWebRequestUTF8String(response);
 
 				auto curversion = localversion;
 				auto webversion = std::stoi(string);
@@ -606,12 +614,7 @@ namespace
 			L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
 			[=](web::http::http_response&& response)
 			{
-				using Status = SDR::File::ScopedFile::ExceptionType;
-
-				/*
-					Content is only text, so extract it raw.
-				*/
-				auto string = response.extract_utf8string(true).get();
+				auto string = ExtractWebRequestUTF8String(response);
 
 				try
 				{									
@@ -619,7 +622,7 @@ namespace
 					file.WriteText(string.c_str());
 				}
 
-				catch (Status status)
+				catch (SDR::File::ScopedFile::ExceptionType status)
 				{
 					printf_s("Could not write GameConfig.json\n");
 					return;
