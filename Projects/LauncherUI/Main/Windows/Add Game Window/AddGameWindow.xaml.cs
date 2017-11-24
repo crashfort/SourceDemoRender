@@ -60,8 +60,6 @@ namespace LauncherUI
 			GameExeGrid.IsEnabled = false;
 			GameExeTextBox.Text = null;
 
-			GameDirTextBox.Text = gamepath;
-
 			try
 			{
 				if (gamepath.Length == 0)
@@ -118,6 +116,7 @@ namespace LauncherUI
 				return;
 			}
 
+			GameDirTextBox.Text = gamepath;
 			GameExeGrid.IsEnabled = true;
 		}
 
@@ -146,8 +145,6 @@ namespace LauncherUI
 			ErrorText.Text = null;
 			OKButton.IsEnabled = false;
 
-			GameExeTextBox.Text = exepath;
-
 			try
 			{
 				if (exepath.Length == 0)
@@ -175,6 +172,7 @@ namespace LauncherUI
 				return;
 			}
 
+			GameExeTextBox.Text = exepath;
 			OKButton.IsEnabled = true;
 		}
 
