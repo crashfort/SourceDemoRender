@@ -580,10 +580,10 @@ namespace
 
 					if (input == 'y')
 					{
-						SDR::Error::Make("Closing program for update procedure");
-
 						auto address = L"https://github.com/crashfort/SourceDemoRender/releases";
 						ShellExecuteW(nullptr, L"open", address, nullptr, nullptr, SW_SHOW);
+
+						SDR::Error::Make("Closing program for update procedure");
 					}
 				}
 
