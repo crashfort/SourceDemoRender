@@ -49,4 +49,9 @@ namespace SDR::String
 	{
 		return character == ' ';
 	}
+
+	inline bool IsEqual(const char* first, const char* other)
+	{
+		return strcmp(first, other) == 0;
+	}
 }

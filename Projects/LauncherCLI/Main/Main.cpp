@@ -386,19 +386,8 @@ namespace
 		SDR::Error::Make("Game not found in game config"s);
 	}
 
-	void MainProcedure(int argc, char* argv[])
+	void MainProcedure(const std::string& exepath, const std::string& params)
 	{
-		if (argc < 1)
-		{
-			printf_s("Arguments: <exe path> <startup params ...>\n");
-			return;
-		}
-
-		std::string exepath = argv[0];
-
-		argc -= 1;
-		argv += 1;
-
 		if (PathFileExistsA(exepath.c_str()) == 0)
 		{
 			SDR::Error::Make("Specified path at argument 0 does not exist"s);
@@ -418,21 +407,12 @@ namespace
 		game.pop_back();
 
 		auto displayname = GetDisplayName(game);
-
-		auto params = "-steam -insecure +sv_lan 1 -console"s;
-		printf_s("Appending parameters: \"%s\"\n", params.c_str());
 		
 		std::string dir = curdir;
 
 		printf_s("Game: \"%s\"\n", displayname.c_str());
 		printf_s("Executable path: \"%s\"\n", exepath.c_str());
 		printf_s("Directory: \"%s\"\n", dir.c_str());
-
-		for (size_t i = 0; i < argc; i++)
-		{
-			params += ' ';
-			params += argv[i];
-		}
 
 		printf_s("Parameters: \"%s\"\n", params.c_str());
 
@@ -648,21 +628,64 @@ void main(int argc, char* argv[])
 {
 	try
 	{
-		EnsureFileIsPresent(LibraryNameNoPrefix);
-
-		auto version = GetAndShowLibraryVersion();
-		CheckLibraryUpdate(version);
-		UpdateGameConfig();
-
-		EnsureFileIsPresent(ConfigNameNoPrefix);
-
 		/*
 			Don't need our own name.
 		*/
 		argv++;
 		argc--;
 
-		MainProcedure(argc, argv);
+		/*
+			/GAME "" /PARAMS "" /
+		*/
+		if (argc < 1)
+		{
+			printf_s("Arguments: /GAME \"<exe path>\" /PARAMS \"<startup params>\" optional arguments: /NOUPDATEn");
+			return;
+		}
+
+		bool doupdate = true;
+		std::string exepath;
+		std::string params = "-steam -insecure +sv_lan 1 -console"s;
+		
+		printf_s("Appending parameters: \"%s\"\n", params.c_str());
+
+		for (size_t i = 0; i < argc; i++)
+		{
+			if (SDR::String::IsEqual(argv[i], "/GAME"))
+			{
+				exepath = argv[++i];
+			}
+
+			else if (SDR::String::IsEqual(argv[i], "/PARAMS"))
+			{
+				params += ' ';
+				params += argv[++i];
+			}
+
+			else if (SDR::String::IsEqual(argv[i], "/NOUPDATE"))
+			{
+				doupdate = false;
+			}
+		}
+
+		EnsureFileIsPresent(LibraryNameNoPrefix);
+
+		auto version = GetAndShowLibraryVersion();
+
+		if (doupdate)
+		{
+			CheckLibraryUpdate(version);
+			UpdateGameConfig();
+		}
+
+		else
+		{
+			printf_s("Skipping updates");
+		}
+
+		EnsureFileIsPresent(ConfigNameNoPrefix);
+
+		MainProcedure(exepath, params);
 	}
 
 	catch (const SDR::Error::Exception& error)

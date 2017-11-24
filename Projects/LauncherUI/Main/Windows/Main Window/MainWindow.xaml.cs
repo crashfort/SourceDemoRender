@@ -103,7 +103,7 @@ namespace LauncherUI
 				return;
 			}
 
-			var startparams = string.Format("\"{0}\" {1}", exepath, options);
+			var startparams = string.Format("/GAME \"{0}\" /PARAMS \"{1}\"", exepath, options);
 
 			var info = new ProcessStartInfo(launcher, startparams);
 			info.WorkingDirectory = sdrpath;
