@@ -302,7 +302,7 @@ namespace
 
 			try
 			{
-				document = SDR::Json::FromFile(SDR::Library::BuildPath("SDR\\GameConfig.json"));
+				document = SDR::Json::FromFile(SDR::Library::BuildPath("GameConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)

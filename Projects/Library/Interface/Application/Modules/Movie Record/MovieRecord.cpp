@@ -608,7 +608,7 @@ namespace
 					*/
 					if (sdrpath.empty())
 					{
-						sdrpath = SDR::Library::BuildPath("SDR\\");
+						sdrpath = SDR::Library::GetGamePath();
 					}
 
 					else
