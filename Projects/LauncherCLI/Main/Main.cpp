@@ -639,7 +639,7 @@ void main(int argc, char* argv[])
 		*/
 		if (argc < 1)
 		{
-			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PARAMS \"<startup params>\" optional arguments: /NOUPDATEn");
+			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PARAMS \"<startup params>\" optional arguments: /NOUPDATE");
 		}
 
 		bool doupdate = true;
