@@ -69,7 +69,7 @@ namespace LauncherUI
 
 					if (fileinfo.IsReadOnly)
 					{
-						finalstr += " Game config is set to read only so it cannot be updated.";
+						finalstr += " Game config is set to read only so it will not be updated.";
 						autoskip = false;
 
 						downloadcfg = false;
