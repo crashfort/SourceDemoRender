@@ -11,6 +11,13 @@
 #include <cstdint>
 #include <string>
 #include <algorithm>
+#include <cctype>
+
+#include <ppltasks.h>
+#include <cpprest\http_client.h>
+#include <shellapi.h>
+
+using namespace std::chrono_literals;
 
 namespace
 {
@@ -472,7 +479,7 @@ namespace
 		return;
 	}
 
-	void ShowLibraryVersion()
+	int GetAndShowLibraryVersion()
 	{
 		/*
 			Safe because nothing external is referenced.
@@ -490,6 +497,147 @@ namespace
 		printf_s("SDR library version: %d\n", version);
 
 		FreeLibrary(library);
+
+		return version;
+	}
+
+	template <typename Func>
+	auto GitHubWebRequest(const wchar_t* path, Func callback)
+	{
+		auto task = concurrency::create_task([=]()
+		{
+			auto address = L"https://raw.githubusercontent.com/";
+
+			web::http::client::http_client_config config;
+			config.set_timeout(5s);
+
+			web::http::client::http_client webclient(address, config);
+
+			web::http::uri_builder pathbuilder(path);
+
+			auto task = webclient.request(web::http::methods::GET, pathbuilder.to_string());
+			auto response = task.get();
+
+			auto status = response.status_code();
+
+			if (status != web::http::status_codes::OK)
+			{
+				SDR::Log::Warning("Could not reach update repository\n"s);
+				return;
+			}
+
+			auto ready = response.content_ready();
+			callback(ready.get());
+		});
+
+		return task;
+	}
+
+	void CheckLibraryUpdate(int localversion)
+	{
+		printf_s("Checking for any available library updates\n");
+
+		auto libreq = GitHubWebRequest
+		(
+			L"/crashfort/SourceDemoRender/master/Version/Latest",
+			[=](web::http::http_response&& response)
+			{
+				/*
+					Content is only text, so extract it raw.
+				*/
+				auto string = response.extract_utf8string(true).get();
+
+				auto curversion = localversion;
+				auto webversion = std::stoi(string);
+
+				if (curversion == webversion)
+				{
+					printf_s("Using the latest library version\n");
+				}
+
+				else if (curversion < webversion)
+				{
+					printf_s
+					(
+						"A library update is available: (%d -> %d).\n"
+						"Open Github release page? y / n\n",
+						curversion,
+						webversion
+					);
+
+					char input;
+					std::cin >> input;
+
+					input == std::tolower(input);
+
+					if (input == 'y')
+					{
+						printf_s("Upgrading from version %d to %d\n", curversion, webversion);
+
+						auto address = L"https://github.com/crashfort/SourceDemoRender/releases";
+						ShellExecuteW(nullptr, L"open", address, nullptr, nullptr, SW_SHOW);
+					}
+				}
+
+				else if (curversion > webversion)
+				{
+					printf_s("Local library newer than update repository?\n");
+				}
+			}
+		);
+
+		try
+		{
+			libreq.wait();
+		}
+
+		catch (const std::exception& error)
+		{
+			SDR::Error::Make(error.what());
+		}
+	}
+
+	void UpdateGameConfig()
+	{
+		printf_s("Checking for any available game config updates\n");
+
+		auto req = GitHubWebRequest
+		(
+			L"/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json",
+			[=](web::http::http_response&& response)
+			{
+				using Status = SDR::File::ScopedFile::ExceptionType;
+
+				/*
+					Content is only text, so extract it raw.
+				*/
+				auto string = response.extract_utf8string(true).get();
+
+				try
+				{									
+					SDR::File::ScopedFile file(L"GameConfig.json", L"wb");
+					file.WriteText(string.c_str());
+				}
+
+				catch (Status status)
+				{
+					printf_s("Could not write GameConfig.json\n");
+					return;
+				}
+
+				printf_s("Game config download complete\n");
+			}
+		);
+
+		try
+		{
+			req.wait();
+		}
+
+		catch (const std::exception& error)
+		{
+			SDR::Error::Make("%s", error.what());
+		}
 	}
 }
 
@@ -498,9 +646,12 @@ void main(int argc, char* argv[])
 	try
 	{
 		EnsureFileIsPresent(LibraryNameNoPrefix);
-		EnsureFileIsPresent(ConfigNameNoPrefix);
 
-		ShowLibraryVersion();
+		auto version = GetAndShowLibraryVersion();
+		CheckLibraryUpdate(version);
+		UpdateGameConfig();
+
+		EnsureFileIsPresent(ConfigNameNoPrefix);
 
 		/*
 			Don't need our own name.

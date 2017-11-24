@@ -16,6 +16,10 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(SDR_SHARED_INCLUDE);$(SDR_API_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="SDR_FFMPEG_INCLUDE">

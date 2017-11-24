@@ -94,21 +94,9 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	</thead>
 	<tbody>
 	<tr>
-		<td>sdr_update</td>
-		<td>
-			Check to see if there are any updates available. Library updates need to be manual.
-		</td>
-	</tr>
-	<tr>
 		<td>sdr_version</td>
 		<td>
 			Displays the current library version.
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_accept</td>
-		<td>
-			Context specific user agreement to perform an action.
 		</td>
 	</tr>
 	</tbody>

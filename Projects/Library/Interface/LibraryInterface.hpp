@@ -6,8 +6,6 @@ namespace SDR::Library
 	void Load();
 	void Unload();
 
-	void SetAcceptFunction(std::function<void()>&& func);
-
 	const char* GetGamePath();
 	const char* GetGameName();
 
