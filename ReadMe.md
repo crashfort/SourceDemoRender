@@ -20,7 +20,7 @@ Known games that don't work:
 * Counter-Strike: Global Offensive - *Uses stoneage D3D9 that doesn't support texture sharing*
 
 ## Prerequisites
-Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_d3d11_staging**, Windows 8.1 or later is required.
+Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_video_d3d11_staging**, Windows 8.1 or later is required.
 
 ## Installing
 The content of the archive should go in the root game directory. Examples:
@@ -128,7 +128,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_render_framerate</td>
+		<td>sdr_video_fps</td>
 		<td>
 			Movie output framerate.
             <br/><br/>
@@ -165,7 +165,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	</thead>
 	<tbody>
 	<tr>
-		<td>sdr_movie_suppresslog</td>
+		<td>sdr_video_lav_suppresslog</td>
 		<td>
 			Enable or disable log output from LAV.
             <br/><br/>
@@ -174,7 +174,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_movie_encoder</td>
+		<td>sdr_video_encoder</td>
 		<td>
 			Desired video encoder.
 			<br/><br/>
@@ -183,7 +183,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_movie_encoder_pxformat</td>
+		<td>sdr_video_pxformat</td>
 		<td>
 			Encoded pixel format to use.
 			<br/><br/>
@@ -212,7 +212,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_d3d11_staging</td>
+		<td>sdr_video_d3d11_staging</td>
 		<td>
 			Use extra intermediate buffer when retreiving data from the GPU.
 			<br/><br/>
@@ -221,7 +221,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_x264_crf</td>
+		<td>sdr_video_x264_crf</td>
 		<td>
 			Constant rate factor quality value. Note that using 0 (lossless) can produce a video with a 4:4:4 profile which your media player might not support.
 			<br/><br/>
@@ -231,7 +231,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_x264_preset</td>
+		<td>sdr_video_x264_preset</td>
 		<td>
 			Encoding preset. If you can, prefer not to use a slow encoding preset as the encoding may fall behind and the game will have to wait for it to catch up.
 			<br/><br/>
@@ -240,7 +240,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_x264_intra</td>
+		<td>sdr_video_x264_intra</td>
 		<td>
 			Whether to produce a video of only keyframes.
 			<br/><br/>
@@ -249,7 +249,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_movie_encoder_colorspace</td>
+		<td>sdr_video_yuvspace</td>
 		<td>
 			YUV color space. This value is handled differently in media, try experimenting. Not available in RGB video.
 			<br/><br/>
@@ -268,16 +268,16 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 	</thead>
 	<tbody>
 	<tr>
-		<td>sdr_sample_mult</td>
+		<td>sdr_video_sample_mult</td>
 		<td>
-			Value to multiply with <b>sdr_render_framerate</b>. This is how many frames will be put together to form a final frame multiplied by exposure. Less than 2 will disable sampling.
+			Value to multiply with <b>sdr_video_fps</b>. This is how many frames will be put together to form a final frame multiplied by exposure. Less than 2 will disable sampling.
             <br/><br/>
             <b>Values:</b> Over 0 <br/>
             <b>Default:</b> 32 <br/>
 		</td>
 	</tr>
 	<tr>
-		<td>sdr_sample_exposure</td>
+		<td>sdr_video_sample_exposure</td>
 		<td>
 			Fraction of time per frame that is exposed for sampling
             <br/><br/>
@@ -289,7 +289,7 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 </table>
 
 ## Sampling demo
-In this demo an object is rotating 6 times per second. This is a fast moving object, so higher **sdr_sample_mult** will remove banding that occurs with lower multiplications at cost of slower recording times. For slower scenes you may get away with a lower multiplication. Exposure is dependant on what type of scene you wish to convey.
+In this demo an object is rotating 6 times per second. This is a fast moving object, so higher **sdr_video_sample_mult** will remove banding that occurs with lower multiplications at cost of slower recording times. For slower scenes you may get away with a lower multiplication. Exposure is dependant on what type of scene you wish to convey.
 
 The X axis is the multiplication and the Y axis is the exposure.
 <table>
