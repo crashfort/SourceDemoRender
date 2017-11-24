@@ -580,7 +580,7 @@ namespace
 
 					if (input == 'y')
 					{
-						printf_s("Upgrading from version %d to %d\n", curversion, webversion);
+						SDR::Error::Make("Closing program for update procedure");
 
 						auto address = L"https://github.com/crashfort/SourceDemoRender/releases";
 						ShellExecuteW(nullptr, L"open", address, nullptr, nullptr, SW_SHOW);
