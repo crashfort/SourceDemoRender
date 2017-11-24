@@ -74,12 +74,12 @@ namespace LauncherUI
 		{
 			var options = LaunchOptionsTextBox.Text.Trim();
 			var game = (AddGameWindow.GameData)GameComboBox.SelectedItem;
-			var sdrpath = game.SDRPath;
+			var gamepath = game.GamePath;
 			var exepath = game.ExecutablePath;
 
-			if (!System.IO.Directory.Exists(sdrpath))
+			if (!System.IO.Directory.Exists(gamepath))
 			{
-				ErrorText.Text = "Game SDR path does not exist anymore.";
+				ErrorText.Text = "Game path does not exist anymore.";
 				return;
 			}
 
@@ -89,24 +89,23 @@ namespace LauncherUI
 				return;
 			}
 
-			if (!System.IO.File.Exists(System.IO.Path.Combine(sdrpath, "SourceDemoRender.dll")))
+			if (!System.IO.File.Exists(System.IO.Path.Combine("SourceDemoRender.dll")))
 			{
-				ErrorText.Text = "SourceDemoRender.dll does not exist in SDR folder.";
+				ErrorText.Text = "SourceDemoRender.dll does not exist.";
 				return;
 			}
 
-			var launcher = System.IO.Path.Combine(sdrpath, "LauncherCLI.exe");
+			var launcher = System.IO.Path.Combine("LauncherCLI.exe");
 
 			if (!System.IO.File.Exists(launcher))
 			{
-				ErrorText.Text = "LauncherCLI.exe does not exist in SDR folder.";
+				ErrorText.Text = "LauncherCLI.exe does not exist.";
 				return;
 			}
 
-			var startparams = string.Format("/GAME \"{0}\" /PARAMS \"{1}\"", exepath, options);
+			var startparams = string.Format("/GAME \"{0}\" /PATH \"{1}\" /PARAMS \"{2}\"", exepath, gamepath, options);
 
 			var info = new ProcessStartInfo(launcher, startparams);
-			info.WorkingDirectory = sdrpath;
 
 			Process.Start(info);
 
@@ -168,7 +167,7 @@ namespace LauncherUI
 			*/
 			if (obj != null)
 			{
-				GameComboBox.ToolTip = string.Format("{0}\n\nExecutable\n{1}\n\nSDR\n{2}", obj.DisplayName, obj.ExecutablePath, obj.SDRPath);
+				GameComboBox.ToolTip = string.Format("{0}\n\nExecutable\n{1}\n\nGame\n{2}", obj.DisplayName, obj.ExecutablePath, obj.GamePath);
 			}
 		}
 	}

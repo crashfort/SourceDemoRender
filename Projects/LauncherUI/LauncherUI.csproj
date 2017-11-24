@@ -35,7 +35,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\Output\Launcher UI\</OutputPath>
+    <OutputPath>..\..\Output\SDR\</OutputPath>
     <IntermediateOutputPath>Intermediate\Debug\</IntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -45,7 +45,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\Output\Launcher UI\</OutputPath>
+    <OutputPath>..\..\Output\SDR\</OutputPath>
     <IntermediateOutputPath>Intermediate\Release\</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
