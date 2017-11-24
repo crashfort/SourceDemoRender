@@ -79,7 +79,7 @@ namespace LauncherUI
 				if (downloadcfg)
 				{
 					var webconfig = await GetGitHubGameConfig();
-					System.IO.File.WriteAllText("GameConfig.json", webconfig, System.Text.Encoding.UTF8);
+					System.IO.File.WriteAllText("GameConfig.json", webconfig, new System.Text.UTF8Encoding(false));
 
 					finalstr += " Latest game config was downloaded.";
 				}

@@ -25,7 +25,7 @@ namespace LauncherUI
 
 			var saverestore = new SaveRestoreData();
 
-			var json = System.IO.File.ReadAllText("LauncherUIData.json", System.Text.Encoding.UTF8);
+			var json = System.IO.File.ReadAllText("LauncherUIData.json", new System.Text.UTF8Encoding(false));
 
 			saverestore = Newtonsoft.Json.JsonConvert.DeserializeObject<SaveRestoreData>(json);
 
@@ -56,7 +56,7 @@ namespace LauncherUI
 
 			var json = Newtonsoft.Json.JsonConvert.SerializeObject(saverestore);
 
-			System.IO.File.WriteAllText("LauncherUIData.json", json, System.Text.Encoding.UTF8);
+			System.IO.File.WriteAllText("LauncherUIData.json", json, new System.Text.UTF8Encoding(false));
 		}
 
 		void Window_Closing(object sender, System.ComponentModel.CancelEventArgs args)
