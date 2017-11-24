@@ -639,8 +639,7 @@ void main(int argc, char* argv[])
 		*/
 		if (argc < 1)
 		{
-			printf_s("Arguments: /GAME \"<exe path>\" /PARAMS \"<startup params>\" optional arguments: /NOUPDATEn");
-			return;
+			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PARAMS \"<startup params>\" optional arguments: /NOUPDATEn");
 		}
 
 		bool doupdate = true;
