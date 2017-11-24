@@ -667,6 +667,11 @@ void main(int argc, char* argv[])
 			}
 		}
 
+		if (exepath.empty())
+		{
+			SDR::Error::Make("Required switch \"/GAME\" not found");
+		}
+
 		EnsureFileIsPresent(LibraryNameNoPrefix);
 
 		auto version = GetAndShowLibraryVersion();
