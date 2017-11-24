@@ -26,7 +26,7 @@ Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is r
 The folder ``Source Demo Render`` within the archive can go anywhere you wish. The folder ``cfg`` and file ``sdr_user.cfg`` are only meant as help to store console variables in for later use. 
 
 ## Launching
-Launching for users is done with ``LauncherUI.exe``. When adding a new game, you have to specify its game directory along with its executable path. Games are saved and can quickly be selected another time. Updates for the library are automatically checked when launching. The game config is also automatically updated on every start. If you do not want to update your game config you can mark it as read only, or use ``LauncherCLI.exe`` directly and pass the single switch ``/NOUPDATE``.
+Launching for users is done with ``LauncherUI.exe``. When adding a new game, you have to specify its game directory along with its executable path. Games are saved and can quickly be selected another time. Updates for the library are automatically checked when launching. The game config is also automatically updated on every start. If you do not want to update your game config you can mark it as read only or use ``LauncherCLI.exe`` directly.
 
 ![Launcher UI Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Launcher%20UI/MainWindow.png)
 
