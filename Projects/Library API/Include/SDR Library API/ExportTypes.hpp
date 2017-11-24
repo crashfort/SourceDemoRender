@@ -43,5 +43,5 @@ namespace SDR::API
 	}
 
 	using SDR_LibraryVersion = int(__cdecl*)();
-	using SDR_Initialize = void(__cdecl*)(const char* path, const char* game);
+	using SDR_Initialize = void(__cdecl*)(const char* respath, const char* gamepath);
 }

@@ -7,9 +7,7 @@ namespace SDR::Library
 	void Unload();
 
 	const char* GetResourcePath();
-	const char* GetGameName();
-
-	bool IsGame(const char* test);
+	const char* GetGamePath();
 
 	std::string BuildResourcePath(const char* file);
 }

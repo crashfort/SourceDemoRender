@@ -330,11 +330,11 @@ namespace
 				});
 			});
 
-			auto gamename = SDR::Library::GetGameName();
+			auto gamename = SDR::Library::GetGamePath();
 
 			for (auto& game : Configs)
 			{
-				if (game.Name == gamename)
+				if (SDR::String::EndsWith(gamename, game.Name.c_str()))
 				{
 					currentgame = &game;
 					break;

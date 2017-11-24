@@ -186,7 +186,7 @@ namespace
 		const char* LibraryNameAddr;
 		const char* ExportNameAddr;
 		const char* ResourcePathAddr;
-		const char* GameNameAddr;
+		const char* GamePathAddr;
 	};
 
 	/*
@@ -201,7 +201,7 @@ namespace
 		auto library = data->LibraryNameAddr;
 		auto loadexport = data->ExportNameAddr;
 		auto path = data->ResourcePathAddr;
-		auto game = data->GameNameAddr;
+		auto game = data->GamePathAddr;
 
 		auto module = data->LoadLibraryAddr(library);
 		auto func = (SDR::API::SDR_Initialize)data->GetProcAddressAddr(module, loadexport);
@@ -209,7 +209,7 @@ namespace
 		func(path, game);
 	}
 
-	void InjectProcess(HANDLE process, HANDLE thread, const std::string& resourcepath, const std::string& game)
+	void InjectProcess(HANDLE process, HANDLE thread, const std::string& resourcepath, const std::string& gamepath)
 	{
 		VirtualMemory memory(process, 4096);
 		ProcessWriter writer(process, memory.Address);
@@ -267,7 +267,7 @@ namespace
 		data.LibraryNameAddr = writer.PushString(resourcepath + LibraryName);
 		data.ExportNameAddr = writer.PushString(InitializeExportName);
 		data.ResourcePathAddr = writer.PushString(resourcepath);
-		data.GameNameAddr = writer.PushString(game);
+		data.GamePathAddr = writer.PushString(gamepath);
 
 		auto dataaddr = writer.PushMemory(data);
 
@@ -300,7 +300,7 @@ namespace
 		strcat_s(buffer, "\\");
 	}
 
-	PROCESS_INFORMATION StartProcess(const std::string& dir, const std::string& exepath, const std::string& game, const std::string& params)
+	PROCESS_INFORMATION StartProcess(const std::string& dir, const std::string& exepath, const std::string& params)
 	{
 		char args[8192];
 		strcpy_s(args, exepath.c_str());
@@ -336,7 +336,7 @@ namespace
 		return procinfo;
 	}
 
-	std::string GetDisplayName(const std::string& name)
+	std::string GetDisplayName(const char* gamepath)
 	{
 		printf_s("Searching game config for matching name\n");
 
@@ -354,16 +354,13 @@ namespace
 
 		for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it)
 		{
-			std::string gamename = it->name.GetString();
+			auto gamename = it->name.GetString();
 			
-			if (gamename == name)
+			if (SDR::String::EndsWith(gamepath, gamename))
 			{
-				if (it->value.HasMember("DisplayName"))
-				{
-					gamename = it->value["DisplayName"].GetString();
-				}
+				gamename = SDR::Json::GetString(it->value, "DisplayName");
 
-				printf_s("Found \"%s\" in game config\n", gamename.c_str());
+				printf_s("Found \"%s\" in game config\n", gamename);
 				
 				return gamename;
 			}
@@ -404,9 +401,7 @@ namespace
 		char gamefolder[SDR::File::NameSize];
 		strcpy_s(gamefolder, gamepath.c_str());
 
-		std::string game = PathFindFileNameA(gamefolder);
-
-		auto displayname = GetDisplayName(game);
+		auto displayname = GetDisplayName(gamefolder);
 
 		printf_s("Game: \"%s\"\n", displayname.c_str());
 		printf_s("Executable: \"%s\"\n", exepath.c_str());
@@ -418,13 +413,13 @@ namespace
 		ServerShadowStateData loadstage(SDR::API::StageType::Load, "Load");
 
 		printf_s("Starting \"%s\"\n", displayname.c_str());
-		auto info = StartProcess(gamefolder, exepath, game, params);
+		auto info = StartProcess(gamefolder, exepath, params);
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
 
 		printf_s("Injecting into \"%s\"\n", displayname.c_str());
-		InjectProcess(process.Get(), thread.Get(), curdir, game);
+		InjectProcess(process.Get(), thread.Get(), curdir, gamefolder);
 
 		/*
 			Wait until the end of SDR::Library::Load() and then read back all messages.
@@ -449,7 +444,7 @@ namespace
 		data.LibraryNameAddr = LibraryName;
 		data.ExportNameAddr = InitializeExportName;
 		data.ResourcePathAddr = "i dont know";
-		data.GameNameAddr = "i dont know";
+		data.GamePathAddr = "i dont know";
 
 		QueueUserAPC(ProcessAPC, GetCurrentThread(), (ULONG_PTR)&data);
 

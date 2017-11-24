@@ -1,5 +1,5 @@
 {
-	"cstrike":
+	"Counter-Strike Source\\cstrike":
 	{
 		"DisplayName": "Counter-Strike: Source",
 		"ExecutableName": "Counter-Strike Source\\hl2.exe",
@@ -155,45 +155,45 @@
 			"WarningExport": "Warning"
 		}
 	},
-	"hl2":
+	"Half-Life 2\\hl2":
 	{
-		"Inherit": "cstrike",
+		"Inherit": "Counter-Strike Source\\cstrike",
 		"DisplayName": "Half-Life 2",
 		"ExecutableName": "Half-Life 2\\hl2.exe"
 	},
-	"episodic":
+	"Half-Life 2\\episodic":
 	{
-		"Inherit": "cstrike",
+		"Inherit": "Counter-Strike Source\\cstrike",
 		"DisplayName": "Half-Life 2: Episode One",
 		"ExecutableName": "Half-Life 2\\hl2.exe"
 	},
-	"ep2":
+	"Half-Life 2\\ep2":
 	{
-		"Inherit": "cstrike",
+		"Inherit": "Counter-Strike Source\\cstrike",
 		"DisplayName": "Half-Life 2: Episode Two",
 		"ExecutableName": "Half-Life 2\\hl2.exe"
 	},
-	"tf":
+	"Team Fortress 2\\tf":
 	{
-		"Inherit": "cstrike",
+		"Inherit": "Counter-Strike Source\\cstrike",
 		"DisplayName": "Team Fortress 2",
 		"ExecutableName": "Team Fortress 2\\hl2.exe"
 	},
-	"momentum":
+	"sourcemods\\momentum":
 	{
-		"Inherit": "cstrike",
+		"Inherit": "Counter-Strike Source\\cstrike",
 		"DisplayName": "Momentum",
 		"ExecutableName": "Source SDK Base 2013 Multiplayer\\hl2.exe"
 	},
-	"dod":
+	"Day of Defeat Source\\dod":
 	{
-		"Inherit": "cstrike",
+		"Inherit": "Counter-Strike Source\\cstrike",
 		"DisplayName": "Day of Defeat: Source",
 		"ExecutableName": "Day of Defeat Source\\hl2.exe"
 	},
-	"garrysmod":
+	"GarrysMod\\garrysmod":
 	{
-		"Inherit": "cstrike",
+		"Inherit": "Counter-Strike Source\\cstrike",
 		"DisplayName": "Garry's Mod",
 		"ExecutableName": "GarrysMod\\hl2.exe",
 

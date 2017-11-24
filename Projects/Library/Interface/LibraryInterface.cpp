@@ -14,7 +14,7 @@ namespace
 	namespace ModuleGameDir
 	{
 		std::string ResourcePath;
-		std::string GameName;
+		std::string GamePath;
 	}
 }
 
@@ -142,19 +142,14 @@ void SDR::Library::Unload()
 	SDR::Close();
 }
 
-const char* SDR::Library::GetGameName()
+const char* SDR::Library::GetGamePath()
 {
-	return ModuleGameDir::GameName.c_str();
+	return ModuleGameDir::GamePath.c_str();
 }
 
 const char* SDR::Library::GetResourcePath()
 {
 	return ModuleGameDir::ResourcePath.c_str();
-}
-
-bool SDR::Library::IsGame(const char* test)
-{
-	return strcmp(GetGameName(), test) == 0;
 }
 
 std::string SDR::Library::BuildResourcePath(const char* file)
@@ -176,10 +171,10 @@ extern "C"
 		First actual pre-engine load function. Don't reference any
 		engine libraries here as they aren't loaded yet like in "Load".
 	*/
-	__declspec(dllexport) void __cdecl SDR_Initialize(const char* path, const char* game)
+	__declspec(dllexport) void __cdecl SDR_Initialize(const char* respath, const char* gamepath)
 	{
-		ModuleGameDir::ResourcePath = path;
-		ModuleGameDir::GameName = game;
+		ModuleGameDir::ResourcePath = respath;
+		ModuleGameDir::GamePath = gamepath;
 
 		SDR::Error::SetPrintFormat("SDR: %s\n");
 

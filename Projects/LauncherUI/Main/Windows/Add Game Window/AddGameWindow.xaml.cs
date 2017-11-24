@@ -85,17 +85,19 @@ namespace LauncherUI
 				var document = System.Json.JsonValue.Parse(content);
 				var dirinfo = new System.IO.DirectoryInfo(gamepath);
 
-				if (!document.ContainsKey(dirinfo.Name))
+				var searcher = string.Format("{0}\\{1}", dirinfo.Parent.Name, dirinfo.Name);
+
+				if (!document.ContainsKey(searcher))
 				{
-					var format = string.Format("Game \"{0}\" does not exist in game config.", dirinfo.Name);
+					var format = string.Format("Game \"{0}\" does not exist in game config.", searcher);
 					throw new Exception(format);
 				}
 
-				var gamejson = document[dirinfo.Name];
+				var gamejson = document[searcher];
 
 				if (!gamejson.ContainsKey("DisplayName"))
 				{
-					var format = string.Format("Game config does not contain \"DisplayName\" member for game \"{0}\".", dirinfo.Name);
+					var format = string.Format("Game config does not contain \"DisplayName\" member for game \"{0}\".", searcher);
 					throw new Exception(format);
 				}
 
