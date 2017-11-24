@@ -61,6 +61,8 @@ namespace LauncherUI
 					UpgradeButton.IsEnabled = true;
 				}
 
+				bool downloadcfg = true;
+
 				if (System.IO.File.Exists("GameConfig.json"))
 				{
 					var fileinfo = new System.IO.FileInfo("GameConfig.json");
@@ -69,10 +71,12 @@ namespace LauncherUI
 					{
 						finalstr += " Game config is set to read only so it cannot be updated.";
 						autoskip = false;
+
+						downloadcfg = false;
 					}
 				}
 
-				else
+				if (downloadcfg)
 				{
 					var webconfig = await GetGitHubGameConfig();
 					System.IO.File.WriteAllText("GameConfig.json", webconfig, System.Text.Encoding.UTF8);
