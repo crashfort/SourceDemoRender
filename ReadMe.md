@@ -23,29 +23,12 @@ Known games that don't work:
 Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_video_d3d11_staging**, Windows 8.1 or later is required.
 
 ## Installing
-The content of the archive should go in the root game directory. Examples:
-
-* steamapps\common\Counter-Strike Source\cstrike\
-* steamapps\common\Half-Life 2\hl2\
-* steamapps\sourcemods\momentum\
-
-After you've extracted the archive you should navigate into the SDR directory and run the updater. It downloads the required game config data that is needed for game support.
+The folder ``Source Demo Render`` within the archive can go anywhere you wish. The folder ``cfg`` and file ``sdr_user.cfg`` are only meant as help to store console variables in for later use. 
 
 ## Launching
-
-### User interface
-The launcher ``LauncherUI.exe`` comes as a separate download on the releases page. This launcher does not have to be in a specific game directory and can be run from anywhere. When adding a new game, you have to specify its SDR directory along with its executable file path. Games are saved and can quickly be selected another time.
+Launching for users is done with ``LauncherUI.exe``. When adding a new game, you have to specify its game directory along with its executable path. Games are saved and can quickly be selected another time. Updates for the library are automatically checked when launching. The game config is also automatically updated on every start. If you do not want to update your game config you can mark it as read only, or use ``LauncherCLI.exe`` directly and pass the single switch ``/NOUPDATE``.
 
 ![Launcher UI Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Launcher%20UI/MainWindow.png)
-
-### Batch files
-The launcher ``LauncherCLI.exe`` takes the following parameters: ``/GAME \"<exe path>\" /PARAMS \"<startup params>\"``. To get the executable path you hold shift and right click the file then select ``Copy as path``, the quotes are required. Automatically appended parameters are ``-steam -insecure +sv_lan 1 -console``. Examples of executable paths:
-
-* steamapps\common\Counter-Strike Source\hl2.exe
-* steamapps\common\Half-Life 2\hl2.exe
-* steamapps\common\Source SDK Base 2013 Multiplayer\hl2.exe
-
-You can use ``LauncherCLI User.bat`` to aid launching. Edit the content to fit your game. When starting, library updates will be checked for and the game config will automatically update. The single switch ``/NOUPDATE`` can be passed to skip this step.
 
 ## Instructions
 When you are ready to create your movie just type `startmovie <name>.<container>` and then `endmovie` as usual. **Do not exit the game until you see a green message that says the movie is completed.**
