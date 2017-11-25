@@ -4,8 +4,6 @@
   <PropertyGroup Label="UserMacros">
     <SDR_FFMPEG_INCLUDE>C:\msys64\home\CF\ffmpegbuild\include\</SDR_FFMPEG_INCLUDE>
     <SDR_FFMPEG_LIBRARY>C:\msys64\home\CF\ffmpegbuild\lib\</SDR_FFMPEG_LIBRARY>
-    <SDR_RESTSDK_LIBRARY>C:\VS\3rd Party Libs\RESTSDK\Binaries\Win32\$(Configuration)\</SDR_RESTSDK_LIBRARY>
-    <SDR_RESTSDK_INCLUDE>C:\VS\3rd Party Libs\RESTSDK\Release\include\</SDR_RESTSDK_INCLUDE>
     <SDR_RAPIDJSON_INCLUDE>C:\VS\3rd Party Libs\rapidjson\include\</SDR_RAPIDJSON_INCLUDE>
     <SDR_RWQUEUE_INCLUDE>C:\VS\3rd Party Libs\readerwriterqueue\include\</SDR_RWQUEUE_INCLUDE>
     <SDR_SHARED_INCLUDE>$(SolutionDir)Shared\Include\</SDR_SHARED_INCLUDE>
@@ -27,12 +25,6 @@
     </BuildMacro>
     <BuildMacro Include="SDR_FFMPEG_LIBRARY">
       <Value>$(SDR_FFMPEG_LIBRARY)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_RESTSDK_LIBRARY">
-      <Value>$(SDR_RESTSDK_LIBRARY)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_RESTSDK_INCLUDE">
-      <Value>$(SDR_RESTSDK_INCLUDE)</Value>
     </BuildMacro>
     <BuildMacro Include="SDR_RAPIDJSON_INCLUDE">
       <Value>$(SDR_RAPIDJSON_INCLUDE)</Value>
