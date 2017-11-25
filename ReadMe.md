@@ -18,6 +18,7 @@ Games that are added:
 
 Known games that don't work:
 * Counter-Strike: Global Offensive - *Uses stoneage D3D9 that doesn't support texture sharing*
+* Portal 2 - *Same as above*
 
 ## Prerequisites
 Any DirectX 11 (Direct3D 11.0) compatible adapter with minimum of Windows 7 is required. If you wish to not use **sdr_video_d3d11_staging**, Windows 8.1 or later is required.
@@ -27,6 +28,8 @@ The folder ``Source Demo Render`` within the archive can go anywhere you wish. T
 
 ## Launching
 Launching for users is done with ``LauncherUI.exe``. When adding a new game, you have to specify its game directory along with its executable path. Games are saved and can quickly be selected another time. Updates for the library are automatically checked when launching. The game config is also automatically updated on every start. If you do not want to update your game config you can mark it as read only or use ``LauncherCLI.exe`` directly.
+
+**You must run as administrator.**
 
 ![Launcher UI Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Launcher%20UI/MainWindow.png)
 
