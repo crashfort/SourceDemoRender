@@ -10,7 +10,7 @@ namespace LauncherUI
 	public partial class StartWindow : Window
 	{
 		[DllImport("SourceDemoRender.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-		public static extern int SDR_LibraryVersion();
+		static extern int SDR_LibraryVersion();
 
 		int LocalVersion = SDR_LibraryVersion();
 		HttpClient NetClient = new HttpClient();
