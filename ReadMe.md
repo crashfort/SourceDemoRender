@@ -46,7 +46,7 @@ Example of supported video containers:
 The default video encoder is ``libx264rgb`` which will produce an RGB video with no color loss. Other available is ``libx264`` for YUV video. Note however that ``libx264rgb`` encodes slower than ``libx264`` and will greatly increase file size.
 
 ## Guide
-SDR can output in YUV420, YUV444 and BGR0 formats with x264. Color space can be `601` or `709`, for YUV video the color range is `full`.
+SDR can output in YUV420, YUV444 and BGR0 formats with x264. For RGB video the color space is `RGB`. For YUV the color space can be `601` or `709` and the range is `full`.
 
 ### Vegas Pro (not recommended)
 This video editor cannot open:
