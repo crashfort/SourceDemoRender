@@ -79,6 +79,9 @@
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
+    <FxCompile>
+      <AdditionalIncludeDirectories>$(SDR_SHADERDEFS_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -103,6 +106,9 @@
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
+    <FxCompile>
+      <AdditionalIncludeDirectories>$(SDR_SHADERDEFS_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Interface\Application\Application.hpp" />
@@ -280,8 +286,6 @@
       <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DisableOptimizations>
       <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</EnableDebuggingInformation>
     </FxCompile>
-    <None Include="Interface\Application\Modules\Movie Record\Shaders\SharedAll.hlsl" />
-    <None Include="Interface\Application\Modules\Movie Record\Shaders\Utility.hlsl" />
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl">
       <FileType>Document</FileType>
     </None>

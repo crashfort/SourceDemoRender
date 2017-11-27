@@ -10,6 +10,7 @@
     <SDR_API_INCLUDE>$(SolutionDir)Library API\Include\</SDR_API_INCLUDE>
     <SDR_EXTENSION_INCLUDE>$(SolutionDir)Extension\Include\</SDR_EXTENSION_INCLUDE>
     <SDR_HOOKING_INCLUDE>$(SolutionDir)Hooking\Include\</SDR_HOOKING_INCLUDE>
+    <SDR_SHADERDEFS_INCLUDE>$(SolutionDir)Shader Definitions\Include\</SDR_SHADERDEFS_INCLUDE>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
@@ -45,6 +46,9 @@
     </BuildMacro>
     <BuildMacro Include="SDR_HOOKING_INCLUDE">
       <Value>$(SDR_HOOKING_INCLUDE)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SDR_SHADERDEFS_INCLUDE">
+      <Value>$(SDR_SHADERDEFS_INCLUDE)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

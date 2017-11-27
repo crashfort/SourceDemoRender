@@ -19,8 +19,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleExtension", "SampleEx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hooking", "Hooking\Hooking.vcxitems", "{BFCC3D78-9D82-4D9A-B854-36FBFB616C99}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shader Definitions", "Shader Definitions\Shader Definitions.vcxitems", "{3D5C1FF3-1F1F-4330-91D7-EA08F5CA0970}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Shader Definitions\Shader Definitions.vcxitems*{3d5c1ff3-1f1f-4330-91d7-ea08f5ca0970}*SharedItemsImports = 9
 		Shared\Shared.vcxitems*{45d41acc-2c3c-43d2-bc10-02aa73ffc7c7}*SharedItemsImports = 9
 		Hooking\Hooking.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Library API\Library API.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
