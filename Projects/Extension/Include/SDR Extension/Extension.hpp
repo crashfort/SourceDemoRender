@@ -8,6 +8,7 @@ namespace SDR::Extension
 	struct QueryData
 	{
 		const char* Name;
+		const char* Namespace;
 		const char* Author;
 		const char* Contact;
 		int Version;

@@ -7,6 +7,7 @@ extern "C"
 	__declspec(dllexport) void __cdecl SDR_Query(SDR::Extension::QueryData* query)
 	{
 		query->Name = "Sample Extension";
+		query->Namespace = "SampleExtension";
 		query->Author = "crashfort";
 		query->Contact = "https://github.com/crashfort/SourceDemoRender";
 		
