@@ -21,6 +21,21 @@ namespace SDR::Extension
 		Log::LogFunctionType Warning;
 	};
 
+	struct ConsoleData
+	{
+		uint32_t(*MakeBool)(const char* name, const char* value);
+		uint32_t(*MakeNumber)(const char* name, const char* value);
+		uint32_t(*MakeNumberMin)(const char* name, const char* value, float min);
+		uint32_t(*MakeNumberMinMax)(const char* name, const char* value, float min, float max);
+		uint32_t(*MakeNumberMinMaxString)(const char* name, const char* value, float min, float max);
+		uint32_t(*MakeString)(const char* name, const char* value);
+
+		bool(*GetBool)(uint32_t key);
+		int(*GetInt)(uint32_t key);
+		float(*GetFloat)(uint32_t key);
+		const char*(*GetString)(uint32_t key);
+	};
+
 	struct ModifyFrameData
 	{
 		ID3D11DeviceContext* Context;
@@ -43,7 +58,7 @@ namespace SDR::Extension
 		using SDR_Query = void(__cdecl*)(QueryData* query);
 		using SDR_Initialize = void(__cdecl*)(InitializeData* data);
 		using SDR_CallHandlers = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
-		using SDR_Ready = void(__cdecl*)();
+		using SDR_Ready = void(__cdecl*)(ConsoleData* data);
 		using SDR_StartMovie = void(__cdecl*)(ID3D11Device* device, int width, int height);
 		using SDR_EndMovie = void(__cdecl*)();
 		using SDR_ModifyFrame = void(*)(ModifyFrameData& data);

@@ -39,6 +39,7 @@ namespace
 	};
 
 	std::vector<ExtensionData> Loaded;
+	std::vector<SDR::Console::Variable> Variables;
 
 	void Initialize(ExtensionData& ext)
 	{
@@ -120,9 +121,83 @@ bool SDR::ExtensionManager::Events::CallHandlers(const char* name, const rapidjs
 
 void SDR::ExtensionManager::Events::Ready()
 {
-	for (const auto& ext : Loaded)
+	SDR::Extension::ConsoleData data = {};
+
+	for (auto& ext : Loaded)
 	{
-		ext.Ready();
+		data.MakeBool = [](const char* name, const char* value)
+		{
+			auto var = SDR::Console::MakeBool(name, value);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeNumber = [](const char* name, const char* value)
+		{
+			auto var = SDR::Console::MakeNumber(name, value);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeNumberMin = [](const char* name, const char* value, float min)
+		{
+			auto var = SDR::Console::MakeNumber(name, value, min);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeNumberMinMax = [](const char* name, const char* value, float min, float max)
+		{
+			auto var = SDR::Console::MakeNumber(name, value, min, max);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeNumberMinMaxString = [](const char* name, const char* value, float min, float max)
+		{
+			auto var = SDR::Console::MakeNumberWithString(name, value, min, max);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeString = [](const char* name, const char* value)
+		{
+			auto var = SDR::Console::MakeString(name, value);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.GetBool = [](uint32_t key)
+		{
+			auto& var = Variables[key];
+			return var.GetBool();
+		};
+
+		data.GetInt = [](uint32_t key)
+		{
+			auto& var = Variables[key];
+			return var.GetInt();
+		};
+
+		data.GetFloat = [](uint32_t key)
+		{
+			auto& var = Variables[key];
+			return var.GetFloat();
+		};
+
+		data.GetString = [](uint32_t key)
+		{
+			auto& var = Variables[key];
+			return var.GetString();
+		};
+
+		ext.Ready(&data);
 	}
 }
 

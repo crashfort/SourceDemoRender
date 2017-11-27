@@ -558,6 +558,11 @@ SDR::Console::Variable SDR::Console::MakeBool(const char* name, const char* valu
 	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, 0, true, 1);
 }
 
+SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value)
+{
+	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag);
+}
+
 SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value, float min)
 {
 	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, min);

@@ -52,6 +52,7 @@ namespace SDR::Console
 
 	Variable MakeBool(const char* name, const char* value);
 
+	Variable MakeNumber(const char* name, const char* value);
 	Variable MakeNumber(const char* name, const char* value, float min);
 	Variable MakeNumber(const char* name, const char* value, float min, float max);
 	Variable MakeNumberWithString(const char* name, const char* value, float min, float max);
