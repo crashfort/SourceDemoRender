@@ -142,10 +142,10 @@ void SDR::ExtensionManager::Events::EndMovie()
 	}
 }
 
-void SDR::ExtensionManager::Events::ModifyFrame(ID3D11DeviceContext* context)
+void SDR::ExtensionManager::Events::ModifyFrame(SDR::Extension::ModifyFrameData& data)
 {
 	for (const auto& ext : Loaded)
 	{
-		ext.ModifyFrame(context);
+		ext.ModifyFrame(data);
 	}
 }

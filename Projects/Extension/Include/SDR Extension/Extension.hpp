@@ -21,6 +21,13 @@ namespace SDR::Extension
 		Log::LogFunctionType Warning;
 	};
 
+	struct ModifyFrameData
+	{
+		ID3D11DeviceContext* Context;
+		ID3D11UnorderedAccessView* GameFrameUAV;
+		ID3D11Buffer* ConstantBuffer;
+	};
+
 	inline void RedirectLogOutputs(InitializeData* data)
 	{
 		SDR::Log::SetMessageFunction(data->Message);
@@ -36,6 +43,6 @@ namespace SDR::Extension
 		using SDR_Ready = void(__cdecl*)();
 		using SDR_StartMovie = void(__cdecl*)(ID3D11Device* device, int width, int height);
 		using SDR_EndMovie = void(__cdecl*)();
-		using SDR_ModifyFrame = void(*)(ID3D11DeviceContext* context);
+		using SDR_ModifyFrame = void(*)(ModifyFrameData& data);
 	}
 }

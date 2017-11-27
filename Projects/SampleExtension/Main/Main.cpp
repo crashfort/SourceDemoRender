@@ -41,7 +41,7 @@ extern "C"
 		
 	}
 
-	__declspec(dllexport) void __cdecl SDR_ModifyFrame(ID3D11DeviceContext* context)
+	__declspec(dllexport) void __cdecl SDR_ModifyFrame(SDR::Extension::ModifyFrameData& data)
 	{
 		
 	}

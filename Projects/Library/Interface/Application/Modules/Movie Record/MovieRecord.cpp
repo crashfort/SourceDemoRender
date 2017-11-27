@@ -246,10 +246,8 @@ namespace
 					SDR::Stream::FutureData item;
 					item.Writer = &stream->Video;
 
+					stream->DirectX11.ExtensionsPass(CurrentMovie.VideoStreamShared);
 					stream->DirectX11.Conversion(CurrentMovie.VideoStreamShared);
-
-					SDR::ExtensionManager::Events::ModifyFrame(CurrentMovie.VideoStreamShared.DirectX11.Context.Get());
-
 					auto res = stream->DirectX11.Download(CurrentMovie.VideoStreamShared, item);
 
 					if (res)

@@ -1,5 +1,6 @@
 #include "Stream.hpp"
 #include "SDR Shared\Error.hpp"
+#include "Interface\Application\Extensions\ExtensionManager.hpp"
 #include "D3D11.hpp"
 #include "Profile.hpp"
 #include "Interface\Application\Modules\Movie Record\Shaders\Blobs\BGR0.hpp"
@@ -428,6 +429,16 @@ void SDR::Stream::StreamBase::DirectX11Data::Pass(SharedData& shared)
 	Dispatch(shared);
 
 	ResetShaderInputs(context);
+}
+
+void SDR::Stream::StreamBase::DirectX11Data::ExtensionsPass(SharedData& shared)
+{
+	SDR::Extension::ModifyFrameData data;
+	data.Context = shared.DirectX11.Context.Get();
+	data.GameFrameUAV = WorkBufferUAV.Get();
+	data.ConstantBuffer = shared.DirectX11.SharedConstantBuffer.Get();
+
+	SDR::ExtensionManager::Events::ModifyFrame(data);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::Conversion(SharedData& shared)
