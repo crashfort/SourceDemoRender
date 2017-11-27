@@ -45,6 +45,7 @@ namespace
 		ext.Initialize = (SDR::Extension::ExportTypes::SDR_Initialize)GetProcAddress(ext.Module, "SDR_Initialize");
 		ext.CallHandlers = (SDR::Extension::ExportTypes::SDR_CallHandlers)GetProcAddress(ext.Module, "SDR_CallHandlers");
 		ext.Ready = (SDR::Extension::ExportTypes::SDR_Ready)GetProcAddress(ext.Module, "SDR_Ready");
+		ext.StartMovie = (SDR::Extension::ExportTypes::SDR_StartMovie)GetProcAddress(ext.Module, "SDR_StartMovie");
 		ext.ModifyFrame = (SDR::Extension::ExportTypes::SDR_ModifyFrame)GetProcAddress(ext.Module, "SDR_ModifyFrame");
 
 		ext.Query(&ext.Info);
