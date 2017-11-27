@@ -14,7 +14,7 @@ namespace SDR::Extension
 		int Version;
 	};
 
-	struct ReadyData
+	struct InitializeData
 	{
 		Log::LogFunctionType Message;
 		Log::LogFunctionColorType MessageColor;
@@ -22,11 +22,19 @@ namespace SDR::Extension
 		Log::LogFunctionType MakeError;
 	};
 
+	inline void RedirectLogOutputs(InitializeData* data)
+	{
+		SDR::Log::SetMessageFunction(data->Message);
+		SDR::Log::SetMessageColorFunction(data->MessageColor);
+		SDR::Log::SetWarningFunction(data->Warning);
+	}
+
 	namespace ExportTypes
 	{
 		using SDR_Query = void(__cdecl*)(QueryData* query);
+		using SDR_Initialize = void(__cdecl*)(InitializeData* data);
 		using SDR_CallHandlers = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
-		using SDR_Ready = void(*)(ReadyData* data);
+		using SDR_Ready = void(__cdecl*)();
 		using SDR_ModifyFrame = void(*)(ID3D11DeviceContext* context);
 	}
 }

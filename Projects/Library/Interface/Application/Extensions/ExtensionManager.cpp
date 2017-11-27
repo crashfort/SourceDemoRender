@@ -30,6 +30,7 @@ namespace
 		SDR::Extension::QueryData Info;
 
 		SDR::Extension::ExportTypes::SDR_Query Query;
+		SDR::Extension::ExportTypes::SDR_Initialize Initialize;
 		SDR::Extension::ExportTypes::SDR_CallHandlers CallHandlers;
 		SDR::Extension::ExportTypes::SDR_Ready Ready;
 		SDR::Extension::ExportTypes::SDR_ModifyFrame ModifyFrame;
@@ -37,25 +38,39 @@ namespace
 
 	std::vector<ExtensionData> Loaded;
 
+	void Initialize(ExtensionData& ext)
+	{
+		ext.Query = (SDR::Extension::ExportTypes::SDR_Query)GetProcAddress(ext.Module, "SDR_Query");
+		ext.Initialize = (SDR::Extension::ExportTypes::SDR_Initialize)GetProcAddress(ext.Module, "SDR_Initialize");
+		ext.CallHandlers = (SDR::Extension::ExportTypes::SDR_CallHandlers)GetProcAddress(ext.Module, "SDR_CallHandlers");
+		ext.Ready = (SDR::Extension::ExportTypes::SDR_Ready)GetProcAddress(ext.Module, "SDR_Ready");
+		ext.ModifyFrame = (SDR::Extension::ExportTypes::SDR_ModifyFrame)GetProcAddress(ext.Module, "SDR_ModifyFrame");
+
+		ext.Query(&ext.Info);
+
+		SDR::Extension::InitializeData data = {};
+		data.Message = SDR::Log::Message;
+		data.MessageColor = SDR::Log::MessageColor;
+		data.Warning = SDR::Log::Warning;
+		data.MakeError = SDR::Error::Make;
+
+		ext.Initialize(&data);
+	}
+
 	void Load(const std::string& name)
 	{
-		ExtensionData data = {};
+		ExtensionData ext = {};
 
-		data.Module = LoadLibraryA(name.c_str());
+		ext.Module = LoadLibraryA(name.c_str());
 
-		if (!data.Module)
+		if (!ext.Module)
 		{
 			SDR::Error::MS::ThrowLastError("Could not load extension \"%s\"", name.c_str());
 		}
 
-		data.Query = (SDR::Extension::ExportTypes::SDR_Query)GetProcAddress(data.Module, "SDR_Query");
-		data.CallHandlers = (SDR::Extension::ExportTypes::SDR_CallHandlers)GetProcAddress(data.Module, "SDR_CallHandlers");
-		data.Ready = (SDR::Extension::ExportTypes::SDR_Ready)GetProcAddress(data.Module, "SDR_Ready");
-		data.ModifyFrame = (SDR::Extension::ExportTypes::SDR_ModifyFrame)GetProcAddress(data.Module, "SDR_ModifyFrame");
+		Initialize(ext);
 
-		data.Query(&data.Info);
-
-		Loaded.emplace_back(std::move(data));
+		Loaded.emplace_back(std::move(ext));
 	}
 }
 
@@ -96,15 +111,9 @@ bool SDR::ExtensionManager::Events::CallHandlers(const char* name, const rapidjs
 
 void SDR::ExtensionManager::Events::Ready()
 {
-	SDR::Extension::ReadyData data = {};
-	data.Message = SDR::Log::Message;
-	data.MessageColor = SDR::Log::MessageColor;
-	data.Warning = SDR::Log::Warning;
-	data.MakeError = SDR::Error::Make;
-
 	for (const auto& ext : Loaded)
 	{
-		ext.Ready(&data);
+		ext.Ready();
 	}
 }
 
