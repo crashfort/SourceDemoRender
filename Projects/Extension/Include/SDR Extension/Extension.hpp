@@ -10,7 +10,6 @@ namespace SDR::Extension
 		const char* Name;
 		const char* Author;
 		const char* Contact;
-
 		int Version;
 	};
 
@@ -19,7 +18,6 @@ namespace SDR::Extension
 		Log::LogFunctionType Message;
 		Log::LogFunctionColorType MessageColor;
 		Log::LogFunctionType Warning;
-
 		Log::LogFunctionType MakeError;
 	};
 
