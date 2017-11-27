@@ -123,80 +123,80 @@ void SDR::ExtensionManager::Events::Ready()
 {
 	SDR::Extension::ConsoleData data = {};
 
+	data.MakeBool = [](const char* name, const char* value)
+	{
+		auto var = SDR::Console::MakeBool(name, value);
+		Variables.emplace_back(std::move(var));
+
+		return Variables.size() - 1;
+	};
+
+	data.MakeNumber = [](const char* name, const char* value)
+	{
+		auto var = SDR::Console::MakeNumber(name, value);
+		Variables.emplace_back(std::move(var));
+
+		return Variables.size() - 1;
+	};
+
+	data.MakeNumberMin = [](const char* name, const char* value, float min)
+	{
+		auto var = SDR::Console::MakeNumber(name, value, min);
+		Variables.emplace_back(std::move(var));
+
+		return Variables.size() - 1;
+	};
+
+	data.MakeNumberMinMax = [](const char* name, const char* value, float min, float max)
+	{
+		auto var = SDR::Console::MakeNumber(name, value, min, max);
+		Variables.emplace_back(std::move(var));
+
+		return Variables.size() - 1;
+	};
+
+	data.MakeNumberMinMaxString = [](const char* name, const char* value, float min, float max)
+	{
+		auto var = SDR::Console::MakeNumberWithString(name, value, min, max);
+		Variables.emplace_back(std::move(var));
+
+		return Variables.size() - 1;
+	};
+
+	data.MakeString = [](const char* name, const char* value)
+	{
+		auto var = SDR::Console::MakeString(name, value);
+		Variables.emplace_back(std::move(var));
+
+		return Variables.size() - 1;
+	};
+
+	data.GetBool = [](uint32_t key)
+	{
+		auto& var = Variables[key];
+		return var.GetBool();
+	};
+
+	data.GetInt = [](uint32_t key)
+	{
+		auto& var = Variables[key];
+		return var.GetInt();
+	};
+
+	data.GetFloat = [](uint32_t key)
+	{
+		auto& var = Variables[key];
+		return var.GetFloat();
+	};
+
+	data.GetString = [](uint32_t key)
+	{
+		auto& var = Variables[key];
+		return var.GetString();
+	};
+
 	for (auto& ext : Loaded)
 	{
-		data.MakeBool = [](const char* name, const char* value)
-		{
-			auto var = SDR::Console::MakeBool(name, value);
-			Variables.emplace_back(std::move(var));
-
-			return Variables.size() - 1;
-		};
-
-		data.MakeNumber = [](const char* name, const char* value)
-		{
-			auto var = SDR::Console::MakeNumber(name, value);
-			Variables.emplace_back(std::move(var));
-
-			return Variables.size() - 1;
-		};
-
-		data.MakeNumberMin = [](const char* name, const char* value, float min)
-		{
-			auto var = SDR::Console::MakeNumber(name, value, min);
-			Variables.emplace_back(std::move(var));
-
-			return Variables.size() - 1;
-		};
-
-		data.MakeNumberMinMax = [](const char* name, const char* value, float min, float max)
-		{
-			auto var = SDR::Console::MakeNumber(name, value, min, max);
-			Variables.emplace_back(std::move(var));
-
-			return Variables.size() - 1;
-		};
-
-		data.MakeNumberMinMaxString = [](const char* name, const char* value, float min, float max)
-		{
-			auto var = SDR::Console::MakeNumberWithString(name, value, min, max);
-			Variables.emplace_back(std::move(var));
-
-			return Variables.size() - 1;
-		};
-
-		data.MakeString = [](const char* name, const char* value)
-		{
-			auto var = SDR::Console::MakeString(name, value);
-			Variables.emplace_back(std::move(var));
-
-			return Variables.size() - 1;
-		};
-
-		data.GetBool = [](uint32_t key)
-		{
-			auto& var = Variables[key];
-			return var.GetBool();
-		};
-
-		data.GetInt = [](uint32_t key)
-		{
-			auto& var = Variables[key];
-			return var.GetInt();
-		};
-
-		data.GetFloat = [](uint32_t key)
-		{
-			auto& var = Variables[key];
-			return var.GetFloat();
-		};
-
-		data.GetString = [](uint32_t key)
-		{
-			auto& var = Variables[key];
-			return var.GetString();
-		};
-
 		ext.Ready(data);
 	}
 }
