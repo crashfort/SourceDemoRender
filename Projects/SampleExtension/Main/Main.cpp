@@ -23,12 +23,6 @@ extern "C"
 
 	__declspec(dllexport) bool __cdecl SDR_CallHandlers(const char* name, const rapidjson::Value& value)
 	{
-		if (SDR::String::IsEqual(name, "SampleExtension_Test"))
-		{
-			auto testvalue = value["TestValue"].GetInt();
-			return true;
-		}
-
 		return false;
 	}
 
