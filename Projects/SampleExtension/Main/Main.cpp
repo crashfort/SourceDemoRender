@@ -10,7 +10,7 @@ extern "C"
 		query->Name = "Sample Extension";
 		query->Namespace = "SampleExtension";
 		query->Author = "crashfort";
-		query->Contact = "https://github.com/crashfort/SourceDemoRender";
+		query->Contact = "https://github.com/crashfort/";
 		
 		query->Version = 1;
 	}
@@ -26,14 +26,19 @@ extern "C"
 		return false;
 	}
 
+	__declspec(dllexport) void __cdecl SDR_Ready()
+	{
+		SDR::Log::Message("Hello from sample extension!\n"s);
+	}
+
 	__declspec(dllexport) void __cdecl SDR_StartMovie(ID3D11Device* device, int width, int height)
 	{
 		
 	}
 
-	__declspec(dllexport) void __cdecl SDR_Ready()
+	__declspec(dllexport) void __cdecl SDR_EndMovie()
 	{
-		SDR::Log::Message("Hello from sample extension!\n"s);
+		
 	}
 
 	__declspec(dllexport) void __cdecl SDR_ModifyFrame(ID3D11DeviceContext* context)

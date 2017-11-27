@@ -34,6 +34,7 @@ namespace
 		SDR::Extension::ExportTypes::SDR_CallHandlers CallHandlers;
 		SDR::Extension::ExportTypes::SDR_Ready Ready;
 		SDR::Extension::ExportTypes::SDR_StartMovie StartMovie;
+		SDR::Extension::ExportTypes::SDR_EndMovie EndMovie;
 		SDR::Extension::ExportTypes::SDR_ModifyFrame ModifyFrame;
 	};
 
@@ -46,6 +47,7 @@ namespace
 		ext.CallHandlers = (SDR::Extension::ExportTypes::SDR_CallHandlers)GetProcAddress(ext.Module, "SDR_CallHandlers");
 		ext.Ready = (SDR::Extension::ExportTypes::SDR_Ready)GetProcAddress(ext.Module, "SDR_Ready");
 		ext.StartMovie = (SDR::Extension::ExportTypes::SDR_StartMovie)GetProcAddress(ext.Module, "SDR_StartMovie");
+		ext.EndMovie = (SDR::Extension::ExportTypes::SDR_EndMovie)GetProcAddress(ext.Module, "SDR_EndMovie");
 		ext.ModifyFrame = (SDR::Extension::ExportTypes::SDR_ModifyFrame)GetProcAddress(ext.Module, "SDR_ModifyFrame");
 
 		ext.Query(&ext.Info);
@@ -129,6 +131,14 @@ void SDR::ExtensionManager::Events::StartMovie(ID3D11Device* device, int width, 
 	for (const auto& ext : Loaded)
 	{
 		ext.StartMovie(device, width, height);
+	}
+}
+
+void SDR::ExtensionManager::Events::EndMovie()
+{
+	for (const auto& ext : Loaded)
+	{
+		ext.EndMovie();
 	}
 }
 

@@ -1022,6 +1022,8 @@ namespace
 					*/
 					CurrentMovie.VideoStream->Video.Finish();
 
+					SDR::ExtensionManager::Events::EndMovie();
+
 					CurrentMovie = {};
 
 					if (Variables::ExitOnFinish.GetBool())

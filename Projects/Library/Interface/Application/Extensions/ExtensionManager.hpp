@@ -27,6 +27,11 @@ namespace SDR::ExtensionManager
 		/*
 			
 		*/
+		void EndMovie();
+
+		/*
+			
+		*/
 		void ModifyFrame(ID3D11DeviceContext* context);
 	}
 }
