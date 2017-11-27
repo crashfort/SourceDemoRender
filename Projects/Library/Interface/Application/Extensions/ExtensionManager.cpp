@@ -85,6 +85,11 @@ void SDR::ExtensionManager::LoadExtensions()
 		if (obj.extension() == ".dll")
 		{
 			Load(obj.u8string());
+
+			auto filename = obj.filename();
+			auto nameutf8 = filename.u8string();
+
+			SDR::Log::Message("SDR: Loaded extension \"%s\"\n", nameutf8.c_str());
 		}
 	}
 }
