@@ -445,15 +445,8 @@ void SDR::PreEngineSetup()
 void SDR::Setup()
 {
 	LoadLibraryIntercept::End();
-
-	ExtensionManager::LoadExtensions();
 	
 	Config::SetupGame();
-
-	if (SDR::ExtensionManager::HasExtensions())
-	{
-		Config::SetupExtensions();
-	}
 
 	for (auto entry : MainApplication.StartupFunctions)
 	{
@@ -474,7 +467,13 @@ void SDR::Setup()
 
 	MainApplication.StartupFunctions.clear();
 
-	ExtensionManager::Events::Ready();
+	ExtensionManager::LoadExtensions();
+
+	if (SDR::ExtensionManager::HasExtensions())
+	{
+		Config::SetupExtensions();
+		ExtensionManager::Events::Ready();
+	}
 }
 
 void SDR::Close()
