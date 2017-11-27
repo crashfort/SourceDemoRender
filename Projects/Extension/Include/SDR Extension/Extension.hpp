@@ -19,7 +19,6 @@ namespace SDR::Extension
 		Log::LogFunctionType Message;
 		Log::LogFunctionColorType MessageColor;
 		Log::LogFunctionType Warning;
-		Log::LogFunctionType MakeError;
 	};
 
 	inline void RedirectLogOutputs(InitializeData* data)

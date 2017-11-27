@@ -52,7 +52,6 @@ namespace
 		data.Message = SDR::Log::Message;
 		data.MessageColor = SDR::Log::MessageColor;
 		data.Warning = SDR::Log::Warning;
-		data.MakeError = SDR::Error::Make;
 
 		ext.Initialize(&data);
 	}
