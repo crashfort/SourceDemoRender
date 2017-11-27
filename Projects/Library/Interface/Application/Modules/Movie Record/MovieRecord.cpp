@@ -374,7 +374,7 @@ namespace
 			void __fastcall NewFunction(void* thisptr, void* edx, void* rect);
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __fastcall NewFunction(void* thisptr, void* edx, void* rect)
 			{
@@ -390,9 +390,9 @@ namespace
 				"View_Render",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -868,7 +868,7 @@ namespace
 			void __cdecl NewFunction(const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk);
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction(const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk)
 			{
@@ -883,9 +883,9 @@ namespace
 				"StartMovie",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -948,7 +948,7 @@ namespace
 			void __cdecl NewFunction(const void* ptr);
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction(const void* ptr)
 			{
@@ -963,9 +963,9 @@ namespace
 				"StartMovieCommand",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -1062,7 +1062,7 @@ namespace
 			void __cdecl NewFunction();
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction()
 			{
@@ -1077,9 +1077,9 @@ namespace
 				"EndMovie",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -1105,7 +1105,7 @@ namespace
 			void __cdecl NewFunction();
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction()
 			{
@@ -1120,9 +1120,9 @@ namespace
 				"EndMovieCommand",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -1156,7 +1156,7 @@ namespace
 			void __cdecl NewFunction(float mixahead);
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction(float mixahead)
 			{
@@ -1174,9 +1174,9 @@ namespace
 				"SUpdateGuts",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}

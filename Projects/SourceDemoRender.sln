@@ -17,14 +17,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Extension", "Extension\Exte
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleExtension", "SampleExtension\SampleExtension.vcxproj", "{EA9BFA18-F8FF-4181-BA6A-8CCC245937EB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hooking", "Hooking\Hooking.vcxitems", "{BFCC3D78-9D82-4D9A-B854-36FBFB616C99}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Shared\Shared.vcxitems*{45d41acc-2c3c-43d2-bc10-02aa73ffc7c7}*SharedItemsImports = 9
+		Hooking\Hooking.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Library API\Library API.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Extension\Extension.vcxitems*{574d1cca-f375-4e5c-950b-9e2b1b7a2a92}*SharedItemsImports = 9
 		Library API\Library API.vcxitems*{b2dbce0d-417d-47d2-842c-4651f60231a7}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{b2dbce0d-417d-47d2-842c-4651f60231a7}*SharedItemsImports = 4
+		Hooking\Hooking.vcxitems*{bfcc3d78-9d82-4d9a-b854-36fbfb616c99}*SharedItemsImports = 9
 		Shared\Shared.vcxitems*{ea9bfa18-f8ff-4181-ba6a-8ccc245937eb}*SharedItemsImports = 4
 		Library API\Library API.vcxitems*{f6a710b0-1dad-4087-b575-5512efeccc0f}*SharedItemsImports = 9
 	EndGlobalSection
