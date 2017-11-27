@@ -57,18 +57,24 @@ namespace
 		ext.Initialize(&data);
 	}
 
-	void Load(const std::string& name)
+	void Load(const std::experimental::filesystem::path& path)
 	{
 		ExtensionData ext = {};
 
-		ext.Module = LoadLibraryA(name.c_str());
+		auto filename = path.filename();
+		auto fullutf8 = path.u8string();
+		auto nameutf8 = filename.u8string();
+
+		ext.Module = LoadLibraryA(fullutf8.c_str());
 
 		if (!ext.Module)
 		{
-			SDR::Error::MS::ThrowLastError("Could not load extension \"%s\"", name.c_str());
+			SDR::Error::MS::ThrowLastError("Could not load extension \"%s\"", nameutf8.c_str());
 		}
 
 		Initialize(ext);
+
+		SDR::Log::Message("SDR: Loaded extension \"%s\"\n", nameutf8.c_str());
 
 		Loaded.emplace_back(std::move(ext));
 	}
@@ -84,12 +90,7 @@ void SDR::ExtensionManager::LoadExtensions()
 
 		if (obj.extension() == ".dll")
 		{
-			Load(obj.u8string());
-
-			auto filename = obj.filename();
-			auto nameutf8 = filename.u8string();
-
-			SDR::Log::Message("SDR: Loaded extension \"%s\"\n", nameutf8.c_str());
+			Load(obj);
 		}
 	}
 }
