@@ -26,6 +26,9 @@ namespace SDR::Extension
 		ID3D11DeviceContext* Context;
 		ID3D11UnorderedAccessView* GameFrameUAV;
 		ID3D11Buffer* ConstantBuffer;
+
+		int ThreadGroupsX;
+		int ThreadGroupsY;
 	};
 
 	inline void RedirectLogOutputs(InitializeData* data)
