@@ -1,0 +1,37 @@
+{
+	"Counter-Strike Source\\cstrike":
+	{
+		"SampleExtension_Test":
+		{
+			"TestValue": 10
+		}
+	},
+	"Half-Life 2\\hl2":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Half-Life 2\\episodic":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Half-Life 2\\ep2":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Team Fortress 2\\tf":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"sourcemods\\momentum":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Day of Defeat Source\\dod":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"GarrysMod\\garrysmod":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	}
+}
