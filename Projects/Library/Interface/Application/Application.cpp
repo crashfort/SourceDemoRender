@@ -3,6 +3,7 @@
 #include "SDR Shared\Json.hpp"
 #include "SDR Library API\ExportTypes.hpp"
 #include "Application.hpp"
+#include "Interface\Application\Extensions\ExtensionManager.hpp"
 
 namespace
 {
@@ -168,18 +169,16 @@ namespace
 			}
 		}
 
-		struct GameData
+		struct ConfigObjectData
 		{
-			using MemberIt = rapidjson::Document::MemberIterator;
-			using ValueType = rapidjson::Value;
-
-			std::string Name;
-			std::vector<std::pair<std::string, ValueType>> Properties;
+			std::string ObjectName;
+			std::vector<std::pair<std::string, rapidjson::Value>> Properties;
 		};
 
-		std::vector<GameData> Configs;
+		std::vector<ConfigObjectData> GameConfigs;
+		std::vector<ConfigObjectData> ExtensionConfigs;
 
-		void ResolveInherit(GameData* targetgame, rapidjson::Document::AllocatorType& alloc)
+		void ResolveInherit(ConfigObjectData* targetgame, const std::vector<ConfigObjectData>& source, rapidjson::Document::AllocatorType& alloc)
 		{
 			auto begin = targetgame->Properties.begin();
 			auto end = targetgame->Properties.end();
@@ -194,18 +193,18 @@ namespace
 
 					if (!it->second.IsString())
 					{
-						SDR::Error::Make("SDR: \"%s\" inherit field not a string\n", targetgame->Name.c_str());
+						SDR::Error::Make("SDR: \"%s\" inherit field not a string\n", targetgame->ObjectName.c_str());
 					}
 
 					std::string from = it->second.GetString();
 
 					targetgame->Properties.erase(it);
 
-					for (const auto& game : Configs)
+					for (const auto& game : source)
 					{
 						bool foundgame = false;
 
-						if (game.Name == from)
+						if (game.ObjectName == from)
 						{
 							foundgame = true;
 
@@ -233,7 +232,7 @@ namespace
 
 						if (!foundgame)
 						{
-							SDR::Error::Make("\"%s\" inherit target \"%s\" not found", targetgame->Name.c_str(), from.c_str());
+							SDR::Error::Make("\"%s\" inherit target \"%s\" not found", targetgame->ObjectName.c_str(), from.c_str());
 						}
 					}
 
@@ -243,13 +242,26 @@ namespace
 
 			if (foundinherit)
 			{
-				ResolveInherit(targetgame, alloc);
+				ResolveInherit(targetgame, source, alloc);
 			}
 		}
 
-		void CallHandlers(GameData* game)
+		void PrintModuleState(bool value, const char* name)
 		{
-			SDR::Log::Message("SDR: Creating %d modules\n", MainApplication.ModuleHandlers.size());
+			if (!value)
+			{
+				SDR::Log::Warning("SDR: No handler found for \"%s\"\n", name);
+			}
+
+			else
+			{
+				SDR::Log::Message("SDR: Enabled module \"%s\"\n", name);
+			}
+		}
+
+		void CallGameHandlers(ConfigObjectData* game)
+		{
+			SDR::Log::Message("SDR: Creating %d game modules\n", MainApplication.ModuleHandlers.size());
 
 			for (auto& prop : game->Properties)
 			{
@@ -287,18 +299,54 @@ namespace
 							throw;
 						}
 
-						SDR::Log::Message("SDR: Enabled module \"%s\"\n", handler.Name);
 						break;
 					}
 				}
 
-				if (!found)
-				{
-					SDR::Log::Warning("SDR: No handler found for \"%s\"\n", prop.first.c_str());
-				}
+				PrintModuleState(found, prop.first.c_str());
 			}
 
 			MainApplication.ModuleHandlers.clear();
+		}
+
+		void CallExtensionHandlers(ConfigObjectData* object)
+		{
+			SDR::Log::Message("SDR: Creating %d extension modules\n", object->Properties.size());
+
+			for (auto& prop : object->Properties)
+			{
+				auto found = SDR::ExtensionManager::Events::CallHandlers(prop.first.c_str(), prop.second);
+
+				PrintModuleState(found, prop.first.c_str());
+			}
+		}
+
+		ConfigObjectData* PopulateAndFindObject(rapidjson::Document& document, std::vector<ConfigObjectData>& dest)
+		{
+			MemberLoop(document, [&](rapidjson::Document::MemberIterator gameit)
+			{
+				dest.emplace_back();
+				auto& curobj = dest.back();
+
+				curobj.ObjectName = gameit->name.GetString();
+
+				MemberLoop(gameit->value, [&](rapidjson::Document::MemberIterator gamedata)
+				{
+					curobj.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
+				});
+			});
+
+			auto gamename = SDR::Library::GetGamePath();
+
+			for (auto& obj : dest)
+			{
+				if (SDR::String::EndsWith(gamename, obj.ObjectName.c_str()))
+				{
+					return &obj;
+				}
+			}
+
+			return nullptr;
 		}
 
 		void SetupGame()
@@ -315,39 +363,44 @@ namespace
 				SDR::Error::Make("Could not find game config"s);
 			}
 
-			GameData* currentgame = nullptr;
+			auto object = PopulateAndFindObject(document, GameConfigs);
 
-			MemberLoop(document, [&](GameData::MemberIt gameit)
-			{
-				Configs.emplace_back();
-				auto& curgame = Configs.back();
-
-				curgame.Name = gameit->name.GetString();
-
-				MemberLoop(gameit->value, [&](GameData::MemberIt gamedata)
-				{
-					curgame.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
-				});
-			});
-
-			auto gamename = SDR::Library::GetGamePath();
-
-			for (auto& game : Configs)
-			{
-				if (SDR::String::EndsWith(gamename, game.Name.c_str()))
-				{
-					currentgame = &game;
-					break;
-				}
-			}
-
-			if (!currentgame)
+			if (!object)
 			{
 				SDR::Error::Make("Could not find current game in game config"s);
 			}
 
-			ResolveInherit(currentgame, document.GetAllocator());
-			CallHandlers(currentgame);
+			ResolveInherit(object, GameConfigs, document.GetAllocator());
+			CallGameHandlers(object);
+
+			GameConfigs.clear();
+		}
+
+		void SetupExtensions()
+		{
+			rapidjson::Document document;
+
+			try
+			{
+				document = SDR::Json::FromFile(SDR::Library::BuildResourcePath("ExtensionConfig.json"));
+			}
+
+			catch (SDR::File::ScopedFile::ExceptionType status)
+			{
+				SDR::Error::Make("Could not find extension config"s);
+			}
+
+			auto object = PopulateAndFindObject(document, ExtensionConfigs);
+
+			if (!object)
+			{
+				SDR::Error::Make("Could not find current game in extension config"s);
+			}
+
+			ResolveInherit(object, ExtensionConfigs, document.GetAllocator());
+			CallExtensionHandlers(object);
+
+			ExtensionConfigs.clear();
 		}
 	}
 
@@ -515,14 +568,15 @@ void SDR::PreEngineSetup()
 void SDR::Setup()
 {
 	LoadLibraryIntercept::End();
+
+	ExtensionManager::LoadExtensions();
+	
 	Config::SetupGame();
 
-	if (MainApplication.StartupFunctions.empty())
+	if (SDR::ExtensionManager::HasExtensions())
 	{
-		return;
+		Config::SetupExtensions();
 	}
-
-	auto count = MainApplication.StartupFunctions.size();
 
 	for (auto entry : MainApplication.StartupFunctions)
 	{
@@ -542,6 +596,8 @@ void SDR::Setup()
 	}
 
 	MainApplication.StartupFunctions.clear();
+
+	ExtensionManager::Events::Ready();
 }
 
 void SDR::Close()

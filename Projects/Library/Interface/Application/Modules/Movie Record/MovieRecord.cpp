@@ -9,6 +9,7 @@
 #include "Interface\Application\Modules\Shared\MaterialSystem.hpp"
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
 #include "Interface\LibraryInterface.hpp"
+#include "Interface\Application\Extensions\ExtensionManager.hpp"
 
 namespace
 {
@@ -246,6 +247,9 @@ namespace
 					item.Writer = &stream->Video;
 
 					stream->DirectX11.Conversion(CurrentMovie.VideoStreamShared);
+
+					SDR::ExtensionManager::Events::ModifyFrame(CurrentMovie.VideoStreamShared.DirectX11.Context.Get());
+
 					auto res = stream->DirectX11.Download(CurrentMovie.VideoStreamShared, item);
 
 					if (res)
