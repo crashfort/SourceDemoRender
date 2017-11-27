@@ -197,7 +197,7 @@ void SDR::ExtensionManager::Events::Ready()
 			return var.GetString();
 		};
 
-		ext.Ready(&data);
+		ext.Ready(data);
 	}
 }
 

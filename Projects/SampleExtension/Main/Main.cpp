@@ -26,7 +26,7 @@ extern "C"
 		return false;
 	}
 
-	__declspec(dllexport) void __cdecl SDR_Ready(SDR::Extension::ConsoleData* data)
+	__declspec(dllexport) void __cdecl SDR_Ready(const SDR::Extension::ConsoleData& data)
 	{
 		SDR::Log::Message("Hello from sample extension!\n"s);
 	}

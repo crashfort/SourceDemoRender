@@ -58,7 +58,7 @@ namespace SDR::Extension
 		using SDR_Query = void(__cdecl*)(QueryData* query);
 		using SDR_Initialize = void(__cdecl*)(InitializeData* data);
 		using SDR_CallHandlers = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
-		using SDR_Ready = void(__cdecl*)(ConsoleData* data);
+		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ConsoleData& data);
 		using SDR_StartMovie = void(__cdecl*)(ID3D11Device* device, int width, int height);
 		using SDR_EndMovie = void(__cdecl*)();
 		using SDR_ModifyFrame = void(*)(ModifyFrameData& data);
