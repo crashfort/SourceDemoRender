@@ -33,6 +33,7 @@ namespace
 		SDR::Extension::ExportTypes::SDR_Initialize Initialize;
 		SDR::Extension::ExportTypes::SDR_CallHandlers CallHandlers;
 		SDR::Extension::ExportTypes::SDR_Ready Ready;
+		SDR::Extension::ExportTypes::SDR_StartMovie StartMovie;
 		SDR::Extension::ExportTypes::SDR_ModifyFrame ModifyFrame;
 	};
 
@@ -113,6 +114,14 @@ void SDR::ExtensionManager::Events::Ready()
 	for (const auto& ext : Loaded)
 	{
 		ext.Ready();
+	}
+}
+
+void SDR::ExtensionManager::Events::StartMovie(ID3D11Device* device, int width, int height)
+{
+	for (const auto& ext : Loaded)
+	{
+		ext.StartMovie(device, width, height);
 	}
 }
 

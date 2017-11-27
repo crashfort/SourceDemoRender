@@ -25,7 +25,7 @@ namespace
 
 void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool sampling)
 {
-	uint32_t flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
+	uint32_t flags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 	#ifdef _DEBUG
 	flags |= D3D11_CREATE_DEVICE_DEBUG;
 	#endif
