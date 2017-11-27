@@ -173,6 +173,11 @@ namespace
 
 		void CallExtensionHandlers(ConfigObjectData* object)
 		{
+			if (object->Properties.empty())
+			{
+				return;
+			}
+
 			SDR::Log::Message("SDR: Creating %d extension modules\n", object->Properties.size());
 
 			for (auto& prop : object->Properties)
