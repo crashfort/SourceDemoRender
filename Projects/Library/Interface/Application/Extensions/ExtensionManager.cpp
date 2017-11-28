@@ -201,11 +201,11 @@ void SDR::ExtensionManager::Events::Ready()
 	}
 }
 
-void SDR::ExtensionManager::Events::StartMovie(ID3D11Device* device, int width, int height)
+void SDR::ExtensionManager::Events::StartMovie(ID3D11Device* device, int width, int height, int fps)
 {
 	for (const auto& ext : Loaded)
 	{
-		ext.StartMovie(device, width, height);
+		ext.StartMovie(device, width, height, fps);
 	}
 }
 

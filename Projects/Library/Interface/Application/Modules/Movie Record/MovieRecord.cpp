@@ -854,7 +854,7 @@ namespace
 
 				movie.FrameBufferThreadHandle = std::thread(FrameBufferThread);
 
-				SDR::ExtensionManager::Events::StartMovie(movie.VideoStreamShared.DirectX11.Device.Get(), width, height);
+				SDR::ExtensionManager::Events::StartMovie(movie.VideoStreamShared.DirectX11.Device.Get(), width, height, fps);
 
 				SDR::Log::Message("SDR: Started movie\n"s);
 			}
