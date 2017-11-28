@@ -148,6 +148,16 @@ namespace
 	}
 }
 
+MH_STATUS SDR::Hooking::Initialize()
+{
+	return MH_Initialize();
+}
+
+void SDR::Hooking::Shutdown()
+{
+	MH_Uninitialize();
+}
+
 SDR::Hooking::ModuleInformation::ModuleInformation(const char* name) : Name(name)
 {
 	SDR::Error::ScopedContext e1("ModuleInformation"s);

@@ -3,9 +3,13 @@
 #include <vector>
 #include <rapidjson\document.h>
 #include <SDR Shared\Error.hpp>
+#include "SDR Shared\MinHookCPP.hpp"
 
 namespace SDR::Hooking
 {
+	MH_STATUS Initialize();
+	void Shutdown();
+
 	struct ModuleInformation
 	{
 		ModuleInformation(const char* name);
