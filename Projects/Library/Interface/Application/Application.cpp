@@ -432,7 +432,7 @@ namespace
 
 void SDR::PreEngineSetup()
 {
-	auto res = MH_Initialize();
+	auto res = SDR::Hooking::Initialize();
 
 	if (res != MH_OK)
 	{
@@ -483,7 +483,7 @@ void SDR::Close()
 		func();
 	}
 
-	MH_Uninitialize();
+	SDR::Hooking::Shutdown();
 }
 
 void SDR::AddStartupFunction(const StartupFuncData& data)
