@@ -48,13 +48,25 @@ namespace
 
 	void Initialize(ExtensionData& ext)
 	{
-		ext.Query = (SDR::Extension::ExportTypes::SDR_Query)GetProcAddress(ext.Module, "SDR_Query");
-		ext.Initialize = (SDR::Extension::ExportTypes::SDR_Initialize)GetProcAddress(ext.Module, "SDR_Initialize");
-		ext.ConfigHandler = (SDR::Extension::ExportTypes::SDR_ConfigHandler)GetProcAddress(ext.Module, "SDR_ConfigHandler");
-		ext.Ready = (SDR::Extension::ExportTypes::SDR_Ready)GetProcAddress(ext.Module, "SDR_Ready");
-		ext.StartMovie = (SDR::Extension::ExportTypes::SDR_StartMovie)GetProcAddress(ext.Module, "SDR_StartMovie");
-		ext.EndMovie = (SDR::Extension::ExportTypes::SDR_EndMovie)GetProcAddress(ext.Module, "SDR_EndMovie");
-		ext.NewFrame = (SDR::Extension::ExportTypes::SDR_NewFrame)GetProcAddress(ext.Module, "SDR_NewFrame");
+		auto findexport = [&](const char* name, auto& object, bool required)
+		{
+			auto addr = (void*)GetProcAddress(ext.Module, name);
+
+			if (!addr && required)
+			{
+				SDR::Error::Make("Extension \"%s\" misses export for \"%s\"", ext.Name.c_str(), name);
+			}
+
+			object = (decltype(object))addr;
+		};
+
+		findexport("SDR_Query", ext.Query, true);
+		findexport("SDR_Initialize", ext.Initialize, true);
+		findexport("SDR_ConfigHandler", ext.ConfigHandler, false);
+		findexport("SDR_Ready", ext.Ready, true);
+		findexport("SDR_StartMovie", ext.StartMovie, false);
+		findexport("SDR_EndMovie", ext.EndMovie, false);
+		findexport("SDR_NewFrame", ext.NewFrame, false);
 
 		ext.Query(ext.Info);
 
@@ -74,18 +86,17 @@ namespace
 		auto fullutf8 = path.u8string();
 		auto nameutf8 = filename.u8string();
 
+		ext.Name = std::move(nameutf8);
 		ext.Module = LoadLibraryA(fullutf8.c_str());
 
 		if (!ext.Module)
 		{
-			SDR::Error::MS::ThrowLastError("Could not load extension \"%s\"", nameutf8.c_str());
+			SDR::Error::MS::ThrowLastError("Could not load extension \"%s\"", ext.Name.c_str());
 		}
 
 		Initialize(ext);
 
-		SDR::Log::Message("SDR: Loaded extension \"%s\"\n", nameutf8.c_str());
-
-		ext.Name = std::move(nameutf8);
+		SDR::Log::Message("SDR: Loaded extension \"%s\"\n", ext.Name.c_str());
 
 		Loaded.emplace_back(std::move(ext));
 	}
@@ -110,6 +121,11 @@ namespace
 		if (!document.IsArray())
 		{
 			SDR::Log::Warning("SDR: Extension order config not an array"s);
+			return;
+		}
+
+		if (Loaded.size() < 2)
+		{
 			return;
 		}
 
@@ -146,7 +162,15 @@ void SDR::ExtensionManager::LoadExtensions()
 
 		if (obj.extension() == ".dll")
 		{
-			Load(obj);
+			try
+			{
+				Load(obj);
+			}
+
+			catch (const SDR::Error::Exception& error)
+			{
+				continue;
+			}
 		}
 	}
 
@@ -162,11 +186,14 @@ bool SDR::ExtensionManager::Events::CallHandlers(const char* name, const rapidjs
 {
 	for (const auto& ext : Loaded)
 	{
-		auto res = ext.ConfigHandler(name, value);
-
-		if (res)
+		if (ext.ConfigHandler)
 		{
-			return true;
+			auto res = ext.ConfigHandler(name, value);
+
+			if (res)
+			{
+				return true;
+			}
 		}
 	}
 
@@ -294,7 +321,10 @@ void SDR::ExtensionManager::Events::StartMovie(const SDR::Extension::StartMovieD
 {
 	for (const auto& ext : Loaded)
 	{
-		ext.StartMovie(data);
+		if (ext.StartMovie)
+		{
+			ext.StartMovie(data);
+		}
 	}
 }
 
@@ -302,7 +332,10 @@ void SDR::ExtensionManager::Events::EndMovie()
 {
 	for (const auto& ext : Loaded)
 	{
-		ext.EndMovie();
+		if (ext.EndMovie)
+		{
+			ext.EndMovie();
+		}
 	}
 }
 
@@ -310,6 +343,9 @@ void SDR::ExtensionManager::Events::ModifyFrame(SDR::Extension::NewFrameData& da
 {
 	for (const auto& ext : Loaded)
 	{
-		ext.NewFrame(data);
+		if (ext.NewFrame)
+		{
+			ext.NewFrame(data);
+		}
 	}
 }
