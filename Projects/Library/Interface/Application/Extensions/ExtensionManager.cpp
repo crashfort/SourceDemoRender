@@ -196,6 +196,30 @@ void SDR::ExtensionManager::Events::Ready()
 		return var.GetString();
 	};
 
+	data.GetExternalBool = [](const char* name)
+	{
+		SDR::Console::Variable var(name);
+		return var.GetBool();
+	};
+
+	data.GetExternalInt = [](const char* name)
+	{
+		SDR::Console::Variable var(name);
+		return var.GetInt();
+	};
+
+	data.GetExternalFloat = [](const char* name)
+	{
+		SDR::Console::Variable var(name);
+		return var.GetFloat();
+	};
+
+	data.GetExternalString = [](const char* name)
+	{
+		SDR::Console::Variable var(name);
+		return var.GetString();
+	};
+
 	data.GetTimeNow = []()
 	{
 		auto now = std::chrono::high_resolution_clock::now();

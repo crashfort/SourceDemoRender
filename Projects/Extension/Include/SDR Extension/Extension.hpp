@@ -35,6 +35,11 @@ namespace SDR::Extension
 		float(*GetFloat)(uint32_t key);
 		const char*(*GetString)(uint32_t key);
 
+		bool(*GetExternalBool)(const char* name);
+		int(*GetExternalInt)(const char* name);
+		float(*GetExternalFloat)(const char* name);
+		const char*(*GetExternalString)(const char* name);
+
 		double(*GetTimeNow)();
 
 		bool(*IsRecordingVideo)();
