@@ -72,6 +72,7 @@ namespace SDR::Extension
 	{
 		ID3D11DeviceContext* Context;
 		ID3D11UnorderedAccessView* GameFrameUAV;
+		ID3D11ShaderResourceView* GameFrameSRV;
 		ID3D11Buffer* ConstantBuffer;
 
 		int ThreadGroupsX;

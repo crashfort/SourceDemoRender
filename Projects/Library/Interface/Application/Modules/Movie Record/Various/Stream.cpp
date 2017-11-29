@@ -436,6 +436,7 @@ void SDR::Stream::StreamBase::DirectX11Data::ExtensionsPass(SharedData& shared)
 	SDR::Extension::NewFrameData data;
 	data.Context = shared.DirectX11.Context.Get();
 	data.GameFrameUAV = WorkBufferUAV.Get();
+	data.GameFrameSRV = WorkBufferSRV.Get();
 	data.ConstantBuffer = shared.DirectX11.SharedConstantBuffer.Get();
 	data.ThreadGroupsX = shared.DirectX11.GroupsX;
 	data.ThreadGroupsY = shared.DirectX11.GroupsY;
