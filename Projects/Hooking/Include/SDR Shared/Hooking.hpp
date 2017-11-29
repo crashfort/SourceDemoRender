@@ -5,6 +5,28 @@
 #include <SDR Shared\Error.hpp>
 #include "SDR Shared\MinHookCPP.hpp"
 
+namespace SDR::Error::MH
+{
+	/*
+		For use with unrecoverable errors.
+	*/
+	template <typename... Args>
+	inline void ThrowIfFailed(MH_STATUS status, const char* format, Args&&... args)
+	{
+		if (status != MH_OK)
+		{
+			auto message = MH_StatusToString(status);
+
+			auto user = String::GetFormattedString(format, std::forward<Args>(args)...);
+			auto final = String::GetFormattedString("%d (%s) -> ", status, message);
+
+			final += user;
+
+			Make(std::move(final));
+		}
+	}
+}
+
 namespace SDR::Hooking
 {
 	MH_STATUS Initialize();
