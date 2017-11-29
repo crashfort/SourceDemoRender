@@ -21,7 +21,7 @@ extern "C"
 		SDR::Extension::RedirectLogOutputs(data);
 	}
 
-	__declspec(dllexport) bool __cdecl SDR_CallHandlers(const char* name, const rapidjson::Value& value)
+	__declspec(dllexport) bool __cdecl SDR_ConfigHandler(const char* name, const rapidjson::Value& value)
 	{
 		return false;
 	}

@@ -33,7 +33,7 @@ namespace
 
 		SDR::Extension::ExportTypes::SDR_Query Query;
 		SDR::Extension::ExportTypes::SDR_Initialize Initialize;
-		SDR::Extension::ExportTypes::SDR_CallHandlers CallHandlers;
+		SDR::Extension::ExportTypes::SDR_ConfigHandler ConfigHandler;
 		SDR::Extension::ExportTypes::SDR_Ready Ready;
 		SDR::Extension::ExportTypes::SDR_StartMovie StartMovie;
 		SDR::Extension::ExportTypes::SDR_EndMovie EndMovie;
@@ -47,7 +47,7 @@ namespace
 	{
 		ext.Query = (SDR::Extension::ExportTypes::SDR_Query)GetProcAddress(ext.Module, "SDR_Query");
 		ext.Initialize = (SDR::Extension::ExportTypes::SDR_Initialize)GetProcAddress(ext.Module, "SDR_Initialize");
-		ext.CallHandlers = (SDR::Extension::ExportTypes::SDR_CallHandlers)GetProcAddress(ext.Module, "SDR_CallHandlers");
+		ext.ConfigHandler = (SDR::Extension::ExportTypes::SDR_ConfigHandler)GetProcAddress(ext.Module, "SDR_ConfigHandler");
 		ext.Ready = (SDR::Extension::ExportTypes::SDR_Ready)GetProcAddress(ext.Module, "SDR_Ready");
 		ext.StartMovie = (SDR::Extension::ExportTypes::SDR_StartMovie)GetProcAddress(ext.Module, "SDR_StartMovie");
 		ext.EndMovie = (SDR::Extension::ExportTypes::SDR_EndMovie)GetProcAddress(ext.Module, "SDR_EndMovie");
@@ -110,7 +110,7 @@ bool SDR::ExtensionManager::Events::CallHandlers(const char* name, const rapidjs
 {
 	for (const auto& ext : Loaded)
 	{
-		auto res = ext.CallHandlers(name, value);
+		auto res = ext.ConfigHandler(name, value);
 
 		if (res)
 		{

@@ -12,6 +12,7 @@ namespace SDR::Extension
 		const char* Namespace;
 		const char* Author;
 		const char* Contact;
+		
 		int Version;
 	};
 
@@ -82,7 +83,7 @@ namespace SDR::Extension
 	{
 		using SDR_Query = void(__cdecl*)(QueryData& query);
 		using SDR_Initialize = void(__cdecl*)(const InitializeData& data);
-		using SDR_CallHandlers = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
+		using SDR_ConfigHandler = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
 		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);
 		using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);
 		using SDR_EndMovie = void(__cdecl*)();
