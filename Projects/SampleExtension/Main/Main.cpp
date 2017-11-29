@@ -31,7 +31,7 @@ extern "C"
 		SDR::Log::Message("Hello from sample extension!\n"s);
 	}
 
-	__declspec(dllexport) void __cdecl SDR_StartMovie(ID3D11Device* device, int width, int height, int fps)
+	__declspec(dllexport) void __cdecl SDR_StartMovie(const SDR::Extension::StartMovieData& data)
 	{
 		
 	}

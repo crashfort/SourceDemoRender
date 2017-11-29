@@ -36,6 +36,16 @@ namespace SDR::Extension
 		const char*(*GetString)(uint32_t key);
 	};
 
+	struct StartMovieData
+	{
+		ID3D11Device* Device;
+		
+		int Width;
+		int Height;
+		int Framerate;
+		int HostFramerate;
+	};
+
 	struct ModifyFrameData
 	{
 		ID3D11DeviceContext* Context;
@@ -59,7 +69,7 @@ namespace SDR::Extension
 		using SDR_Initialize = void(__cdecl*)(InitializeData* data);
 		using SDR_CallHandlers = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
 		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ConsoleData& data);
-		using SDR_StartMovie = void(__cdecl*)(ID3D11Device* device, int width, int height, int fps);
+		using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);
 		using SDR_EndMovie = void(__cdecl*)();
 		using SDR_ModifyFrame = void(*)(ModifyFrameData& data);
 	}

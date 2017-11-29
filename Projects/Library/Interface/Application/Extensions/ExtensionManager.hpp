@@ -22,7 +22,7 @@ namespace SDR::ExtensionManager
 		/*
 			
 		*/
-		void StartMovie(ID3D11Device* device, int width, int height, int fps);
+		void StartMovie(const SDR::Extension::StartMovieData& data);
 
 		/*
 			
