@@ -546,5 +546,5 @@ void main(int argc, char* argv[])
 
 	printf_s("You can close this window now\n");
 
-	//std::getchar();
+	std::getchar();
 }
