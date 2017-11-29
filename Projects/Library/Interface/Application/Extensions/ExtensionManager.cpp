@@ -254,7 +254,7 @@ void SDR::ExtensionManager::Events::EndMovie()
 	}
 }
 
-void SDR::ExtensionManager::Events::ModifyFrame(SDR::Extension::ModifyFrameData& data)
+void SDR::ExtensionManager::Events::ModifyFrame(SDR::Extension::NewFrameData& data)
 {
 	for (const auto& ext : Loaded)
 	{
