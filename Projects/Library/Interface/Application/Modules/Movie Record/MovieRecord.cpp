@@ -1,4 +1,5 @@
 #include "PrecompiledHeader.hpp"
+#include "MovieRecord.hpp"
 #include "Interface\Application\Application.hpp"
 
 #include <ppltasks.h>
@@ -162,26 +163,6 @@ namespace
 	std::atomic_bool ShouldStopFrameThread;
 	std::atomic_bool IsStoppingAsync;
 
-	bool ShouldRecord()
-	{
-		if (!CurrentMovie.IsStarted)
-		{
-			return false;
-		}
-
-		if (SDR::SourceGlobals::IsDrawingLoading())
-		{
-			return false;
-		}
-
-		if (SDR::EngineClient::IsConsoleVisible())
-		{
-			return false;
-		}
-
-		return true;
-	}
-
 	void FrameBufferThread()
 	{
 		auto& movie = CurrentMovie;
@@ -199,6 +180,26 @@ namespace
 			}
 		}
 	}
+}
+
+bool SDR::MovieRecord::ShouldRecord()
+{
+	if (!CurrentMovie.IsStarted)
+	{
+		return false;
+	}
+
+	if (SDR::SourceGlobals::IsDrawingLoading())
+	{
+		return false;
+	}
+
+	if (SDR::EngineClient::IsConsoleVisible())
+	{
+		return false;
+	}
+
+	return true;
 }
 
 namespace
@@ -338,7 +339,7 @@ namespace
 			void Procedure()
 			{
 				auto& movie = CurrentMovie;
-				bool dopasses = ShouldRecord();
+				bool dopasses = SDR::MovieRecord::ShouldRecord();
 
 				if (dopasses)
 				{
@@ -859,8 +860,8 @@ namespace
 					data.Device = movie.VideoStreamShared.DirectX11.Device.Get();
 					data.Width = width;
 					data.Height = height;
-					data.Framerate = fps;
-					data.HostFramerate = enginerate;
+					data.FrameRate = fps;
+					data.HostFrameRate = enginerate;
 
 					SDR::ExtensionManager::Events::StartMovie(data);
 				}
@@ -1107,7 +1108,7 @@ namespace
 			*/
 			void Procedure()
 			{
-				ModuleEndMovie::Common::Procedure(true);
+				ModuleEndMovie::Common::Procedure(false);
 			}
 		}
 

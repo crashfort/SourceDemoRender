@@ -1,6 +1,7 @@
 #include "PrecompiledHeader.hpp"
 #include "ExtensionManager.hpp"
 #include "Interface\LibraryInterface.hpp"
+#include "Interface\Application\Modules\Movie Record\MovieRecord.hpp"
 
 namespace
 {
@@ -121,7 +122,7 @@ bool SDR::ExtensionManager::Events::CallHandlers(const char* name, const rapidjs
 
 void SDR::ExtensionManager::Events::Ready()
 {
-	SDR::Extension::ConsoleData data = {};
+	SDR::Extension::ImportData data = {};
 
 	data.MakeBool = [](const char* name, const char* value)
 	{
@@ -194,6 +195,8 @@ void SDR::ExtensionManager::Events::Ready()
 		auto& var = Variables[key];
 		return var.GetString();
 	};
+
+	data.IsRecordingVideo = SDR::MovieRecord::ShouldRecord;
 
 	for (auto& ext : Loaded)
 	{

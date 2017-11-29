@@ -21,7 +21,7 @@ namespace SDR::Extension
 		Log::LogFunctionType Warning;
 	};
 
-	struct ConsoleData
+	struct ImportData
 	{
 		uint32_t(*MakeBool)(const char* name, const char* value);
 		uint32_t(*MakeNumber)(const char* name, const char* value);
@@ -34,6 +34,8 @@ namespace SDR::Extension
 		int(*GetInt)(uint32_t key);
 		float(*GetFloat)(uint32_t key);
 		const char*(*GetString)(uint32_t key);
+
+		bool(*IsRecordingVideo)();
 	};
 
 	struct StartMovieData
@@ -68,7 +70,7 @@ namespace SDR::Extension
 		using SDR_Query = void(__cdecl*)(QueryData* query);
 		using SDR_Initialize = void(__cdecl*)(InitializeData* data);
 		using SDR_CallHandlers = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
-		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ConsoleData& data);
+		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);
 		using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);
 		using SDR_EndMovie = void(__cdecl*)();
 		using SDR_ModifyFrame = void(*)(ModifyFrameData& data);

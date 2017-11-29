@@ -113,6 +113,7 @@
   <ItemGroup>
     <ClInclude Include="Interface\Application\Application.hpp" />
     <ClInclude Include="Interface\Application\Extensions\ExtensionManager.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Movie Record\MovieRecord.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBase.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.hpp" />
