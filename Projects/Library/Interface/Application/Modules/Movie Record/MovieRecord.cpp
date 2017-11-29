@@ -1108,6 +1108,9 @@ namespace
 			*/
 			void Procedure()
 			{
+				/*
+					Ending movie must be synchronous with extensions.
+				*/
 				ModuleEndMovie::Common::Procedure(false);
 			}
 		}
