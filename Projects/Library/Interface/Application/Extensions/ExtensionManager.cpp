@@ -52,7 +52,7 @@ namespace
 		ext.EndMovie = (SDR::Extension::ExportTypes::SDR_EndMovie)GetProcAddress(ext.Module, "SDR_EndMovie");
 		ext.ModifyFrame = (SDR::Extension::ExportTypes::SDR_ModifyFrame)GetProcAddress(ext.Module, "SDR_ModifyFrame");
 
-		ext.Query(&ext.Info);
+		ext.Query(ext.Info);
 
 		SDR::Extension::InitializeData data = {};
 		data.Message = SDR::Log::Message;

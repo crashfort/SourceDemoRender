@@ -77,7 +77,7 @@ namespace SDR::Extension
 
 	namespace ExportTypes
 	{
-		using SDR_Query = void(__cdecl*)(QueryData* query);
+		using SDR_Query = void(__cdecl*)(QueryData& query);
 		using SDR_Initialize = void(__cdecl*)(const InitializeData& data);
 		using SDR_CallHandlers = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
 		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);

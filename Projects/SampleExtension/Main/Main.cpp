@@ -5,14 +5,14 @@
 
 extern "C"
 {
-	__declspec(dllexport) void __cdecl SDR_Query(SDR::Extension::QueryData* query)
+	__declspec(dllexport) void __cdecl SDR_Query(SDR::Extension::QueryData& query)
 	{
-		query->Name = "Sample Extension";
-		query->Namespace = "SampleExtension";
-		query->Author = "crashfort";
-		query->Contact = "https://github.com/crashfort/";
+		query.Name = "Sample Extension";
+		query.Namespace = "SampleExtension";
+		query.Author = "crashfort";
+		query.Contact = "https://github.com/crashfort/";
 		
-		query->Version = 1;
+		query.Version = 1;
 	}
 
 	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::Extension::InitializeData& data)
