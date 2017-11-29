@@ -196,6 +196,14 @@ void SDR::ExtensionManager::Events::Ready()
 		return var.GetString();
 	};
 
+	data.GetTimeNow = []()
+	{
+		auto now = std::chrono::high_resolution_clock::now();
+		auto start = std::chrono::duration<double>(now.time_since_epoch());
+
+		return start.count();
+	};
+
 	data.IsRecordingVideo = SDR::MovieRecord::ShouldRecord;
 
 	for (auto& ext : Loaded)
