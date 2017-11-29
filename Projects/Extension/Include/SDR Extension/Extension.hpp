@@ -68,17 +68,17 @@ namespace SDR::Extension
 		int ThreadGroupsY;
 	};
 
-	inline void RedirectLogOutputs(InitializeData* data)
+	inline void RedirectLogOutputs(const InitializeData& data)
 	{
-		SDR::Log::SetMessageFunction(data->Message);
-		SDR::Log::SetMessageColorFunction(data->MessageColor);
-		SDR::Log::SetWarningFunction(data->Warning);
+		SDR::Log::SetMessageFunction(data.Message);
+		SDR::Log::SetMessageColorFunction(data.MessageColor);
+		SDR::Log::SetWarningFunction(data.Warning);
 	}
 
 	namespace ExportTypes
 	{
 		using SDR_Query = void(__cdecl*)(QueryData* query);
-		using SDR_Initialize = void(__cdecl*)(InitializeData* data);
+		using SDR_Initialize = void(__cdecl*)(const InitializeData& data);
 		using SDR_CallHandlers = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
 		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);
 		using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);

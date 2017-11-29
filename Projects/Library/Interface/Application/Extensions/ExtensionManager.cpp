@@ -59,7 +59,7 @@ namespace
 		data.MessageColor = SDR::Log::MessageColor;
 		data.Warning = SDR::Log::Warning;
 
-		ext.Initialize(&data);
+		ext.Initialize(data);
 	}
 
 	void Load(const std::experimental::filesystem::path& path)

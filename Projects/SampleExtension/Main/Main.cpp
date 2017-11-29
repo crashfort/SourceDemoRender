@@ -15,7 +15,7 @@ extern "C"
 		query->Version = 1;
 	}
 
-	__declspec(dllexport) void __cdecl SDR_Initialize(SDR::Extension::InitializeData* data)
+	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::Extension::InitializeData& data)
 	{
 		SDR::Error::SetPrintFormat("SampleExtension: %s\n");
 		SDR::Extension::RedirectLogOutputs(data);
