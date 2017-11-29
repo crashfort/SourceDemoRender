@@ -433,11 +433,6 @@ void SDR::Stream::StreamBase::DirectX11Data::Pass(SharedData& shared)
 
 void SDR::Stream::StreamBase::DirectX11Data::ExtensionsPass(SharedData& shared)
 {
-	if (!SDR::ExtensionManager::HasExtensions())
-	{
-		return;
-	}
-
 	SDR::Extension::NewFrameData data;
 	data.Context = shared.DirectX11.Context.Get();
 	data.GameFrameUAV = WorkBufferUAV.Get();
