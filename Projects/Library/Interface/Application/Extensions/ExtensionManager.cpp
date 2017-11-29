@@ -4,6 +4,8 @@
 #include "Interface\Application\Modules\Movie Record\MovieRecord.hpp"
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
 
+#include "SDR Shared\Json.hpp"
+
 namespace
 {
 	struct ExtensionData
@@ -27,6 +29,7 @@ namespace
 			}
 		}
 
+		std::string Name;
 		HMODULE Module = nullptr;
 
 		SDR::Extension::QueryData Info;
@@ -82,7 +85,54 @@ namespace
 
 		SDR::Log::Message("SDR: Loaded extension \"%s\"\n", nameutf8.c_str());
 
+		ext.Name = std::move(nameutf8);
+
 		Loaded.emplace_back(std::move(ext));
+	}
+
+	void ResolveOrder()
+	{
+		auto path = SDR::Library::BuildResourcePath("Extensions\\Enabled\\Order.json");
+		
+		rapidjson::Document document;
+
+		try
+		{
+			document = SDR::Json::FromFile(path);
+		}
+
+		catch (SDR::File::ScopedFile::ExceptionType status)
+		{
+			SDR::Log::Warning("SDR: Could not find extension order config"s);
+			return;
+		}
+
+		if (!document.IsArray())
+		{
+			SDR::Log::Warning("SDR: Extension order config not an array"s);
+			return;
+		}
+
+		auto array = document.GetArray();
+		
+		if (array.Size() < 2)
+		{
+			return;
+		}
+
+		auto temp = std::move(Loaded);
+
+		for (const auto& entry : array)
+		{
+			for (auto it = temp.begin(); it != temp.end(); ++it)
+			{
+				if (it->Name == entry.GetString())
+				{
+					Loaded.emplace_back(std::move(*it));
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -99,6 +149,8 @@ void SDR::ExtensionManager::LoadExtensions()
 			Load(obj);
 		}
 	}
+
+	ResolveOrder();
 }
 
 bool SDR::ExtensionManager::HasExtensions()
