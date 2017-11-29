@@ -93,6 +93,6 @@ namespace SDR::Extension
 		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);
 		using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);
 		using SDR_EndMovie = void(__cdecl*)();
-		using SDR_ModifyFrame = void(*)(ModifyFrameData& data);
+		using SDR_NewFrame = void(*)(ModifyFrameData& data);
 	}
 }

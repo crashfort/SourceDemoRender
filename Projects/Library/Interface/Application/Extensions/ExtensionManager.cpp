@@ -37,7 +37,7 @@ namespace
 		SDR::Extension::ExportTypes::SDR_Ready Ready;
 		SDR::Extension::ExportTypes::SDR_StartMovie StartMovie;
 		SDR::Extension::ExportTypes::SDR_EndMovie EndMovie;
-		SDR::Extension::ExportTypes::SDR_ModifyFrame ModifyFrame;
+		SDR::Extension::ExportTypes::SDR_NewFrame NewFrame;
 	};
 
 	std::vector<ExtensionData> Loaded;
@@ -51,7 +51,7 @@ namespace
 		ext.Ready = (SDR::Extension::ExportTypes::SDR_Ready)GetProcAddress(ext.Module, "SDR_Ready");
 		ext.StartMovie = (SDR::Extension::ExportTypes::SDR_StartMovie)GetProcAddress(ext.Module, "SDR_StartMovie");
 		ext.EndMovie = (SDR::Extension::ExportTypes::SDR_EndMovie)GetProcAddress(ext.Module, "SDR_EndMovie");
-		ext.ModifyFrame = (SDR::Extension::ExportTypes::SDR_ModifyFrame)GetProcAddress(ext.Module, "SDR_ModifyFrame");
+		ext.NewFrame = (SDR::Extension::ExportTypes::SDR_NewFrame)GetProcAddress(ext.Module, "SDR_NewFrame");
 
 		ext.Query(ext.Info);
 
@@ -258,6 +258,6 @@ void SDR::ExtensionManager::Events::ModifyFrame(SDR::Extension::ModifyFrameData&
 {
 	for (const auto& ext : Loaded)
 	{
-		ext.ModifyFrame(data);
+		ext.NewFrame(data);
 	}
 }
