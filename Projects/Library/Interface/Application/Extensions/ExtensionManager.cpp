@@ -2,6 +2,7 @@
 #include "ExtensionManager.hpp"
 #include "Interface\LibraryInterface.hpp"
 #include "Interface\Application\Modules\Movie Record\MovieRecord.hpp"
+#include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
 
 namespace
 {
@@ -229,6 +230,7 @@ void SDR::ExtensionManager::Events::Ready()
 	};
 
 	data.IsRecordingVideo = SDR::MovieRecord::ShouldRecord;
+	data.GetD3D9Device = SDR::SourceGlobals::GetD3D9DeviceEx;
 
 	for (auto& ext : Loaded)
 	{

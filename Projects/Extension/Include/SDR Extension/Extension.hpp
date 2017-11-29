@@ -1,6 +1,7 @@
 #pragma once
 #include "rapidjson\document.h"
 #include "SDR Shared\Log.hpp"
+#include <d3d9.h>
 #include <d3d11.h>
 
 namespace SDR::Extension
@@ -43,6 +44,8 @@ namespace SDR::Extension
 		double(*GetTimeNow)();
 
 		bool(*IsRecordingVideo)();
+
+		IDirect3DDevice9Ex*(*GetD3D9Device)();
 	};
 
 	struct StartMovieData
