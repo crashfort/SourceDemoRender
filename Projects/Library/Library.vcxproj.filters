@@ -36,9 +36,6 @@
     <ClInclude Include="Interface\Application\Modules\Shared\Console.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\D3D11.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\LAV.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -61,9 +58,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Interface\LibraryInterface.hpp">
@@ -98,9 +92,6 @@
     <ClCompile Include="Interface\Application\Modules\Shared\Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\D3D11.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\LAV.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -111,9 +102,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\Video.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.cpp">
