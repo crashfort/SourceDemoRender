@@ -48,6 +48,9 @@ namespace SDR::Extension
 		int Height;
 		int FrameRate;
 		int HostFrameRate;
+
+		double TimePerFrame;
+		double TimePerSample;
 	};
 
 	struct ModifyFrameData

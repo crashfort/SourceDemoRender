@@ -858,10 +858,14 @@ namespace
 				{
 					SDR::Extension::StartMovieData data;
 					data.Device = movie.VideoStreamShared.DirectX11.Device.Get();
+					
 					data.Width = width;
 					data.Height = height;
+					
 					data.FrameRate = fps;
 					data.HostFrameRate = enginerate;
+					data.TimePerFrame = movie.SamplingData.TimePerFrame;
+					data.TimePerSample = movie.SamplingData.TimePerSample;
 
 					SDR::ExtensionManager::Events::StartMovie(data);
 				}
