@@ -864,8 +864,8 @@ namespace
 					
 					data.FrameRate = fps;
 					data.HostFrameRate = enginerate;
-					data.TimePerFrame = movie.SamplingData.TimePerFrame;
-					data.TimePerSample = movie.SamplingData.TimePerSample;
+					data.TimePerFrame = 1.0 / fps;
+					data.TimePerSample = 1.0 / enginerate;
 
 					SDR::ExtensionManager::Events::StartMovie(data);
 				}
