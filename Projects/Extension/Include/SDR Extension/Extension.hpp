@@ -42,8 +42,8 @@ namespace SDR::Extension
 		
 		int Width;
 		int Height;
-		int Framerate;
-		int HostFramerate;
+		int FrameRate;
+		int HostFrameRate;
 	};
 
 	struct ModifyFrameData
