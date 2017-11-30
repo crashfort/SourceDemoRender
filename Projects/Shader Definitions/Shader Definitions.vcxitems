@@ -14,7 +14,11 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="$(MSBuildThisFileDirectory)Include\SharedAll.hlsl" />
-    <FxCompile Include="$(MSBuildThisFileDirectory)Include\Utility.hlsl" />
+    <None Include="$(MSBuildThisFileDirectory)Include\SharedAll.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Include\Utility.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
 </Project>
