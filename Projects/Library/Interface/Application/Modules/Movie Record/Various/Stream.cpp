@@ -107,13 +107,13 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 
 	if (sampling)
 	{
-		D3D11::OpenShader(Device.Get(), "Sampling", CSBlob_Sampling, sizeof(CSBlob_Sampling), SamplingShader.GetAddressOf());
-		D3D11::OpenShader(Device.Get(), "ClearUAV", CSBlob_ClearUAV, sizeof(CSBlob_ClearUAV), ClearShader.GetAddressOf());
+		D3D11::OpenShader(Device.Get(), "Sampling", SDR::D3D11::MakeBlob(CSBlob_Sampling), SamplingShader.GetAddressOf());
+		D3D11::OpenShader(Device.Get(), "ClearUAV", SDR::D3D11::MakeBlob(CSBlob_ClearUAV), ClearShader.GetAddressOf());
 	}
 
 	else
 	{
-		D3D11::OpenShader(Device.Get(), "PassUAV", CSBlob_PassUAV, sizeof(CSBlob_PassUAV), PassShader.GetAddressOf());
+		D3D11::OpenShader(Device.Get(), "PassUAV", SDR::D3D11::MakeBlob(CSBlob_PassUAV), PassShader.GetAddressOf());
 	}
 }
 
@@ -305,7 +305,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		Error::Make("No conversion rule found for \"%s\"", name);
 	}
 
-	D3D11::OpenShader(device, found->ShaderName, found->Data, found->DataSize, ConversionShader.GetAddressOf());
+	D3D11::OpenShader(device, found->ShaderName, SDR::D3D11::MakeBlob(found->Data, found->DataSize), ConversionShader.GetAddressOf());
 
 	ConversionPtr = found->Factory();
 	ConversionPtr->Create(device, reference, staging);
