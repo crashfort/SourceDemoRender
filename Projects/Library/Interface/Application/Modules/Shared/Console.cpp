@@ -359,6 +359,18 @@ namespace
 
 		return ret;
 	}
+
+	auto MakeGenericCommand(const char* name, SDR::Console::CommandCallbackArgsType callback)
+	{
+		auto ret = CreateGenericCommand();
+
+		if (ModuleConCommand::Entries::Constructor1 == 0)
+		{
+			ModuleConCommand::Variant0::Constructor1()(ret.Opaque, nullptr, name, callback, "", 0, nullptr);
+		}
+
+		return ret;
+	}
 }
 
 namespace SDR::Console
@@ -549,6 +561,11 @@ void SDR::Console::Load()
 }
 
 void SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callback)
+{
+	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
+}
+
+void SDR::Console::MakeCommand(const char* name, CommandCallbackArgsType callback)
 {
 	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
 }

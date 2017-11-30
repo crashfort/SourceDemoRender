@@ -45,10 +45,11 @@ namespace SDR::Console
 
 	void Load();
 
-	using CommandCallbackArgsType = void(*)(const void* args);
 	using CommandCallbackVoidType = void(*)();
+	using CommandCallbackArgsType = void(*)(const void* ptr);
 
 	void MakeCommand(const char* name, CommandCallbackVoidType callback);
+	void MakeCommand(const char* name, CommandCallbackArgsType callback);
 
 	Variable MakeBool(const char* name, const char* value);
 
