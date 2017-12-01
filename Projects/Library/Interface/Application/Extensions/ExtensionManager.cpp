@@ -40,7 +40,7 @@ namespace
 		SDR::Extension::ExportTypes::SDR_Ready Ready;
 		SDR::Extension::ExportTypes::SDR_StartMovie StartMovie;
 		SDR::Extension::ExportTypes::SDR_EndMovie EndMovie;
-		SDR::Extension::ExportTypes::SDR_NewFrame NewFrame;
+		SDR::Extension::ExportTypes::SDR_NewVideoFrame NewVideoFrame;
 	};
 
 	std::vector<ExtensionData> Loaded;
@@ -66,7 +66,7 @@ namespace
 		findexport("SDR_Ready", ext.Ready, true);
 		findexport("SDR_StartMovie", ext.StartMovie, false);
 		findexport("SDR_EndMovie", ext.EndMovie, false);
-		findexport("SDR_NewFrame", ext.NewFrame, false);
+		findexport("SDR_NewVideoFrame", ext.NewVideoFrame, false);
 
 		ext.Query(ext.Info);
 
@@ -339,13 +339,13 @@ void SDR::ExtensionManager::Events::EndMovie()
 	}
 }
 
-void SDR::ExtensionManager::Events::ModifyFrame(SDR::Extension::NewFrameData& data)
+void SDR::ExtensionManager::Events::NewVideoFrame(SDR::Extension::NewVideoFrameData& data)
 {
 	for (const auto& ext : Loaded)
 	{
-		if (ext.NewFrame)
+		if (ext.NewVideoFrame)
 		{
-			ext.NewFrame(data);
+			ext.NewVideoFrame(data);
 		}
 	}
 }

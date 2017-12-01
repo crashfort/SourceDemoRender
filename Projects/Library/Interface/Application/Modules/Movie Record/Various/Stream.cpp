@@ -433,7 +433,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Pass(SharedData& shared)
 
 void SDR::Stream::StreamBase::DirectX11Data::ExtensionsPass(SharedData& shared)
 {
-	SDR::Extension::NewFrameData data;
+	SDR::Extension::NewVideoFrameData data;
 	data.Context = shared.DirectX11.Context.Get();
 	data.GameFrameUAV = WorkBufferUAV.Get();
 	data.GameFrameSRV = WorkBufferSRV.Get();
@@ -441,7 +441,7 @@ void SDR::Stream::StreamBase::DirectX11Data::ExtensionsPass(SharedData& shared)
 	data.ThreadGroupsX = shared.DirectX11.GroupsX;
 	data.ThreadGroupsY = shared.DirectX11.GroupsY;
 
-	SDR::ExtensionManager::Events::ModifyFrame(data);
+	SDR::ExtensionManager::Events::NewVideoFrame(data);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::Conversion(SharedData& shared)

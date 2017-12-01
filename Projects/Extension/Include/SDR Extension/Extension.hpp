@@ -68,7 +68,7 @@ namespace SDR::Extension
 		double TimePerSample;
 	};
 
-	struct NewFrameData
+	struct NewVideoFrameData
 	{
 		ID3D11DeviceContext* Context;
 		ID3D11UnorderedAccessView* GameFrameUAV;
@@ -94,6 +94,6 @@ namespace SDR::Extension
 		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);
 		using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);
 		using SDR_EndMovie = void(__cdecl*)();
-		using SDR_NewFrame = void(*)(NewFrameData& data);
+		using SDR_NewVideoFrame = void(*)(NewVideoFrameData& data);
 	}
 }
