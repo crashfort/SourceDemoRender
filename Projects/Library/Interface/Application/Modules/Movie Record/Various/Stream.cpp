@@ -431,7 +431,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Pass(SharedData& shared)
 	ResetShaderInputs(context);
 }
 
-void SDR::Stream::StreamBase::DirectX11Data::ExtensionsPass(SharedData& shared)
+void SDR::Stream::StreamBase::DirectX11Data::NewVideoFrame(SharedData& shared)
 {
 	SDR::Extension::NewVideoFrameData data;
 	data.Context = shared.DirectX11.Context.Get();

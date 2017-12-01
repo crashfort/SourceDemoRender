@@ -104,7 +104,7 @@ namespace SDR::Stream
 			/*
 				Let all extensions have a go at the frame before converting.
 			*/
-			void ExtensionsPass(SharedData& shared);
+			void NewVideoFrame(SharedData& shared);
 
 			/*
 				Converts to user format.
