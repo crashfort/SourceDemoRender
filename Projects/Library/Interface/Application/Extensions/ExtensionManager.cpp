@@ -63,7 +63,7 @@ namespace
 		findexport("SDR_Query", ext.Query, true);
 		findexport("SDR_Initialize", ext.Initialize, true);
 		findexport("SDR_ConfigHandler", ext.ConfigHandler, false);
-		findexport("SDR_Ready", ext.Ready, true);
+		findexport("SDR_Ready", ext.Ready, false);
 		findexport("SDR_StartMovie", ext.StartMovie, false);
 		findexport("SDR_EndMovie", ext.EndMovie, false);
 		findexport("SDR_NewVideoFrame", ext.NewVideoFrame, false);
