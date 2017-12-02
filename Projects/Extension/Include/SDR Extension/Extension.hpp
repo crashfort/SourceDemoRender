@@ -10,12 +10,6 @@ namespace SDR::Extension
 	{
 		const char* Name;
 		const char* Namespace;
-
-		/*
-			If null, will be "<Namespace>.json".
-		*/
-		const char* SettingsName;
-
 		const char* Author;
 		const char* Contact;
 		
