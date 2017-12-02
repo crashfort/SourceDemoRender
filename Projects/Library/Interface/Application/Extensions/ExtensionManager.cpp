@@ -54,7 +54,7 @@ namespace
 
 			if (!addr && required)
 			{
-				SDR::Error::Make("Extension \"%s\" misses export for \"%s\"", ext.Name.c_str(), name);
+				SDR::Error::Make("Extension \"%s\" missing export for \"%s\"", ext.Name.c_str(), name);
 			}
 
 			object = (decltype(object))addr;
