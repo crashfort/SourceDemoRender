@@ -1,0 +1,5 @@
+{
+	"LibraryVersion": 25,
+	"GameConfigURL": "https://raw.githubusercontent.com/crashfort/SourceDemoRender/extensions/Output/SDR/GameConfig.json",
+	"ExtensionConfigURL": "https://raw.githubusercontent.com/crashfort/SourceDemoRender/extensions/Output/SDR/ExtensionConfig.json"
+}
