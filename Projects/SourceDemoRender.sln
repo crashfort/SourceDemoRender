@@ -23,8 +23,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shader Definitions", "Shade
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Direct3D11", "Direct3D11\Direct3D11.vcxitems", "{751BADE2-721F-4138-BCF1-846B33DCE585}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console Types", "Console Types\Console Types.vcxitems", "{3AA441C9-9A1C-45A0-8DB7-191124401A75}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Console Types\Console Types.vcxitems*{3aa441c9-9a1c-45a0-8db7-191124401a75}*SharedItemsImports = 9
 		Shader Definitions\Shader Definitions.vcxitems*{3d5c1ff3-1f1f-4330-91d7-ea08f5ca0970}*SharedItemsImports = 9
 		Shared\Shared.vcxitems*{45d41acc-2c3c-43d2-bc10-02aa73ffc7c7}*SharedItemsImports = 9
 		Direct3D11\Direct3D11.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
@@ -36,6 +39,10 @@ Global
 		Library API\Library API.vcxitems*{b2dbce0d-417d-47d2-842c-4651f60231a7}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{b2dbce0d-417d-47d2-842c-4651f60231a7}*SharedItemsImports = 4
 		Hooking\Hooking.vcxitems*{bfcc3d78-9d82-4d9a-b854-36fbfb616c99}*SharedItemsImports = 9
+		Direct3D11\Direct3D11.vcxitems*{e5722eaf-3432-49fb-8f2e-a88738715393}*SharedItemsImports = 4
+		Extension\Extension.vcxitems*{e5722eaf-3432-49fb-8f2e-a88738715393}*SharedItemsImports = 4
+		Shader Definitions\Shader Definitions.vcxitems*{e5722eaf-3432-49fb-8f2e-a88738715393}*SharedItemsImports = 4
+		Shared\Shared.vcxitems*{e5722eaf-3432-49fb-8f2e-a88738715393}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{ea9bfa18-f8ff-4181-ba6a-8ccc245937eb}*SharedItemsImports = 4
 		Direct3D11\Direct3D11.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
 		Hooking\Hooking.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
