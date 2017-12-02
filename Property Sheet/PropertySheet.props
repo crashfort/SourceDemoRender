@@ -12,6 +12,7 @@
     <SDR_HOOKING_INCLUDE>$(SolutionDir)Hooking\Include\</SDR_HOOKING_INCLUDE>
     <SDR_SHADERDEFS_INCLUDE>$(SolutionDir)Shader Definitions\Include\</SDR_SHADERDEFS_INCLUDE>
     <SDR_D3D11_INCLUDE>$(SolutionDir)Direct3D11\Include\</SDR_D3D11_INCLUDE>
+    <SDR_CONSOLETYPES_INCLUDE>$(SolutionDir)Console Types\Include\</SDR_CONSOLETYPES_INCLUDE>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
@@ -53,6 +54,9 @@
     </BuildMacro>
     <BuildMacro Include="SDR_D3D11_INCLUDE">
       <Value>$(SDR_D3D11_INCLUDE)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SDR_CONSOLETYPES_INCLUDE">
+      <Value>$(SDR_CONSOLETYPES_INCLUDE)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

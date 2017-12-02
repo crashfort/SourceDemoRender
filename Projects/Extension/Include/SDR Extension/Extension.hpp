@@ -1,6 +1,7 @@
 #pragma once
 #include "rapidjson\document.h"
-#include "SDR Shared\Log.hpp"
+#include <SDR Shared\Log.hpp>
+#include <SDR Shared\ConsoleTypes.hpp>
 #include <d3d9.h>
 #include <d3d11.h>
 
@@ -41,6 +42,13 @@ namespace SDR::Extension
 		int(*GetExternalInt)(const char* name);
 		float(*GetExternalFloat)(const char* name);
 		const char*(*GetExternalString)(const char* name);
+
+		void(*MakeCommandVoid)(const char* name, Console::Types::CommandCallbackVoidType func);
+		void(*MakeCommandArgs)(const char* name, Console::Types::CommandCallbackArgsType func);
+
+		int(*GetCommandArgumentCount)(const void* ptr);
+		const char*(*GetCommandArgumentAt)(const void* ptr, int index);
+		const char*(*GetCommandArgumentFull)(const void* ptr);
 
 		double(*GetTimeNow)();
 

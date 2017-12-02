@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <cstdint>
+#include <SDR Shared\ConsoleTypes.hpp>
 
 namespace SDR::Console
 {
@@ -45,11 +46,8 @@ namespace SDR::Console
 
 	void Load();
 
-	using CommandCallbackVoidType = void(*)();
-	using CommandCallbackArgsType = void(*)(const void* ptr);
-
-	void MakeCommand(const char* name, CommandCallbackVoidType callback);
-	void MakeCommand(const char* name, CommandCallbackArgsType callback);
+	void MakeCommand(const char* name, Types::CommandCallbackVoidType callback);
+	void MakeCommand(const char* name, Types::CommandCallbackArgsType callback);
 
 	Variable MakeBool(const char* name, const char* value);
 

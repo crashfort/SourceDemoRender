@@ -316,6 +316,34 @@ void SDR::ExtensionManager::Events::Ready()
 		return var.GetString();
 	};
 
+	data.MakeCommandVoid = [](const char* name, SDR::Console::Types::CommandCallbackVoidType func)
+	{
+		SDR::Console::MakeCommand(name, func);
+	};
+
+	data.MakeCommandArgs = [](const char* name, SDR::Console::Types::CommandCallbackArgsType func)
+	{
+		SDR::Console::MakeCommand(name, func);
+	};
+
+	data.GetCommandArgumentCount = [](const void* ptr)
+	{
+		SDR::Console::CommandArgs args(ptr);
+		return args.Count();
+	};
+
+	data.GetCommandArgumentAt = [](const void* ptr, int index)
+	{
+		SDR::Console::CommandArgs args(ptr);
+		return args.At(index);
+	};
+
+	data.GetCommandArgumentFull = [](const void* ptr)
+	{
+		SDR::Console::CommandArgs args(ptr);
+		return args.FullArgs();
+	};
+
 	data.GetTimeNow = []()
 	{
 		auto now = std::chrono::high_resolution_clock::now();

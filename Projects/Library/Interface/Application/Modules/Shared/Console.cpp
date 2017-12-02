@@ -348,19 +348,7 @@ namespace
 		return ret;
 	}
 
-	auto MakeGenericCommand(const char* name, SDR::Console::CommandCallbackVoidType callback)
-	{
-		auto ret = CreateGenericCommand();
-
-		if (ModuleConCommand::Entries::Constructor1 == 0)
-		{
-			ModuleConCommand::Variant0::Constructor1()(ret.Opaque, nullptr, name, callback, "", 0, nullptr);
-		}
-
-		return ret;
-	}
-
-	auto MakeGenericCommand(const char* name, SDR::Console::CommandCallbackArgsType callback)
+	auto MakeGenericCommand(const char* name, void* callback)
 	{
 		auto ret = CreateGenericCommand();
 
@@ -560,12 +548,12 @@ void SDR::Console::Load()
 	});
 }
 
-void SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callback)
+void SDR::Console::MakeCommand(const char* name, Types::CommandCallbackVoidType callback)
 {
 	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
 }
 
-void SDR::Console::MakeCommand(const char* name, CommandCallbackArgsType callback)
+void SDR::Console::MakeCommand(const char* name, Types::CommandCallbackArgsType callback)
 {
 	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
 }
