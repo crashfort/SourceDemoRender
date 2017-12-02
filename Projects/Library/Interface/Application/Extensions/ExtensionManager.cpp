@@ -149,6 +149,14 @@ namespace
 				}
 			}
 		}
+
+		for (auto&& rem : temp)
+		{
+			if (rem.Module)
+			{
+				Loaded.emplace_back(std::move(rem));
+			}
+		}
 	}
 }
 
