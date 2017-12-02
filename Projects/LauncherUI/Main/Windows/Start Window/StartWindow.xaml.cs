@@ -23,13 +23,21 @@ namespace LauncherUI
 
 		async Task<int> GetGitHubLibraryVersion()
 		{
-			var webstr = await NetClient.GetStringAsync("https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Version/Latest");
-			return int.Parse(webstr);
+			var content = await NetClient.GetStringAsync("https://raw.githubusercontent.com/crashfort/SourceDemoRender/extensions/Version/Latest.json");
+			var document = System.Json.JsonValue.Parse(content);
+
+			return document["LibraryVersion"];
 		}
 
 		async Task<string> GetGitHubGameConfig()
 		{
-			var webstr = await NetClient.GetStringAsync("https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Output/SDR/GameConfig.json");
+			var webstr = await NetClient.GetStringAsync("https://raw.githubusercontent.com/crashfort/SourceDemoRender/extensions/Output/SDR/GameConfig.json");
+			return webstr;
+		}
+
+		async Task<string> GetGitHubExtensionConfig()
+		{
+			var webstr = await NetClient.GetStringAsync("https://raw.githubusercontent.com/crashfort/SourceDemoRender/extensions/Output/SDR/ExtensionConfig.json");
 			return webstr;
 		}
 
@@ -37,6 +45,21 @@ namespace LauncherUI
 		{
 			Progress.IsIndeterminate = false;
 			Progress.Visibility = Visibility.Hidden;
+		}
+
+		bool ShouldFileBeUpdated(string filename)
+		{
+			if (System.IO.File.Exists(filename))
+			{
+				var fileinfo = new System.IO.FileInfo(filename);
+
+				if (fileinfo.IsReadOnly)
+				{
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		async void MainProcedure()
@@ -61,27 +84,32 @@ namespace LauncherUI
 					UpgradeButton.IsEnabled = true;
 				}
 
-				bool downloadcfg = true;
-
-				if (System.IO.File.Exists("GameConfig.json"))
-				{
-					var fileinfo = new System.IO.FileInfo("GameConfig.json");
-
-					if (fileinfo.IsReadOnly)
-					{
-						finalstr += " Game config is set to read only so it will not be updated.";
-						autoskip = false;
-
-						downloadcfg = false;
-					}
-				}
-
-				if (downloadcfg)
+				if (ShouldFileBeUpdated("GameConfig.json"))
 				{
 					var webconfig = await GetGitHubGameConfig();
 					System.IO.File.WriteAllText("GameConfig.json", webconfig, new System.Text.UTF8Encoding(false));
 
 					finalstr += " Latest game config was downloaded.";
+				}
+
+				else
+				{
+					finalstr += " Game config is set to read only so it will not be updated.";
+					autoskip = false;
+				}
+
+				if (ShouldFileBeUpdated("ExtensionConfig.json"))
+				{
+					var webconfig = await GetGitHubExtensionConfig();
+					System.IO.File.WriteAllText("ExtensionConfig.json", webconfig, new System.Text.UTF8Encoding(false));
+
+					finalstr += " Latest extension config was downloaded.";
+				}
+
+				else
+				{
+					finalstr += " Extension config is set to read only so it will not be updated.";
+					autoskip = false;
 				}
 
 				StatusText.Text = finalstr;
