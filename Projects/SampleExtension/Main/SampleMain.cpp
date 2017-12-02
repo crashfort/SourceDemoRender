@@ -28,7 +28,7 @@ extern "C"
 
 	__declspec(dllexport) void __cdecl SDR_Ready(const SDR::Extension::ImportData& data)
 	{
-		SDR::Log::Message("Hello from sample extension!\n"s);
+		
 	}
 
 	__declspec(dllexport) void __cdecl SDR_StartMovie(const SDR::Extension::StartMovieData& data)
