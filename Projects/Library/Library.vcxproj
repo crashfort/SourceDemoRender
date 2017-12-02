@@ -67,7 +67,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_FFMPEG_INCLUDE);$(SDR_HOOKING_INCLUDE);$(SDR_EXTENSION_INCLUDE);$(SDR_D3D11_INCLUDE);$(SDR_CONSOLETYPES_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_SHARED_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_API_INCLUDE);$(SDR_FFMPEG_INCLUDE);$(SDR_HOOKING_INCLUDE);$(SDR_EXTENSION_INCLUDE);$(SDR_D3D11_INCLUDE);$(SDR_CONSOLETYPES_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -92,7 +92,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_FFMPEG_INCLUDE);$(SDR_HOOKING_INCLUDE);$(SDR_EXTENSION_INCLUDE);$(SDR_D3D11_INCLUDE);$(SDR_CONSOLETYPES_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_SHARED_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_API_INCLUDE);$(SDR_FFMPEG_INCLUDE);$(SDR_HOOKING_INCLUDE);$(SDR_EXTENSION_INCLUDE);$(SDR_D3D11_INCLUDE);$(SDR_CONSOLETYPES_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -291,6 +291,7 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
+    <Error Condition="!Exists('..\..\Packages\minhook.1.3.3\build\native\minhook.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Packages\minhook.1.3.3\build\native\minhook.targets'))" />
     <Error Condition="!Exists('..\..\Packages\minhook.1.3.3\build\native\minhook.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Packages\minhook.1.3.3\build\native\minhook.targets'))" />
   </Target>
 </Project>

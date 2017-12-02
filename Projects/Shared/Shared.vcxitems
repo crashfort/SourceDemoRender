@@ -22,7 +22,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\IPC.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Json.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Log.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\MinHookCPP.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\String.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\TargetWindowsVersion.hpp" />
   </ItemGroup>

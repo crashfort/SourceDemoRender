@@ -65,7 +65,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_NO_ASYNCRTIMP;_NO_PPLXIMP</PreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_SHARED_INCLUDE);$(SDR_API_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -86,7 +86,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_NO_ASYNCRTIMP;_NO_PPLXIMP</PreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDR_SHARED_INCLUDE);$(SDR_API_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
