@@ -44,6 +44,7 @@ Global
 		Shader Definitions\Shader Definitions.vcxitems*{e5722eaf-3432-49fb-8f2e-a88738715393}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{e5722eaf-3432-49fb-8f2e-a88738715393}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{ea9bfa18-f8ff-4181-ba6a-8ccc245937eb}*SharedItemsImports = 4
+		Console Types\Console Types.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
 		Direct3D11\Direct3D11.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
 		Hooking\Hooking.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
