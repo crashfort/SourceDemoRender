@@ -196,11 +196,19 @@ bool SDR::ExtensionManager::Events::CallHandlers(const char* name, const rapidjs
 	{
 		if (ext.ConfigHandler)
 		{
-			auto res = ext.ConfigHandler(name, value);
+			auto space = ext.Info.Namespace;
 
-			if (res)
+			if (space)
 			{
-				return true;
+				if (SDR::String::StartsWith(name, space))
+				{
+					auto res = ext.ConfigHandler(name, value);
+
+					if (res)
+					{
+						return true;
+					}
+				}
 			}
 		}
 	}
