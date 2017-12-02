@@ -103,6 +103,11 @@ namespace
 
 	void ResolveOrder()
 	{
+		if (Loaded.size() < 2)
+		{
+			return;
+		}
+
 		auto path = SDR::Library::BuildResourcePath("Extensions\\Enabled\\Order.json");
 		
 		rapidjson::Document document;
@@ -121,11 +126,6 @@ namespace
 		if (!document.IsArray())
 		{
 			SDR::Log::Warning("SDR: Extension order config not an array"s);
-			return;
-		}
-
-		if (Loaded.size() < 2)
-		{
 			return;
 		}
 
