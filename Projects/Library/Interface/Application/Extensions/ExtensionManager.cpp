@@ -321,7 +321,10 @@ void SDR::ExtensionManager::Events::Ready()
 
 	for (auto& ext : Loaded)
 	{
-		ext.Ready(data);
+		if (ext.Ready)
+		{
+			ext.Ready(data);
+		}
 	}
 }
 
