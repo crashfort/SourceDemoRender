@@ -15,15 +15,35 @@ namespace LauncherUI
 		int LocalVersion = SDR_LibraryVersion();
 		HttpClient NetClient = new HttpClient();
 
+		string UpdateBranch = "master";
+
 		public StartWindow()
 		{
 			InitializeComponent();
+
+			CheckBranch();
+
 			MainProcedure();
+		}
+
+		void CheckBranch()
+		{
+			if (System.IO.File.Exists("LauncherUI_UpdateBranch"))
+			{
+				UpdateBranch = System.IO.File.ReadAllText("LauncherUI_UpdateBranch", new System.Text.UTF8Encoding(false));
+			}
+		}
+
+		string BuildGitHubPath(string file)
+		{
+			return string.Format("https://raw.githubusercontent.com/crashfort/SourceDemoRender/{0}/{1}", UpdateBranch, file);
 		}
 
 		async Task<int> GetGitHubLibraryVersion()
 		{
-			var content = await NetClient.GetStringAsync("https://raw.githubusercontent.com/crashfort/SourceDemoRender/extensions/Version/Latest.json");
+			var path = BuildGitHubPath("Version/Latest.json");
+
+			var content = await NetClient.GetStringAsync(path);
 			var document = System.Json.JsonValue.Parse(content);
 
 			return document["LibraryVersion"];
@@ -31,14 +51,12 @@ namespace LauncherUI
 
 		async Task<string> GetGitHubGameConfig()
 		{
-			var webstr = await NetClient.GetStringAsync("https://raw.githubusercontent.com/crashfort/SourceDemoRender/extensions/Output/SDR/GameConfig.json");
-			return webstr;
+			return await NetClient.GetStringAsync(BuildGitHubPath("Output/SDR/GameConfig.json"));
 		}
 
 		async Task<string> GetGitHubExtensionConfig()
 		{
-			var webstr = await NetClient.GetStringAsync("https://raw.githubusercontent.com/crashfort/SourceDemoRender/extensions/Output/SDR/ExtensionConfig.json");
-			return webstr;
+			return await NetClient.GetStringAsync(BuildGitHubPath("Output/SDR/ExtensionConfig.json"));
 		}
 
 		void HideProgress()
