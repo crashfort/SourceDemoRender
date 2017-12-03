@@ -10,21 +10,21 @@ namespace
 
 		namespace Entries
 		{
-			SDR::ModuleShared::Variant::Entry ConsoleVisible;
-			SDR::ModuleShared::Variant::Entry FlashWindow;
-			SDR::ModuleShared::Variant::Entry ClientCommand;
+			SDR::Hooking::ModuleShared::Variant::Entry ConsoleVisible;
+			SDR::Hooking::ModuleShared::Variant::Entry FlashWindow;
+			SDR::Hooking::ModuleShared::Variant::Entry ClientCommand;
 		}
 
 		namespace Variant0
 		{
 			using ConsoleVisibleType = bool(__fastcall*)(void* thisptr, void* edx);
-			SDR::ModuleShared::Variant::Function<ConsoleVisibleType> ConsoleVisible(Entries::ConsoleVisible);
+			SDR::Hooking::ModuleShared::Variant::Function<ConsoleVisibleType> ConsoleVisible(Entries::ConsoleVisible);
 
 			using FlashWindowType = void(__fastcall*)(void* thisptr, void* edx);
-			SDR::ModuleShared::Variant::Function<FlashWindowType> FlashWindow(Entries::FlashWindow);
+			SDR::Hooking::ModuleShared::Variant::Function<FlashWindowType> FlashWindow(Entries::FlashWindow);
 
 			using ClientCommandType = void(__fastcall*)(void* thisptr, void* edx, const char* str);
-			SDR::ModuleShared::Variant::Function<ClientCommandType> ClientCommand(Entries::ClientCommand);
+			SDR::Hooking::ModuleShared::Variant::Function<ClientCommandType> ClientCommand(Entries::ClientCommand);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -34,12 +34,12 @@ namespace
 				"EngineClientPtr",
 				[](const rapidjson::Value& value)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::Hooking::GetAddressFromJsonPattern(value);
 
 					Ptr = **(void***)(address);
 					SDR::Error::ThrowIfNull(Ptr);
 
-					SDR::ModuleShared::Registry::SetKeyValue("EngineClientPtr", Ptr);
+					SDR::Hooking::ModuleShared::Registry::SetKeyValue("EngineClientPtr", Ptr);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -47,7 +47,7 @@ namespace
 				"EngineClient_ConsoleVisible",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::ConsoleVisible, value);
+					SDR::Hooking::GenericVariantInit(Entries::ConsoleVisible, value);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -55,7 +55,7 @@ namespace
 				"EngineClient_FlashWindow",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::FlashWindow, value);
+					SDR::Hooking::GenericVariantInit(Entries::FlashWindow, value);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -63,7 +63,7 @@ namespace
 				"EngineClient_ClientCommand",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::ClientCommand, value);
+					SDR::Hooking::GenericVariantInit(Entries::ClientCommand, value);
 				}
 			)
 		);

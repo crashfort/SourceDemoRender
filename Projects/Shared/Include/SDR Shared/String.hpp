@@ -30,6 +30,21 @@ namespace SDR::String
 	}
 
 	template <typename T>
+	bool StartsWith(const T* str, const T* begin)
+	{
+		auto sourcelength = std::char_traits<T>::length(str);
+		auto beginlength = std::char_traits<T>::length(begin);
+
+		if (sourcelength < beginlength)
+		{
+			return false;
+		}
+
+		auto start = str;
+		return std::char_traits<T>::compare(start, begin, beginlength) == 0;
+	}
+
+	template <typename T>
 	bool EndsWith(const T* str, const T* end)
 	{
 		auto sourcelength = std::char_traits<T>::length(str);

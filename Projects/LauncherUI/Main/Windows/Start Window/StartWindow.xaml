@@ -5,12 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LauncherUI"
         mc:Ignorable="d"
-        Title="Source Demo Render" Height="180" Width="640" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="SDR Launcher UI" Height="360" Width="640" WindowStartupLocation="CenterScreen" MinWidth="640" MinHeight="360">
     <Grid Margin="10">
-		<StackPanel Orientation="Vertical" VerticalAlignment="Top">
-			<TextBlock x:Name="StatusText" Text="Looking for SDR updates" HorizontalAlignment="Center" FontSize="15" Margin="5" TextWrapping="Wrap"/>
-			<ProgressBar x:Name="Progress" Height="32" IsIndeterminate="True"/>
-		</StackPanel>
+		<TextBox x:Name="StatusText" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="15" TextWrapping="Wrap" Margin="0,0,0,37" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
 			<Button x:Name="UpgradeButton" Margin="10,0,0,0" Height="32" Content="Upgrade" Width="100" FontSize="15" IsEnabled="False" Click="UpgradeButton_Click"/>
 			<Button x:Name="StartButton" Margin="10,0,0,0" Height="32" Content="Start" Width="100" FontSize="15" IsEnabled="False" Click="StartButton_Click"/>

@@ -2,6 +2,7 @@
 !*.txt
 !*.cfg
 !GameConfig.json
+!ExtensionConfig.json
 !*.bat
 !/cfg/
 !/SDR/

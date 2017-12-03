@@ -1,6 +1,6 @@
 # Build configurations used for external projects
 
-## ffmpeg-20170605-4705edb
+## ffmpeg-3.4
 ```
 CC=cl ./configure \
 --prefix=$HOME/ffmpegbuild \
@@ -8,6 +8,9 @@ CC=cl ./configure \
 --enable-static \
 --enable-gpl \
 --disable-shared \
+--disable-autodetect \
+--disable-swresample \
+--disable-swscale \
 --disable-programs \
 --disable-doc \
 --disable-avdevice \
@@ -30,19 +33,18 @@ CC=cl ./configure \
 --enable-libx264 \
 --enable-encoder=libx264 \
 --enable-encoder=libx264rgb \
---enable-parser=png \
 --extra-ldflags="-LIBPATH:$HOME/ffmpegbuild/lib" \
---extra-cflags="-I$HOME/ffmpegbuild/include" \
+--extra-cflags="-I$HOME/ffmpegbuild/include"
 
 ```
 
-## x264-snapshot-20170613-2245-stable
+## x264-snapshot-20171125-2245
 ```
 CC=cl ./configure \
 --prefix=$HOME/ffmpegbuild \
 --disable-cli \
 --enable-static \
 --enable-strip \
---disable-opencl \
+--disable-opencl
 
 ```

@@ -41,7 +41,7 @@ namespace
 				"ConCommandBase_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson(value);
 				}
 			)
 		);
@@ -76,7 +76,7 @@ namespace
 				"CCommand_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson(value);
 				}
 			)
 		);
@@ -88,7 +88,7 @@ namespace
 
 		namespace Entries
 		{
-			SDR::ModuleShared::Variant::Entry Constructor1;
+			SDR::Hooking::ModuleShared::Variant::Entry Constructor1;
 		}
 
 		namespace Variant0
@@ -119,7 +119,7 @@ namespace
 				void* callback, const char* helpstr, int flags, void* compfunc
 			);
 
-			SDR::ModuleShared::Variant::Function<Constructor1Type> Constructor1(Entries::Constructor1);
+			SDR::Hooking::ModuleShared::Variant::Function<Constructor1Type> Constructor1(Entries::Constructor1);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -129,7 +129,7 @@ namespace
 				"ConCommand_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson(value);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -137,7 +137,7 @@ namespace
 				"ConCommand_Constructor1",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::Constructor1, value);
+					SDR::Hooking::GenericVariantInit(Entries::Constructor1, value);
 				}
 			)
 		);
@@ -153,7 +153,7 @@ namespace
 
 		namespace Entries
 		{
-			SDR::ModuleShared::Variant::Entry Constructor3;
+			SDR::Hooking::ModuleShared::Variant::Entry Constructor3;
 		}
 
 		namespace Variant0
@@ -185,7 +185,7 @@ namespace
 				const char* helpstr, bool hasmin, float min, bool hasmax, float max
 			);
 
-			SDR::ModuleShared::Variant::Function<Constructor3Type> Constructor3(Entries::Constructor3);
+			SDR::Hooking::ModuleShared::Variant::Function<Constructor3Type> Constructor3(Entries::Constructor3);
 
 			using SetValueStringType = void(__fastcall*)(void* thisptr, void* edx, const char* value);
 			using SetValueFloatType = void(__fastcall*)(void* thisptr, void* edx, float value);
@@ -199,7 +199,7 @@ namespace
 				"ConVar_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson(value);
 					NeverAsStringFlag = SDR::Json::GetInt(value, "NeverAsStringFlag");
 					
 					VTIndex_SetValueString = SDR::Json::GetInt(value, "VTIndex_SetValueString");
@@ -212,7 +212,7 @@ namespace
 				"ConVar_Constructor3",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::Constructor3, value);
+					SDR::Hooking::GenericVariantInit(Entries::Constructor3, value);
 				}
 			)
 		);
@@ -224,13 +224,13 @@ namespace
 
 		namespace Entries
 		{
-			SDR::ModuleShared::Variant::Entry FindVar;
+			SDR::Hooking::ModuleShared::Variant::Entry FindVar;
 		}
 
 		namespace Variant0
 		{
 			using FindVarType = void*(__fastcall*)(void* thisptr, void* edx, const char* name);
-			SDR::ModuleShared::Variant::Function<FindVarType> FindVar(Entries::FindVar);
+			SDR::Hooking::ModuleShared::Variant::Function<FindVarType> FindVar(Entries::FindVar);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -240,12 +240,12 @@ namespace
 				"CvarPtr",
 				[](const rapidjson::Value& value)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::Hooking::GetAddressFromJsonPattern(value);
 
 					Ptr = **(void***)(address);
 					SDR::Error::ThrowIfNull(Ptr);
 
-					SDR::ModuleShared::Registry::SetKeyValue("CvarPtr", Ptr);
+					SDR::Hooking::ModuleShared::Registry::SetKeyValue("CvarPtr", Ptr);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -253,7 +253,7 @@ namespace
 				"Cvar_FindVar",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::FindVar, value);
+					SDR::Hooking::GenericVariantInit(Entries::FindVar, value);
 				}
 			)
 		);
@@ -348,7 +348,7 @@ namespace
 		return ret;
 	}
 
-	auto MakeGenericCommand(const char* name, SDR::Console::CommandCallbackVoidType callback)
+	auto MakeGenericCommand(const char* name, void* callback)
 	{
 		auto ret = CreateGenericCommand();
 
@@ -411,7 +411,7 @@ namespace SDR::Console
 
 	void Variable::SetValue(const char* value)
 	{
-		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueString);
+		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueString);
 
 		if (func)
 		{
@@ -425,7 +425,7 @@ namespace SDR::Console
 
 	void Variable::SetValue(float value)
 	{
-		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueFloat);
+		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueFloat);
 
 		if (func)
 		{
@@ -439,7 +439,7 @@ namespace SDR::Console
 
 	void Variable::SetValue(int value)
 	{
-		auto func = SDR::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueInt);
+		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueInt);
 
 		if (func)
 		{
@@ -548,7 +548,12 @@ void SDR::Console::Load()
 	});
 }
 
-void SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callback)
+void SDR::Console::MakeCommand(const char* name, Types::CommandCallbackVoidType callback)
+{
+	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
+}
+
+void SDR::Console::MakeCommand(const char* name, Types::CommandCallbackArgsType callback)
 {
 	GlobalState.Commands.emplace_back(MakeGenericCommand(name, callback));
 }
@@ -556,6 +561,11 @@ void SDR::Console::MakeCommand(const char* name, CommandCallbackVoidType callbac
 SDR::Console::Variable SDR::Console::MakeBool(const char* name, const char* value)
 {
 	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, 0, true, 1);
+}
+
+SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value)
+{
+	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag);
 }
 
 SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value, float min)

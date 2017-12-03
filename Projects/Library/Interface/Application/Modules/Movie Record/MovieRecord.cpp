@@ -1,4 +1,5 @@
 #include "PrecompiledHeader.hpp"
+#include "MovieRecord.hpp"
 #include "Interface\Application\Application.hpp"
 
 #include <ppltasks.h>
@@ -9,6 +10,7 @@
 #include "Interface\Application\Modules\Shared\MaterialSystem.hpp"
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
 #include "Interface\LibraryInterface.hpp"
+#include "Interface\Application\Extensions\ExtensionManager.hpp"
 
 namespace
 {
@@ -161,26 +163,6 @@ namespace
 	std::atomic_bool ShouldStopFrameThread;
 	std::atomic_bool IsStoppingAsync;
 
-	bool ShouldRecord()
-	{
-		if (!CurrentMovie.IsStarted)
-		{
-			return false;
-		}
-
-		if (SDR::SourceGlobals::IsDrawingLoading())
-		{
-			return false;
-		}
-
-		if (SDR::EngineClient::IsConsoleVisible())
-		{
-			return false;
-		}
-
-		return true;
-	}
-
 	void FrameBufferThread()
 	{
 		auto& movie = CurrentMovie;
@@ -198,6 +180,26 @@ namespace
 			}
 		}
 	}
+}
+
+bool SDR::MovieRecord::ShouldRecord()
+{
+	if (!CurrentMovie.IsStarted)
+	{
+		return false;
+	}
+
+	if (SDR::SourceGlobals::IsDrawingLoading())
+	{
+		return false;
+	}
+
+	if (SDR::EngineClient::IsConsoleVisible())
+	{
+		return false;
+	}
+
+	return true;
 }
 
 namespace
@@ -245,6 +247,7 @@ namespace
 					SDR::Stream::FutureData item;
 					item.Writer = &stream->Video;
 
+					stream->DirectX11.NewVideoFrame(CurrentMovie.VideoStreamShared);
 					stream->DirectX11.Conversion(CurrentMovie.VideoStreamShared);
 					auto res = stream->DirectX11.Download(CurrentMovie.VideoStreamShared, item);
 
@@ -336,7 +339,7 @@ namespace
 			void Procedure()
 			{
 				auto& movie = CurrentMovie;
-				bool dopasses = ShouldRecord();
+				bool dopasses = SDR::MovieRecord::ShouldRecord();
 
 				if (dopasses)
 				{
@@ -370,7 +373,7 @@ namespace
 			void __fastcall NewFunction(void* thisptr, void* edx, void* rect);
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __fastcall NewFunction(void* thisptr, void* edx, void* rect)
 			{
@@ -386,9 +389,9 @@ namespace
 				"View_Render",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -852,6 +855,21 @@ namespace
 
 				movie.FrameBufferThreadHandle = std::thread(FrameBufferThread);
 
+				{
+					SDR::Extension::StartMovieData data;
+					data.Device = movie.VideoStreamShared.DirectX11.Device.Get();
+					
+					data.Width = width;
+					data.Height = height;
+					
+					data.FrameRate = fps;
+					data.HostFrameRate = enginerate;
+					data.TimePerFrame = 1.0 / fps;
+					data.TimePerSample = 1.0 / enginerate;
+
+					SDR::ExtensionManager::Events::StartMovie(data);
+				}
+
 				SDR::Log::Message("SDR: Started movie\n"s);
 			}
 		}
@@ -864,7 +882,7 @@ namespace
 			void __cdecl NewFunction(const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk);
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction(const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk)
 			{
@@ -879,9 +897,9 @@ namespace
 				"StartMovie",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -944,7 +962,7 @@ namespace
 			void __cdecl NewFunction(const void* ptr);
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction(const void* ptr)
 			{
@@ -959,9 +977,9 @@ namespace
 				"StartMovieCommand",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -1016,6 +1034,8 @@ namespace
 					*/
 					CurrentMovie.VideoStream->Video.Finish();
 
+					SDR::ExtensionManager::Events::EndMovie();
+
 					CurrentMovie = {};
 
 					if (Variables::ExitOnFinish.GetBool())
@@ -1058,7 +1078,7 @@ namespace
 			void __cdecl NewFunction();
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction()
 			{
@@ -1073,9 +1093,9 @@ namespace
 				"EndMovie",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -1092,7 +1112,10 @@ namespace
 			*/
 			void Procedure()
 			{
-				ModuleEndMovie::Common::Procedure(true);
+				/*
+					Ending movie must be synchronous with extensions.
+				*/
+				ModuleEndMovie::Common::Procedure(false);
 			}
 		}
 
@@ -1101,7 +1124,7 @@ namespace
 			void __cdecl NewFunction();
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction()
 			{
@@ -1116,9 +1139,9 @@ namespace
 				"EndMovieCommand",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
@@ -1152,7 +1175,7 @@ namespace
 			void __cdecl NewFunction(float mixahead);
 
 			using OverrideType = decltype(NewFunction)*;
-			SDR::HookModule<OverrideType> ThisHook;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
 			void __cdecl NewFunction(float mixahead)
 			{
@@ -1170,9 +1193,9 @@ namespace
 				"SUpdateGuts",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
 					);
 				}
