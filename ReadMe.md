@@ -85,6 +85,12 @@ This video editor can open everything SDR outputs and has detailed advanced sett
 			Displays the current library version.
 		</td>
 	</tr>
+	<tr>
+		<td>sdr_extensions_list</td>
+		<td>
+			Shows information about all loaded extensions.
+		</td>
+	</tr>
 	</tbody>
 </table>
 

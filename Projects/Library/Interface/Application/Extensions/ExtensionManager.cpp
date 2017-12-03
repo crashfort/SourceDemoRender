@@ -3,6 +3,7 @@
 #include "Interface\LibraryInterface.hpp"
 #include "Interface\Application\Modules\Movie Record\MovieRecord.hpp"
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
+#include "Interface\Application\Application.hpp"
 
 #include "SDR Shared\Json.hpp"
 
@@ -157,6 +158,60 @@ namespace
 				Loaded.emplace_back(std::move(rem));
 			}
 		}
+	}
+}
+
+namespace
+{
+	namespace Commands
+	{
+		void List()
+		{
+			if (Loaded.empty())
+			{
+				SDR::Log::Message("SDR: No extensions loaded\n"s);
+				return;
+			}
+
+			int index = 0;
+			int maxindex = Loaded.size() - 1;
+
+			for (const auto& ext : Loaded)
+			{
+				std::string str;
+
+				auto safestr = [](const char* input)
+				{
+					if (!input)
+					{
+						return "N/A";
+					}
+
+					return input;
+				};
+
+				str += SDR::String::GetFormattedString("SDR: File: \"%s\"\n", ext.Name.c_str());
+				str += SDR::String::GetFormattedString("SDR: Name: \"%s\"\n", safestr(ext.Info.Name));
+				str += SDR::String::GetFormattedString("SDR: Namespace: \"%s\"\n", safestr(ext.Info.Namespace));
+				str += SDR::String::GetFormattedString("SDR: Author: \"%s\"\n", safestr(ext.Info.Author));
+				str += SDR::String::GetFormattedString("SDR: Contact: \"%s\"\n", safestr(ext.Info.Contact));
+				str += SDR::String::GetFormattedString("SDR: Version: %d\n", ext.Info.Version);
+
+				if (index != maxindex)
+				{
+					str += "\n";
+				}
+
+				SDR::Log::Message(std::move(str));
+
+				++index;
+			}
+		}
+
+		SDR::StartupFunctionAdder A1("ExtensionManager console commands", []()
+		{
+			SDR::Console::MakeCommand("sdr_extensions_list", List);
+		});
 	}
 }
 
