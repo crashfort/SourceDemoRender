@@ -59,12 +59,6 @@ namespace LauncherUI
 			return await NetClient.GetStringAsync(BuildGitHubPath("Output/SDR/ExtensionConfig.json"));
 		}
 
-		void HideProgress()
-		{
-			Progress.IsIndeterminate = false;
-			Progress.Visibility = Visibility.Hidden;
-		}
-
 		bool ShouldFileBeUpdated(string filename)
 		{
 			if (System.IO.File.Exists(filename))
@@ -80,25 +74,30 @@ namespace LauncherUI
 			return true;
 		}
 
+		void AddLogText(string format, params object[] args)
+		{
+			StatusText.Text += string.Format(format + "\n", args);
+		}
+
 		async void MainProcedure()
 		{
+			AddLogText("Looking for SDR updates.");
+
 			bool autoskip = false;
 
 			try
 			{
 				var webver = await GetGitHubLibraryVersion();
 
-				string finalstr = "";
-
 				if (LocalVersion == webver)
 				{
-					finalstr = "Using the latest library version.";
+					AddLogText("Using the latest library version.");
 					autoskip = true;
 				}
 
 				else if (webver > LocalVersion)
 				{
-					finalstr = string.Format("Library update is available from {0} to {1}. Press Upgrade to view release.", LocalVersion, webver);
+					AddLogText("Library update is available from {0} to {1}. Press Upgrade to view release.", LocalVersion, webver);
 					UpgradeButton.IsEnabled = true;
 				}
 
@@ -107,12 +106,12 @@ namespace LauncherUI
 					var webconfig = await GetGitHubGameConfig();
 					System.IO.File.WriteAllText("GameConfig.json", webconfig, new System.Text.UTF8Encoding(false));
 
-					finalstr += " Latest game config was downloaded.";
+					AddLogText("Latest game config was downloaded.");
 				}
 
 				else
 				{
-					finalstr += " Game config is set to read only so it will not be updated.";
+					AddLogText("Game config is set to read only so it will not be updated.");
 					autoskip = false;
 				}
 
@@ -121,24 +120,19 @@ namespace LauncherUI
 					var webconfig = await GetGitHubExtensionConfig();
 					System.IO.File.WriteAllText("ExtensionConfig.json", webconfig, new System.Text.UTF8Encoding(false));
 
-					finalstr += " Latest extension config was downloaded.";
+					AddLogText("Latest extension config was downloaded.");
 				}
 
 				else
 				{
-					finalstr += " Extension config is set to read only so it will not be updated.";
+					AddLogText("Extension config is set to read only so it will not be updated.");
 					autoskip = false;
 				}
-
-				StatusText.Text = finalstr;
-				HideProgress();
 			}
 
 			catch (Exception error)
 			{
-				StatusText.Text = error.Message;
-				HideProgress();
-
+				AddLogText(error.Message);
 				autoskip = false;
 			}
 
