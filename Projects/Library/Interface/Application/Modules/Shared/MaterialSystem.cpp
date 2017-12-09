@@ -10,13 +10,13 @@ namespace
 
 		namespace Entries
 		{
-			SDR::ModuleShared::Variant::Entry GetBackBufferDimensions;
+			SDR::Hooking::ModuleShared::Variant::Entry GetBackBufferDimensions;
 		}
 
 		namespace Variant0
 		{
 			using GetBackBufferDimensionsType = void(__fastcall*)(void* thisptr, void* edx, int& width, int& height);
-			SDR::ModuleShared::Variant::Function<GetBackBufferDimensionsType> GetBackBufferDimensions(Entries::GetBackBufferDimensions);
+			SDR::Hooking::ModuleShared::Variant::Function<GetBackBufferDimensionsType> GetBackBufferDimensions(Entries::GetBackBufferDimensions);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -26,12 +26,12 @@ namespace
 				"MaterialsPtr",
 				[](const rapidjson::Value& value)
 				{
-					auto address = SDR::GetAddressFromJsonPattern(value);
+					auto address = SDR::Hooking::GetAddressFromJsonPattern(value);
 
 					Ptr = **(void***)(address);
 					SDR::Error::ThrowIfNull(Ptr);
 
-					SDR::ModuleShared::Registry::SetKeyValue("MaterialsPtr", Ptr);
+					SDR::Hooking::ModuleShared::Registry::SetKeyValue("MaterialsPtr", Ptr);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -39,7 +39,7 @@ namespace
 				"MaterialSystem_GetBackBufferDimensions",
 				[](const rapidjson::Value& value)
 				{
-					SDR::GenericVariantInit(Entries::GetBackBufferDimensions, value);
+					SDR::Hooking::GenericVariantInit(Entries::GetBackBufferDimensions, value);
 				}
 			)
 		);

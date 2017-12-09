@@ -1,0 +1,46 @@
+{
+	"Counter-Strike Source\\cstrike":
+	{
+		"VelocityText_Position":
+		{
+			"Comment": "0x101A75B0 static CSS IDA address November 27 2017",
+			"Module": "client.dll",
+			"Pattern": "55 8B EC F3 0F 10 05 ?? ?? ?? ?? 8B 45 08 56 8B 75 0C 57 8B 7D 10 F3 0F 11 06 F3 0F 10 05 ?? ?? ?? ?? F3 0F 11 46 ?? F3 0F 10 05 ?? ?? ?? ??",
+			"Offset": 7
+		},
+		"VelocityText_SetupView":
+		{
+			"Comment": "0x101A82E0 static CSS IDA address November 28 2017",
+			"Module": "client.dll",
+			"Pattern": "55 8B EC 83 EC 4C 53 8B D9 56 57 89 5D F8 8B 03 8B 40 70 FF D0 8D 7B 08 8B CB D9 57 5C D9 5F 64 8B 03 8B 40 6C FF D0 D9 5F 58"
+		}
+	},
+	"Half-Life 2\\hl2":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Half-Life 2\\episodic":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Half-Life 2\\ep2":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Team Fortress 2\\tf":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"sourcemods\\momentum":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Day of Defeat Source\\dod":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"GarrysMod\\garrysmod":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	}
+}

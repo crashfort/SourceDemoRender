@@ -12,6 +12,7 @@
 
 # Build results
 Projects/*/Intermediate/
+Projects/VelocityTextExtension/
 x64/
 x86/
 bld/

@@ -37,6 +37,8 @@
   <ImportGroup Label="Shared">
     <Import Project="..\Shared\Shared.vcxitems" Label="Shared" />
     <Import Project="..\Library API\Library API.vcxitems" Label="Shared" />
+    <Import Project="..\Hooking\Hooking.vcxitems" Label="Shared" />
+    <Import Project="..\Direct3D11\Direct3D11.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -65,7 +67,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_FFMPEG_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_SHARED_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_API_INCLUDE);$(SDR_FFMPEG_INCLUDE);$(SDR_HOOKING_INCLUDE);$(SDR_EXTENSION_INCLUDE);$(SDR_D3D11_INCLUDE);$(SDR_CONSOLETYPES_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -78,6 +80,9 @@
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
+    <FxCompile>
+      <AdditionalIncludeDirectories>$(SDR_SHADERDEFS_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -87,7 +92,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_FFMPEG_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_SHARED_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_API_INCLUDE);$(SDR_FFMPEG_INCLUDE);$(SDR_HOOKING_INCLUDE);$(SDR_EXTENSION_INCLUDE);$(SDR_D3D11_INCLUDE);$(SDR_CONSOLETYPES_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -102,16 +107,19 @@
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
+    <FxCompile>
+      <AdditionalIncludeDirectories>$(SDR_SHADERDEFS_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Interface\Application\Application.hpp" />
+    <ClInclude Include="Interface\Application\Extensions\ExtensionManager.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Movie Record\MovieRecord.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBase.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\FutureData.hpp" />
-    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Profile.hpp" />
-    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\D3D11.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\LAV.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Stream.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Video.hpp" />
@@ -125,15 +133,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Interface\Application\Application.cpp" />
+    <ClCompile Include="Interface\Application\Extensions\ExtensionManager.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -143,10 +148,6 @@
     </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\MovieRecord.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\Profile.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\D3D11.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -277,8 +278,6 @@
       <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DisableOptimizations>
       <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</EnableDebuggingInformation>
     </FxCompile>
-    <None Include="Interface\Application\Modules\Movie Record\Shaders\SharedAll.hlsl" />
-    <None Include="Interface\Application\Modules\Movie Record\Shaders\Utility.hlsl" />
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl">
       <FileType>Document</FileType>
     </None>
@@ -292,6 +291,7 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
+    <Error Condition="!Exists('..\..\Packages\minhook.1.3.3\build\native\minhook.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Packages\minhook.1.3.3\build\native\minhook.targets'))" />
     <Error Condition="!Exists('..\..\Packages\minhook.1.3.3\build\native\minhook.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Packages\minhook.1.3.3\build\native\minhook.targets'))" />
   </Target>
 </Project>

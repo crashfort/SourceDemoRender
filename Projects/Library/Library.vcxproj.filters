@@ -36,9 +36,6 @@
     <ClInclude Include="Interface\Application\Modules\Shared\Console.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\D3D11.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\LAV.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -63,10 +60,13 @@
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.hpp">
+    <ClInclude Include="Interface\LibraryInterface.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interface\LibraryInterface.hpp">
+    <ClInclude Include="Interface\Application\Extensions\ExtensionManager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface\Application\Modules\Movie Record\MovieRecord.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -92,9 +92,6 @@
     <ClCompile Include="Interface\Application\Modules\Shared\Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\D3D11.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\LAV.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -107,9 +104,6 @@
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\Video.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\GPUBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -117,6 +111,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Interface\LibraryInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\Application\Extensions\ExtensionManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -130,8 +127,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl" />
-    <None Include="Interface\Application\Modules\Movie Record\Shaders\Utility.hlsl" />
-    <None Include="Interface\Application\Modules\Movie Record\Shaders\SharedAll.hlsl" />
     <None Include="packages.config" />
   </ItemGroup>
 </Project>

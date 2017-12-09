@@ -1,6 +1,6 @@
 #pragma once
 #include "ConversionBase.hpp"
-#include "GPUBuffer.hpp"
+#include "SDR Shared\GPUBuffer.hpp"
 
 namespace SDR::D3D11
 {
