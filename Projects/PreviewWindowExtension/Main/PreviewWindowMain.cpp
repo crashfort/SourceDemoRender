@@ -474,7 +474,10 @@ extern "C"
 			PostThreadMessageA(id, WM_QUIT, 0, 0);
 		}
 		
-		Window::WindowThread.join();
+		if (Window::WindowThread.joinable())
+		{
+			Window::WindowThread.join();
+		}
 
 		Synchro::Destroy();
 	}
