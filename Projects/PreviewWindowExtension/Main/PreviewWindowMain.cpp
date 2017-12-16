@@ -437,7 +437,7 @@ extern "C"
 		query.Author = "crashfort";
 		query.Contact = "https://github.com/crashfort/";
 
-		query.Version = 1;
+		query.Version = 2;
 	}
 
 	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::Extension::InitializeData& data)
@@ -474,7 +474,10 @@ extern "C"
 			PostThreadMessageA(id, WM_QUIT, 0, 0);
 		}
 		
-		Window::WindowThread.join();
+		if (Window::WindowThread.joinable())
+		{
+			Window::WindowThread.join();
+		}
 
 		Synchro::Destroy();
 	}
