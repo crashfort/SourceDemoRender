@@ -71,10 +71,14 @@ External modules can extend SDR with other functions. The public interface that 
 Extensions will only be loaded inside the ``Enabled`` folder. You can use the ``Disabled`` feature as storage for disabled extensions. To order extensions you enter their filenames in the order you want in ``Order.json``.
 
 ### Preview Window
+**Availability:** Free, included
+
 This extension will open up a new window which will display how everything looks like at its load order in the video file but in realtime. The window can be resized and the content will remain at its aspect ratio.
 
 ### Velocity Text
-This extension will gather the current player velocity and display it in a highly customizable format. This works in SourceTV and client demos, as well as local recording.
+**Availability:** Contact me
+
+This extension will gather the current player velocity and display it in a highly customizable format. This works in SourceTV and client demos, as well as local recordings.
 
 ![Velocity Text Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Extensions/VelocityText1.png)
 
