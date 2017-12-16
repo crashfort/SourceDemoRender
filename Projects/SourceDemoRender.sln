@@ -27,8 +27,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PreviewWindowExtension", "P
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console Types", "Console Types\Console Types.vcxitems", "{3AA441C9-9A1C-45A0-8DB7-191124401A75}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VelocityTextExtension", "VelocityTextExtension\VelocityTextExtension.vcxproj", "{ED0A795D-525D-4422-A2B7-0AA7A612427A}"
-EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Console Types\Console Types.vcxitems*{3aa441c9-9a1c-45a0-8db7-191124401a75}*SharedItemsImports = 9
@@ -48,10 +46,6 @@ Global
 		Shader Definitions\Shader Definitions.vcxitems*{e5722eaf-3432-49fb-8f2e-a88738715393}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{e5722eaf-3432-49fb-8f2e-a88738715393}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{ea9bfa18-f8ff-4181-ba6a-8ccc245937eb}*SharedItemsImports = 4
-		Console Types\Console Types.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
-		Direct3D11\Direct3D11.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
-		Hooking\Hooking.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
-		Shared\Shared.vcxitems*{ed0a795d-525d-4422-a2b7-0aa7a612427a}*SharedItemsImports = 4
 		Library API\Library API.vcxitems*{f6a710b0-1dad-4087-b575-5512efeccc0f}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -79,10 +73,6 @@ Global
 		{E5722EAF-3432-49FB-8F2E-A88738715393}.Debug|x86.Build.0 = Debug|Win32
 		{E5722EAF-3432-49FB-8F2E-A88738715393}.Release|x86.ActiveCfg = Release|Win32
 		{E5722EAF-3432-49FB-8F2E-A88738715393}.Release|x86.Build.0 = Release|Win32
-		{ED0A795D-525D-4422-A2B7-0AA7A612427A}.Debug|x86.ActiveCfg = Debug|Win32
-		{ED0A795D-525D-4422-A2B7-0AA7A612427A}.Debug|x86.Build.0 = Debug|Win32
-		{ED0A795D-525D-4422-A2B7-0AA7A612427A}.Release|x86.ActiveCfg = Release|Win32
-		{ED0A795D-525D-4422-A2B7-0AA7A612427A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
