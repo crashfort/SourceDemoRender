@@ -66,7 +66,7 @@ Some versions can open `libx264rgb` videos which is the recommended way as there
 This video editor can open everything SDR outputs.
 
 ## Extensions
-External modules can extend SDR with other functions. The public interface that your module should implement is available here [Extension.hpp](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/Extension/Include/SDR%20Extension/Extension.hpp) and example projects here [Sample Extension](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/SampleExtension/Main/SampleMain.cpp) and [Preview Window](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/PreviewWindowExtension/Main/PreviewWindowMain.cpp).
+External modules can extend SDR with other functions. The public interface that your module should implement is available at [Extension.hpp](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/Extension/Include/SDR%20Extension/Extension.hpp) and example projects [Sample Extension](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/SampleExtension/Main/SampleMain.cpp) and [Preview Window](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/PreviewWindowExtension/Main/PreviewWindowMain.cpp).
 
 Extensions will only be loaded inside the ``Enabled`` folder. You can use the ``Disabled`` feature as storage for disabled extensions. To order extensions you enter their filenames in the order you want in ``Order.json``.
 
@@ -78,7 +78,7 @@ This extension will open up a new window which will display how everything looks
 ### Velocity Text
 **Availability:** Contact me
 
-This extension will gather the current player velocity and display it in a highly customizable format. This works in SourceTV and client demos, as well as local recordings.
+This extension will gather the current player velocity and display it in a highly customizable format.
 
 ![Velocity Text Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Extensions/VelocityText1.png)
 
