@@ -170,5 +170,15 @@ namespace LauncherUI
 				GameComboBox.ToolTip = string.Format("{0}\n\nExecutable\n{1}\n\nGame\n{2}", obj.DisplayName, obj.ExecutablePath, obj.GamePath);
 			}
 		}
+
+		void ExtensionsButton_Click(object sender, RoutedEventArgs args)
+		{
+			var dialog = new ExtensionsWindow();
+			dialog.Owner = this;
+
+			dialog.ShowDialog();
+
+			ErrorText.Text = null;
+		}
 	}
 }
