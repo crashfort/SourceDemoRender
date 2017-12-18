@@ -3,9 +3,9 @@
 	{
 		"VelocityText_GetLocalPlayer":
 		{
-			"Comment": "0x101A7623 static CSS IDA address December 15 2017",
+			"Comment": "0x101A7623 static CSS IDA address December 18 2017",
 			"Module": "client.dll",
-			"Pattern": "E8 ?? ?? ?? ?? 8B D8 85 DB 74 2E 8B 13 8B CB FF 52 24 8B CB D9 00 D9 1E D9 40 04 D9 5E 04 D9 40 08 8B 03",
+			"Pattern": "E8 ?? ?? ?? ?? 8B D8 85 DB 74 2E 8B 13 8B CB",
 			"IsRelativeJump": true
 		},
 		"VelocityText_ClientEntityLocalVelocity":
