@@ -181,6 +181,8 @@ namespace LauncherUI
 			MoveBottomButton.IsEnabled = state;
 		}
 
+		bool ShowDisabled = true;
+
 		void SyncWithUI()
 		{
 			ExtensionsList.Items.Clear();
@@ -190,6 +192,11 @@ namespace LauncherUI
 
 			foreach (var item in Extensions)
 			{
+				if (!item.Enabled && !ShowDisabled)
+				{
+					continue;
+				}
+
 				var content = new System.Windows.Controls.Grid();
 				content.Height = 70;
 
@@ -437,6 +444,28 @@ namespace LauncherUI
 
 			SetMoveUpState(topfree);
 			SetMoveDownState(bottomfree);
+		}
+
+		void ShowDisabledCheck_Checked(object sender, RoutedEventArgs args)
+		{
+			if (ExtensionsList == null)
+			{
+				return;
+			}
+
+			ShowDisabled = true;
+			SyncWithUI();
+		}
+
+		void ShowDisabledCheck_Unchecked(object sender, RoutedEventArgs args)
+		{
+			if (ExtensionsList == null)
+			{
+				return;
+			}
+
+			ShowDisabled = false;
+			SyncWithUI();
 		}
 	}
 }
