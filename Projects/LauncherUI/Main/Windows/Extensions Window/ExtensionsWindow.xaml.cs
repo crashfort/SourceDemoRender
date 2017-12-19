@@ -206,7 +206,7 @@ namespace LauncherUI
 				enabledseq.VerticalAlignment = VerticalAlignment.Bottom;
 
 				var enabledtitle = new System.Windows.Controls.TextBlock();
-				enabledtitle.Text = "Enabled ";
+				enabledtitle.Text = "Enable ";
 				enabledtitle.Foreground = System.Windows.Media.Brushes.Black;
 
 				var enabledstr = new System.Windows.Controls.TextBlock();
