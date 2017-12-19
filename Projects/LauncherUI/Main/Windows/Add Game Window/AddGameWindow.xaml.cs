@@ -20,7 +20,7 @@ namespace LauncherUI
 			}
 		}
 
-		struct CurrentGameVerifyData
+		class CurrentGameVerifyData
 		{
 			public string DisplayName;
 			public string ExpectedExecutableName;

@@ -37,7 +37,7 @@ namespace LauncherUI
 			public delegate void QueryType(ref QueryData data);
 		}
 
-		struct ListBoxData
+		class ListBoxData
 		{
 			public string Name;
 			public string FileName;
