@@ -162,6 +162,13 @@ namespace LauncherUI
 			}
 		}
 
+		void SyncSelection(int index)
+		{
+			ExtensionsList.SelectedIndex = index;
+			ExtensionsList.Focus();
+			ExtensionsList.ScrollIntoView(ExtensionsList.SelectedItem);
+		}
+
 		void SyncWithUI()
 		{
 			ExtensionsList.Items.Clear();
@@ -281,10 +288,7 @@ namespace LauncherUI
 			Extensions[newindex] = temp;
 
 			SyncWithUI();
-
-			ExtensionsList.SelectedIndex = newindex;
-			ExtensionsList.Focus();
-			ExtensionsList.ScrollIntoView(ExtensionsList.SelectedItem);
+			SyncSelection(newindex);
 		}
 
 		void MoveUpButton_Click(object sender, RoutedEventArgs args)
@@ -341,7 +345,13 @@ namespace LauncherUI
 				return;
 			}
 
-			SwapItems(index, newindex);
+			var target = Extensions[index];
+			Extensions.RemoveAt(index);
+
+			Extensions.Insert(newindex, target);
+
+			SyncWithUI();
+			SyncSelection(newindex);
 		}
 
 		void MoveBottomButton_Click(object sender, RoutedEventArgs args)
@@ -360,7 +370,13 @@ namespace LauncherUI
 				return;
 			}
 
-			SwapItems(index, newindex);
+			var target = Extensions[index];
+			Extensions.RemoveAt(index);
+
+			Extensions.Insert(newindex, target);
+
+			SyncWithUI();
+			SyncSelection(newindex);
 		}
 
 		void OKButton_Click(object sender, RoutedEventArgs args)
