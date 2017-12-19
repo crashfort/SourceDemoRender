@@ -169,15 +169,24 @@ namespace LauncherUI
 			ExtensionsList.ScrollIntoView(ExtensionsList.SelectedItem);
 		}
 
+		void SetMoveUpState(bool state)
+		{
+			MoveUpButton.IsEnabled = state;
+			MoveTopButton.IsEnabled = state;
+		}
+
+		void SetMoveDownState(bool state)
+		{
+			MoveDownButton.IsEnabled = state;
+			MoveBottomButton.IsEnabled = state;
+		}
+
 		void SyncWithUI()
 		{
 			ExtensionsList.Items.Clear();
 
-			MoveUpButton.IsEnabled = false;
-			MoveTopButton.IsEnabled = false;
-
-			MoveDownButton.IsEnabled = false;
-			MoveBottomButton.IsEnabled = false;
+			SetMoveUpState(false);
+			SetMoveDownState(false);
 
 			foreach (var item in Extensions)
 			{
@@ -426,32 +435,8 @@ namespace LauncherUI
 			var topfree = index > 0;
 			var bottomfree = index < ExtensionsList.Items.Count - 1;
 
-			MoveUpButton.IsEnabled = false;
-			MoveTopButton.IsEnabled = false;
-
-			MoveDownButton.IsEnabled = false;
-			MoveBottomButton.IsEnabled = false;
-
-			if (bottomfree)
-			{
-				MoveDownButton.IsEnabled = true;
-				MoveBottomButton.IsEnabled = true;
-			}
-
-			if (topfree)
-			{
-				MoveUpButton.IsEnabled = true;
-				MoveTopButton.IsEnabled = true;
-			}
-
-			if (!topfree && !bottomfree)
-			{
-				MoveUpButton.IsEnabled = false;
-				MoveTopButton.IsEnabled = false;
-
-				MoveDownButton.IsEnabled = false;
-				MoveBottomButton.IsEnabled = false;
-			}
+			SetMoveUpState(topfree);
+			SetMoveDownState(bottomfree);
 		}
 	}
 }
