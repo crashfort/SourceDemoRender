@@ -317,9 +317,12 @@ namespace
 			size = sizeof(ModuleConVar::Variant0::Data);
 		}
 
-		ret.Blob = std::make_unique<uint8_t[]>(size);
-		ret.Opaque = ret.Blob.get();
-
+		/*
+			Never freed because the engine's class destructor cannot be called with these objects.
+			Is fine anyway since the OS will clear everything on process exit, when they would normally get destroyed.
+			No need to clean the house up before it gets demolished.
+		*/
+		ret.Opaque = new uint8_t[size];
 		std::memset(ret.Opaque, 0, size);
 
 		if (ModuleConVar::Entries::Constructor3 == 0)
@@ -340,9 +343,12 @@ namespace
 			size = sizeof(ModuleConCommand::Variant0::Data);
 		}
 
-		ret.Blob = std::make_unique<uint8_t[]>(size);
-		ret.Opaque = ret.Blob.get();
-
+		/*
+			Never freed because the engine's class destructor cannot be called with these objects.
+			Is fine anyway since the OS will clear everything on process exit, when they would normally get destroyed.
+			No need to clean the house up before it gets demolished.
+		*/
+		ret.Opaque = new uint8_t[size];
 		std::memset(ret.Opaque, 0, size);
 
 		return ret;
