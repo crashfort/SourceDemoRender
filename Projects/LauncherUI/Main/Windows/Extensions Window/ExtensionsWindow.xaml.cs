@@ -256,7 +256,7 @@ namespace LauncherUI
 				var index = new System.Windows.Controls.TextBlock();
 				index.Text = string.Format("{0}#", ExtensionsList.Items.Count + 1);
 				index.FontSize = 30;
-				index.FontWeight = FontWeight.FromOpenTypeWeight(100);
+				index.FontWeight = FontWeights.Thin;
 				index.Foreground = System.Windows.Media.Brushes.Gray;
 				index.HorizontalAlignment = HorizontalAlignment.Right;
 				index.VerticalAlignment = VerticalAlignment.Top;
