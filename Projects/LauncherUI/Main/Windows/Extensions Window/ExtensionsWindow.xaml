@@ -15,9 +15,9 @@
 			</Grid.RowDefinitions>
 			<StackPanel Orientation="Vertical">
 				<TextBlock TextWrapping="Wrap" Text="Define the execution order of the extensions. Execution order will be the same as below, higher up being earlier." FontSize="15" Grid.Row="0"/>
-				<CheckBox Content="Show Disabled" FontSize="15" VerticalContentAlignment="Center" Margin="0,10,0,0" Grid.Row="0" Checked="ShowDisabledCheck_Checked" Unchecked="ShowDisabledCheck_Unchecked" IsChecked="True"/>
+				<CheckBox Content="Show Disabled" Height="32" FontSize="15" VerticalContentAlignment="Center" Grid.Row="0" Checked="ShowDisabledCheck_Checked" Unchecked="ShowDisabledCheck_Unchecked" IsChecked="True"/>
 			</StackPanel>
-			<ListBox x:Name="ExtensionsList" SelectionMode="Single" Grid.Row="1" Margin="0,10,0,10" IsTextSearchEnabled="False" ScrollViewer.CanContentScroll="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" SelectionChanged="ExtensionsList_SelectionChanged"/>
+			<ListBox x:Name="ExtensionsList" SelectionMode="Single" Grid.Row="1" Margin="0,0,0,10" IsTextSearchEnabled="False" ScrollViewer.CanContentScroll="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" SelectionChanged="ExtensionsList_SelectionChanged"/>
 			<Grid Grid.Row="2">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*"/>
