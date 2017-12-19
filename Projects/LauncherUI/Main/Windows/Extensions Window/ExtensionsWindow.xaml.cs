@@ -40,6 +40,7 @@ namespace LauncherUI
 		class ListBoxData
 		{
 			public bool Enabled;
+			public int Index;
 
 			public string Name;
 			public string FileName;
@@ -197,6 +198,7 @@ namespace LauncherUI
 
 		void SyncWithUI()
 		{
+			ExtensionsList.SelectedItem = null;
 			ExtensionsList.Items.Clear();
 
 			SetMoveUpState(false);
@@ -208,6 +210,8 @@ namespace LauncherUI
 				{
 					continue;
 				}
+
+				item.Index = ExtensionsList.Items.Count;
 
 				var content = new System.Windows.Controls.Grid();
 				content.Height = 70;
@@ -299,6 +303,15 @@ namespace LauncherUI
 			var data = (ListBoxData)control.DataContext;
 
 			data.Enabled = true;
+
+			var oldindex = ExtensionsList.SelectedIndex;
+
+			ExtensionsList.SelectedIndex = data.Index;
+
+			if (oldindex == data.Index)
+			{
+				UpdateSelectionButtonsState(ExtensionsList.SelectedIndex);
+			}
 		}
 
 		void ExtensionEnabledCheck_Unchecked(object sender, RoutedEventArgs args)
@@ -307,6 +320,15 @@ namespace LauncherUI
 			var data = (ListBoxData)control.DataContext;
 
 			data.Enabled = false;
+
+			var oldindex = ExtensionsList.SelectedIndex;
+
+			ExtensionsList.SelectedIndex = data.Index;
+
+			if (oldindex == data.Index)
+			{
+				UpdateSelectionButtonsState(ExtensionsList.SelectedIndex);
+			}
 		}
 
 		void SwapItems(int index, int newindex)
@@ -447,15 +469,21 @@ namespace LauncherUI
 			Close();
 		}
 
-		void ExtensionsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)
+		void UpdateSelectionButtonsState(int index)
 		{
-			var index = ExtensionsList.SelectedIndex;
-
 			var topfree = index > 0;
 			var bottomfree = index < ExtensionsList.Items.Count - 1;
 
 			SetMoveUpState(topfree);
 			SetMoveDownState(bottomfree);
+		}
+
+		void ExtensionsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs args)
+		{
+			if (ExtensionsList.SelectedItem != null)
+			{
+				UpdateSelectionButtonsState(ExtensionsList.SelectedIndex);
+			}
 		}
 
 		void ShowDisabledCheck_Checked(object sender, RoutedEventArgs args)
