@@ -89,13 +89,13 @@ namespace LauncherUI
 				return;
 			}
 
-			if (!System.IO.File.Exists(System.IO.Path.Combine("SourceDemoRender.dll")))
+			if (!System.IO.File.Exists("SourceDemoRender.dll"))
 			{
 				ErrorText.Text = "SourceDemoRender.dll does not exist.";
 				return;
 			}
 
-			var launcher = System.IO.Path.Combine("LauncherCLI.exe");
+			var launcher = "LauncherCLI.exe";
 
 			if (!System.IO.File.Exists(launcher))
 			{
