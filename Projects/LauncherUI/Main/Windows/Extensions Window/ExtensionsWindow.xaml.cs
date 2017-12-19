@@ -85,10 +85,22 @@ namespace LauncherUI
 						var data = new ListBoxData();
 						data.RelativePath = file;
 						data.Enabled = enabled;
+						data.FileName = fileinfo.Name;
 
 						data.Name = Marshal.PtrToStringAnsi(result.Name);
-						data.FileName = fileinfo.Name;
+
+						if (data.Name == null)
+						{
+							data.Name = "Unnamed Extension";
+						}
+
 						data.Author = Marshal.PtrToStringAnsi(result.Author);
+
+						if (data.Author == null)
+						{
+							data.Author = "Unnamed Author";
+						}
+
 						data.Version = result.Version;
 
 						Extensions.Add(data);
