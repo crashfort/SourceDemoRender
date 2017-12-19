@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LauncherUI"
         mc:Ignorable="d"
-        Title="Extensions" Height="640" Width="640" WindowStartupLocation="CenterOwner" MinWidth="640" MinHeight="300" ShowInTaskbar="False">
+        Title="Extensions" Height="640" Width="840" WindowStartupLocation="CenterOwner" MinWidth="640" MinHeight="300" ShowInTaskbar="False">
 	<Grid Margin="10">
 		<Grid>
 			<Grid.RowDefinitions>
