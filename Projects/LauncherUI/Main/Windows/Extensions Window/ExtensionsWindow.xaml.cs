@@ -157,8 +157,6 @@ namespace LauncherUI
 				var content = new System.Windows.Controls.Grid();
 				content.Height = 65;
 
-				var header = new System.Windows.Controls.TextBlock();
-
 				var index = new System.Windows.Controls.TextBlock();
 				index.Text = string.Format("{0}#", ExtensionsList.Items.Count + 1);
 				index.FontSize = 30;
@@ -174,8 +172,6 @@ namespace LauncherUI
 				title.FontWeight = FontWeights.Thin;
 				title.HorizontalAlignment = HorizontalAlignment.Left;
 				title.VerticalAlignment = VerticalAlignment.Top;
-
-				header.Inlines.Add(title);
 
 				var file = new System.Windows.Controls.TextBlock();
 				file.Text = item.FileName;
@@ -210,7 +206,7 @@ namespace LauncherUI
 				infostr.Inlines.Add(versiontitle);
 				infostr.Inlines.Add(versionstr);
 
-				content.Children.Add(header);
+				content.Children.Add(title);
 				content.Children.Add(file);
 				content.Children.Add(infostr);
 				content.Children.Add(index);
