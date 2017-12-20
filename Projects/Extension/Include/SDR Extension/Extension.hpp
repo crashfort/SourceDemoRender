@@ -12,9 +12,25 @@ namespace SDR::Extension
 	*/
 	struct QueryData
 	{
+		/*
+			Display name of this extension.
+		*/
 		const char* Name;
+
+		/*
+			An extension will only receieve calls to "SDR_ConfigHandler" if an object
+			in "ExtensionConfig.json" is prefixed with this namespace.
+		*/
 		const char* Namespace;
+
+		/*
+			Collection of authors that developed this extension.
+		*/
 		const char* Author;
+
+		/*
+			Location of where support is to be seeked.
+		*/
 		const char* Contact;
 		
 		int Version;
@@ -26,8 +42,19 @@ namespace SDR::Extension
 	*/
 	struct InitializeData
 	{
+		/*
+			Normal console message.
+		*/
 		Log::LogFunctionType Message;
+
+		/*
+			Same as "Message", but takes a color.
+		*/
 		Log::LogFunctionColorType MessageColor;
+
+		/*
+			Console message with a red color.
+		*/
 		Log::LogFunctionType Warning;
 	};
 
@@ -96,6 +123,9 @@ namespace SDR::Extension
 	*/
 	struct StartMovieData
 	{
+		/*
+			The device that the main library is currently using.
+		*/
 		ID3D11Device* Device;
 		
 		int Width;
@@ -103,7 +133,15 @@ namespace SDR::Extension
 		int FrameRate;
 		int HostFrameRate;
 
+		/*
+			Value that is being used for every video frame.
+		*/
 		double TimePerFrame;
+
+		/*
+			If sampling is enabled, this will not be the same as "TimePerFrame", but rather
+			1.0 / HostFrameRate.
+		*/
 		double TimePerSample;
 	};
 
@@ -112,11 +150,34 @@ namespace SDR::Extension
 	*/
 	struct NewVideoFrameData
 	{
+		/*
+			The rendering context currently used by the main library.
+		*/
 		ID3D11DeviceContext* Context;
+
+		/*
+			Shader resources for the active video frame.
+			In shader code it should use the "WorkBufferData" structure in project "Shader Definitions".
+
+			UAV:
+			RWStructuredBuffer<WorkBufferData> WorkBufferUAV : register(u0)
+
+			SRV:
+			StructuredBuffer<WorkBufferData> WorkBufferSRV : register(t0)
+		*/
 		ID3D11UnorderedAccessView* GameFrameUAV;
 		ID3D11ShaderResourceView* GameFrameSRV;
+
+		/*
+			This buffer should be bound to any activity with above resources. This contains the dimensions of the video frame.
+			It should be bound to slot 0.
+		*/
 		ID3D11Buffer* ConstantBuffer;
 
+		/*
+			How many thread groups that should be dispatched to a compute shader.
+			These values must be used if the compute shader is using "ThreadsX" and "ThreadsY" in project "Shader Definitions".
+		*/
 		int ThreadGroupsX;
 		int ThreadGroupsY;
 	};
@@ -133,12 +194,42 @@ namespace SDR::Extension
 	*/
 	namespace ExportTypes
 	{
+		/*
+			Fill in information about your extension.
+		*/
 		using SDR_Query = void(__cdecl*)(QueryData& query);
+
+		/*
+			Called directly after "SDR_Query" to set up initial extension state.
+		*/
 		using SDR_Initialize = void(__cdecl*)(const InitializeData& data);
+
+		/*
+			For every matching namespace entry in ExtensionConfig.json, this is the callback.
+			Return true if the handler was found by name.
+		*/
 		using SDR_ConfigHandler = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
+
+		/*
+			Called when SDR is fully loaded. The parameter can be stored off for future use,
+			it's the gateway for communicating with the main library.
+		*/
 		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);
+
+		/*
+			Called after the main library handles the start movie command.
+		*/
 		using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);
+
+		/*
+			Called after all processing by the main library is done.
+		*/
 		using SDR_EndMovie = void(__cdecl*)();
+
+		/*
+			Called when a new video frame is ready. The content can be manipulated or viewed before it gets written.
+			The execution order of the extensions is important here.
+		*/
 		using SDR_NewVideoFrame = void(__cdecl*)(NewVideoFrameData& data);
 	}
 }
