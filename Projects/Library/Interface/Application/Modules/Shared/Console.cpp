@@ -333,7 +333,7 @@ namespace
 		return ret;
 	}
 
-	auto CreateGenericCommand()
+	auto MakeGenericCommand(const char* name, void* callback)
 	{
 		SDR::Console::Command ret;
 		size_t size = 0;
@@ -350,13 +350,6 @@ namespace
 		*/
 		ret.Opaque = new uint8_t[size];
 		std::memset(ret.Opaque, 0, size);
-
-		return ret;
-	}
-
-	auto MakeGenericCommand(const char* name, void* callback)
-	{
-		auto ret = CreateGenericCommand();
 
 		if (ModuleConCommand::Entries::Constructor1 == 0)
 		{
