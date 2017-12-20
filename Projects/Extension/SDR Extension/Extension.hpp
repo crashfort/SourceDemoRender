@@ -218,28 +218,38 @@ namespace SDR::Extension
 		/*
 			For every matching namespace entry in ExtensionConfig.json, this is the callback.
 			Return true if the handler was found by name.
+
+			Optional.
 		*/
 		using SDR_ConfigHandler = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
 
 		/*
 			Called when SDR is fully loaded. The parameter can be stored off for future use,
 			it's the gateway for communicating with the main library.
+
+			Optional.
 		*/
 		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);
 
 		/*
 			Called after the main library handles the start movie command.
+
+			Optional.
 		*/
 		using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);
 
 		/*
 			Called after all processing by the main library is done.
+
+			Optional.
 		*/
 		using SDR_EndMovie = void(__cdecl*)();
 
 		/*
 			Called when a new video frame is ready. The content can be manipulated or viewed before it gets written.
 			The execution order of the extensions is important here.
+
+			Optional.
 		*/
 		using SDR_NewVideoFrame = void(__cdecl*)(const NewVideoFrameData& data);
 	}
