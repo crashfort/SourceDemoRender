@@ -130,7 +130,15 @@ namespace SDR::Extension
 		
 		int Width;
 		int Height;
+
+		/*
+			The video frame rate.
+		*/
 		int FrameRate;
+
+		/*
+			The game engine frame rate.
+		*/
 		int HostFrameRate;
 
 		/*
