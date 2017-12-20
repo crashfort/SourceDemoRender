@@ -1,7 +1,6 @@
 #include <SDR Extension\Extension.hpp>
 #include <SDR Shared\String.hpp>
 #include <SDR Shared\Error.hpp>
-#include <d3d11.h>
 
 extern "C"
 {
