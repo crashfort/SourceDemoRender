@@ -15,7 +15,7 @@ void SDR::D3D11::OpenShader(ID3D11Device* device, const char* name, const BlobDa
 	Error::MS::ThrowIfFailed
 	(
 		device->CreateVertexShader(blob.Data, blob.Size, nullptr, shader),
-		"Could not create compute shader \"%s\"", name
+		"Could not create vertex shader \"%s\"", name
 	);
 }
 
@@ -24,6 +24,6 @@ void SDR::D3D11::OpenShader(ID3D11Device* device, const char* name, const BlobDa
 	Error::MS::ThrowIfFailed
 	(
 		device->CreatePixelShader(blob.Data, blob.Size, nullptr, shader),
-		"Could not create compute shader \"%s\"", name
+		"Could not create pixel shader \"%s\"", name
 	);
 }
