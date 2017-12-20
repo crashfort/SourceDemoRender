@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\Hooking.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SDR Shared\Hooking.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Source\Hooking.cpp">

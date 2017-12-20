@@ -16,6 +16,8 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\D3D11.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\GPUBuffer.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SDR Shared\D3D11.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SDR Shared\GPUBuffer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Source\D3D11.cpp">

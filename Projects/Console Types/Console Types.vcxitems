@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Shared\ConsoleTypes.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SDR Shared\ConsoleTypes.hpp" />
   </ItemGroup>
 </Project>
