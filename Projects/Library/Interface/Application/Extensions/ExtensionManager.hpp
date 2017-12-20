@@ -1,5 +1,5 @@
 #pragma once
-#include "SDR Extension\Extension.hpp"
+#include <SDR Extension\Extension.hpp>
 #include <d3d11.h>
 
 namespace SDR::ExtensionManager

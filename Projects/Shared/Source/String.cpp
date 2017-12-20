@@ -1,4 +1,4 @@
-#include "SDR Shared\String.hpp"
+#include <SDR Shared\String.hpp>
 #include <codecvt>
 
 namespace

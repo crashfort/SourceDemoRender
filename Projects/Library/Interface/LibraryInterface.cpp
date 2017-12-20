@@ -1,7 +1,7 @@
 #include "PrecompiledHeader.hpp"
 #include "LibraryInterface.hpp"
 #include "Application\Application.hpp"
-#include "SDR Library API\ExportTypes.hpp"
+#include <SDR Library API\ExportTypes.hpp>
 
 extern "C"
 {

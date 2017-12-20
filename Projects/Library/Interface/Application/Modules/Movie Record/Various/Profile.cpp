@@ -1,5 +1,5 @@
 #include "Profile.hpp"
-#include "SDR Shared\Log.hpp"
+#include <SDR Shared\Log.hpp>
 #include <vector>
 
 namespace

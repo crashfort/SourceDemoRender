@@ -1,6 +1,6 @@
 #include "Stream.hpp"
-#include "SDR Shared\Error.hpp"
-#include "SDR Shared\D3D11.hpp"
+#include <SDR Shared\Error.hpp>
+#include <SDR Shared\D3D11.hpp>
 #include "Interface\Application\Extensions\ExtensionManager.hpp"
 #include "Profile.hpp"
 #include "Interface\Application\Modules\Movie Record\Shaders\Blobs\BGR0.hpp"

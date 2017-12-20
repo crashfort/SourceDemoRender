@@ -1,6 +1,6 @@
-#include "SDR Shared\Hooking.hpp"
-#include "SDR Shared\BareWindows.hpp"
-#include "SDR Shared\Json.hpp"
+#include <SDR Shared\Hooking.hpp>
+#include <SDR Shared\BareWindows.hpp>
+#include <SDR Shared\Json.hpp>
 #include <cctype>
 #include <cstdint>
 #include <Psapi.h>

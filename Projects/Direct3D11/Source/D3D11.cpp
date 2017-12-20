@@ -1,5 +1,5 @@
-#include "SDR Shared\D3D11.hpp"
-#include "SDR Shared\Error.hpp"
+#include <SDR Shared\D3D11.hpp>
+#include <SDR Shared\Error.hpp>
 
 void SDR::D3D11::OpenShader(ID3D11Device* device, const char* name, const BlobData& blob, ID3D11ComputeShader** shader)
 {

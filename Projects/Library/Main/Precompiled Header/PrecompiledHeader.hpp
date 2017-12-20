@@ -1,5 +1,5 @@
 #pragma once
-#include "SDR Shared\BareWindows.hpp"
+#include <SDR Shared\BareWindows.hpp>
 #include <Psapi.h>
 #include <Shlwapi.h>
 #include <comdef.h>

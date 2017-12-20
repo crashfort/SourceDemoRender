@@ -1,6 +1,6 @@
 #include "ConversionYUV.hpp"
 #include "Profile.hpp"
-#include "SDR Shared\Log.hpp"
+#include <SDR Shared\Log.hpp>
 
 namespace
 {

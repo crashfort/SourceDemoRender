@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
-#include "SDR Shared\Json.hpp"
-#include "SDR Shared\Hooking.hpp"
+#include <SDR Shared\Json.hpp>
+#include <SDR Shared\Hooking.hpp>
 
 namespace SDR
 {

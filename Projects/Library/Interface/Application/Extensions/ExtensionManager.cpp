@@ -5,7 +5,7 @@
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
 #include "Interface\Application\Application.hpp"
 
-#include "SDR Shared\Json.hpp"
+#include <SDR Shared\Json.hpp>
 
 namespace
 {

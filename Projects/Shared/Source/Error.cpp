@@ -1,4 +1,4 @@
-#include "SDR Shared\Error.hpp"
+#include <SDR Shared\Error.hpp>
 #include <vector>
 
 namespace
