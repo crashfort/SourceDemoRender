@@ -190,6 +190,9 @@ namespace SDR::Extension
 		int ThreadGroupsY;
 	};
 
+	/*
+		Within "SDR_Initialize", redirect the SDR::Log functions to the game console.
+	*/
 	inline void RedirectLogOutputs(const InitializeData& data)
 	{
 		SDR::Log::SetMessageFunction(data.Message);
