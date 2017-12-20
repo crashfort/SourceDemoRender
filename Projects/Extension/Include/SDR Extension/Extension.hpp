@@ -238,6 +238,6 @@ namespace SDR::Extension
 			Called when a new video frame is ready. The content can be manipulated or viewed before it gets written.
 			The execution order of the extensions is important here.
 		*/
-		using SDR_NewVideoFrame = void(__cdecl*)(NewVideoFrameData& data);
+		using SDR_NewVideoFrame = void(__cdecl*)(const NewVideoFrameData& data);
 	}
 }

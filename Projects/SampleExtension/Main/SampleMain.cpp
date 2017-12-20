@@ -41,7 +41,7 @@ extern "C"
 		
 	}
 
-	__declspec(dllexport) void __cdecl SDR_NewVideoFrame(SDR::Extension::NewVideoFrameData& data)
+	__declspec(dllexport) void __cdecl SDR_NewVideoFrame(const SDR::Extension::NewVideoFrameData& data)
 	{
 		
 	}

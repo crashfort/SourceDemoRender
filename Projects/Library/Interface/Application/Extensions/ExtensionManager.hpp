@@ -32,6 +32,6 @@ namespace SDR::ExtensionManager
 		/*
 			
 		*/
-		void NewVideoFrame(SDR::Extension::NewVideoFrameData& data);
+		void NewVideoFrame(const SDR::Extension::NewVideoFrameData& data);
 	}
 }
