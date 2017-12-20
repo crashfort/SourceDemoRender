@@ -1,8 +1,8 @@
-#include "SDR Extension\Extension.hpp"
-#include "SDR Shared\String.hpp"
-#include "SDR Shared\Error.hpp"
-#include "SDR Shared\D3D11.hpp"
-#include "SDR Shared\IPC.hpp"
+#include <SDR Extension\Extension.hpp>
+#include <SDR Shared\String.hpp>
+#include <SDR Shared\Error.hpp>
+#include <SDR Shared\D3D11.hpp>
+#include <SDR Shared\IPC.hpp>
 
 #include <dxgi1_2.h>
 

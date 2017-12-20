@@ -1,5 +1,5 @@
-#include "Utility.hlsl"
-#include "SharedAll.hlsl"
+#include <Utility.hlsl>
+#include <SharedAll.hlsl>
 
 StructuredBuffer<WorkBufferData> WorkBuffer : register(t0);
 RWBuffer<uint> OutTexture : register(u0);
