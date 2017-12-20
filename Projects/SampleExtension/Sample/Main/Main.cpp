@@ -1,5 +1,4 @@
 #include <SDR Extension\Extension.hpp>
-#include <SDR Shared\String.hpp>
 #include <SDR Shared\Error.hpp>
 
 extern "C"
