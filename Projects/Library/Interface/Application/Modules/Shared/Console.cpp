@@ -322,8 +322,7 @@ namespace
 			Is fine anyway since the OS will clear everything on process exit, when they would normally get destroyed.
 			No need to clean the house up before it gets demolished.
 		*/
-		ret.Opaque = new uint8_t[size];
-		std::memset(ret.Opaque, 0, size);
+		ret.Opaque = std::calloc(1, size);
 
 		if (ModuleConVar::Entries::Constructor3 == 0)
 		{
@@ -348,8 +347,7 @@ namespace
 			Is fine anyway since the OS will clear everything on process exit, when they would normally get destroyed.
 			No need to clean the house up before it gets demolished.
 		*/
-		ret.Opaque = new uint8_t[size];
-		std::memset(ret.Opaque, 0, size);
+		ret.Opaque = std::calloc(1, size);
 
 		if (ModuleConCommand::Entries::Constructor1 == 0)
 		{
