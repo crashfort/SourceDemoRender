@@ -3,6 +3,9 @@
 #include <vector>
 #include <rapidjson\document.h>
 #include <SDR Shared\Error.hpp>
+
+#ifndef SDR_HOOKING_NO_MH
+
 #include <MinHook.h>
 
 template <typename T>
@@ -39,10 +42,16 @@ namespace SDR::Error::MH
 	}
 }
 
+#endif
+
 namespace SDR::Hooking
 {
+	#ifndef SDR_HOOKING_NO_MH
+	
 	MH_STATUS Initialize();
 	void Shutdown();
+	
+	#endif
 
 	struct ModuleInformation
 	{
@@ -65,6 +74,8 @@ namespace SDR::Hooking
 		std::vector<Entry> Bytes;
 	};
 
+	#ifndef SDR_HOOKING_NO_MH
+
 	struct HookModuleBare
 	{
 		void* TargetFunction;
@@ -80,6 +91,8 @@ namespace SDR::Hooking
 			return static_cast<FuncSignature>(OriginalFunction);
 		}
 	};
+
+	#endif
 
 	BytePattern GetPatternFromString(const char* input);
 
@@ -213,6 +226,8 @@ namespace SDR::Hooking
 
 	void GenericVariantInit(ModuleShared::Variant::Entry& entry, const rapidjson::Value& value);
 
+	#ifndef SDR_HOOKING_NO_MH
+
 	void CreateHookBare(HookModuleBare& hook, void* override, void* address);
 
 	template <typename FuncType>
@@ -251,6 +266,8 @@ namespace SDR::Hooking
 	};
 
 	void GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const rapidjson::Value& value);
+
+	#endif
 
 	struct AddressFinder
 	{
