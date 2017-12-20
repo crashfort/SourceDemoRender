@@ -21,7 +21,3 @@
 #include "rapidjson\document.h"
 
 using namespace std::chrono_literals;
-
-#include "Interface\Application\Modules\Shared\Console.hpp"
-#include "SDR Shared\File.hpp"
-#include "SDR Shared\Error.hpp"

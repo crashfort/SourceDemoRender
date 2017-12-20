@@ -4,6 +4,7 @@
 #include "Interface\Application\Modules\Movie Record\MovieRecord.hpp"
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
 #include "Interface\Application\Application.hpp"
+#include "Interface\Application\Modules\Shared\Console.hpp"
 
 #include <SDR Shared\Json.hpp>
 

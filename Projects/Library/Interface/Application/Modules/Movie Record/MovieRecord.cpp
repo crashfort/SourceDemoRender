@@ -12,6 +12,8 @@
 #include "Interface\LibraryInterface.hpp"
 #include "Interface\Application\Extensions\ExtensionManager.hpp"
 
+#include "Interface\Application\Modules\Shared\Console.hpp"
+
 namespace
 {
 	namespace Variables

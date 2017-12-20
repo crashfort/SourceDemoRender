@@ -3,6 +3,8 @@
 #include "Application\Application.hpp"
 #include <SDR Library API\ExportTypes.hpp>
 
+#include "Interface\Application\Modules\Shared\Console.hpp"
+
 extern "C"
 {
 	#include "libavcodec\avcodec.h"
