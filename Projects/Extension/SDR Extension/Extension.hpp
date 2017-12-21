@@ -116,6 +116,8 @@ namespace SDR::Extension
 			Returns engine D3D9 device.
 		*/
 		IDirect3DDevice9Ex*(*GetD3D9Device)();
+
+		uint32_t ExtensionKey;
 	};
 
 	/*

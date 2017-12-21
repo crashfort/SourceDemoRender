@@ -411,12 +411,16 @@ void SDR::ExtensionManager::Events::Ready()
 	data.IsRecordingVideo = SDR::MovieRecord::ShouldRecord;
 	data.GetD3D9Device = SDR::SourceGlobals::GetD3D9DeviceEx;
 
+	data.ExtensionKey = 0;
+
 	for (auto& ext : Loaded)
 	{
 		if (ext.Ready)
 		{
 			ext.Ready(data);
 		}
+
+		++data.ExtensionKey;
 	}
 }
 
