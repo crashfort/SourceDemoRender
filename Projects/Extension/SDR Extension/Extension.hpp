@@ -58,6 +58,20 @@ namespace SDR::Extension
 		Log::LogFunctionType Warning;
 	};
 
+	extern "C"
+	{
+		inline HMODULE GetThisModule()
+		{
+			extern IMAGE_DOS_HEADER __ImageBase;
+			return (HMODULE)&__ImageBase;
+		}
+	}
+
+	struct ModuleRequiredData
+	{
+		HMODULE Module = GetThisModule();
+	};
+
 	/*
 		Sent to SDR_Ready, contains functions that interact with the game.
 	*/
