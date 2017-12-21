@@ -411,6 +411,23 @@ void SDR::ExtensionManager::Events::Ready()
 	data.IsRecordingVideo = SDR::MovieRecord::ShouldRecord;
 	data.GetD3D9Device = SDR::SourceGlobals::GetD3D9DeviceEx;
 
+	data.GetExtensionCount = []()
+	{
+		return Loaded.size();
+	};
+
+	data.GetExtensionModule = [](uint32_t key)
+	{
+		auto& target = Loaded[key];
+		return target.Module;
+	};
+
+	data.GetExtensionFileName = [](uint32_t key)
+	{
+		auto& target = Loaded[key];
+		return target.Name.c_str();
+	};
+
 	data.ExtensionKey = 0;
 
 	for (auto& ext : Loaded)

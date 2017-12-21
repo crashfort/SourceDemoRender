@@ -58,20 +58,6 @@ namespace SDR::Extension
 		Log::LogFunctionType Warning;
 	};
 
-	extern "C"
-	{
-		inline HMODULE GetThisModule()
-		{
-			extern IMAGE_DOS_HEADER __ImageBase;
-			return (HMODULE)&__ImageBase;
-		}
-	}
-
-	struct ModuleRequiredData
-	{
-		HMODULE Module = GetThisModule();
-	};
-
 	/*
 		Sent to SDR_Ready, contains functions that interact with the game.
 	*/
@@ -135,6 +121,23 @@ namespace SDR::Extension
 			Unique key that is used to reference this extension to the main library.
 		*/
 		uint32_t ExtensionKey;
+
+		/*
+			Returns number of active extensions. The returned value can be used as the
+			upper bound for a loop, with each index being an extension key.
+		*/
+		size_t(*GetExtensionCount)();
+		
+		/*
+			Returns the module for the given extension.
+		*/
+		HMODULE(*GetExtensionModule)(uint32_t key);
+
+		/*
+			Returns the file name of the given extension. The returned string is only
+			the name with extension.
+		*/
+		const char*(*GetExtensionFileName)(uint32_t key);
 	};
 
 	/*
