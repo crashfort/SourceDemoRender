@@ -101,7 +101,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main\Main.cpp" />
+    <ClCompile Include="Main\PreviewWindowMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Main\Shaders\PixelShader.hlsl">
