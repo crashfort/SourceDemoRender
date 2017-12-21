@@ -131,6 +131,9 @@ namespace SDR::Extension
 		*/
 		IDirect3DDevice9Ex*(*GetD3D9Device)();
 
+		/*
+			Unique key that is used to reference this extension to the main library.
+		*/
 		uint32_t ExtensionKey;
 	};
 
