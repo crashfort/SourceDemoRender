@@ -68,7 +68,9 @@ This video editor can open everything SDR outputs.
 ## Extensions
 External modules can extend SDR with other functions. The public interface that your module should implement is available at [Extension.hpp](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/Extension/Include/SDR%20Extension/Extension.hpp) and example projects [Sample Extension](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/SampleExtension/Main/SampleMain.cpp) and [Preview Window](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/PreviewWindowExtension/Main/PreviewWindowMain.cpp).
 
-Extensions will only be loaded inside the ``Enabled`` folder. You can use the ``Disabled`` feature as storage for disabled extensions. To order extensions you enter their filenames in the order you want in ``Order.json``.
+The launcher has a feature to manage all your extensions. In this window you can quickly view, enable or disable, and order your extensions.
+
+![Launcher uI Extensions Window 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Launcher%20UI/ExtensionsWindow.png)
 
 ### Preview Window
 **Availability:** Free, included
