@@ -1,7 +1,9 @@
 #include "PrecompiledHeader.hpp"
 #include "LibraryInterface.hpp"
 #include "Application\Application.hpp"
-#include "SDR Library API\ExportTypes.hpp"
+#include <SDR Library API\ExportTypes.hpp>
+
+#include "Interface\Application\Modules\Shared\Console.hpp"
 
 extern "C"
 {
@@ -22,7 +24,7 @@ namespace
 {
 	enum
 	{
-		LibraryVersion = 26,
+		LibraryVersion = 27,
 	};
 }
 

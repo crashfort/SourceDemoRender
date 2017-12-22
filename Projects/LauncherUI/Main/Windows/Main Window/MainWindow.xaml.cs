@@ -89,13 +89,13 @@ namespace LauncherUI
 				return;
 			}
 
-			if (!System.IO.File.Exists(System.IO.Path.Combine("SourceDemoRender.dll")))
+			if (!System.IO.File.Exists("SourceDemoRender.dll"))
 			{
 				ErrorText.Text = "SourceDemoRender.dll does not exist.";
 				return;
 			}
 
-			var launcher = System.IO.Path.Combine("LauncherCLI.exe");
+			var launcher = "LauncherCLI.exe";
 
 			if (!System.IO.File.Exists(launcher))
 			{
@@ -169,6 +169,16 @@ namespace LauncherUI
 			{
 				GameComboBox.ToolTip = string.Format("{0}\n\nExecutable\n{1}\n\nGame\n{2}", obj.DisplayName, obj.ExecutablePath, obj.GamePath);
 			}
+		}
+
+		void ExtensionsButton_Click(object sender, RoutedEventArgs args)
+		{
+			var dialog = new ExtensionsWindow();
+			dialog.Owner = this;
+
+			dialog.ShowDialog();
+
+			ErrorText.Text = null;
 		}
 	}
 }

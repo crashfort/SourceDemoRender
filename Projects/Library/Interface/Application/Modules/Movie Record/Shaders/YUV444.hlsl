@@ -1,5 +1,5 @@
-#include "YUVShared.hlsl"
-#include "Utility.hlsl"
+#include <YUVShared.hlsl>
+#include <Utility.hlsl>
 
 [numthreads(ThreadsX, ThreadsY, 1)]
 void CSMain(uint3 dtid : SV_DispatchThreadID)

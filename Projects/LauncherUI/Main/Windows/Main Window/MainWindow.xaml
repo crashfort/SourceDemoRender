@@ -43,7 +43,8 @@
 				</StackPanel>
 			</StackPanel>
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Column="1">
-				<Button x:Name="LaunchButton" Content="Launch" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />
+				<Button x:Name="ExtensionsButton" Content="Extensions" Width="100" FontSize="15" Click="ExtensionsButton_Click" Height="32" />
+				<Button x:Name="LaunchButton" Content="Launch" Margin="10,0,0,0" Width="100" FontSize="15" Click="LaunchButton_Click" Height="32" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}" />
 			</StackPanel>
 		</Grid>
 	</Grid>

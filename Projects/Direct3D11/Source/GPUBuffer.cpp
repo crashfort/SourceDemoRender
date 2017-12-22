@@ -1,5 +1,5 @@
-#include "SDR Shared\GPUBuffer.hpp"
-#include "SDR Shared\Error.hpp"
+#include <SDR Shared\GPUBuffer.hpp>
+#include <SDR Shared\Error.hpp>
 
 void SDR::D3D11::GPUBuffer::Create(ID3D11Device* device, DXGI_FORMAT viewformat, size_t size, int numelements, bool staging)
 {

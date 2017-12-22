@@ -1,8 +1,8 @@
 #include "PrecompiledHeader.hpp"
 #include "Interface\LibraryInterface.hpp"
-#include "SDR Shared\Json.hpp"
-#include "SDR Shared\Hooking.hpp"
-#include "SDR Library API\ExportTypes.hpp"
+#include <SDR Shared\Json.hpp>
+#include <SDR Shared\Hooking.hpp>
+#include <SDR Library API\ExportTypes.hpp>
 #include "Application.hpp"
 #include "Interface\Application\Extensions\ExtensionManager.hpp"
 

@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Extension\Extension.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SDR Extension\Extension.hpp" />
   </ItemGroup>
 </Project>

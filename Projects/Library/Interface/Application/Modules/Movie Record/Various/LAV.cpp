@@ -1,5 +1,5 @@
 #include "LAV.hpp"
-#include "SDR Shared\Error.hpp"
+#include <SDR Shared\Error.hpp>
 
 SDR::LAV::ScopedFormatContext::~ScopedFormatContext()
 {

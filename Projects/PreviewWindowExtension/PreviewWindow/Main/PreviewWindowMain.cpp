@@ -1,8 +1,8 @@
-#include "SDR Extension\Extension.hpp"
-#include "SDR Shared\String.hpp"
-#include "SDR Shared\Error.hpp"
-#include "SDR Shared\D3D11.hpp"
-#include "SDR Shared\IPC.hpp"
+#include <SDR Extension\Extension.hpp>
+#include <SDR Shared\String.hpp>
+#include <SDR Shared\Error.hpp>
+#include <SDR Shared\D3D11.hpp>
+#include <SDR Shared\IPC.hpp>
 
 #include <dxgi1_2.h>
 
@@ -437,7 +437,7 @@ extern "C"
 		query.Author = "crashfort";
 		query.Contact = "https://github.com/crashfort/";
 
-		query.Version = 1;
+		query.Version = 2;
 	}
 
 	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::Extension::InitializeData& data)
@@ -474,12 +474,15 @@ extern "C"
 			PostThreadMessageA(id, WM_QUIT, 0, 0);
 		}
 		
-		Window::WindowThread.join();
+		if (Window::WindowThread.joinable())
+		{
+			Window::WindowThread.join();
+		}
 
 		Synchro::Destroy();
 	}
 
-	__declspec(dllexport) void __cdecl SDR_NewVideoFrame(SDR::Extension::NewVideoFrameData& data)
+	__declspec(dllexport) void __cdecl SDR_NewVideoFrame(const SDR::Extension::NewVideoFrameData& data)
 	{
 		if (Window::WindowPtr)
 		{

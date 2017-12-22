@@ -93,12 +93,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Main\Windows\Extensions Window\ExtensionsWindow.xaml.cs">
+      <DependentUpon>ExtensionsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Main\Windows\Start Window\StartWindow.xaml.cs">
       <DependentUpon>StartWindow.xaml</DependentUpon>
     </Compile>
     <Page Include="Main\Windows\Add Game Window\AddGameWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Main\Windows\Extensions Window\ExtensionsWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Main\Windows\Main Window\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

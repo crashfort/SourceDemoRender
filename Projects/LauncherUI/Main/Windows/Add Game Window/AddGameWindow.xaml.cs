@@ -20,7 +20,7 @@ namespace LauncherUI
 			}
 		}
 
-		struct CurrentGameVerifyData
+		class CurrentGameVerifyData
 		{
 			public string DisplayName;
 			public string ExpectedExecutableName;
@@ -80,7 +80,7 @@ namespace LauncherUI
 					}
 				}
 
-				var configpath = System.IO.Path.Combine("GameConfig.json");
+				var configpath = "GameConfig.json";
 				var content = System.IO.File.ReadAllText(configpath, new System.Text.UTF8Encoding(false));
 				var document = System.Json.JsonValue.Parse(content);
 				var dirinfo = new System.IO.DirectoryInfo(gamepath);

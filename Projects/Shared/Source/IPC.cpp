@@ -1,4 +1,4 @@
-#include "SDR Shared\IPC.hpp"
+#include <SDR Shared\IPC.hpp>
 
 HANDLE SDR::IPC::WaitForOne(std::initializer_list<HANDLE> handles)
 {

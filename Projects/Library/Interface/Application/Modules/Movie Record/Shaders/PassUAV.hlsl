@@ -1,5 +1,5 @@
-#include "Utility.hlsl"
-#include "SharedAll.hlsl"
+#include <Utility.hlsl>
+#include <SharedAll.hlsl>
 
 Texture2D<float4> SharedTexture : register(t0);
 RWStructuredBuffer<WorkBufferData> WorkBuffer : register(u0);

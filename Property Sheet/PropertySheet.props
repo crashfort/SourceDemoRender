@@ -6,14 +6,6 @@
     <SDR_FFMPEG_LIBRARY>C:\msys64\home\CF\ffmpegbuild\lib\</SDR_FFMPEG_LIBRARY>
     <SDR_RAPIDJSON_INCLUDE>C:\VS\3rd Party Libs\rapidjson\include\</SDR_RAPIDJSON_INCLUDE>
     <SDR_RWQUEUE_INCLUDE>C:\VS\3rd Party Libs\readerwriterqueue\include\</SDR_RWQUEUE_INCLUDE>
-    <SDR_SHARED_INCLUDE>$(SolutionDir)Shared\Include\</SDR_SHARED_INCLUDE>
-    <SDR_API_INCLUDE>$(SolutionDir)Library API\Include\</SDR_API_INCLUDE>
-    <SDR_EXTENSION_INCLUDE>$(SolutionDir)Extension\Include\</SDR_EXTENSION_INCLUDE>
-    <SDR_HOOKING_INCLUDE>$(SolutionDir)Hooking\Include\</SDR_HOOKING_INCLUDE>
-    <SDR_SHADERDEFS_INCLUDE>$(SolutionDir)Shader Definitions\Include\</SDR_SHADERDEFS_INCLUDE>
-    <SDR_D3D11_INCLUDE>$(SolutionDir)Direct3D11\Include\</SDR_D3D11_INCLUDE>
-    <SDR_CONSOLETYPES_INCLUDE>$(SolutionDir)Console Types\Include\</SDR_CONSOLETYPES_INCLUDE>
-    <SDR_EXTENSION_REQUIRED>$(SDR_EXTENSION_INCLUDE);$(SDR_CONSOLETYPES_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_SHARED_INCLUDE)</SDR_EXTENSION_REQUIRED>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
@@ -35,30 +27,6 @@
     </BuildMacro>
     <BuildMacro Include="SDR_RWQUEUE_INCLUDE">
       <Value>$(SDR_RWQUEUE_INCLUDE)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_SHARED_INCLUDE">
-      <Value>$(SDR_SHARED_INCLUDE)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_API_INCLUDE">
-      <Value>$(SDR_API_INCLUDE)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_EXTENSION_INCLUDE">
-      <Value>$(SDR_EXTENSION_INCLUDE)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_HOOKING_INCLUDE">
-      <Value>$(SDR_HOOKING_INCLUDE)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_SHADERDEFS_INCLUDE">
-      <Value>$(SDR_SHADERDEFS_INCLUDE)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_D3D11_INCLUDE">
-      <Value>$(SDR_D3D11_INCLUDE)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_CONSOLETYPES_INCLUDE">
-      <Value>$(SDR_CONSOLETYPES_INCLUDE)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SDR_EXTENSION_REQUIRED">
-      <Value>$(SDR_EXTENSION_REQUIRED)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

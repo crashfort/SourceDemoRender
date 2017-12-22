@@ -1,6 +1,6 @@
-#include "SDR Shared\Hooking.hpp"
-#include "SDR Shared\BareWindows.hpp"
-#include "SDR Shared\Json.hpp"
+#include <SDR Shared\Hooking.hpp>
+#include <SDR Shared\BareWindows.hpp>
+#include <SDR Shared\Json.hpp>
 #include <cctype>
 #include <cstdint>
 #include <Psapi.h>
@@ -147,6 +147,8 @@ namespace
 	}
 }
 
+#ifndef SDR_HOOKING_NO_MH
+
 MH_STATUS SDR::Hooking::Initialize()
 {
 	return MH_Initialize();
@@ -156,6 +158,8 @@ void SDR::Hooking::Shutdown()
 {
 	MH_Uninitialize();
 }
+
+#endif
 
 SDR::Hooking::ModuleInformation::ModuleInformation(const char* name) : Name(name)
 {
@@ -439,6 +443,8 @@ void SDR::Hooking::GenericVariantInit(ModuleShared::Variant::Entry& entry, const
 	ModuleShared::SetFromAddress(entry, addr, variant);
 }
 
+#ifndef SDR_HOOKING_NO_MH
+
 void SDR::Hooking::CreateHookBare(HookModuleBare& hook, void* override, void* address)
 {
 	SDR::Error::ScopedContext e1("CreateHookBare"s);
@@ -496,3 +502,5 @@ void SDR::Hooking::GenericHookVariantInit(std::initializer_list<GenericHookInitP
 
 	CreateHookBareShort(target.Hook, target.Override, value);
 }
+
+#endif

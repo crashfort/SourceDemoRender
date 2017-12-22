@@ -4,8 +4,9 @@
 #include "Interface\Application\Modules\Movie Record\MovieRecord.hpp"
 #include "Interface\Application\Modules\Shared\SourceGlobals.hpp"
 #include "Interface\Application\Application.hpp"
+#include "Interface\Application\Modules\Shared\Console.hpp"
 
-#include "SDR Shared\Json.hpp"
+#include <SDR Shared\Json.hpp>
 
 namespace
 {
@@ -410,12 +411,33 @@ void SDR::ExtensionManager::Events::Ready()
 	data.IsRecordingVideo = SDR::MovieRecord::ShouldRecord;
 	data.GetD3D9Device = SDR::SourceGlobals::GetD3D9DeviceEx;
 
+	data.GetExtensionCount = []()
+	{
+		return Loaded.size();
+	};
+
+	data.GetExtensionModule = [](uint32_t key)
+	{
+		auto& target = Loaded[key];
+		return target.Module;
+	};
+
+	data.GetExtensionFileName = [](uint32_t key)
+	{
+		auto& target = Loaded[key];
+		return target.Name.c_str();
+	};
+
+	data.ExtensionKey = 0;
+
 	for (auto& ext : Loaded)
 	{
 		if (ext.Ready)
 		{
 			ext.Ready(data);
 		}
+
+		++data.ExtensionKey;
 	}
 }
 
@@ -441,7 +463,7 @@ void SDR::ExtensionManager::Events::EndMovie()
 	}
 }
 
-void SDR::ExtensionManager::Events::NewVideoFrame(SDR::Extension::NewVideoFrameData& data)
+void SDR::ExtensionManager::Events::NewVideoFrame(const SDR::Extension::NewVideoFrameData& data)
 {
 	for (const auto& ext : Loaded)
 	{

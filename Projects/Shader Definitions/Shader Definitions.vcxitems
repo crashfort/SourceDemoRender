@@ -14,10 +14,10 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)Include\SharedAll.hlsl">
+    <None Include="$(MSBuildThisFileDirectory)SDR Shader Definitions\SharedAll.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="$(MSBuildThisFileDirectory)Include\Utility.hlsl">
+    <None Include="$(MSBuildThisFileDirectory)SDR Shader Definitions\Utility.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

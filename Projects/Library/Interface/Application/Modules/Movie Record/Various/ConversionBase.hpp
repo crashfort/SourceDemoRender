@@ -1,6 +1,6 @@
 #pragma once
-#include "SDR Shared\D3D11.hpp"
-#include "SDR Shared\GPUBuffer.hpp"
+#include <SDR Shared\D3D11.hpp>
+#include <SDR Shared\GPUBuffer.hpp>
 #include "LAV.hpp"
 #include "FutureData.hpp"
 

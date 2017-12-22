@@ -1,5 +1,5 @@
-#include "Utility.hlsl"
-#include "SharedAll.hlsl"
+#include <Utility.hlsl>
+#include <SharedAll.hlsl>
 
 RWStructuredBuffer<WorkBufferData> InputBuffer : register(u0);
 

@@ -39,6 +39,9 @@
     <Import Project="..\Library API\Library API.vcxitems" Label="Shared" />
     <Import Project="..\Hooking\Hooking.vcxitems" Label="Shared" />
     <Import Project="..\Direct3D11\Direct3D11.vcxitems" Label="Shared" />
+    <Import Project="..\Console Types\Console Types.vcxitems" Label="Shared" />
+    <Import Project="..\Extension\Extension.vcxitems" Label="Shared" />
+    <Import Project="..\Shader Definitions\Shader Definitions.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -67,7 +70,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_SHARED_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_API_INCLUDE);$(SDR_FFMPEG_INCLUDE);$(SDR_HOOKING_INCLUDE);$(SDR_EXTENSION_INCLUDE);$(SDR_D3D11_INCLUDE);$(SDR_CONSOLETYPES_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_FFMPEG_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -81,7 +84,7 @@
       </DelayLoadDLLs>
     </Link>
     <FxCompile>
-      <AdditionalIncludeDirectories>$(SDR_SHADERDEFS_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Shader Definitions\SDR Shader Definitions\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -92,7 +95,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_SHARED_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_API_INCLUDE);$(SDR_FFMPEG_INCLUDE);$(SDR_HOOKING_INCLUDE);$(SDR_EXTENSION_INCLUDE);$(SDR_D3D11_INCLUDE);$(SDR_CONSOLETYPES_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_FFMPEG_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -108,7 +111,7 @@
       </DelayLoadDLLs>
     </Link>
     <FxCompile>
-      <AdditionalIncludeDirectories>$(SDR_SHADERDEFS_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Shader Definitions\SDR Shader Definitions\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

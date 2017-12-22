@@ -11,6 +11,7 @@ namespace SDR::Console
 		Variable(const char* ref);
 		Variable(const Variable& other) = delete;
 		Variable(Variable&& other) = default;
+
 		Variable& operator=(const Variable& other) = delete;
 		Variable& operator=(Variable&& other) = default;
 
@@ -24,7 +25,6 @@ namespace SDR::Console
 		void SetValue(int value);
 
 		void* Opaque = nullptr;
-		std::unique_ptr<uint8_t[]> Blob;
 	};
 
 	struct CommandArgs
@@ -41,7 +41,6 @@ namespace SDR::Console
 	struct Command
 	{
 		void* Opaque = nullptr;
-		std::unique_ptr<uint8_t[]> Blob;
 	};
 
 	void Load();

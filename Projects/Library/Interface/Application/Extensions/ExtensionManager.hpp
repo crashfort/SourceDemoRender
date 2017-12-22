@@ -1,5 +1,5 @@
 #pragma once
-#include "SDR Extension\Extension.hpp"
+#include <SDR Extension\Extension.hpp>
 #include <d3d11.h>
 
 namespace SDR::ExtensionManager
@@ -32,6 +32,6 @@ namespace SDR::ExtensionManager
 		/*
 			
 		*/
-		void NewVideoFrame(SDR::Extension::NewVideoFrameData& data);
+		void NewVideoFrame(const SDR::Extension::NewVideoFrameData& data);
 	}
 }

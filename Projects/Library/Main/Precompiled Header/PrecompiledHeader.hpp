@@ -1,5 +1,5 @@
 #pragma once
-#include "SDR Shared\BareWindows.hpp"
+#include <SDR Shared\BareWindows.hpp>
 #include <Psapi.h>
 #include <Shlwapi.h>
 #include <comdef.h>
@@ -21,7 +21,3 @@
 #include "rapidjson\document.h"
 
 using namespace std::chrono_literals;
-
-#include "Interface\Application\Modules\Shared\Console.hpp"
-#include "SDR Shared\File.hpp"
-#include "SDR Shared\Error.hpp"

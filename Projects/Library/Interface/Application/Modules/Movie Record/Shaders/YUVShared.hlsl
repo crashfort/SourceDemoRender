@@ -1,4 +1,4 @@
-#include "SharedAll.hlsl"
+#include <SharedAll.hlsl>
 
 StructuredBuffer<WorkBufferData> WorkBuffer : register(t0);
 RWBuffer<uint> ChannelY : register(u0);

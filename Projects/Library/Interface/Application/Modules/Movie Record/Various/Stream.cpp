@@ -1,7 +1,8 @@
 #include "Stream.hpp"
-#include "SDR Shared\Error.hpp"
-#include "SDR Shared\D3D11.hpp"
+#include <SDR Shared\Error.hpp>
+#include <SDR Shared\D3D11.hpp>
 #include "Interface\Application\Extensions\ExtensionManager.hpp"
+#include "Interface\Application\Modules\Shared\Console.hpp"
 #include "Profile.hpp"
 #include "Interface\Application\Modules\Movie Record\Shaders\Blobs\BGR0.hpp"
 #include "Interface\Application\Modules\Movie Record\Shaders\Blobs\ClearUAV.hpp"
@@ -12,6 +13,26 @@
 #include "ConversionBGR0.hpp"
 #include "ConversionYUV.hpp"
 #include <functional>
+
+namespace
+{
+	namespace Variables
+	{
+		SDR::Console::Variable UseDebugDevice;
+
+		SDR::StartupFunctionAdder A1("Stream console variables", []()
+		{
+			UseDebugDevice = SDR::Console::MakeBool("sdr_d3d11_debug", []()
+			{
+				#ifdef _DEBUG
+				return "1";
+				#else
+				return "0";
+				#endif
+			}());
+		});
+	}
+}
 
 namespace
 {
@@ -26,10 +47,12 @@ namespace
 
 void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool sampling)
 {
-	uint32_t flags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-	#ifdef _DEBUG
-	flags |= D3D11_CREATE_DEVICE_DEBUG;
-	#endif
+	auto flags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+
+	if (Variables::UseDebugDevice.GetBool())
+	{
+		flags |= D3D11_CREATE_DEVICE_DEBUG;
+	}
 
 	D3D_FEATURE_LEVEL createdlevel;
 

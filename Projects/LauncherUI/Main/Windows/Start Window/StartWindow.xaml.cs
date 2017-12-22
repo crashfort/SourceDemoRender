@@ -19,11 +19,27 @@ namespace LauncherUI
 
 		public StartWindow()
 		{
+			if (ShouldUpdateSkip())
+			{
+				ProceedToMainWindow();
+				return;
+			}
+
 			InitializeComponent();
 
 			CheckBranch();
 
 			MainProcedure();
+		}
+
+		bool ShouldUpdateSkip()
+		{
+			if (System.IO.File.Exists("LauncherUI_UpdateSkip"))
+			{
+				return true;
+			}
+
+			return false;
 		}
 
 		void CheckBranch()
