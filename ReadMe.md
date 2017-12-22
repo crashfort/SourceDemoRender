@@ -120,15 +120,6 @@ This extension will gather the current player velocity and display it in a highl
 			</td>
 		</tr>
 		<tr>
-			<td>sdr_video_fps</td>
-			<td>
-				Movie output framerate.
-				<br/><br/>
-				<b>Values:</b> 30 to 1000 <br/>
-				<b>Default:</b> 60 <br/>
-			</td>
-		</tr>
-		<tr>
 			<td>sdr_endmovieflash</td>
 			<td>
 				Flash the window when endmovie gets called. This can be used with the demo director to do "endmovie" on a certain tick so you don't have to keep looking at the window.
@@ -165,6 +156,15 @@ This extension will gather the current player velocity and display it in a highl
 		<th>Description</th>
 	</thead>
 	<tbody>
+		<tr>
+			<td>sdr_video_fps</td>
+			<td>
+				Movie output framerate.
+				<br/><br/>
+				<b>Values:</b> 30 to 1000 <br/>
+				<b>Default:</b> 60 <br/>
+			</td>
+		</tr>
 		<tr>
 			<td>sdr_video_lav_suppresslog</td>
 			<td>
