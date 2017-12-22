@@ -111,39 +111,48 @@ This extension will gather the current player velocity and display it in a highl
 		<th>Description</th>
 	</thead>
 	<tbody>
-	<tr>
-		<td>sdr_outputdir</td>
-		<td>
-			Path where to save the video. The directory structure must exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the SDR folder.
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_video_fps</td>
-		<td>
-			Movie output framerate.
-            <br/><br/>
-            <b>Values:</b> 30 to 1000 <br/>
-            <b>Default:</b> 60 <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_endmovieflash</td>
-		<td>
-			Flash the window when endmovie gets called. This can be used with the demo director to do "endmovie" on a certain tick so you don't have to keep looking at the window.
-			<br/><br/>
-			<b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 0 <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_endmoviequit</td>
-		<td>
-			Quits the game after all processing is done.
-			<br/><br/>
-			<b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 0 <br/>
-		</td>
-	</tr>
+		<tr>
+			<td>sdr_outputdir</td>
+			<td>
+				Path where to save the video. The directory structure must exist. This cannot be the root of a drive, it must be a in at least one directory. If this is empty, the output will be in the SDR folder.
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_fps</td>
+			<td>
+				Movie output framerate.
+				<br/><br/>
+				<b>Values:</b> 30 to 1000 <br/>
+				<b>Default:</b> 60 <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_endmovieflash</td>
+			<td>
+				Flash the window when endmovie gets called. This can be used with the demo director to do "endmovie" on a certain tick so you don't have to keep looking at the window.
+				<br/><br/>
+				<b>Values:</b> 0 or 1 <br/>
+				<b>Default:</b> 0 <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_endmoviequit</td>
+			<td>
+				Quits the game after all processing is done.
+				<br/><br/>
+				<b>Values:</b> 0 or 1 <br/>
+				<b>Default:</b> 0 <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_d3d11_debug</td>
+			<td>
+				Enable the Direct3D 11 debug layer. Useful when making extensions that use Direct3D 11 to make sure everything is working correctly.
+				<br/><br/>
+				<b>Values:</b> 0 or 1 <br/>
+				<b>Default:</b> 0 <br/>
+			</td>
+		</tr>
 	</tbody>
 </table>
 
@@ -154,99 +163,99 @@ This extension will gather the current player velocity and display it in a highl
 		<th>Description</th>
 	</thead>
 	<tbody>
-	<tr>
-		<td>sdr_video_lav_suppresslog</td>
-		<td>
-			Enable or disable log output from LAV.
-            <br/><br/>
-            <b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 1 <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_video_encoder</td>
-		<td>
-			Desired video encoder.
-			<br/><br/>
-			<b>Values:</b> libx264, libx264rgb <br/>
-            <b>Default:</b> libx264rgb <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_video_pxformat</td>
-		<td>
-			Encoded pixel format to use.
-			<br/><br/>
-			<b>Values:</b><br/>
-			<table>
-				<thead>
-				<tr>
-						<th>Encoder</th>
-						<th>Values</th>
-					</tr>
-				</thead>
-				<tbody>
+		<tr>
+			<td>sdr_video_lav_suppresslog</td>
+			<td>
+				Enable or disable log output from LAV.
+				<br/><br/>
+				<b>Values:</b> 0 or 1 <br/>
+				<b>Default:</b> 1 <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_encoder</td>
+			<td>
+				Desired video encoder.
+				<br/><br/>
+				<b>Values:</b> libx264, libx264rgb <br/>
+				<b>Default:</b> libx264rgb <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_pxformat</td>
+			<td>
+				Encoded pixel format to use.
+				<br/><br/>
+				<b>Values:</b><br/>
+				<table>
+					<thead>
 					<tr>
-						<td>libx264</td>
-						<td>yuv420, yuv444</td>
-					</tr>
-					<tr>
-						<td>libx264rgb</td>
-						<td>bgr0</td>
-					</tr>
-				</tbody>
-			</table>
-			<br/>
-            <b>Default:</b> First listed above per encoder <br/>
-			<a href="https://wiki.videolan.org/YUV/">Read more about YUV</a>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_video_d3d11_staging</td>
-		<td>
-			Use extra intermediate buffer when retreiving data from the GPU.
-			<br/><br/>
-            <b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 1 <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_video_x264_crf</td>
-		<td>
-			Constant rate factor quality value. Note that using 0 (lossless) can produce a video with a 4:4:4 profile which your media player might not support.
-			<br/><br/>
-            <b>Values:</b> 0 to 51 <br/>
-            <b>Default:</b> 0 <br/>
-			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_video_x264_preset</td>
-		<td>
-			Encoding preset. If you can, prefer not to use a slow encoding preset as the encoding may fall behind and the game will have to wait for it to catch up.
-			<br/><br/>
-            <b>Default:</b> ultrafast <br/>
-			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_video_x264_intra</td>
-		<td>
-			Whether to produce a video of only keyframes.
-			<br/><br/>
-            <b>Values:</b> 0 or 1 <br/>
-            <b>Default:</b> 1 <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_video_yuvspace</td>
-		<td>
-			YUV color space. This value is handled differently in media, try experimenting. Not available in RGB video.
-			<br/><br/>
-            <b>Values:</b> 601 or 709 <br/>
-            <b>Default:</b> 709 <br/>
-		</td>
-	</tr>
+							<th>Encoder</th>
+							<th>Values</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>libx264</td>
+							<td>yuv420, yuv444</td>
+						</tr>
+						<tr>
+							<td>libx264rgb</td>
+							<td>bgr0</td>
+						</tr>
+					</tbody>
+				</table>
+				<br/>
+				<b>Default:</b> First listed above per encoder <br/>
+				<a href="https://wiki.videolan.org/YUV/">Read more about YUV</a>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_d3d11_staging</td>
+			<td>
+				Use extra intermediate buffer when retreiving data from the GPU.
+				<br/><br/>
+				<b>Values:</b> 0 or 1 <br/>
+				<b>Default:</b> 1 <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_x264_crf</td>
+			<td>
+				Constant rate factor quality value. Note that using 0 (lossless) can produce a video with a 4:4:4 profile which your media player might not support.
+				<br/><br/>
+				<b>Values:</b> 0 to 51 <br/>
+				<b>Default:</b> 0 <br/>
+				<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_x264_preset</td>
+			<td>
+				Encoding preset. If you can, prefer not to use a slow encoding preset as the encoding may fall behind and the game will have to wait for it to catch up.
+				<br/><br/>
+				<b>Default:</b> ultrafast <br/>
+				<a href="https://trac.ffmpeg.org/wiki/Encode/H.264">Read more</a>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_x264_intra</td>
+			<td>
+				Whether to produce a video of only keyframes.
+				<br/><br/>
+				<b>Values:</b> 0 or 1 <br/>
+				<b>Default:</b> 1 <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_yuvspace</td>
+			<td>
+				YUV color space. This value is handled differently in media, try experimenting. Not available in RGB video.
+				<br/><br/>
+				<b>Values:</b> 601 or 709 <br/>
+				<b>Default:</b> 709 <br/>
+			</td>
+		</tr>
 	</tbody>
 </table>
 
@@ -257,24 +266,24 @@ This extension will gather the current player velocity and display it in a highl
 		<th>Description</th>
 	</thead>
 	<tbody>
-	<tr>
-		<td>sdr_video_sample_mult</td>
-		<td>
-			Value to multiply with <b>sdr_video_fps</b>. This is how many frames will be put together to form a final frame multiplied by exposure. Less than 2 will disable sampling.
-            <br/><br/>
-            <b>Values:</b> Over 0 <br/>
-            <b>Default:</b> 32 <br/>
-		</td>
-	</tr>
-	<tr>
-		<td>sdr_video_sample_exposure</td>
-		<td>
-			Fraction of time per frame that is exposed for sampling
-            <br/><br/>
-            <b>Values:</b> 0 to 1 <br/>
-            <b>Default:</b> 0.5 <br/>
-		</td>
-	</tr>
+		<tr>
+			<td>sdr_video_sample_mult</td>
+			<td>
+				Value to multiply with <b>sdr_video_fps</b>. This is how many frames will be put together to form a final frame multiplied by exposure. Less than 2 will disable sampling.
+				<br/><br/>
+				<b>Values:</b> Over 0 <br/>
+				<b>Default:</b> 32 <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_sample_exposure</td>
+			<td>
+				Fraction of time per frame that is exposed for sampling
+				<br/><br/>
+				<b>Values:</b> 0 to 1 <br/>
+				<b>Default:</b> 0.5 <br/>
+			</td>
+		</tr>
 	</tbody>
 </table>
 
@@ -283,40 +292,44 @@ In this demo an object is rotating 6 times per second. This is a fast moving obj
 
 The X axis is the multiplication and the Y axis is the exposure.
 <table>
-	<tr>
-		<td></td>
-		<th>16</th>
-		<th>32</th>
-		<th>64</th>
-		<th>128</th>
-	</tr>
-	<tr>
-		<th>0.25</th>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/16_025.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/32_025.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/64_025.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/128_025.png"/></td>
-	</tr>
-    <tr>
-		<th>0.50</th>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/16_050.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/32_050.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/64_050.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/128_050.png"/></td>
-	</tr>
-    <tr>
-		<th>0.75</th>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/16_075.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/32_075.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/64_075.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/128_075.png"/></td>
-	</tr>
-    <tr>
-		<th>1.00</th>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/16_100.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/32_100.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/64_100.png"/></td>
-		<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/128_100.png"/></td>
-	</tr>
+	<thead>
+		<tr>
+			<td></td>
+			<th>16</th>
+			<th>32</th>
+			<th>64</th>
+			<th>128</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<th>0.25</th>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/16_025.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/32_025.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/64_025.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/128_025.png"/></td>
+		</tr>
+		<tr>
+			<th>0.50</th>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/16_050.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/32_050.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/64_050.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/128_050.png"/></td>
+		</tr>
+		<tr>
+			<th>0.75</th>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/16_075.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/32_075.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/64_075.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/128_075.png"/></td>
+		</tr>
+		<tr>
+			<th>1.00</th>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/16_100.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/32_100.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/64_100.png"/></td>
+			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Sampling%20Demo/128_100.png"/></td>
+		</tr>
+	</tbody>
 </table>
 
