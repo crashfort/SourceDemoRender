@@ -191,12 +191,12 @@ namespace
 					return input;
 				};
 
-				str += SDR::String::GetFormattedString("SDR: File: \"%s\"\n", ext.Name.c_str());
-				str += SDR::String::GetFormattedString("SDR: Name: \"%s\"\n", safestr(ext.Info.Name));
-				str += SDR::String::GetFormattedString("SDR: Namespace: \"%s\"\n", safestr(ext.Info.Namespace));
-				str += SDR::String::GetFormattedString("SDR: Author: \"%s\"\n", safestr(ext.Info.Author));
-				str += SDR::String::GetFormattedString("SDR: Contact: \"%s\"\n", safestr(ext.Info.Contact));
-				str += SDR::String::GetFormattedString("SDR: Version: %d\n", ext.Info.Version);
+				str += SDR::String::Format("SDR: File: \"%s\"\n", ext.Name.c_str());
+				str += SDR::String::Format("SDR: Name: \"%s\"\n", safestr(ext.Info.Name));
+				str += SDR::String::Format("SDR: Namespace: \"%s\"\n", safestr(ext.Info.Namespace));
+				str += SDR::String::Format("SDR: Author: \"%s\"\n", safestr(ext.Info.Author));
+				str += SDR::String::Format("SDR: Contact: \"%s\"\n", safestr(ext.Info.Contact));
+				str += SDR::String::Format("SDR: Version: %d\n", ext.Info.Version);
 
 				if (index != maxindex)
 				{

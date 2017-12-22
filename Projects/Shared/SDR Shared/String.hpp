@@ -12,7 +12,7 @@ namespace SDR::String
 	std::wstring FromUTF8(const char* input);
 
 	template <typename... Args>
-	inline std::string GetFormattedString(const char* format, Args&&... args)
+	inline std::string Format(const char* format, Args&&... args)
 	{
 		std::string ret;
 

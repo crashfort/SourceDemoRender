@@ -27,19 +27,19 @@ namespace SDR::API
 	inline std::string CreatePipeName(StageType stage)
 	{
 		auto stagenum = (uint32_t)stage;
-		return String::GetFormattedString(R"(\\.\pipe\sdr_loader_pipe_%d)", stagenum);
+		return String::Format(R"(\\.\pipe\sdr_loader_pipe_%d)", stagenum);
 	}
 
 	inline std::string CreateEventSuccessName(StageType stage)
 	{
 		auto stagenum = (uint32_t)stage;
-		return String::GetFormattedString("SDR_LOADER_SUCCESS_%d", stagenum);
+		return String::Format("SDR_LOADER_SUCCESS_%d", stagenum);
 	}
 
 	inline std::string CreateEventFailureName(StageType stage)
 	{
 		auto stagenum = (uint32_t)stage;
-		return String::GetFormattedString("SDR_LOADER_FAIL_%d", stagenum);
+		return String::Format("SDR_LOADER_FAIL_%d", stagenum);
 	}
 
 	using SDR_LibraryVersion = int(__cdecl*)();

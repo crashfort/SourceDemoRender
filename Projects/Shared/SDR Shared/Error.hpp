@@ -39,7 +39,7 @@ namespace SDR::Error
 	template <typename... Args>
 	inline void Make(const char* format, Args&&... args)
 	{
-		Make(String::GetFormattedString(format, std::forward<Args>(args)...));
+		Make(String::Format(format, std::forward<Args>(args)...));
 	}
 
 	/*
@@ -105,8 +105,8 @@ namespace SDR::Error
 				_com_error error(hr);
 				auto message = error.ErrorMessage();
 
-				auto user = String::GetFormattedString(format, std::forward<Args>(args)...);
-				auto final = String::GetFormattedString("%08X (%s) -> ", hr, message);
+				auto user = String::Format(format, std::forward<Args>(args)...);
+				auto final = String::Format("%08X (%s) -> ", hr, message);
 
 				final += user;
 
