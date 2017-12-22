@@ -66,7 +66,7 @@ Some versions can open `libx264rgb` videos which is the recommended way as there
 This video editor can open everything SDR outputs.
 
 ## Extensions
-External modules can extend SDR with other functions. The public interface that your module should implement is available at [Extension.hpp](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/Extension/Include/SDR%20Extension/Extension.hpp). Example projects are at [Sample Extension](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/SampleExtension/Main/SampleMain.cpp) and [Preview Window](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/PreviewWindowExtension/Main/PreviewWindowMain.cpp).
+External modules can extend SDR with other functions. The public interface that your module should implement is available at [Extension.hpp](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/Extension/SDR%20Extension/Extension.hpp). Example projects are at [Sample Extension](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/SampleExtension/Sample/Main/SampleExtensionMain.cpp) and [Preview Window](https://github.com/crashfort/SourceDemoRender/tree/master/Projects/PreviewWindowExtension/PreviewWindow/Main).
 
 The launcher has a feature to manage all your extensions. In this window you can quickly view, enable or disable, and order your extensions.
 
