@@ -1,5 +1,5 @@
 #pragma once
-#include "rapidjson\document.h"
+#include <rapidjson\document.h>
 #include <SDR Shared\Log.hpp>
 #include <SDR Shared\ConsoleTypes.hpp>
 #include <d3d9.h>
