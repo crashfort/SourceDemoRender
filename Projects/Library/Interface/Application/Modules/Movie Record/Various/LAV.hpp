@@ -7,10 +7,10 @@
 
 extern "C"
 {
-	#include "libavutil\avutil.h"
-	#include "libavutil\imgutils.h"
-	#include "libavcodec\avcodec.h"
-	#include "libavformat\avformat.h"
+	#include <libavutil\avutil.h>
+	#include <libavutil\imgutils.h>
+	#include <libavcodec\avcodec.h>
+	#include <libavformat\avformat.h>
 }
 
 #undef __STDC_CONSTANT_MACROS

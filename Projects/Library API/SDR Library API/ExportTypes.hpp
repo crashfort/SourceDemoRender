@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <wrl.h>
-#include "SDR Shared\String.hpp"
+#include <SDR Shared\String.hpp>
 
 namespace SDR::API
 {

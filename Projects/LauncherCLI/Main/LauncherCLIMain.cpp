@@ -4,7 +4,7 @@
 #include <SDR Shared\Json.hpp>
 #include <SDR Shared\IPC.hpp>
 #include <SDR Library API\ExportTypes.hpp>
-#include "rapidjson\document.h"
+#include <rapidjson\document.h>
 #include <Shlwapi.h>
 #include <wrl.h>
 #include <cstdio>

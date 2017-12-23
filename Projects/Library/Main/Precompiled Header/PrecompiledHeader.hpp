@@ -18,6 +18,6 @@
 #include <functional>
 #include <filesystem>
 
-#include "rapidjson\document.h"
+#include <rapidjson\document.h>
 
 using namespace std::chrono_literals;
