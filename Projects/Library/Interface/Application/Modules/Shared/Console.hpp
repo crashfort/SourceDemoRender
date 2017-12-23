@@ -8,12 +8,13 @@ namespace SDR::Console
 	struct Variable
 	{
 		Variable() = default;
-		Variable(const char* ref);
 		Variable(const Variable& other) = delete;
 		Variable(Variable&& other) = default;
 
 		Variable& operator=(const Variable& other) = delete;
 		Variable& operator=(Variable&& other) = default;
+
+		static Variable Find(const char* name);
 
 		bool GetBool() const;
 		int GetInt() const;

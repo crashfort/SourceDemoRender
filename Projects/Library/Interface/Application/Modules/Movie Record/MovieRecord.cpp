@@ -829,10 +829,10 @@ namespace
 					movie.SamplingData.TimePerFrame = 1.0 / fps;
 				}
 
-				SDR::Console::Variable hostframerate("host_framerate");
+				auto hostframerate = SDR::Console::Variable::Find("host_framerate");
 				hostframerate.SetValue(enginerate);
 
-				SDR::Console::Variable matqueuemode("mat_queue_mode");
+				auto matqueuemode = SDR::Console::Variable::Find("mat_queue_mode");
 				movie.OldMatQueueModeValue = matqueuemode.GetInt();
 
 				/*
@@ -840,7 +840,7 @@ namespace
 				*/
 				matqueuemode.SetValue(0);
 
-				SDR::Console::Variable nofocustime("engine_no_focus_sleep");
+				auto nofocustime = SDR::Console::Variable::Find("engine_no_focus_sleep");
 				movie.OldEngineSleepTime = nofocustime.GetInt();
 
 				/*
@@ -1007,13 +1007,13 @@ namespace
 					Don't call original function as we don't call the engine's startmovie.
 				*/
 
-				SDR::Console::Variable hostframerate("host_framerate");
+				auto hostframerate = SDR::Console::Variable::Find("host_framerate");
 				hostframerate.SetValue(0);
 
-				SDR::Console::Variable matqueuemode("mat_queue_mode");
+				auto matqueuemode = SDR::Console::Variable::Find("mat_queue_mode");
 				matqueuemode.SetValue(CurrentMovie.OldMatQueueModeValue);
 
-				SDR::Console::Variable nofocustime("engine_no_focus_sleep");
+				auto nofocustime = SDR::Console::Variable::Find("engine_no_focus_sleep");
 				nofocustime.SetValue(CurrentMovie.OldEngineSleepTime);
 
 				SDR::Log::Message("SDR: Ending movie\n"s);

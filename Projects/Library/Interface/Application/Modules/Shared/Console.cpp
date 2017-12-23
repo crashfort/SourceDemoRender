@@ -360,12 +360,16 @@ namespace
 
 namespace SDR::Console
 {
-	Variable::Variable(const char* ref)
+	SDR::Console::Variable Variable::Find(const char* name)
 	{
+		SDR::Console::Variable ret;
+
 		if (ModuleCVar::Entries::FindVar == 0)
 		{
-			Opaque = ModuleCVar::Variant0::FindVar()(ModuleCVar::Ptr, nullptr, ref);
+			ret.Opaque = ModuleCVar::Variant0::FindVar()(ModuleCVar::Ptr, nullptr, name);
 		}
+
+		return ret;
 	}
 
 	bool Variable::GetBool() const

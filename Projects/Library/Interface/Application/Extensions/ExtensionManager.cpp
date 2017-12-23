@@ -343,25 +343,25 @@ void SDR::ExtensionManager::Events::Ready()
 
 	data.GetExternalBool = [](const char* name)
 	{
-		SDR::Console::Variable var(name);
+		auto var = SDR::Console::Variable::Find(name);
 		return var.GetBool();
 	};
 
 	data.GetExternalInt = [](const char* name)
 	{
-		SDR::Console::Variable var(name);
+		auto var = SDR::Console::Variable::Find(name);
 		return var.GetInt();
 	};
 
 	data.GetExternalFloat = [](const char* name)
 	{
-		SDR::Console::Variable var(name);
+		auto var = SDR::Console::Variable::Find(name);
 		return var.GetFloat();
 	};
 
 	data.GetExternalString = [](const char* name)
 	{
-		SDR::Console::Variable var(name);
+		auto var = SDR::Console::Variable::Find(name);
 		return var.GetString();
 	};
 
