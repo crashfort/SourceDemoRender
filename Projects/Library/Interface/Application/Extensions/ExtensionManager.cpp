@@ -50,25 +50,18 @@ namespace
 
 	void Initialize(ExtensionData& ext)
 	{
-		auto findexport = [&](const char* name, auto& object, bool required)
+		auto findexport = [&](const char* name, auto& object, bool required = false)
 		{
-			auto addr = (void*)GetProcAddress(ext.Module, name);
-
-			if (!addr && required)
-			{
-				SDR::Error::Make("Extension \"%s\" missing export for \"%s\"", ext.Name.c_str(), name);
-			}
-
-			object = (decltype(object))addr;
+			SDR::Extension::FindExport(ext.Module, ext.Name.c_str(), name, object, required);
 		};
 
 		findexport("SDR_Query", ext.Query, true);
 		findexport("SDR_Initialize", ext.Initialize, true);
-		findexport("SDR_ConfigHandler", ext.ConfigHandler, false);
-		findexport("SDR_Ready", ext.Ready, false);
-		findexport("SDR_StartMovie", ext.StartMovie, false);
-		findexport("SDR_EndMovie", ext.EndMovie, false);
-		findexport("SDR_NewVideoFrame", ext.NewVideoFrame, false);
+		findexport("SDR_ConfigHandler", ext.ConfigHandler);
+		findexport("SDR_Ready", ext.Ready);
+		findexport("SDR_StartMovie", ext.StartMovie);
+		findexport("SDR_EndMovie", ext.EndMovie);
+		findexport("SDR_NewVideoFrame", ext.NewVideoFrame);
 
 		ext.Query(ext.Info);
 

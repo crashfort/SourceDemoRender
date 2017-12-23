@@ -223,6 +223,22 @@ namespace SDR::Extension
 	}
 
 	/*
+		Can be used to find an export in another extension.
+	*/
+	template <typename T>
+	inline void FindExport(HMODULE module, const char* modulename, const char* name, T& object, bool required = false)
+	{
+		auto addr = (void*)GetProcAddress(module, name);
+
+		if (!addr && required)
+		{
+			SDR::Error::Make("Extension \"%s\" missing export for \"%s\"", modulename, name);
+		}
+
+		object = (decltype(object))addr;
+	}
+
+	/*
 		These are the correct signatures that extensions should use.
 	*/
 	namespace ExportTypes
