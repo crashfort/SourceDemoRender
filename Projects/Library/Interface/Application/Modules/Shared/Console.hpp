@@ -14,6 +14,8 @@ namespace SDR::Console
 		Variable& operator=(const Variable& other) = delete;
 		Variable& operator=(Variable&& other) = default;
 
+		explicit operator bool() const;
+
 		static Variable Find(const char* name);
 
 		bool GetBool() const;

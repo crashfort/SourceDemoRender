@@ -360,6 +360,11 @@ namespace
 
 namespace SDR::Console
 {
+	Variable::operator bool() const
+	{
+		return Opaque != nullptr;
+	}
+
 	SDR::Console::Variable Variable::Find(const char* name)
 	{
 		SDR::Console::Variable ret;
