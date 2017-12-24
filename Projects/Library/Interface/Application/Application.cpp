@@ -182,19 +182,8 @@ namespace
 
 			for (auto& prop : object->Properties)
 			{
-				try
-				{
-					SDR::Error::ScopedContext e1(prop.first.c_str());
-
-					auto found = SDR::ExtensionManager::Events::CallHandlers(prop.first.c_str(), prop.second);
-					PrintModuleState(found, prop.first.c_str());
-				}
-
-				catch (const SDR::Error::Exception& error)
-				{
-					SDR::Error::Make("Could not enable module \"%s\"", prop.first.c_str());
-					throw;
-				}
+				auto found = SDR::ExtensionManager::Events::CallHandlers(prop.first.c_str(), prop.second);
+				PrintModuleState(found, prop.first.c_str());
 			}
 		}
 
