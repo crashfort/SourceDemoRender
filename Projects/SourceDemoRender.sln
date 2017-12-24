@@ -23,6 +23,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Direct3D11", "Direct3D11\Di
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console Types", "Console Types\Console Types.vcxitems", "{3AA441C9-9A1C-45A0-8DB7-191124401A75}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LauncherCLI API", "LauncherCLI API\LauncherCLI API.vcxitems", "{FFD49CD4-6B11-40C2-83EB-33C5C2B661C1}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Console Types\Console Types.vcxitems*{3aa441c9-9a1c-45a0-8db7-191124401a75}*SharedItemsImports = 9
@@ -32,15 +34,18 @@ Global
 		Direct3D11\Direct3D11.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Extension\Extension.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Hooking\Hooking.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
+		LauncherCLI API\LauncherCLI API.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Library API\Library API.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Shader Definitions\Shader Definitions.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{4b8e5130-d408-4ad9-a9c4-009ca22e8c5e}*SharedItemsImports = 4
 		Extension\Extension.vcxitems*{574d1cca-f375-4e5c-950b-9e2b1b7a2a92}*SharedItemsImports = 9
 		Direct3D11\Direct3D11.vcxitems*{751bade2-721f-4138-bcf1-846b33dce585}*SharedItemsImports = 9
+		LauncherCLI API\LauncherCLI API.vcxitems*{b2dbce0d-417d-47d2-842c-4651f60231a7}*SharedItemsImports = 4
 		Library API\Library API.vcxitems*{b2dbce0d-417d-47d2-842c-4651f60231a7}*SharedItemsImports = 4
 		Shared\Shared.vcxitems*{b2dbce0d-417d-47d2-842c-4651f60231a7}*SharedItemsImports = 4
 		Hooking\Hooking.vcxitems*{bfcc3d78-9d82-4d9a-b854-36fbfb616c99}*SharedItemsImports = 9
 		Library API\Library API.vcxitems*{f6a710b0-1dad-4087-b575-5512efeccc0f}*SharedItemsImports = 9
+		LauncherCLI API\LauncherCLI API.vcxitems*{ffd49cd4-6b11-40c2-83eb-33c5c2b661c1}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
