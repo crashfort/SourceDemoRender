@@ -308,7 +308,7 @@ namespace
 
 					auto menu = CreatePopupMenu();
 
-					enum MyEnum
+					enum
 					{
 						SelectAllIndex = WM_APP,
 						QuitIndex,
