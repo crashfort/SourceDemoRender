@@ -37,29 +37,28 @@ namespace SDR::LauncherCLI
 		}
 	}
 
-	namespace Message
+	namespace Colors
 	{
-		namespace Colors
+		enum
 		{
-			enum
-			{
-				White = RGB(220, 220, 220),
-				Red = RGB(255, 100, 100)
-			};
-		}
-
-		struct AddMessageData
-		{
-			uint32_t Color;
-			char Text[1024];
+			White = RGB(200, 200, 200),
+			Red = RGB(252, 62, 54),
+			Green = RGB(100, 255, 100),
+			String = RGB(214, 157, 133),
+			Number = RGB(181, 206, 168),
 		};
+	}
 
-		namespace Types
+	struct AddMessageData
+	{
+		char Text[1024];
+	};
+
+	namespace Messages
+	{
+		enum
 		{
-			enum
-			{
-				AddMessage = WM_APP + 1
-			};
-		}
+			AddMessage = WM_APP + 1
+		};
 	}
 }

@@ -78,14 +78,13 @@ namespace
 			}
 		}
 
-		void Write(uint32_t color, const std::string& text)
+		void Write(const std::string& text)
 		{
-			SDR::LauncherCLI::Message::AddMessageData data;
-			data.Color = color;
+			SDR::LauncherCLI::AddMessageData data;
 			strcpy_s(data.Text, text.c_str());
 
 			COPYDATASTRUCT copydata = {};
-			copydata.dwData = SDR::LauncherCLI::Message::Types::AddMessage;
+			copydata.dwData = SDR::LauncherCLI::Messages::AddMessage;
 			copydata.cbData = sizeof(data);
 			copydata.lpData = &data;
 
@@ -110,18 +109,18 @@ namespace
 		*/
 		SDR::Log::SetMessageFunction([](std::string&& text)
 		{
-			LoadDataPtr->Write(SDR::LauncherCLI::Message::Colors::White, text);
+			LoadDataPtr->Write(text);
 		});
 
 		SDR::Log::SetMessageColorFunction([](SDR::Shared::Color color, std::string&& text)
 		{
-			auto comps = color.Colors;
-			LoadDataPtr->Write(RGB(comps[0], comps[1], comps[2]), text);
+			LoadDataPtr->Write(text);
 		});
 
 		SDR::Log::SetWarningFunction([](std::string&& text)
 		{
-			LoadDataPtr->Write(SDR::LauncherCLI::Message::Colors::Red, text);
+			auto format = SDR::String::Format("{red}%s{/red}", text.c_str());
+			LoadDataPtr->Write(format.c_str());
 		});
 
 		return localdata;
@@ -135,7 +134,7 @@ void SDR::Library::Load()
 	try
 	{
 		SDR::Setup();
-		SDR::Log::MessageColor(SDR::Shared::Color(100, 255, 100), "SDR: Source Demo Render loaded\n");
+		SDR::Log::Message("{green}SDR: Source Demo Render loaded\n{/green}");
 
 		/*
 			Give all output to the game console now.

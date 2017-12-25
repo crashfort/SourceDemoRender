@@ -3,6 +3,7 @@
 #include <SDR Shared\Json.hpp>
 #include <SDR Shared\Hooking.hpp>
 #include <SDR Library API\ExportTypes.hpp>
+#include <SDR LauncherCLI API\LauncherCLIAPI.hpp>
 #include "Application.hpp"
 #include "Interface\Application\Extensions\ExtensionManager.hpp"
 
@@ -117,13 +118,13 @@ namespace
 
 			else
 			{
-				SDR::Log::Message("SDR: Enabled module \"%s\"\n", name);
+				SDR::Log::Message("SDR: Enabled module {string}\"%s\"{/string}\n", name);
 			}
 		}
 
 		void CallGameHandlers(ConfigObjectData* game)
 		{
-			SDR::Log::Message("SDR: Creating %d game modules\n", MainApplication.ModuleHandlers.size());
+			SDR::Log::Message("SDR: Creating {number}%d{/number} game modules\n", MainApplication.ModuleHandlers.size());
 
 			for (auto& prop : game->Properties)
 			{
@@ -178,7 +179,7 @@ namespace
 				return;
 			}
 
-			SDR::Log::Message("SDR: Creating %d extension modules\n", object->Properties.size());
+			SDR::Log::Message("SDR: Creating {number}%d{/number} extension modules\n", object->Properties.size());
 
 			for (auto& prop : object->Properties)
 			{
@@ -451,7 +452,7 @@ void SDR::Setup()
 			throw;
 		}
 
-		SDR::Log::Message("SDR: Passed startup procedure: \"%s\"\n", entry.Name);
+		SDR::Log::Message("SDR: Passed startup procedure: {string}\"%s\"{/string}\n", entry.Name);
 	}
 
 	MainApplication.StartupFunctions.clear();

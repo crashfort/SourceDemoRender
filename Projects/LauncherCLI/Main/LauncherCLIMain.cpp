@@ -18,6 +18,8 @@
 #include <Richedit.h>
 #include <CommCtrl.h>
 
+using namespace std::literals;
+
 namespace
 {
 	namespace Synchro
@@ -59,6 +61,8 @@ namespace
 
 			EventData MainReady;
 			EventData WindowCreated;
+
+			Microsoft::WRL::Wrappers::CriticalSection WindowCS;
 		};
 
 		std::unique_ptr<Data> Ptr;
@@ -96,8 +100,8 @@ namespace
 			return hwnd;
 		}
 
-		HWND WindowHandle;
-		HWND TextControl;
+		HWND WindowHandle = nullptr;
+		HWND TextControl = nullptr;
 		std::thread Thread;
 
 		CHARFORMAT2A GetDefaultFormat()
@@ -106,7 +110,7 @@ namespace
 			format.cbSize = sizeof(format);
 			format.dwMask |= CFM_COLOR | CFM_FACE | CFM_SIZE;
 			strcpy_s(format.szFaceName, "Consolas");
-			format.crTextColor = SDR::LauncherCLI::Message::Colors::White;
+			format.crTextColor = SDR::LauncherCLI::Colors::White;
 			
 			/*
 				10px
@@ -116,20 +120,186 @@ namespace
 			return format;
 		}
 
-		void AppendLogText(COLORREF color, const std::string& str)
+		struct TextFormatData
 		{
+			TextFormatData() = default;
+
+			static TextFormatData Make(std::string&& text)
+			{
+				TextFormatData ret;
+				ret.Color = SDR::LauncherCLI::Colors::White;
+				ret.Text = std::move(text);
+
+				return ret;
+			}
+
+			static TextFormatData Make(COLORREF color, std::string&& text)
+			{
+				TextFormatData ret;
+				ret.Color = color;
+				ret.Text = std::move(text);
+
+				return ret;
+			}
+
+			template <typename... Args>
+			static TextFormatData Make(COLORREF color, const char* format, Args&&... args)
+			{
+				TextFormatData ret;
+				ret.Color = color;
+				ret.Text = SDR::String::Format(format, std::forward<Args>(args)...);
+
+				return ret;
+			}
+
+			template <typename... Args>
+			static TextFormatData MakeString(const char* format, Args&&... args)
+			{
+				TextFormatData ret;
+				ret.Color = SDR::LauncherCLI::Colors::String;
+				ret.Text = SDR::String::Format(format, std::forward<Args>(args)...);
+
+				return ret;
+			}
+
+			template <typename T>
+			static TextFormatData MakeNumber(T number)
+			{
+				TextFormatData ret;
+				ret.Color = SDR::LauncherCLI::Colors::Number;
+				ret.Text = std::to_string(number);
+
+				return ret;
+			}
+
+			template <typename T>
+			static TextFormatData MakeNumber(const char* format, T number)
+			{
+				TextFormatData ret;
+				ret.Color = SDR::LauncherCLI::Colors::Number;
+				ret.Text = SDR::String::Format(format, number);
+
+				return ret;
+			}
+
+			COLORREF Color;
+			std::string Text;
+		};
+
+		std::vector<TextFormatData> FormatText(const char* text)
+		{
+			struct TokenData
+			{
+				static TokenData Make(const char* start, const char* end, COLORREF color)
+				{
+					TokenData ret;
+					ret.Start = start;
+					ret.End = end;
+					ret.Color = color;
+
+					return ret;
+				}
+
+				const char* Start;
+				const char* End;
+
+				COLORREF Color;
+			};
+
+			auto tokens =
+			{
+				TokenData::Make("{white}", "{/white}", SDR::LauncherCLI::Colors::White),
+				TokenData::Make("{red}", "{/red}", SDR::LauncherCLI::Colors::Red),
+				TokenData::Make("{green}", "{/green}", SDR::LauncherCLI::Colors::Green),
+				TokenData::Make("{string}", "{/string}", SDR::LauncherCLI::Colors::String),
+				TokenData::Make("{number}", "{/number}", SDR::LauncherCLI::Colors::Number),
+			};
+
+			auto procedure = [&]()
+			{
+				
+			};
+
+			std::vector<TextFormatData> parts;
+
+			TextFormatData* current = nullptr;
+
+			auto ptr = text;
+
+			for (; *ptr;)
+			{
+				if (*ptr != '{')
+				{
+					if (!current)
+					{
+						parts.emplace_back();
+						current = &parts.back();
+						
+						current->Color = SDR::LauncherCLI::Colors::White;
+					}
+					
+					current->Text.push_back(*ptr);
+					
+					++ptr;
+					continue;
+				}
+
+				for (const auto& token : tokens)
+				{
+					if (SDR::String::StartsWith(ptr, token.Start))
+					{
+						parts.emplace_back();
+						current = &parts.back();
+
+						current->Color = token.Color;
+
+						ptr += strlen(token.Start);
+
+						while (true)
+						{
+							if (SDR::String::StartsWith(ptr, token.End))
+							{
+								ptr += strlen(token.End);
+								break;
+							}
+
+							current->Text.push_back(*ptr);
+							++ptr;
+						}
+
+						current = nullptr;
+						break;
+					}
+				}
+			}
+
+			return parts;
+		}
+
+		void AppendLogText(const char* text)
+		{
+			if (!WindowHandle)
+			{
+				return;
+			}
+
 			CHARRANGE range;
 			range.cpMin = -1;
 			range.cpMax = -1;
 
-			auto format = GetDefaultFormat();
-			format.crTextColor = color;
-			format.dwEffects = 0;
+			auto charformat = GetDefaultFormat();
 
-			SendMessageA(TextControl, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
+			auto textformats = FormatText(text);
 
-			SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
-			SendMessageA(TextControl, EM_REPLACESEL, 0, (LPARAM)str.c_str());
+			for (const auto& entry : textformats)
+			{
+				charformat.crTextColor = entry.Color;
+				SendMessageA(TextControl, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charformat);
+
+				SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
+				SendMessageA(TextControl, EM_REPLACESEL, 0, (LPARAM)entry.Text.c_str());
+			}
+
 			SendMessageA(TextControl, WM_VSCROLL, SB_BOTTOM, 0);
 		}
 
@@ -155,6 +325,11 @@ namespace
 
 					return 1;
 				}
+			}
+
+			if (message == WM_KEYDOWN)
+			{
+				SendMessageA(WindowHandle, message, wparam, lparam);
 			}
 
 			return DefSubclassProc(hwnd, message, wparam, lparam);
@@ -184,10 +359,27 @@ namespace
 				case WM_COPYDATA:
 				{
 					auto copydata = (COPYDATASTRUCT*)lparam;
-					auto data = (SDR::LauncherCLI::Message::AddMessageData*)copydata->lpData;
+					auto data = (SDR::LauncherCLI::AddMessageData*)copydata->lpData;
 
-					AppendLogText(data->Color, data->Text);
+					AppendLogText(data->Text);
 					return 1;
+				}
+
+				case WM_CONTEXTMENU:
+				{
+					int a = 5;
+					break;
+				}
+
+				case WM_KEYDOWN:
+				{
+					if (wparam == VK_RETURN)
+					{
+						PostQuitMessage(0);
+						return 0;
+					}
+
+					break;
 				}
 			}
 
@@ -211,6 +403,9 @@ namespace
 					WaitMessage();
 				}
 			}
+
+			WindowHandle = nullptr;
+			TextControl = nullptr;
 		}
 
 		void MakeWindow(HINSTANCE instance)
@@ -266,7 +461,7 @@ namespace
 
 				SetWindowSubclass(TextControl, TextControlProcedure, 0, 0);
 
-				SendMessageA(TextControl, EM_SETBKGNDCOLOR, 0, RGB(16, 16, 16));
+				SendMessageA(TextControl, EM_SETBKGNDCOLOR, 0, RGB(30, 30, 30));
 				SendMessageA(TextControl, EM_SHOWSCROLLBAR, SB_VERT, 1);
 
 				auto format = GetDefaultFormat();
@@ -324,13 +519,15 @@ namespace
 		template <typename... Args>
 		void Message(const char* format, Args&&... args)
 		{
-			Window::AppendLogText(SDR::LauncherCLI::Message::Colors::White, SDR::String::Format(format, std::forward<Args>(args)...));
+			auto text = SDR::String::Format(format, std::forward<Args>(args)...);
+			Window::AppendLogText(text.c_str());
 		}
 
 		template <typename... Args>
 		void Warning(const char* format, Args&&... args)
 		{
-			Window::AppendLogText(SDR::LauncherCLI::Message::Colors::Red, SDR::String::Format(format, std::forward<Args>(args)...));
+			auto text = SDR::String::Format(format, std::forward<Args>(args)...);
+			Window::AppendLogText(text.c_str());
 		}
 
 		char LibraryName[] = "SourceDemoRender.dll";
@@ -429,7 +626,7 @@ namespace
 
 		void WaitEvents(HANDLE process)
 		{
-			Local::Message("Waiting for stage \"%s\"\n", StageName);
+			Local::Message("Waiting for stage: {string}\"%s\"{/string}\n", StageName);
 
 			auto target = SDR::IPC::WaitForOne({ process, EventSuccess.Get(), EventFailure.Get() });
 
@@ -440,7 +637,7 @@ namespace
 
 			else if (target == EventSuccess.Get())
 			{
-				Local::Message("Passed stage \"%s\"\n", StageName);
+				Local::Message("Passed stage: {string}\"%s\"{/string}\n", StageName);
 			}
 
 			else if (target == EventFailure.Get())
@@ -654,7 +851,7 @@ namespace
 			{
 				gamename = SDR::Json::GetString(it->value, "DisplayName");
 
-				Local::Message("Found \"%s\" in game config\n", gamename);
+				Local::Message("Found {string}\"%s\"{/string} in game config\n", gamename);
 				
 				return gamename;
 			}
@@ -697,22 +894,23 @@ namespace
 
 		auto displayname = GetDisplayName(gamefolder);
 
-		Local::Message("Game: \"%s\"\n", displayname.c_str());
-		Local::Message("Executable: \"%s\"\n", exepath.c_str());
-		Local::Message("Directory: \"%s\"\n", gamefolder);
-		Local::Message("Resource: \"%s\"\n", curdir);
-
-		Local::Message("Parameters: \"%s\"\n", params.c_str());
+		Local::Message("Game: {string}\"%s\"{/string}\n", displayname.c_str());
+		Local::Message("Executable: {string}\"%s\"{/string}\n", exepath.c_str());
+		Local::Message("Directory: {string}\"%s\"{/string}\n", gamefolder);
+		Local::Message("Resource: {string}\"%s\"{/string}\n", curdir);
+		Local::Message("Parameters: {string}\"%s\"{/string}\n", params.c_str());
 
 		ServerShadowStateData loadstage(SDR::LauncherCLI::Load::StageType::Load, "Load");
 
-		Local::Message("Starting \"%s\"\n", displayname.c_str());
+		Local::Message("Starting: {string}\"%s\"{/string}\n", displayname.c_str());
+
 		auto info = StartProcess(gamefolder, exepath, params);
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
 
-		Local::Message("Injecting into \"%s\"\n", displayname.c_str());
+		Local::Message("Injecting into: {string}\"%s\"{/string}\n", displayname.c_str());
+
 		InjectProcess(process.Get(), thread.Get(), curdir, gamefolder);
 
 		/*
@@ -764,7 +962,7 @@ namespace
 		auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
 		auto version = func();
 
-		Local::Message("SDR library version: %d\n", version);
+		Local::Message("SDR library version: {number}%d{/number}\n", version);
 
 		FreeLibrary(library);
 	}
@@ -805,8 +1003,8 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 		std::string exepath;
 		std::string gamepath;
 		std::string params = "-steam -insecure +sv_lan 1 -console"s;
-		
-		Local::Message("Appending parameters: \"%s\"\n", params.c_str());
+
+		Local::Message("Appending parameters: {string}\"%s\"{/string}\n", params.c_str());
 
 		for (size_t i = 0; i < argc; i++)
 		{
