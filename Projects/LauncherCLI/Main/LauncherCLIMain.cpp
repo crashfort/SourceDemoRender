@@ -151,6 +151,7 @@ namespace
 				TokenData::Make("dark", SDR::LauncherCLI::Colors::Dark),
 				TokenData::Make("red", SDR::LauncherCLI::Colors::Red),
 				TokenData::Make("green", SDR::LauncherCLI::Colors::Green),
+				TokenData::Make("blue", SDR::LauncherCLI::Colors::Blue),
 				TokenData::Make("string", SDR::LauncherCLI::Colors::String),
 				TokenData::Make("number", SDR::LauncherCLI::Colors::Number),
 			};

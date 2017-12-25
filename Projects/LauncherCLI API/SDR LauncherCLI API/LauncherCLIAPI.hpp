@@ -45,6 +45,7 @@ namespace SDR::LauncherCLI
 			Dark = RGB(155, 155, 155),
 			Red = RGB(252, 62, 54),
 			Green = RGB(100, 255, 100),
+			Blue = RGB(86, 156, 214),
 			String = RGB(214, 157, 133),
 			Number = RGB(181, 206, 168),
 		};
