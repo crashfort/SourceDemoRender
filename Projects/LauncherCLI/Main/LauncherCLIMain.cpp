@@ -62,8 +62,6 @@ namespace
 
 			EventData MainReady;
 			EventData WindowCreated;
-
-			Microsoft::WRL::Wrappers::CriticalSection WindowCS;
 		};
 
 		std::unique_ptr<Data> Ptr;
