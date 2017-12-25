@@ -120,7 +120,7 @@ namespace
 		SDR::Log::SetWarningFunction([](std::string&& text)
 		{
 			auto format = SDR::String::Format("{red}%s{/red}", text.c_str());
-			LoadDataPtr->Write(format.c_str());
+			LoadDataPtr->Write(format);
 		});
 
 		return localdata;
