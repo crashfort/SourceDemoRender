@@ -208,16 +208,10 @@ namespace
 
 			auto tokens =
 			{
-				TokenData::Make("white", SDR::LauncherCLI::Colors::White),
 				TokenData::Make("red", SDR::LauncherCLI::Colors::Red),
 				TokenData::Make("green", SDR::LauncherCLI::Colors::Green),
 				TokenData::Make("string", SDR::LauncherCLI::Colors::String),
 				TokenData::Make("number", SDR::LauncherCLI::Colors::Number),
-			};
-
-			auto procedure = [&]()
-			{
-				
 			};
 
 			std::vector<TextFormatData> parts;
