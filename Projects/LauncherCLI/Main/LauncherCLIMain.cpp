@@ -294,10 +294,16 @@ namespace
 				case WM_COPYDATA:
 				{
 					auto copydata = (COPYDATASTRUCT*)lparam;
-					auto data = (SDR::LauncherCLI::AddMessageData*)copydata->lpData;
 
-					AppendLogText(data->Text);
-					return 1;
+					if (copydata->dwData == SDR::LauncherCLI::Messages::AddMessage)
+					{
+						auto data = (SDR::LauncherCLI::AddMessageData*)copydata->lpData;
+
+						AppendLogText(data->Text);
+						return 1;
+					}
+
+					break;
 				}
 
 				case WM_CONTEXTMENU:
