@@ -263,11 +263,6 @@ namespace
 				}
 			}
 
-			if (message == WM_KEYDOWN)
-			{
-				SendMessageA(WindowHandle, message, wparam, lparam);
-			}
-
 			return DefSubclassProc(hwnd, message, wparam, lparam);
 		}
 
@@ -310,17 +305,6 @@ namespace
 				case WM_CONTEXTMENU:
 				{
 					int a = 5;
-					break;
-				}
-
-				case WM_KEYDOWN:
-				{
-					if (wparam == VK_RETURN)
-					{
-						PostQuitMessage(0);
-						return 0;
-					}
-
 					break;
 				}
 			}
