@@ -249,6 +249,16 @@ namespace
 		{
 			switch (message)
 			{
+				case WM_MBUTTONDOWN:
+				{
+					if (wparam & MK_MBUTTON)
+					{
+						return 0;
+					}
+
+					break;
+				}
+
 				case WM_MOUSEWHEEL:
 				{
 					if (GET_WHEEL_DELTA_WPARAM(wparam) > 0)
