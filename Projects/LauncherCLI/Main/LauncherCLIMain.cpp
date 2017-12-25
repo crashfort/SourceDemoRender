@@ -163,48 +163,55 @@ namespace
 
 			for (; *ptr;)
 			{
-				if (*ptr != '{')
+				bool found = false;
+
+				if (*ptr == '{')
+				{
+					for (const auto& token : tokens)
+					{
+						if (SDR::String::StartsWith(ptr, token.Start.c_str()))
+						{
+							found = true;
+
+							parts.emplace_back();
+							current = &parts.back();
+
+							current->Color = token.Color;
+
+							ptr += token.Start.size();
+
+							while (true)
+							{
+								if (SDR::String::StartsWith(ptr, token.End.c_str()))
+								{
+									ptr += token.End.size();
+									break;
+								}
+
+								current->Text.push_back(*ptr);
+								++ptr;
+							}
+
+							current = nullptr;
+							break;
+						}
+					}
+				}
+
+				if (!found)
 				{
 					if (!current)
 					{
 						parts.emplace_back();
 						current = &parts.back();
-						
+
 						current->Color = SDR::LauncherCLI::Colors::White;
 					}
-					
+
 					current->Text.push_back(*ptr);
-					
+
 					++ptr;
 					continue;
-				}
-
-				for (const auto& token : tokens)
-				{
-					if (SDR::String::StartsWith(ptr, token.Start.c_str()))
-					{
-						parts.emplace_back();
-						current = &parts.back();
-
-						current->Color = token.Color;
-
-						ptr += token.Start.size();
-
-						while (true)
-						{
-							if (SDR::String::StartsWith(ptr, token.End.c_str()))
-							{
-								ptr += token.End.size();
-								break;
-							}
-
-							current->Text.push_back(*ptr);
-							++ptr;
-						}
-
-						current = nullptr;
-						break;
-					}
 				}
 			}
 
