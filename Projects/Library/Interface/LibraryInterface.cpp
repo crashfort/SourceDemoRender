@@ -78,50 +78,26 @@ namespace
 			}
 		}
 
-		void Write(const std::string& text)
-		{
-			SDR::LauncherCLI::AddMessageData data;
-			strcpy_s(data.Text, text.c_str());
-
-			COPYDATASTRUCT copydata = {};
-			copydata.dwData = SDR::LauncherCLI::Messages::AddMessage;
-			copydata.cbData = sizeof(data);
-			copydata.lpData = &data;
-
-			SendMessageA(Local::LauncherCLI, WM_COPYDATA, 0, (LPARAM)&copydata);
-		}
-
-		HMODULE LauncherCLI;
 		bool Failure = false;
 	};
 
+	void WriteToLauncherCLI(const std::string& text)
+	{
+		SDR::LauncherCLI::AddMessageData data;
+		strcpy_s(data.Text, text.c_str());
+
+		COPYDATASTRUCT copydata = {};
+		copydata.dwData = SDR::LauncherCLI::Messages::AddMessage;
+		copydata.cbData = sizeof(data);
+		copydata.lpData = &data;
+
+		SendMessageA(Local::LauncherCLI, WM_COPYDATA, 0, (LPARAM)&copydata);
+	}
+
 	auto CreateShadowLoadState(SDR::LauncherCLI::Load::StageType stage)
 	{
-		static LoadFuncData* LoadDataPtr;
-
 		auto localdata = std::make_unique<LoadFuncData>();
 		localdata->Create(stage);
-
-		LoadDataPtr = localdata.get();
-
-		/*
-			Temporary communication gates. All text output has to go to the launcher console.
-		*/
-		SDR::Log::SetMessageFunction([](std::string&& text)
-		{
-			LoadDataPtr->Write(text);
-		});
-
-		SDR::Log::SetMessageColorFunction([](SDR::Shared::Color color, std::string&& text)
-		{
-			LoadDataPtr->Write(text);
-		});
-
-		SDR::Log::SetWarningFunction([](std::string&& text)
-		{
-			auto format = SDR::String::Format("{red}%s{/red}", text.c_str());
-			LoadDataPtr->Write(format);
-		});
 
 		return localdata;
 	}
@@ -129,6 +105,25 @@ namespace
 
 void SDR::Library::Load()
 {
+	/*
+		Temporary communication gates. All text output has to go to the launcher console.
+	*/
+	SDR::Log::SetMessageFunction([](std::string&& text)
+	{
+		WriteToLauncherCLI(text);
+	});
+
+	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color color, std::string&& text)
+	{
+		WriteToLauncherCLI(text);
+	});
+
+	SDR::Log::SetWarningFunction([](std::string&& text)
+	{
+		auto format = SDR::String::Format("{red}%s{/red}", text.c_str());
+		WriteToLauncherCLI(format);
+	});
+
 	auto localdata = CreateShadowLoadState(SDR::LauncherCLI::Load::StageType::Load);
 
 	try
