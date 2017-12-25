@@ -122,66 +122,6 @@ namespace
 
 		struct TextFormatData
 		{
-			TextFormatData() = default;
-
-			static TextFormatData Make(std::string&& text)
-			{
-				TextFormatData ret;
-				ret.Color = SDR::LauncherCLI::Colors::White;
-				ret.Text = std::move(text);
-
-				return ret;
-			}
-
-			static TextFormatData Make(COLORREF color, std::string&& text)
-			{
-				TextFormatData ret;
-				ret.Color = color;
-				ret.Text = std::move(text);
-
-				return ret;
-			}
-
-			template <typename... Args>
-			static TextFormatData Make(COLORREF color, const char* format, Args&&... args)
-			{
-				TextFormatData ret;
-				ret.Color = color;
-				ret.Text = SDR::String::Format(format, std::forward<Args>(args)...);
-
-				return ret;
-			}
-
-			template <typename... Args>
-			static TextFormatData MakeString(const char* format, Args&&... args)
-			{
-				TextFormatData ret;
-				ret.Color = SDR::LauncherCLI::Colors::String;
-				ret.Text = SDR::String::Format(format, std::forward<Args>(args)...);
-
-				return ret;
-			}
-
-			template <typename T>
-			static TextFormatData MakeNumber(T number)
-			{
-				TextFormatData ret;
-				ret.Color = SDR::LauncherCLI::Colors::Number;
-				ret.Text = std::to_string(number);
-
-				return ret;
-			}
-
-			template <typename T>
-			static TextFormatData MakeNumber(const char* format, T number)
-			{
-				TextFormatData ret;
-				ret.Color = SDR::LauncherCLI::Colors::Number;
-				ret.Text = SDR::String::Format(format, number);
-
-				return ret;
-			}
-
 			COLORREF Color;
 			std::string Text;
 		};
