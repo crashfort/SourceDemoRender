@@ -474,14 +474,7 @@ namespace
 	namespace Local
 	{
 		template <typename... Args>
-		void Message(const char* format, Args&&... args)
-		{
-			auto text = SDR::String::Format(format, std::forward<Args>(args)...);
-			Window::AppendLogText(text.c_str());
-		}
-
-		template <typename... Args>
-		void Warning(const char* format, Args&&... args)
+		void Print(const char* format, Args&&... args)
 		{
 			auto text = SDR::String::Format(format, std::forward<Args>(args)...);
 			Window::AppendLogText(text.c_str());
@@ -583,7 +576,7 @@ namespace
 
 		void WaitEvents(HANDLE process)
 		{
-			Local::Message("Waiting for stage: {string}\"%s\"{/string}\n", StageName);
+			Local::Print("Waiting for stage: {string}\"%s\"{/string}\n", StageName);
 
 			auto target = SDR::IPC::WaitForOne({ process, EventSuccess.Get(), EventFailure.Get() });
 
@@ -594,7 +587,7 @@ namespace
 
 			else if (target == EventSuccess.Get())
 			{
-				Local::Message("Passed stage: {string}\"%s\"{/string}\n", StageName);
+				Local::Print("Passed stage: {string}\"%s\"{/string}\n", StageName);
 			}
 
 			else if (target == EventFailure.Get())
@@ -786,7 +779,7 @@ namespace
 
 	std::string GetDisplayName(const char* gamepath)
 	{
-		Local::Message("Searching game config for matching name\n");
+		Local::Print("Searching game config for matching name\n");
 
 		rapidjson::Document document;
 
@@ -808,7 +801,7 @@ namespace
 			{
 				gamename = SDR::Json::GetString(it->value, "DisplayName");
 
-				Local::Message("Found {string}\"%s\"{/string} in game config\n", gamename);
+				Local::Print("Found {string}\"%s\"{/string} in game config\n", gamename);
 				
 				return gamename;
 			}
@@ -851,22 +844,22 @@ namespace
 
 		auto displayname = GetDisplayName(gamefolder);
 
-		Local::Message("Game: {string}\"%s\"{/string}\n", displayname.c_str());
-		Local::Message("Executable: {string}\"%s\"{/string}\n", exepath.c_str());
-		Local::Message("Directory: {string}\"%s\"{/string}\n", gamefolder);
-		Local::Message("Resource: {string}\"%s\"{/string}\n", curdir);
-		Local::Message("Parameters: {string}\"%s\"{/string}\n", params.c_str());
+		Local::Print("Game: {string}\"%s\"{/string}\n", displayname.c_str());
+		Local::Print("Executable: {string}\"%s\"{/string}\n", exepath.c_str());
+		Local::Print("Directory: {string}\"%s\"{/string}\n", gamefolder);
+		Local::Print("Resource: {string}\"%s\"{/string}\n", curdir);
+		Local::Print("Parameters: {string}\"%s\"{/string}\n", params.c_str());
 
 		ServerShadowStateData loadstage(SDR::LauncherCLI::StageType::Load, "Load");
 
-		Local::Message("Starting: {string}\"%s\"{/string}\n", displayname.c_str());
+		Local::Print("Starting: {string}\"%s\"{/string}\n", displayname.c_str());
 
 		auto info = StartProcess(gamefolder, exepath, params);
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
 
-		Local::Message("Injecting into: {string}\"%s\"{/string}\n", displayname.c_str());
+		Local::Print("Injecting into: {string}\"%s\"{/string}\n", displayname.c_str());
 
 		InjectProcess(process.Get(), thread.Get(), curdir, gamefolder);
 
@@ -919,7 +912,7 @@ namespace
 		auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
 		auto version = func();
 
-		Local::Message("Library version: {number}%d{/number}\n", version);
+		Local::Print("Library version: {number}%d{/number}\n", version);
 
 		FreeLibrary(library);
 	}
@@ -929,7 +922,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 {
 	SDR::Log::SetWarningFunction([](std::string&& text)
 	{
-		Local::Warning(text.c_str());
+		Local::Print("{red}%s{/red}", text.c_str());
 	});
 
 	try
@@ -961,7 +954,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 		std::string gamepath;
 		std::string params = "-steam -insecure +sv_lan 1 -console"s;
 
-		Local::Message("Appending parameters: {string}\"%s\"{/string}\n", params.c_str());
+		Local::Print("Appending parameters: {string}\"%s\"{/string}\n", params.c_str());
 
 		for (size_t i = 0; i < argc; i++)
 		{
@@ -1007,7 +1000,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 		
 	}
 
-	Local::Message("You can close this window now\n");
+	Local::Print("You can close this window now\n");
 
 	if (Window::Thread.joinable())
 	{
