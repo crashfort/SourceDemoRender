@@ -190,29 +190,29 @@ namespace
 		{
 			struct TokenData
 			{
-				static TokenData Make(const char* start, const char* end, COLORREF color)
+				static TokenData Make(const char* name, COLORREF color)
 				{
 					TokenData ret;
-					ret.Start = start;
-					ret.End = end;
+					ret.Start = SDR::String::Format("{%s}", name);
+					ret.End = SDR::String::Format("{/%s}", name);
 					ret.Color = color;
 
 					return ret;
 				}
 
-				const char* Start;
-				const char* End;
+				std::string Start;
+				std::string End;
 
 				COLORREF Color;
 			};
 
 			auto tokens =
 			{
-				TokenData::Make("{white}", "{/white}", SDR::LauncherCLI::Colors::White),
-				TokenData::Make("{red}", "{/red}", SDR::LauncherCLI::Colors::Red),
-				TokenData::Make("{green}", "{/green}", SDR::LauncherCLI::Colors::Green),
-				TokenData::Make("{string}", "{/string}", SDR::LauncherCLI::Colors::String),
-				TokenData::Make("{number}", "{/number}", SDR::LauncherCLI::Colors::Number),
+				TokenData::Make("white", SDR::LauncherCLI::Colors::White),
+				TokenData::Make("red", SDR::LauncherCLI::Colors::Red),
+				TokenData::Make("green", SDR::LauncherCLI::Colors::Green),
+				TokenData::Make("string", SDR::LauncherCLI::Colors::String),
+				TokenData::Make("number", SDR::LauncherCLI::Colors::Number),
 			};
 
 			auto procedure = [&]()
@@ -246,20 +246,20 @@ namespace
 
 				for (const auto& token : tokens)
 				{
-					if (SDR::String::StartsWith(ptr, token.Start))
+					if (SDR::String::StartsWith(ptr, token.Start.c_str()))
 					{
 						parts.emplace_back();
 						current = &parts.back();
 
 						current->Color = token.Color;
 
-						ptr += strlen(token.Start);
+						ptr += token.Start.size();
 
 						while (true)
 						{
-							if (SDR::String::StartsWith(ptr, token.End))
+							if (SDR::String::StartsWith(ptr, token.End.c_str()))
 							{
-								ptr += strlen(token.End);
+								ptr += token.End.size();
 								break;
 							}
 
