@@ -897,7 +897,7 @@ namespace
 		auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
 		auto version = func();
 
-		Local::Message("SDR library version: {number}%d{/number}\n", version);
+		Local::Message("Library version: {number}%d{/number}\n", version);
 
 		FreeLibrary(library);
 	}
