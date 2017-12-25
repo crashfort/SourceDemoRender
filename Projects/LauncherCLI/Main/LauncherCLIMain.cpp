@@ -148,6 +148,7 @@ namespace
 
 			auto tokens =
 			{
+				TokenData::Make("dark", SDR::LauncherCLI::Colors::Dark),
 				TokenData::Make("red", SDR::LauncherCLI::Colors::Red),
 				TokenData::Make("green", SDR::LauncherCLI::Colors::Green),
 				TokenData::Make("string", SDR::LauncherCLI::Colors::String),

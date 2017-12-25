@@ -42,6 +42,7 @@ namespace SDR::LauncherCLI
 		enum
 		{
 			White = RGB(200, 200, 200),
+			Dark = RGB(150, 150, 150),
 			Red = RGB(252, 62, 54),
 			Green = RGB(100, 255, 100),
 			String = RGB(214, 157, 133),
