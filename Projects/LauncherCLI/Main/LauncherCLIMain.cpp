@@ -17,6 +17,7 @@
 
 #include <Richedit.h>
 #include <CommCtrl.h>
+#include <windowsx.h>
 
 using namespace std::literals;
 
@@ -304,7 +305,37 @@ namespace
 
 				case WM_CONTEXTMENU:
 				{
-					int a = 5;
+					auto posx = GET_X_LPARAM(lparam);
+					auto posy = GET_Y_LPARAM(lparam);
+
+					auto menu = CreatePopupMenu();
+
+					enum MyEnum
+					{
+						SelectAllIndex = WM_APP,
+						QuitIndex,
+					};
+
+					AppendMenuA(menu, MF_STRING, SelectAllIndex, "Select All");
+					AppendMenuA(menu, MF_SEPARATOR, 0, nullptr);
+					AppendMenuA(menu, MF_STRING, QuitIndex, "Quit");
+
+					auto selection = TrackPopupMenu(menu, TPM_RETURNCMD, posx, posy, 0, WindowHandle, nullptr);
+
+					if (selection == SelectAllIndex)
+					{
+						CHARRANGE range = {};
+						range.cpMax = -1;
+
+						SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
+					}
+
+					else if (selection == QuitIndex)
+					{
+						PostQuitMessage(0);
+					}
+
+					DestroyMenu(menu);
 					break;
 				}
 			}
