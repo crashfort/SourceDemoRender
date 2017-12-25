@@ -134,7 +134,7 @@ void SDR::Library::Load()
 	try
 	{
 		SDR::Setup();
-		SDR::Log::Message("{green}SDR: Source Demo Render loaded\n{/green}");
+		SDR::Log::Message("{dark}SDR: {/dark}{green}Source Demo Render loaded\n{/green}");
 
 		/*
 			Give all output to the game console now.
