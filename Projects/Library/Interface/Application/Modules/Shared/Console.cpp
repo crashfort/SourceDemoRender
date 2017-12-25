@@ -12,6 +12,8 @@ namespace
 	{
 		std::vector<SDR::Console::Command> Commands;
 	} GlobalState;
+
+	bool OutputIsGameConsole = false;
 }
 
 namespace
@@ -552,6 +554,13 @@ void SDR::Console::Load()
 			casted(text.c_str());
 		}
 	});
+
+	OutputIsGameConsole = true;
+}
+
+bool SDR::Console::IsOutputToGameConsole()
+{
+	return OutputIsGameConsole;
 }
 
 void SDR::Console::MakeCommand(const char* name, Types::CommandCallbackVoidType callback)

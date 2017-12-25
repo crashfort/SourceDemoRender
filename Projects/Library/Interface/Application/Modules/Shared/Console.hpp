@@ -47,6 +47,7 @@ namespace SDR::Console
 	};
 
 	void Load();
+	bool IsOutputToGameConsole();
 
 	void MakeCommand(const char* name, Types::CommandCallbackVoidType callback);
 	void MakeCommand(const char* name, Types::CommandCallbackArgsType callback);
