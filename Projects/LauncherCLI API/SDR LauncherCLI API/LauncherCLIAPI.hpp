@@ -5,36 +5,33 @@
 
 namespace SDR::LauncherCLI
 {
-	namespace Load
+	enum class StageType : uint32_t
 	{
-		enum class StageType : uint32_t
-		{
-			Initialize,
-			Load,
-		};
+		Initialize,
+		Load,
+	};
 
-		struct ShadowState
-		{
-			using ScopedHandle = Microsoft::WRL::Wrappers::HandleT
-			<
-				Microsoft::WRL::Wrappers::HandleTraits::HANDLENullTraits
-			>;
+	struct ShadowState
+	{
+		using ScopedHandle = Microsoft::WRL::Wrappers::HandleT
+		<
+			Microsoft::WRL::Wrappers::HandleTraits::HANDLENullTraits
+		>;
 
-			ScopedHandle EventSuccess;
-			ScopedHandle EventFailure;
-		};
+		ScopedHandle EventSuccess;
+		ScopedHandle EventFailure;
+	};
 
-		inline std::string CreateEventSuccessName(StageType stage)
-		{
-			auto stagenum = (uint32_t)stage;
-			return String::Format("SDR_LAUNCHERAPI_SUCCESS_%d", stagenum);
-		}
+	inline std::string CreateEventSuccessName(StageType stage)
+	{
+		auto stagenum = (uint32_t)stage;
+		return String::Format("SDR_LAUNCHERAPI_SUCCESS_%d", stagenum);
+	}
 
-		inline std::string CreateEventFailureName(StageType stage)
-		{
-			auto stagenum = (uint32_t)stage;
-			return String::Format("SDR_LAUNCHERAPI_FAIL_%d", stagenum);
-		}
+	inline std::string CreateEventFailureName(StageType stage)
+	{
+		auto stagenum = (uint32_t)stage;
+		return String::Format("SDR_LAUNCHERAPI_FAIL_%d", stagenum);
 	}
 
 	namespace Colors

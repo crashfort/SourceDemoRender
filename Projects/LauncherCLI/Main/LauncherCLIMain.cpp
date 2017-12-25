@@ -565,14 +565,14 @@ namespace
 
 namespace
 {
-	struct ServerShadowStateData : SDR::LauncherCLI::Load::ShadowState
+	struct ServerShadowStateData : SDR::LauncherCLI::ShadowState
 	{
-		ServerShadowStateData(SDR::LauncherCLI::Load::StageType stage, const char* name)
+		ServerShadowStateData(SDR::LauncherCLI::StageType stage, const char* name)
 		{
 			StageName = name;
 
-			auto successname = SDR::LauncherCLI::Load::CreateEventSuccessName(stage);
-			auto failname = SDR::LauncherCLI::Load::CreateEventFailureName(stage);
+			auto successname = SDR::LauncherCLI::CreateEventSuccessName(stage);
+			auto failname = SDR::LauncherCLI::CreateEventFailureName(stage);
 
 			EventSuccess.Attach(CreateEventA(nullptr, false, false, successname.c_str()));
 			SDR::Error::MS::ThrowIfZero(EventSuccess.Get(), "Could not create success event in stage \"%s\"", StageName);
@@ -728,7 +728,7 @@ namespace
 			"Could not queue APC for process"
 		);
 
-		ServerShadowStateData initstage(SDR::LauncherCLI::Load::StageType::Initialize, "Initialize");
+		ServerShadowStateData initstage(SDR::LauncherCLI::StageType::Initialize, "Initialize");
 
 		/*
 			Our initialize function will now run inside the other process.
@@ -857,7 +857,7 @@ namespace
 		Local::Message("Resource: {string}\"%s\"{/string}\n", curdir);
 		Local::Message("Parameters: {string}\"%s\"{/string}\n", params.c_str());
 
-		ServerShadowStateData loadstage(SDR::LauncherCLI::Load::StageType::Load, "Load");
+		ServerShadowStateData loadstage(SDR::LauncherCLI::StageType::Load, "Load");
 
 		Local::Message("Starting: {string}\"%s\"{/string}\n", displayname.c_str());
 

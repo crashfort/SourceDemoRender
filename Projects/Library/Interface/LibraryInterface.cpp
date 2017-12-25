@@ -54,12 +54,12 @@ namespace
 		SDR::Console::MakeCommand("sdr_version", Commands::Version);
 	});
 
-	struct LoadFuncData : SDR::LauncherCLI::Load::ShadowState
+	struct LoadFuncData : SDR::LauncherCLI::ShadowState
 	{
-		void Create(SDR::LauncherCLI::Load::StageType stage)
+		void Create(SDR::LauncherCLI::StageType stage)
 		{
-			auto successname = SDR::LauncherCLI::Load::CreateEventSuccessName(stage);
-			auto failname = SDR::LauncherCLI::Load::CreateEventFailureName(stage);
+			auto successname = SDR::LauncherCLI::CreateEventSuccessName(stage);
+			auto failname = SDR::LauncherCLI::CreateEventFailureName(stage);
 
 			EventSuccess.Attach(OpenEventA(EVENT_MODIFY_STATE, false, successname.c_str()));
 			EventFailure.Attach(OpenEventA(EVENT_MODIFY_STATE, false, failname.c_str()));
@@ -94,7 +94,7 @@ namespace
 		SendMessageA(Local::LauncherCLI, WM_COPYDATA, 0, (LPARAM)&copydata);
 	}
 
-	auto CreateShadowLoadState(SDR::LauncherCLI::Load::StageType stage)
+	auto CreateShadowLoadState(SDR::LauncherCLI::StageType stage)
 	{
 		auto localdata = std::make_unique<LoadFuncData>();
 		localdata->Create(stage);
@@ -124,7 +124,7 @@ void SDR::Library::Load()
 		WriteToLauncherCLI(format);
 	});
 
-	auto localdata = CreateShadowLoadState(SDR::LauncherCLI::Load::StageType::Load);
+	auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Load);
 
 	try
 	{
@@ -185,7 +185,7 @@ extern "C"
 
 		SDR::Error::SetPrintFormat("SDR: %s\n");
 
-		auto localdata = CreateShadowLoadState(SDR::LauncherCLI::Load::StageType::Initialize);
+		auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Initialize);
 
 		try
 		{
