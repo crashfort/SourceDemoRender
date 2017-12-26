@@ -159,7 +159,7 @@ namespace
 
 			auto ptr = text;
 
-			for (; *ptr;)
+			while (*ptr)
 			{
 				bool found = false;
 
