@@ -1010,7 +1010,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 		
 	}
 
-	Local::Print("You can close this window now\n");
+	Local::Print("{blue}You can close this window now\n");
 
 	if (Window::Thread.joinable())
 	{
