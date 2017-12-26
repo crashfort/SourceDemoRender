@@ -182,10 +182,13 @@ namespace
 
 							while (true)
 							{
-								if (SDR::String::StartsWith(ptr, token.End.c_str()))
+								if (*ptr == '{')
 								{
-									ptr += token.End.size();
-									break;
+									if (SDR::String::StartsWith(ptr, token.End.c_str()))
+									{
+										ptr += token.End.size();
+										break;
+									}
 								}
 
 								current->Text.push_back(*ptr);
