@@ -118,7 +118,7 @@ namespace
 
 			else
 			{
-				SDR::Log::Message("{dark}SDR: {/dark}Enabled module {string}\"%s\"{/string}\n", name);
+				SDR::Log::Message("{dark}SDR: {/dark}Enabled module {string}\"%s\"\n{/string}", name);
 			}
 		}
 
@@ -452,7 +452,7 @@ void SDR::Setup()
 			throw;
 		}
 
-		SDR::Log::Message("{dark}SDR: {/dark}Passed startup procedure: {string}\"%s\"{/string}\n", entry.Name);
+		SDR::Log::Message("{dark}SDR: {/dark}Passed startup procedure: {string}\"%s\"\n{/string}", entry.Name);
 	}
 
 	MainApplication.StartupFunctions.clear();
