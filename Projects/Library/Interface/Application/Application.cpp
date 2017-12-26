@@ -113,18 +113,18 @@ namespace
 		{
 			if (!value)
 			{
-				SDR::Log::Warning("{dark}SDR:{/dark} No handler found for \"%s\"\n", name);
+				SDR::Log::Warning("SDR: No handler found for \"%s\"\n", name);
 			}
 
 			else
 			{
-				SDR::Log::Message("{dark}SDR: {/dark}Enabled module {string}\"%s\"\n{/string}", name);
+				SDR::Log::Message("{dark}SDR: {white}Enabled module {string}\"%s\"\n", name);
 			}
 		}
 
 		void CallGameHandlers(ConfigObjectData* game)
 		{
-			SDR::Log::Message("{dark}SDR: {/dark}Creating {number}%d{/number} game modules\n", MainApplication.ModuleHandlers.size());
+			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", MainApplication.ModuleHandlers.size());
 
 			for (auto& prop : game->Properties)
 			{
@@ -179,7 +179,7 @@ namespace
 				return;
 			}
 
-			SDR::Log::Message("{dark}SDR: {/dark}Creating {number}%d{/number} extension modules\n", object->Properties.size());
+			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}extension modules\n", object->Properties.size());
 
 			for (auto& prop : object->Properties)
 			{
@@ -452,7 +452,7 @@ void SDR::Setup()
 			throw;
 		}
 
-		SDR::Log::Message("{dark}SDR: {/dark}Passed startup procedure: {string}\"%s\"\n{/string}", entry.Name);
+		SDR::Log::Message("{dark}SDR: {white}Passed startup procedure: {string}\"%s\"\n", entry.Name);
 	}
 
 	MainApplication.StartupFunctions.clear();

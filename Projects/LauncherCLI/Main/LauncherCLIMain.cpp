@@ -133,20 +133,18 @@ namespace
 				{
 					TokenData ret;
 					ret.Start = SDR::String::Format("{%s}", name);
-					ret.End = SDR::String::Format("{/%s}", name);
 					ret.Color = color;
 
 					return ret;
 				}
 
 				std::string Start;
-				std::string End;
-
 				COLORREF Color;
 			};
 
 			auto tokens =
 			{
+				TokenData::Make("white", SDR::LauncherCLI::Colors::White),
 				TokenData::Make("dark", SDR::LauncherCLI::Colors::Dark),
 				TokenData::Make("red", SDR::LauncherCLI::Colors::Red),
 				TokenData::Make("green", SDR::LauncherCLI::Colors::Green),
@@ -180,22 +178,6 @@ namespace
 
 							ptr += token.Start.size();
 
-							while (true)
-							{
-								if (*ptr == '{')
-								{
-									if (SDR::String::StartsWith(ptr, token.End.c_str()))
-									{
-										ptr += token.End.size();
-										break;
-									}
-								}
-
-								current->Text.push_back(*ptr);
-								++ptr;
-							}
-
-							current = nullptr;
 							break;
 						}
 					}
@@ -239,6 +221,7 @@ namespace
 			for (const auto& entry : textformats)
 			{
 				charformat.crTextColor = entry.Color;
+
 				SendMessageA(TextControl, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charformat);
 
 				SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
@@ -594,7 +577,7 @@ namespace
 
 		void WaitEvents(HANDLE process)
 		{
-			Local::Print("Waiting for stage: {string}\"%s\"\n{/string}", StageName);
+			Local::Print("Waiting for stage: {string}\"%s\"\n", StageName);
 
 			auto target = SDR::IPC::WaitForOne({ process, EventSuccess.Get(), EventFailure.Get() });
 
@@ -605,7 +588,7 @@ namespace
 
 			else if (target == EventSuccess.Get())
 			{
-				Local::Print("Passed stage: {string}\"%s\"\n{/string}", StageName);
+				Local::Print("Passed stage: {string}\"%s\"\n", StageName);
 			}
 
 			else if (target == EventFailure.Get())
@@ -819,7 +802,7 @@ namespace
 			{
 				gamename = SDR::Json::GetString(it->value, "DisplayName");
 
-				Local::Print("Found {string}\"%s\"{/string} in game config\n", gamename);
+				Local::Print("Found {string}\"%s\" {white}in game config\n", gamename);
 				
 				return gamename;
 			}
@@ -862,22 +845,22 @@ namespace
 
 		auto displayname = GetDisplayName(gamefolder);
 
-		Local::Print("Game: {string}\"%s\"\n{/string}", displayname.c_str());
-		Local::Print("Executable: {string}\"%s\"\n{/string}", exepath.c_str());
-		Local::Print("Directory: {string}\"%s\"\n{/string}", gamefolder);
-		Local::Print("Resource: {string}\"%s\"\n{/string}", curdir);
-		Local::Print("Parameters: {string}\"%s\"\n{/string}", params.c_str());
+		Local::Print("Game: {string}\"%s\"\n", displayname.c_str());
+		Local::Print("Executable: {string}\"%s\"\n", exepath.c_str());
+		Local::Print("Directory: {string}\"%s\"\n", gamefolder);
+		Local::Print("Resource: {string}\"%s\"\n", curdir);
+		Local::Print("Parameters: {string}\"%s\"\n", params.c_str());
 
 		ServerShadowStateData loadstage(SDR::LauncherCLI::StageType::Load, "Load");
 
-		Local::Print("Starting: {string}\"%s\"\n{/string}", displayname.c_str());
+		Local::Print("Starting: {string}\"%s\"\n", displayname.c_str());
 
 		auto info = StartProcess(gamefolder, exepath, params);
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
 
-		Local::Print("Injecting into: {string}\"%s\"\n{/string}", displayname.c_str());
+		Local::Print("Injecting into: {string}\"%s\"\n", displayname.c_str());
 
 		InjectProcess(process.Get(), thread.Get(), curdir, gamefolder);
 
@@ -930,7 +913,7 @@ namespace
 		auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
 		auto version = func();
 
-		Local::Print("Library version: {number}%d\n{/number}", version);
+		Local::Print("Library version: {number}%d\n", version);
 
 		FreeLibrary(library);
 	}
@@ -940,7 +923,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 {
 	SDR::Log::SetWarningFunction([](std::string&& text)
 	{
-		Local::Print("{red}%s{/red}", text.c_str());
+		Local::Print("{red}%s", text.c_str());
 	});
 
 	try
@@ -972,7 +955,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 		std::string gamepath;
 		std::string params = "-steam -insecure +sv_lan 1 -console"s;
 
-		Local::Print("Appending parameters: {string}\"%s\"\n{/string}", params.c_str());
+		Local::Print("Appending parameters: {string}\"%s\"\n", params.c_str());
 
 		for (size_t i = 0; i < argc; i++)
 		{
@@ -1010,7 +993,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 		EnsureFileIsPresent(Local::LibraryName);
 		EnsureFileIsPresent(Local::GameConfigName);
 
-		//MainProcedure(exepath, gamepath, params);
+		MainProcedure(exepath, gamepath, params);
 	}
 
 	catch (const SDR::Error::Exception& error)

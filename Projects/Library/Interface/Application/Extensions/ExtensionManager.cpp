@@ -91,7 +91,7 @@ namespace
 
 		Initialize(ext);
 
-		SDR::Log::Message("{dark}SDR: {/dark}Loaded extension {string}\"%s\"\n{/string}", ext.Name.c_str());
+		SDR::Log::Message("{dark}SDR: {white}Loaded extension {string}\"%s\"\n", ext.Name.c_str());
 
 		Loaded.emplace_back(std::move(ext));
 	}

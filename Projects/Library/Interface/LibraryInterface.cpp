@@ -120,7 +120,7 @@ void SDR::Library::Load()
 
 	SDR::Log::SetWarningFunction([](std::string&& text)
 	{
-		auto format = SDR::String::Format("{red}%s{/red}", text.c_str());
+		auto format = SDR::String::Format("{red}%s", text.c_str());
 		WriteToLauncherCLI(format);
 	});
 
@@ -129,7 +129,7 @@ void SDR::Library::Load()
 	try
 	{
 		SDR::Setup();
-		SDR::Log::Message("{dark}SDR: {/dark}{green}Source Demo Render loaded\n{/green}");
+		SDR::Log::Message("{dark}SDR: {green}Source Demo Render loaded\n");
 
 		/*
 			Give all output to the game console now.
