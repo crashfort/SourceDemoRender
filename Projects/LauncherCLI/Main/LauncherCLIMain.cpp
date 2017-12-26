@@ -339,6 +339,15 @@ namespace
 					DestroyMenu(menu);
 					break;
 				}
+
+				case WM_GETMINMAXINFO:
+				{
+					auto info = (MINMAXINFO*)lparam;
+					info->ptMinTrackSize.x = 640;
+					info->ptMinTrackSize.y = 360;
+
+					return 0;
+				}
 			}
 
 			return DefWindowProcA(hwnd, message, wparam, lparam);
