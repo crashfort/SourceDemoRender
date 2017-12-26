@@ -165,10 +165,23 @@ namespace
 
 				if (*ptr == '{')
 				{
+					bool skip = false;
+
 					for (const auto& token : tokens)
 					{
 						if (SDR::String::StartsWith(ptr, token.Start.c_str()))
 						{
+							ptr += token.Start.size();
+
+							if (current)
+							{
+								if (token.Color == current->Color)
+								{
+									skip = true;
+									break;
+								}
+							}
+
 							found = true;
 
 							parts.emplace_back();
@@ -176,10 +189,13 @@ namespace
 
 							current->Color = token.Color;
 
-							ptr += token.Start.size();
-
 							break;
 						}
+					}
+
+					if (skip)
+					{
+						continue;
 					}
 				}
 
