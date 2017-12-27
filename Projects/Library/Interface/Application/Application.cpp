@@ -48,6 +48,8 @@ namespace
 
 			auto foundinherit = false;
 
+			std::vector<std::pair<std::string, rapidjson::Value>> temp;
+
 			for (auto it = begin; it != end; ++it)
 			{
 				if (it->first == "Inherit")
@@ -86,9 +88,16 @@ namespace
 
 								if (shouldadd)
 								{
-									targetgame->Properties.emplace_back(sourceprop.first, rapidjson::Value(sourceprop.second, alloc));
+									temp.emplace_back(std::make_pair(sourceprop.first, rapidjson::Value(sourceprop.second, alloc)));
 								}
 							}
+
+							for (auto&& orig : targetgame->Properties)
+							{
+								temp.emplace_back(std::move(orig));
+							}
+
+							targetgame->Properties = std::move(temp);
 
 							break;
 						}
