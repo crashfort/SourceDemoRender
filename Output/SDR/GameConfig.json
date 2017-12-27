@@ -6,9 +6,10 @@
 
 		"MaterialsPtr":
 		{
-			"Comment": "0x101FFFAF static CSS IDA address May 29 2017",
+			"Comment": "0x101FFFAF static CSS IDA address December 27 2017",
+			"SortGroup": "Pointer",
 			"Module": "engine.dll",
-			"Pattern": "8B 0D ?? ?? ?? ?? 56 8B 11 FF 92 ?? ?? ?? ?? 8B F0 85 F6 74 07 8B 06 8B CE FF 50 08 8B 45 08 89 45 EC 8B 45 0C 53 FF 75 1C",
+			"Pattern": "8B 0D ?? ?? ?? ?? 56 8B 11 FF 92 ?? ?? ?? ?? 8B F0 85 F6 74 ??",
 			"Offset": 2
 		},
 		"MaterialSystem_GetBackBufferDimensions":
@@ -19,10 +20,11 @@
 		},
 		"EngineClientPtr":
 		{
-			"Comment": "0x100BA350 static CSS IDA address December 19 2017",
+			"Comment": "0x100BA350 static CSS IDA address December 27 2017",
+			"SortGroup": "Pointer",
 			"Module": "engine.dll",
-			"Pattern": "55 8B EC 83 EC 08 E8 ?? ?? ?? ?? 83 78 ?? 00 74 6C 8B 4D 08 8B 01 FF 50 0C 50 8D 4D F8 E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 48 ?? 8B 45 FC 8B 11 83 78 30 00",
-			"Offset": 92
+			"Pattern": "8B 0D ?? ?? ?? ?? 6A 00 8B 01 FF 90 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 68 ?? ?? ?? ?? 8B 01 FF 90 ?? ?? ?? ?? 8B E5 5D C3",
+			"Offset": 2
 		},
 		"EngineClient_ConsoleVisible":
 		{
@@ -44,10 +46,10 @@
 		},
 		"D3D9_Device":
 		{
-			"Comment": "0x100CDDC0 static CSS IDA address May 31 2017",
+			"Comment": "0x100CDDF9 static CSS IDA address December 27 2017",
 			"Module": "shaderapidx9.dll",
-			"Pattern": "A1 ?? ?? ?? ?? 53 56 8B D9 83 78 30 00 74 0E 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 04 8B 8B ?? ?? ?? ?? 8D B3 ?? ?? ?? ?? 85 C9 74 0C 8B 01",
-			"Offset": 58
+			"Pattern": "A1 ?? ?? ?? ?? 6A 00 56 6A 00 8B 08 6A 15 68 ?? ?? ?? ?? 6A 00 6A 01 6A 01 50 FF 51 5C 85 C0 79 06 C7 06 ?? ?? ?? ??",
+			"Offset": 1
 		},
 		"DrawLoading":
 		{
@@ -64,17 +66,16 @@
 		},
 		"StartMovie":
 		{
-			"Comment": "0x100BF270 static CSS IDA address April 26 2017",
+			"Comment": "0x100BF276 static CSS IDA address December 27 2017",
 			"Module": "engine.dll",
-			"Pattern": "FF 50 44 50 53 56 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 20 5F 5B 5E 8B E5 5D C3",
-			"Offset": 6,
+			"Pattern": "E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 20 ?? ?? ?? 8B E5 5D C3",
 			"IsRelativeJump": true
 		},
 		"StartMovieCommand":
 		{
-			"Comment": "0x100BEF40 static CSS IDA address April 7 2017",
+			"Comment": "0x100BEF40 static CSS IDA address December 27 2017",
 			"Module": "engine.dll",
-			"Pattern": "55 8B EC 83 EC 08 83 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 8B 4D 08 56 8B 01 83 F8 02 7D 6B 8B 35 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF D6 68 ?? ?? ?? ??"
+			"Pattern": "55 8B EC 83 EC 08 83 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ??"
 		},
 		"EndMovie":
 		{
@@ -90,27 +91,30 @@
 		},
 		"SUpdateGuts":
 		{
-			"Comment": "0x1006E1B7 static CSS IDA address December 19 2017",
+			"Comment": "0x1006E1B4 static CSS IDA address December 27 2017",
 			"Module": "engine.dll",
-			"Pattern": "E8 ?? ?? ?? ?? 83 C4 04 83 7D C8 00 7C ?? 8B ?? C0 85 ?? 74",
+			"Pattern": "D9 1C 24 E8 ?? ?? ?? ?? 83 C4 04 83 7D ?? 00 7C ?? 8B ?? ?? 85 ??",
+			"Offset": 3,
 			"IsRelativeJump": true
 		},
 		"CvarPtr":
 		{
-			"Comment": "0x10253CC9 static CSS IDA address August 8 2017",
+			"Comment": "0x1009F758 static CSS IDA address December 27 2017",
+			"SortGroup": "Pointer",
 			"Module": "engine.dll",
-			"Pattern": "A3 ?? ?? ?? ?? A3 ?? ?? ?? ?? 83 3D ?? ?? ?? ?? ?? 75 19 8B 04 B7 6A 00 68 ?? ?? ?? ?? FF D0 A3 ?? ?? ?? ?? 83 C4 08 A1 ?? ?? ?? ?? 46 3B F3 7C BD 5F 5E 5B 5D C3",
-			"Offset": 1
+			"Pattern": "0F 45 C8 89 8D ?? ?? ?? ?? EB ?? 8B 0D ?? ?? ?? ?? FF 77 14 8B 01",
+			"Offset": 13
 		},
 		"Cvar_FindVar":
 		{
-			"Comment": "Static CSS ICVar vtable offset August 8 2017",
+			"Comment": "Static CSS vtable offset August 8 2017 (0x1009D6B8)",
 			"VTPtrName": "CvarPtr",
 			"VTIndex": 13
 		},
 		"ConVar_Info":
 		{
 			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes August 17 2017",
+			"SortGroup": "Info",
 			"NeverAsStringFlag": 4096,
 			"Variant": 0,
 			"VTIndex_SetValueString": 10,
@@ -127,14 +131,17 @@
 		},
 		"ConCommandBase_Info":
 		{
+			"SortGroup": "Info",
 			"Variant": 0
 		},
 		"CCommand_Info":
 		{
+			"SortGroup": "Info",
 			"Variant": 0
 		},
 		"ConCommand_Info":
 		{
+			"SortGroup": "Info",
 			"Variant": 0
 		},
 		"ConCommand_Constructor1":
@@ -147,6 +154,7 @@
 		},
 		"Console_Info":
 		{
+			"SortGroup": "Info",
 			"Library": "tier0.dll",
 
 			"MessageVariant": 0,
@@ -181,7 +189,18 @@
 	{
 		"Inherit": "Counter-Strike Source\\cstrike",
 		"DisplayName": "Team Fortress 2",
-		"ExecutableName": "Team Fortress 2\\hl2.exe"
+		"ExecutableName": "Team Fortress 2\\hl2.exe",
+
+		"ConVar_Info":
+		{
+			"SortGroup": "Info",
+			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes August 17 2017",
+			"NeverAsStringFlag": 4096,
+			"Variant": 1,
+			"VTIndex_SetValueString": 10,
+			"VTIndex_SetValueFloat": 11,
+			"VTIndex_SetValueInt": 12
+		}
 	},
 	"sourcemods\\momentum":
 	{
@@ -201,33 +220,11 @@
 		"DisplayName": "Garry's Mod",
 		"ExecutableName": "GarrysMod\\hl2.exe",
 
-		"MaterialsPtr":
-		{
-			"Comment": "0x101E92DF static GMOD IDA address August 27 2017",
-			"Module": "engine.dll",
-			"Pattern": "8B 0D ?? ?? ?? ?? 56 8B 11 FF 92 ?? ?? ?? ?? 8B F0 85 F6 74 06 8B 06 8B CE FF 10 8B 45 08 89 45 EC 8B 45 0C 53 FF 75 1C 8B 5D 10 89 45 F0 8B 45 14 89 5D F4 89 45 F8 E8 ?? ?? ?? ??",
-			"Offset": 2
-		},
-		"EngineClientPtr":
-		{
-			"Comment": "0x100A5A50 static GMOD IDA address August 27 2017",
-			"Module": "engine.dll",
-			"Pattern": "55 8B EC 83 EC 08 E8 ?? ?? ?? ?? 83 78 24 00 74 6C 8B 4D 08 8B 01 FF 50 0C 50 8D 4D F8 E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 48 24 8B 45 FC 8B 11 83 78 30 00",
-			"Offset": 92
-		},
 		"View_Render":
 		{
-			"Comment": "0x10153ED0 static GMOD IDA address August 27 2017",
+			"Comment": "0x10167380 static GMOD IDA address December 27 2017",
 			"Module": "client.dll",
 			"Pattern": "55 8B EC 57 8B 7D 08 83 7F 08 00 0F 84 ?? ?? ?? ?? 83 7F 0C 00 0F 84 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 56 8B 01 FF 90 ?? ?? ?? ?? 8B F0 85 F6 74 06 8B 06 8B CE FF 10 8B 06 8B CE 6A 00 FF 50 10 8B 06 8B CE FF 50 04 8B 0D ?? ?? ?? ?? 5E 85 C9 74 1C 6A 7F E8 ?? ?? ?? ?? 84 C0 74 11 8B 0D ?? ?? ?? ?? 6A 00 E8 ?? ?? ?? ?? 84 C0 75 33"
-		},
-		"StartMovie":
-		{
-			"Comment": "0x100AA199 static GMOD IDA address December 18 2017",
-			"Module": "engine.dll",
-			"Pattern": "FF 50 44 50 57 56 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 20 5F 5E 5B 8B E5 5D C3",
-			"Offset": 6,
-			"IsRelativeJump": true
 		},
 		"StartMovieCommand":
 		{
@@ -247,6 +244,35 @@
 			"Comment": "0x1024BC00 static GMOD IDA address August 27 2017",
 			"Module": "engine.dll",
 			"Pattern": "55 8B EC 8B 45 0C 8B 55 18 85 D2 56 8B F1 0F 95 C1 89 46 18 B8 ?? ?? ?? ?? 0F 45 C2 C7 46 ?? ?? ?? ?? ?? 89 46 1C 8A 46 20 24 FE C7 06 ?? ?? ?? ?? 0A C8 C6 46 08 00 8B 45 08 80 E1 FB 80 C9 02 89 46 0C 8B 45 10 85 C0 88 4E 20 B9 ?? ?? ?? ?? 0F 45 C8 8B 45 14 89 4E 10 89 46 14 A8 01 75 10 A1 ?? ?? ?? ?? 89 46 04 89 35 ?? ?? ?? ?? EB 07"
+		}
+	},
+	"Black Mesa\\bms":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike",
+		"DisplayName": "Black Mesa",
+		"ExecutableName": "Black Mesa\\bms.exe",
+
+		"Cvar_FindVar":
+		{
+			"Comment": "Static BMS vtable offset December 27 2017 (0x1009DF28)",
+			"VTPtrName": "CvarPtr",
+			"VTIndex": 16
+		},
+		"MaterialSystem_GetBackBufferDimensions":
+		{
+			"Comment": "Static BMS CMaterialSystem vtable index December 27 2017",
+			"VTPtrName": "MaterialsPtr",
+			"VTIndex": 34
+		},
+		"ConVar_Info":
+		{
+			"SortGroup": "Info",
+			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes December 27 2017",
+			"NeverAsStringFlag": 4096,
+			"Variant": 1,
+			"VTIndex_SetValueString": 13,
+			"VTIndex_SetValueFloat": 14,
+			"VTIndex_SetValueInt": 15
 		}
 	}
 }
