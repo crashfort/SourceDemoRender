@@ -43,14 +43,11 @@ namespace
 
 		void ResolveInherit(ConfigObjectData* targetgame, const std::vector<ConfigObjectData>& source, rapidjson::Document::AllocatorType& alloc)
 		{
-			auto begin = targetgame->Properties.begin();
-			auto end = targetgame->Properties.end();
-
 			auto foundinherit = false;
 
 			std::vector<std::pair<std::string, rapidjson::Value>> temp;
 
-			for (auto it = begin; it != end; ++it)
+			for (auto it = targetgame->Properties.begin(); it != targetgame->Properties.end(); ++it)
 			{
 				if (it->first == "Inherit")
 				{
@@ -115,6 +112,53 @@ namespace
 			if (foundinherit)
 			{
 				ResolveInherit(targetgame, source, alloc);
+			}
+		}
+
+		void ResolveSort(ConfigObjectData* targetgame)
+		{
+			auto temp = std::move(targetgame->Properties);
+
+			auto addgroup = [&](const char* name)
+			{
+				for (auto&& prop : temp)
+				{
+					if (prop.first.empty())
+					{
+						continue;
+					}
+
+					if (prop.second.IsObject())
+					{
+						if (prop.second.HasMember("SortGroup"))
+						{
+							std::string group = prop.second["SortGroup"].GetString();
+
+							if (group == name)
+							{
+								targetgame->Properties.emplace_back(std::move(prop));
+							}
+						}
+					}
+				}
+			};
+
+			addgroup("Pointer");
+			addgroup("Info");
+			addgroup("Function");
+			addgroup("User1");
+			addgroup("User2");
+			addgroup("User3");
+			addgroup("User4");
+
+			for (auto&& rem : temp)
+			{
+				if (rem.first.empty())
+				{
+					continue;
+				}
+
+				targetgame->Properties.emplace_back(std::move(rem));
 			}
 		}
 
@@ -247,6 +291,7 @@ namespace
 			}
 
 			ResolveInherit(object, GameConfigs, document.GetAllocator());
+			ResolveSort(object);
 			CallGameHandlers(object);
 
 			GameConfigs.clear();
