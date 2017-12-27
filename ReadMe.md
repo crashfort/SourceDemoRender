@@ -15,6 +15,7 @@ Games that are added:
 * Momentum
 * Day of Defeat: Source
 * Garry's Mod
+* Black Mesa
 
 Known games that don't work:
 * Counter-Strike: Global Offensive - *Uses stoneage D3D9 that doesn't support texture sharing*
