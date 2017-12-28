@@ -4,19 +4,501 @@
 #include <SDR Shared\Json.hpp>
 #include <SDR Shared\IPC.hpp>
 #include <SDR Library API\ExportTypes.hpp>
-#include "rapidjson\document.h"
+#include <SDR LauncherCLI API\LauncherCLIAPI.hpp>
+#include <rapidjson\document.h>
 #include <Shlwapi.h>
 #include <wrl.h>
 #include <cstdio>
 #include <cstdint>
 #include <string>
 #include <algorithm>
+#include <thread>
+#include <functional>
+
+#include <Richedit.h>
+#include <CommCtrl.h>
+#include <windowsx.h>
+
+using namespace std::literals;
 
 namespace
 {
-	char LibraryName[] = "SourceDemoRender.dll";
-	char GameConfigName[] = "GameConfig.json";
-	char InitializeExportName[] = "SDR_Initialize";
+	namespace Synchro
+	{
+		struct EventData
+		{
+			EventData()
+			{
+				Event.Attach(CreateEventA(nullptr, false, false, nullptr));
+			}
+
+			void Set()
+			{
+				SetEvent(Get());
+			}
+
+			HANDLE Get() const
+			{
+				return Event.Get();
+			}
+
+			Microsoft::WRL::Wrappers::HandleT<Microsoft::WRL::Wrappers::HandleTraits::HANDLENullTraits> Event;
+		};
+
+		struct Data
+		{
+			Data()
+			{
+				if (!MainReady.Event.IsValid())
+				{
+					SDR::Error::MS::ThrowLastError("Could not create event \"MainReady\"");
+				}
+
+				if (!WindowCreated.Event.IsValid())
+				{
+					SDR::Error::MS::ThrowLastError("Could not create event \"WindowCreated\"");
+				}
+			}
+
+			EventData MainReady;
+			EventData WindowCreated;
+		};
+
+		std::unique_ptr<Data> Ptr;
+
+		void Create()
+		{
+			Ptr = std::make_unique<Data>();
+		}
+
+		void Destroy()
+		{
+			Ptr.reset();
+		}
+	}
+}
+
+namespace
+{
+	namespace Window
+	{
+		HWND CreateRichEdit(HWND owner, int x, int y, int width, int height, HINSTANCE instance)
+		{
+			auto library = LoadLibraryA("Msftedit.dll");
+
+			if (!library)
+			{
+				SDR::Error::MS::ThrowLastError("Could not load rich edit control library");
+			}
+
+			auto classname = MSFTEDIT_CLASS;
+			auto text = L"";
+			auto style = ES_READONLY | ES_AUTOVSCROLL | ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP;
+
+			auto hwnd = CreateWindowExW(0, classname, text, style, x, y, width, height, owner, nullptr, instance, nullptr);
+			return hwnd;
+		}
+
+		HWND WindowHandle = nullptr;
+		HWND TextControl = nullptr;
+		std::thread Thread;
+
+		CHARFORMAT2A GetDefaultFormat()
+		{
+			CHARFORMAT2A format = {};
+			format.cbSize = sizeof(format);
+			format.dwMask |= CFM_COLOR | CFM_FACE | CFM_SIZE;
+			strcpy_s(format.szFaceName, "Consolas");
+			format.crTextColor = SDR::LauncherCLI::Colors::White;
+			
+			/*
+				10px
+			*/
+			format.yHeight = 10 * 20;
+
+			return format;
+		}
+
+		struct TextFormatData
+		{
+			COLORREF Color;
+			std::string Text;
+		};
+
+		std::vector<TextFormatData> FormatText(const char* text)
+		{
+			struct TokenData
+			{
+				static TokenData Make(const char* name, COLORREF color)
+				{
+					TokenData ret;
+					ret.Start = SDR::String::Format("{%s}", name);
+					ret.Color = color;
+
+					return ret;
+				}
+
+				std::string Start;
+				COLORREF Color;
+			};
+
+			auto tokens =
+			{
+				TokenData::Make("white", SDR::LauncherCLI::Colors::White),
+				TokenData::Make("dark", SDR::LauncherCLI::Colors::Dark),
+				TokenData::Make("red", SDR::LauncherCLI::Colors::Red),
+				TokenData::Make("green", SDR::LauncherCLI::Colors::Green),
+				TokenData::Make("blue", SDR::LauncherCLI::Colors::Blue),
+				TokenData::Make("string", SDR::LauncherCLI::Colors::String),
+				TokenData::Make("number", SDR::LauncherCLI::Colors::Number),
+			};
+
+			std::vector<TextFormatData> parts;
+
+			TextFormatData* current = nullptr;
+
+			auto ptr = text;
+
+			while (*ptr)
+			{
+				bool found = false;
+
+				if (*ptr == '{')
+				{
+					for (const auto& token : tokens)
+					{
+						if (SDR::String::StartsWith(ptr, token.Start.c_str()))
+						{
+							found = true;
+							ptr += token.Start.size();
+
+							if (current)
+							{
+								if (token.Color == current->Color)
+								{
+									break;
+								}
+							}
+
+							parts.emplace_back();
+							current = &parts.back();
+
+							current->Color = token.Color;
+							break;
+						}
+					}
+				}
+
+				if (!found)
+				{
+					if (!current)
+					{
+						parts.emplace_back();
+						current = &parts.back();
+
+						current->Color = SDR::LauncherCLI::Colors::White;
+					}
+
+					current->Text.push_back(*ptr);
+
+					++ptr;
+				}
+			}
+
+			return parts;
+		}
+
+		void AppendLogText(const char* text)
+		{
+			if (!WindowHandle)
+			{
+				return;
+			}
+
+			CHARRANGE range;
+			range.cpMin = -1;
+			range.cpMax = -1;
+
+			auto charformat = GetDefaultFormat();
+
+			auto textformats = FormatText(text);
+
+			for (const auto& entry : textformats)
+			{
+				charformat.crTextColor = entry.Color;
+
+				SendMessageA(TextControl, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charformat);
+
+				SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
+				SendMessageA(TextControl, EM_REPLACESEL, 0, (LPARAM)entry.Text.c_str());
+			}
+
+			SendMessageA(TextControl, WM_VSCROLL, SB_BOTTOM, 0);
+		}
+
+		LRESULT CALLBACK TextControlProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, UINT_PTR subid, DWORD_PTR ref)
+		{
+			switch (message)
+			{
+				case WM_MBUTTONDOWN:
+				{
+					if (wparam & MK_MBUTTON)
+					{
+						return 0;
+					}
+
+					break;
+				}
+
+				case WM_MOUSEWHEEL:
+				{
+					if (GET_WHEEL_DELTA_WPARAM(wparam) > 0)
+					{
+						SendMessageA(hwnd, WM_VSCROLL, SB_LINEUP, 0);
+						SendMessageA(hwnd, WM_VSCROLL, SB_LINEUP, 0);
+						SendMessageA(hwnd, WM_VSCROLL, SB_LINEUP, 0);
+					}
+
+					else if (GET_WHEEL_DELTA_WPARAM(wparam) < 0)
+					{
+						SendMessageA(hwnd, WM_VSCROLL, SB_LINEDOWN, 0);
+						SendMessageA(hwnd, WM_VSCROLL, SB_LINEDOWN, 0);
+						SendMessageA(hwnd, WM_VSCROLL, SB_LINEDOWN, 0);
+					}
+
+					return 1;
+				}
+			}
+
+			return DefSubclassProc(hwnd, message, wparam, lparam);
+		}
+
+		LRESULT CALLBACK WindowProcedureOwner(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+		{
+			switch (message)
+			{
+				case WM_DESTROY:
+				{
+					PostQuitMessage(0);
+					return 0;
+				}
+
+				case WM_SIZE:
+				{
+					int width = LOWORD(lparam);
+					int height = HIWORD(lparam);
+
+					auto flags = SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER;
+					SetWindowPos(TextControl, nullptr, 0, 0, width, height, flags);
+
+					return 0;
+				}
+
+				case WM_COPYDATA:
+				{
+					auto copydata = (COPYDATASTRUCT*)lparam;
+
+					if (copydata->dwData == SDR::LauncherCLI::Messages::AddMessage)
+					{
+						auto data = (SDR::LauncherCLI::AddMessageData*)copydata->lpData;
+
+						AppendLogText(data->Text);
+						return 1;
+					}
+
+					break;
+				}
+
+				case WM_CONTEXTMENU:
+				{
+					auto posx = GET_X_LPARAM(lparam);
+					auto posy = GET_Y_LPARAM(lparam);
+
+					auto menu = CreatePopupMenu();
+
+					enum
+					{
+						SelectAllIndex = WM_APP,
+						QuitIndex,
+					};
+
+					AppendMenuA(menu, MF_STRING, SelectAllIndex, "Select All");
+					AppendMenuA(menu, MF_SEPARATOR, 0, nullptr);
+					AppendMenuA(menu, MF_STRING, QuitIndex, "Quit");
+
+					auto selection = TrackPopupMenu(menu, TPM_RETURNCMD, posx, posy, 0, WindowHandle, nullptr);
+
+					if (selection == SelectAllIndex)
+					{
+						CHARRANGE range = {};
+						range.cpMax = -1;
+
+						SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
+					}
+
+					else if (selection == QuitIndex)
+					{
+						PostQuitMessage(0);
+					}
+
+					DestroyMenu(menu);
+					break;
+				}
+
+				case WM_GETMINMAXINFO:
+				{
+					auto info = (MINMAXINFO*)lparam;
+					info->ptMinTrackSize.x = 640;
+					info->ptMinTrackSize.y = 360;
+
+					return 0;
+				}
+			}
+
+			return DefWindowProcA(hwnd, message, wparam, lparam);
+		}
+
+		void MessageLoop()
+		{
+			MSG msg = {};
+
+			while (msg.message != WM_QUIT)
+			{
+				if (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
+				{
+					TranslateMessage(&msg);
+					DispatchMessageA(&msg);
+				}
+
+				else
+				{
+					WaitMessage();
+				}
+			}
+
+			WindowHandle = nullptr;
+			TextControl = nullptr;
+		}
+
+		void MakeWindow(HINSTANCE instance)
+		{
+			{
+				auto classname = "SDR_LAUNCHERCLI_OWNER_CLASS";
+
+				WNDCLASSEX wcex = {};
+				wcex.cbSize = sizeof(wcex);
+				wcex.lpfnWndProc = WindowProcedureOwner;
+				wcex.hInstance = instance;
+				wcex.hCursor = LoadCursorA(nullptr, IDC_ARROW);
+				wcex.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+				wcex.lpszClassName = classname;
+
+				if (!RegisterClassExA(&wcex))
+				{
+					auto error = GetLastError();
+
+					if (error != ERROR_CLASS_ALREADY_EXISTS)
+					{
+						SDR::Error::MS::ThrowLastError("Could not register owner window class");
+					}
+				}
+
+				RECT rect = {};
+				rect.right = 960;
+				rect.bottom = 640;
+
+				const auto style = WS_OVERLAPPEDWINDOW ^ WS_MAXIMIZEBOX | WS_CLIPCHILDREN;
+
+				AdjustWindowRect(&rect, style, false);
+
+				auto title = "SDR Launcher CLI";
+				auto posx = CW_USEDEFAULT;
+				auto posy = CW_USEDEFAULT;
+				auto width = rect.right - rect.left;
+				auto height = rect.bottom - rect.top;
+
+				WindowHandle = CreateWindowExA(0, classname, title, style, posx, posy, width, height, nullptr, nullptr, instance, nullptr);
+
+				if (!WindowHandle)
+				{
+					SDR::Error::MS::ThrowLastError("Could not create window");
+				}
+
+				TextControl = CreateRichEdit(WindowHandle, 0, 0, width, height, instance);
+
+				if (!TextControl)
+				{
+					SDR::Error::MS::ThrowLastError("Could not create rich edit control");
+				}
+
+				SetWindowSubclass(TextControl, TextControlProcedure, 0, 0);
+
+				SendMessageA(TextControl, EM_SETBKGNDCOLOR, 0, RGB(30, 30, 30));
+				SendMessageA(TextControl, EM_SHOWSCROLLBAR, SB_VERT, 1);
+
+				auto format = GetDefaultFormat();
+				SendMessageA(TextControl, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
+			}
+
+			ShowWindow(WindowHandle, SW_SHOW);
+		}
+
+		void Create(HINSTANCE instance)
+		{
+			Thread = std::thread([=]()
+			{
+				bool fail = false;
+
+				try
+				{
+					SDR::IPC::WaitForOne({ Synchro::Ptr->MainReady.Get() });
+
+					MakeWindow(instance);
+				}
+
+				catch (const SDR::Error::Exception& error)
+				{
+					fail = true;
+				}
+
+				Synchro::Ptr->WindowCreated.Set();
+
+				if (!fail)
+				{
+					MessageLoop();
+				}
+			});
+
+			Synchro::Ptr->MainReady.Set();
+
+			try
+			{
+				SDR::IPC::WaitForOne({ Synchro::Ptr->WindowCreated.Get() });
+			}
+
+			catch (const SDR::Error::Exception& error)
+			{
+
+			}
+		}
+	}
+}
+
+namespace
+{
+	namespace Local
+	{
+		template <typename... Args>
+		void Print(const char* format, Args&&... args)
+		{
+			auto text = SDR::String::Format(format, std::forward<Args>(args)...);
+			Window::AppendLogText(text.c_str());
+		}
+
+		char LibraryName[] = "SourceDemoRender.dll";
+		char GameConfigName[] = "GameConfig.json";
+		char InitializeExportName[] = "SDR_Initialize";
+	}
 }
 
 namespace
@@ -91,18 +573,14 @@ namespace
 
 namespace
 {
-	struct ServerShadowStateData : SDR::API::ShadowState
+	struct ServerShadowStateData : SDR::LauncherCLI::ShadowState
 	{
-		ServerShadowStateData(SDR::API::StageType stage, const char* name)
+		ServerShadowStateData(SDR::LauncherCLI::StageType stage, const char* name)
 		{
 			StageName = name;
 
-			auto pipename = SDR::API::CreatePipeName(stage);
-			auto successname = SDR::API::CreateEventSuccessName(stage);
-			auto failname = SDR::API::CreateEventFailureName(stage);
-
-			Pipe.Attach(CreateNamedPipeA(pipename.c_str(), PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE, 1, 0, 4096, 0, nullptr));
-			SDR::Error::MS::ThrowIfZero(Pipe.Get(), "Could not create inbound pipe in stage \"%s\"", StageName);
+			auto successname = SDR::LauncherCLI::CreateEventSuccessName(stage);
+			auto failname = SDR::LauncherCLI::CreateEventFailureName(stage);
 
 			EventSuccess.Attach(CreateEventA(nullptr, false, false, successname.c_str()));
 			SDR::Error::MS::ThrowIfZero(EventSuccess.Get(), "Could not create success event in stage \"%s\"", StageName);
@@ -113,11 +591,9 @@ namespace
 
 		void WaitEvents(HANDLE process)
 		{
-			printf_s("Waiting for stage \"%s\"\n", StageName);
+			Local::Print("Waiting for stage: {string}\"%s\"\n", StageName);
 
 			auto target = SDR::IPC::WaitForOne({ process, EventSuccess.Get(), EventFailure.Get() });
-
-			ReadPipe();
 
 			if (target == process)
 			{
@@ -126,52 +602,13 @@ namespace
 
 			else if (target == EventSuccess.Get())
 			{
-				printf_s("Passed stage \"%s\"\n", StageName);
+				Local::Print("Passed stage: {string}\"%s\"\n", StageName);
 			}
 
 			else if (target == EventFailure.Get())
 			{
 				TerminateProcess(process, 0);
 				SDR::Error::Make("Could not pass stage \"%s\"", StageName);
-			}
-		}
-
-		void ReadPipe()
-		{
-			char buf[4096];
-			DWORD size = sizeof(buf);
-			DWORD avail = 0;
-
-			while (true)
-			{
-				auto res = PeekNamedPipe(Pipe.Get(), nullptr, 0, nullptr, &avail, nullptr);
-
-				if (res && avail > 0)
-				{
-					while (avail > 0)
-					{
-						std::memset(buf, 0, size);
-
-						DWORD read = 0;
-
-						auto min = std::min(size - 1, avail);
-						res = ReadFile(Pipe.Get(), buf, min, &read, nullptr);
-
-						buf[min] = 0;
-
-						if (res)
-						{
-							printf_s(buf);
-						}
-
-						avail -= min;
-					}
-				}
-
-				else
-				{
-					break;
-				}
 			}
 		}
 
@@ -187,6 +624,8 @@ namespace
 		const char* ExportNameAddr;
 		const char* ResourcePathAddr;
 		const char* GamePathAddr;
+
+		HWND LauncherCLI;
 	};
 
 	/*
@@ -200,13 +639,19 @@ namespace
 
 		auto library = data->LibraryNameAddr;
 		auto loadexport = data->ExportNameAddr;
-		auto path = data->ResourcePathAddr;
-		auto game = data->GamePathAddr;
+		auto respath = data->ResourcePathAddr;
+		auto gamepath = data->GamePathAddr;
+		auto hwnd = data->LauncherCLI;
 
 		auto module = data->LoadLibraryAddr(library);
 		auto func = (SDR::API::SDR_Initialize)data->GetProcAddressAddr(module, loadexport);
 
-		func(path, game);
+		SDR::API::InitializeData initdata;
+		initdata.ResourcePath = respath;
+		initdata.GamePath = gamepath;
+		initdata.LauncherCLI = hwnd;
+
+		func(initdata);
 	}
 
 	void InjectProcess(HANDLE process, HANDLE thread, const std::string& resourcepath, const std::string& gamepath)
@@ -222,28 +667,37 @@ namespace
 		{
 			0x55,
 			0x8b, 0xec,
+			0x83, 0xec, 0x10,
 			0x53,
-			0x8b, 0x5d, 0x08,
 			0x56,
 			0x57,
-			0x8b, 0x43, 0x10,
-			0xff, 0x73, 0x08,
-			0x8b, 0x73, 0x0c,
-			0x8b, 0x7b, 0x14,
+			0x8b, 0x7d, 0x08,
+			0x8b, 0x47, 0x14,
+			0xff, 0x77, 0x08,
+			0x8b, 0x77, 0x0c,
+			0x8b, 0x5f, 0x10,
 			0x89, 0x45, 0x08,
-			0x8b, 0x03,
+			0x8b, 0x47, 0x18,
+			0x89, 0x45, 0xfc,
+			0x8b, 0x07,
 			0xff, 0xd0,
 			0x56,
 			0x50,
-			0x8b, 0x43, 0x04,
+			0x8b, 0x47, 0x04,
 			0xff, 0xd0,
-			0x57,
-			0xff, 0x75, 0x08,
+			0x8b, 0x4d, 0x08,
+			0x89, 0x4d, 0xf4,
+			0x8b, 0x4d, 0xfc,
+			0x89, 0x4d, 0xf8,
+			0x8d, 0x4d, 0xf0,
+			0x51,
+			0x89, 0x5d, 0xf0,
 			0xff, 0xd0,
-			0x83, 0xc4, 0x08,
+			0x83, 0xc4, 0x04,
 			0x5f,
 			0x5e,
 			0x5b,
+			0x8b, 0xe5,
 			0x5d,
 			0xc2, 0x04, 0x00,
 		};
@@ -264,10 +718,12 @@ namespace
 		/*
 			All referenced strings must be allocated in the other process too.
 		*/
-		data.LibraryNameAddr = writer.PushString(resourcepath + LibraryName);
-		data.ExportNameAddr = writer.PushString(InitializeExportName);
+		data.LibraryNameAddr = writer.PushString(resourcepath + Local::LibraryName);
+		data.ExportNameAddr = writer.PushString(Local::InitializeExportName);
 		data.ResourcePathAddr = writer.PushString(resourcepath);
 		data.GamePathAddr = writer.PushString(gamepath);
+
+		data.LauncherCLI = Window::WindowHandle;
 
 		auto dataaddr = writer.PushMemory(data);
 
@@ -280,7 +736,7 @@ namespace
 			"Could not queue APC for process"
 		);
 
-		ServerShadowStateData initstage(SDR::API::StageType::Initialize, "Initialize");
+		ServerShadowStateData initstage(SDR::LauncherCLI::StageType::Initialize, "Initialize");
 
 		/*
 			Our initialize function will now run inside the other process.
@@ -338,13 +794,13 @@ namespace
 
 	std::string GetDisplayName(const char* gamepath)
 	{
-		printf_s("Searching game config for matching name\n");
+		Local::Print("Searching game config for matching name\n");
 
 		rapidjson::Document document;
 
 		try
 		{
-			document = SDR::Json::FromFile(GameConfigName);
+			document = SDR::Json::FromFile(Local::GameConfigName);
 		}
 
 		catch (SDR::File::ScopedFile::ExceptionType status)
@@ -360,7 +816,7 @@ namespace
 			{
 				gamename = SDR::Json::GetString(it->value, "DisplayName");
 
-				printf_s("Found \"%s\" in game config\n", gamename);
+				Local::Print("Found {string}\"%s\" {white}in game config\n", gamename);
 				
 				return gamename;
 			}
@@ -403,22 +859,23 @@ namespace
 
 		auto displayname = GetDisplayName(gamefolder);
 
-		printf_s("Game: \"%s\"\n", displayname.c_str());
-		printf_s("Executable: \"%s\"\n", exepath.c_str());
-		printf_s("Directory: \"%s\"\n", gamefolder);
-		printf_s("Resource: \"%s\"\n", curdir);
+		Local::Print("Game: {string}\"%s\"\n", displayname.c_str());
+		Local::Print("Executable: {string}\"%s\"\n", exepath.c_str());
+		Local::Print("Directory: {string}\"%s\"\n", gamefolder);
+		Local::Print("Resource: {string}\"%s\"\n", curdir);
+		Local::Print("Parameters: {string}\"%s\"\n", params.c_str());
 
-		printf_s("Parameters: \"%s\"\n", params.c_str());
+		ServerShadowStateData loadstage(SDR::LauncherCLI::StageType::Load, "Load");
 
-		ServerShadowStateData loadstage(SDR::API::StageType::Load, "Load");
+		Local::Print("Starting: {string}\"%s\"\n", displayname.c_str());
 
-		printf_s("Starting \"%s\"\n", displayname.c_str());
 		auto info = StartProcess(gamefolder, exepath, params);
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
 
-		printf_s("Injecting into \"%s\"\n", displayname.c_str());
+		Local::Print("Injecting into: {string}\"%s\"\n", displayname.c_str());
+
 		InjectProcess(process.Get(), thread.Get(), curdir, gamefolder);
 
 		/*
@@ -441,10 +898,12 @@ namespace
 		data.LoadLibraryAddr = LoadLibraryA;
 		data.GetProcAddressAddr = GetProcAddress;
 
-		data.LibraryNameAddr = LibraryName;
-		data.ExportNameAddr = InitializeExportName;
+		data.LibraryNameAddr = Local::LibraryName;
+		data.ExportNameAddr = Local::InitializeExportName;
 		data.ResourcePathAddr = "i dont know";
 		data.GamePathAddr = "i dont know";
+
+		data.LauncherCLI = nullptr;
 
 		QueueUserAPC(ProcessAPC, GetCurrentThread(), (ULONG_PTR)&data);
 
@@ -458,7 +917,7 @@ namespace
 		/*
 			Safe because nothing external is referenced.
 		*/
-		auto library = LoadLibraryExA(LibraryName, nullptr, DONT_RESOLVE_DLL_REFERENCES);
+		auto library = LoadLibraryExA(Local::LibraryName, nullptr, DONT_RESOLVE_DLL_REFERENCES);
 
 		if (!library)
 		{
@@ -468,16 +927,28 @@ namespace
 		auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
 		auto version = func();
 
-		printf_s("SDR library version: %d\n", version);
+		Local::Print("Library version: {number}%d\n", version);
 
 		FreeLibrary(library);
 	}
 }
 
-void main(int argc, char* argv[])
+int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int showcommand)
 {
+	SDR::Log::SetWarningFunction([](std::string&& text)
+	{
+		Local::Print("{red}%s", text.c_str());
+	});
+
 	try
 	{
+		Synchro::Create();
+
+		Window::Create(instance);
+
+		auto argv = *__p___argv();
+		auto argc = *__p___argc();
+
 		/*
 			Don't need our own name.
 		*/
@@ -497,8 +968,8 @@ void main(int argc, char* argv[])
 		std::string exepath;
 		std::string gamepath;
 		std::string params = "-steam -insecure +sv_lan 1 -console"s;
-		
-		printf_s("Appending parameters: \"%s\"\n", params.c_str());
+
+		Local::Print("Appending parameters: {string}\"%s\"\n", params.c_str());
 
 		for (size_t i = 0; i < argc; i++)
 		{
@@ -533,8 +1004,8 @@ void main(int argc, char* argv[])
 			SDR::Error::Make("Required switch \"/PATH\" not found");
 		}
 
-		EnsureFileIsPresent(LibraryName);
-		EnsureFileIsPresent(GameConfigName);
+		EnsureFileIsPresent(Local::LibraryName);
+		EnsureFileIsPresent(Local::GameConfigName);
 
 		MainProcedure(exepath, gamepath, params);
 	}
@@ -544,7 +1015,14 @@ void main(int argc, char* argv[])
 		
 	}
 
-	printf_s("You can close this window now\n");
+	Local::Print("{blue}You can close this window now\n");
 
-	std::getchar();
+	if (Window::Thread.joinable())
+	{
+		Window::Thread.join();
+	}
+
+	Synchro::Destroy();
+
+	return 0;
 }

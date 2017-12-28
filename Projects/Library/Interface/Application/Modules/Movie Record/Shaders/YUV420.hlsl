@@ -42,7 +42,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 			botleft = WorkBuffer.Load(CalculateIndex(width, pos, int2(0, 1))).Color;
 		}
 
-		else 
+		else
 		{
 			botleft = pix;
 		}
@@ -52,9 +52,22 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 			botright = WorkBuffer.Load(CalculateIndex(width, pos, int2(1, 1))).Color;
 		}
 
-		else 
+		else
 		{
-			botright = pix;
+			if (pos.x + 1 < width)
+			{
+				botright = topright;
+			}
+
+			else if (pos.y + 1 < height)
+			{
+				botright = botleft;
+			}
+
+			else
+			{
+				botright = pix;
+			}
 		}
 
 		pix = (pix + topright + botleft + botright) / 4.0;

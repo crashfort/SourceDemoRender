@@ -12,6 +12,8 @@ namespace
 	{
 		std::vector<SDR::Console::Command> Commands;
 	} GlobalState;
+
+	bool OutputIsGameConsole = false;
 }
 
 namespace
@@ -192,6 +194,22 @@ namespace
 			using SetValueIntType = void(__fastcall*)(void* thisptr, void* edx, int value);
 		}
 
+		namespace Variant1
+		{
+			struct Data : Variant0::Data
+			{
+				uint8_t Unknown[128];
+			};
+
+			using Constructor3Type = Variant0::Constructor3Type;
+
+			SDR::Hooking::ModuleShared::Variant::Function<Constructor3Type> Constructor3(Entries::Constructor3);
+
+			using SetValueStringType = Variant0::SetValueStringType;
+			using SetValueFloatType = Variant0::SetValueFloatType;
+			using SetValueIntType = Variant0::SetValueIntType;
+		}
+
 		auto Adders = SDR::CreateAdders
 		(
 			SDR::ModuleHandlerAdder
@@ -317,9 +335,13 @@ namespace
 			size = sizeof(ModuleConVar::Variant0::Data);
 		}
 
+		else if (ModuleConVar::Variant == 1)
+		{
+			size = sizeof(ModuleConVar::Variant1::Data);
+		}
+
 		/*
-			Never freed because the engine's class destructor cannot be called with these objects.
-			Is fine anyway since the OS will clear everything on process exit, when they would normally get destroyed.
+			Never freed because the OS will clear everything on process exit, when they would normally get destroyed anyway.
 			No need to clean the house up before it gets demolished.
 		*/
 		ret.Opaque = std::calloc(1, size);
@@ -343,8 +365,7 @@ namespace
 		}
 
 		/*
-			Never freed because the engine's class destructor cannot be called with these objects.
-			Is fine anyway since the OS will clear everything on process exit, when they would normally get destroyed.
+			Never freed because the OS will clear everything on process exit, when they would normally get destroyed anyway.
 			No need to clean the house up before it gets demolished.
 		*/
 		ret.Opaque = std::calloc(1, size);
@@ -360,12 +381,21 @@ namespace
 
 namespace SDR::Console
 {
-	Variable::Variable(const char* ref)
+	Variable::operator bool() const
 	{
+		return Opaque != nullptr;
+	}
+
+	SDR::Console::Variable Variable::Find(const char* name)
+	{
+		SDR::Console::Variable ret;
+
 		if (ModuleCVar::Entries::FindVar == 0)
 		{
-			Opaque = ModuleCVar::Variant0::FindVar()(ModuleCVar::Ptr, nullptr, ref);
+			ret.Opaque = ModuleCVar::Variant0::FindVar()(ModuleCVar::Ptr, nullptr, name);
 		}
+
+		return ret;
 	}
 
 	bool Variable::GetBool() const
@@ -381,6 +411,12 @@ namespace SDR::Console
 			return ptr->IntValue;
 		}
 
+		else if (ModuleConVar::Variant == 1)
+		{
+			auto ptr = (ModuleConVar::Variant1::Data*)Opaque;
+			return atoi(ptr->String);
+		}
+
 		return 0;
 	}
 
@@ -392,6 +428,12 @@ namespace SDR::Console
 			return ptr->FloatValue;
 		}
 
+		else if (ModuleConVar::Variant == 1)
+		{
+			auto ptr = (ModuleConVar::Variant1::Data*)Opaque;
+			return atof(ptr->String);
+		}
+
 		return 0;
 	}
 
@@ -400,6 +442,12 @@ namespace SDR::Console
 		if (ModuleConVar::Variant == 0)
 		{
 			auto ptr = (ModuleConVar::Variant0::Data*)Opaque;
+			return ptr->String;
+		}
+
+		else if (ModuleConVar::Variant == 1)
+		{
+			auto ptr = (ModuleConVar::Variant1::Data*)Opaque;
 			return ptr->String;
 		}
 
@@ -417,6 +465,12 @@ namespace SDR::Console
 				auto casted = (ModuleConVar::Variant0::SetValueStringType)func;
 				casted(Opaque, nullptr, value);
 			}
+
+			else if (ModuleConVar::Variant == 1)
+			{
+				auto casted = (ModuleConVar::Variant1::SetValueStringType)func;
+				casted(Opaque, nullptr, value);
+			}
 		}
 	}
 
@@ -431,6 +485,12 @@ namespace SDR::Console
 				auto casted = (ModuleConVar::Variant0::SetValueFloatType)func;
 				casted(Opaque, nullptr, value);
 			}
+
+			else if (ModuleConVar::Variant == 1)
+			{
+				auto casted = (ModuleConVar::Variant1::SetValueFloatType)func;
+				casted(Opaque, nullptr, value);
+			}
 		}
 	}
 
@@ -443,6 +503,12 @@ namespace SDR::Console
 			if (ModuleConVar::Variant == 0)
 			{
 				auto casted = (ModuleConVar::Variant0::SetValueIntType)func;
+				casted(Opaque, nullptr, value);
+			}
+
+			else if (ModuleConVar::Variant == 1)
+			{
+				auto casted = (ModuleConVar::Variant1::SetValueIntType)func;
 				casted(Opaque, nullptr, value);
 			}
 		}
@@ -543,6 +609,13 @@ void SDR::Console::Load()
 			casted(text.c_str());
 		}
 	});
+
+	OutputIsGameConsole = true;
+}
+
+bool SDR::Console::IsOutputToGameConsole()
+{
+	return OutputIsGameConsole;
 }
 
 void SDR::Console::MakeCommand(const char* name, Types::CommandCallbackVoidType callback)

@@ -8,12 +8,15 @@ namespace SDR::Console
 	struct Variable
 	{
 		Variable() = default;
-		Variable(const char* ref);
 		Variable(const Variable& other) = delete;
 		Variable(Variable&& other) = default;
 
 		Variable& operator=(const Variable& other) = delete;
 		Variable& operator=(Variable&& other) = default;
+
+		explicit operator bool() const;
+
+		static Variable Find(const char* name);
 
 		bool GetBool() const;
 		int GetInt() const;
@@ -44,6 +47,7 @@ namespace SDR::Console
 	};
 
 	void Load();
+	bool IsOutputToGameConsole();
 
 	void MakeCommand(const char* name, Types::CommandCallbackVoidType callback);
 	void MakeCommand(const char* name, Types::CommandCallbackArgsType callback);

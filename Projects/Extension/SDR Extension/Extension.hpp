@@ -1,5 +1,5 @@
 #pragma once
-#include "rapidjson\document.h"
+#include <rapidjson\document.h>
 #include <SDR Shared\Log.hpp>
 #include <SDR Shared\ConsoleTypes.hpp>
 #include <d3d9.h>
@@ -220,6 +220,22 @@ namespace SDR::Extension
 		SDR::Log::SetMessageFunction(data.Message);
 		SDR::Log::SetMessageColorFunction(data.MessageColor);
 		SDR::Log::SetWarningFunction(data.Warning);
+	}
+
+	/*
+		Can be used to find an export in another extension.
+	*/
+	template <typename T>
+	inline void FindExport(HMODULE module, const char* modulename, const char* name, T& object, bool required = false)
+	{
+		auto addr = (void*)GetProcAddress(module, name);
+
+		if (!addr && required)
+		{
+			SDR::Error::Make("Extension \"%s\" missing export for \"%s\"", modulename, name);
+		}
+
+		object = (decltype(object))addr;
 	}
 
 	/*

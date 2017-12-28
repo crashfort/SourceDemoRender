@@ -32,8 +32,8 @@ namespace SDR::Error::MH
 		{
 			auto message = MH_StatusToString(status);
 
-			auto user = String::GetFormattedString(format, std::forward<Args>(args)...);
-			auto final = String::GetFormattedString("%d (%s) -> ", status, message);
+			auto user = String::Format(format, std::forward<Args>(args)...);
+			auto final = String::Format("%d (%s) -> ", status, message);
 
 			final += user;
 

@@ -72,7 +72,7 @@ dcl_uav_typed_buffer (uint,uint,uint,uint) u0
 dcl_uav_typed_buffer (uint,uint,uint,uint) u1
 dcl_uav_typed_buffer (uint,uint,uint,uint) u2
 dcl_input vThreadID.xy
-dcl_temps 4
+dcl_temps 6
 dcl_thread_group 8, 8, 1
 imad r0.x, vThreadID.y, cb0[0].x, vThreadID.x
 ld_structured_indexable(structured_buffer, stride=16)(mixed,mixed,mixed,mixed) r0.xyz, r0.x, l(0), t0.xyzx
@@ -94,16 +94,17 @@ if_nz r1.x
   ult r1.xw, r1.xxxw, cb0[0].xxxy
   imad r1.y, r1.z, cb0[0].x, r1.y
   ld_structured_indexable(structured_buffer, stride=16)(mixed,mixed,mixed,mixed) r2.xyz, r1.y, l(0), t0.xyzx
-  movc r2.xyz, r1.xxxx, r2.xyzx, r0.xyzx
-  iadd r3.xyzw, vThreadID.xyxy, l(0, 1, 1, 1)
-  imad r1.yz, r3.yywy, cb0[0].xxxx, r3.xxzx
-  ld_structured_indexable(structured_buffer, stride=16)(mixed,mixed,mixed,mixed) r3.xyz, r1.y, l(0), t0.xyzx
-  movc r3.xyz, r1.wwww, r3.xyzx, r0.xyzx
-  and r1.x, r1.w, r1.x
-  ld_structured_indexable(structured_buffer, stride=16)(mixed,mixed,mixed,mixed) r1.yzw, r1.z, l(0), t0.xxyz
-  movc r1.xyz, r1.xxxx, r1.yzwy, r0.xyzx
-  add r0.xyz, r0.xyzx, r2.xyzx
-  add r0.xyz, r3.xyzx, r0.xyzx
+  movc r3.xyz, r1.xxxx, r2.xyzx, r0.xyzx
+  iadd r4.xyzw, vThreadID.xyxy, l(0, 1, 1, 1)
+  imad r1.yz, r4.yywy, cb0[0].xxxx, r4.xxzx
+  ld_structured_indexable(structured_buffer, stride=16)(mixed,mixed,mixed,mixed) r4.xyz, r1.y, l(0), t0.xyzx
+  movc r4.xyz, r1.wwww, r4.xyzx, r0.xyzx
+  and r1.y, r1.w, r1.x
+  ld_structured_indexable(structured_buffer, stride=16)(mixed,mixed,mixed,mixed) r5.xyz, r1.z, l(0), t0.xyzx
+  movc r1.xzw, r1.xxxx, r2.xxyz, r4.xxyz
+  movc r1.xyz, r1.yyyy, r5.xyzx, r1.xzwx
+  add r0.xyz, r0.xyzx, r3.xyzx
+  add r0.xyz, r4.xyzx, r0.xyzx
   add r0.xyz, r1.xyzx, r0.xyzx
   ushr r1.x, vThreadID.x, l(1)
   ishr r0.w, r0.w, l(1)
@@ -126,20 +127,20 @@ if_nz r1.x
   store_uav_typed u2.xyzw, r0.zzzz, r0.xxxx
 endif 
 ret 
-// Approximately 52 instruction slots used
+// Approximately 53 instruction slots used
 #endif
 
 const BYTE CSBlob_YUV420[] =
 {
-     68,  88,  66,  67, 178,  14, 
-     33, 186, 127, 247,  84, 103, 
-    106, 206,  17, 167,  49, 119, 
-      0,  40,   1,   0,   0,   0, 
-    172,  12,   0,   0,   5,   0, 
+     68,  88,  66,  67, 144, 252, 
+     28,  25,  27, 188, 247, 180, 
+    220, 126, 162, 110,  45, 228, 
+    167, 162,   1,   0,   0,   0, 
+    208,  12,   0,   0,   5,   0, 
       0,   0,  52,   0,   0,   0, 
     248,   4,   0,   0,   8,   5, 
       0,   0,  24,   5,   0,   0, 
-     16,  12,   0,   0,  82,  68, 
+     52,  12,   0,   0,  82,  68, 
      69,  70, 188,   4,   0,   0, 
       3,   0,   0,   0,  64,   1, 
       0,   0,   6,   0,   0,   0, 
@@ -349,8 +350,8 @@ const BYTE CSBlob_YUV420[] =
      71,  78,   8,   0,   0,   0, 
       0,   0,   0,   0,   8,   0, 
       0,   0,  83,  72,  69,  88, 
-    240,   6,   0,   0,  80,   0, 
-      5,   0, 188,   1,   0,   0, 
+     20,   7,   0,   0,  80,   0, 
+      5,   0, 197,   1,   0,   0, 
     106,   8,   0,   1,  89,   0, 
       0,   4,  70, 142,  32,   0, 
       0,   0,   0,   0,   1,   0, 
@@ -369,7 +370,7 @@ const BYTE CSBlob_YUV420[] =
      17,   0,   2,   0,   0,   0, 
      68,  68,   0,   0,  95,   0, 
       0,   2,  50,   0,   2,   0, 
-    104,   0,   0,   2,   4,   0, 
+    104,   0,   0,   2,   6,   0, 
       0,   0, 155,   0,   0,   4, 
       8,   0,   0,   0,   8,   0, 
       0,   0,   1,   0,   0,   0, 
@@ -481,13 +482,13 @@ const BYTE CSBlob_YUV420[] =
       0,   0,   0,   0,   0,   0, 
      70, 114,  16,   0,   0,   0, 
       0,   0,  55,   0,   0,   9, 
-    114,   0,  16,   0,   2,   0, 
+    114,   0,  16,   0,   3,   0, 
       0,   0,   6,   0,  16,   0, 
       1,   0,   0,   0,  70,   2, 
      16,   0,   2,   0,   0,   0, 
      70,   2,  16,   0,   0,   0, 
       0,   0,  30,   0,   0,   9, 
-    242,   0,  16,   0,   3,   0, 
+    242,   0,  16,   0,   4,   0, 
       0,   0,  70,   4,   2,   0, 
       2,  64,   0,   0,   0,   0, 
       0,   0,   1,   0,   0,   0, 
@@ -495,49 +496,55 @@ const BYTE CSBlob_YUV420[] =
       0,   0,  35,   0,   0,  10, 
      98,   0,  16,   0,   1,   0, 
       0,   0,  86,   7,  16,   0, 
-      3,   0,   0,   0,   6, 128, 
+      4,   0,   0,   0,   6, 128, 
      32,   0,   0,   0,   0,   0, 
       0,   0,   0,   0,   6,   2, 
-     16,   0,   3,   0,   0,   0, 
+     16,   0,   4,   0,   0,   0, 
     167,   0,   0, 139,   2, 131, 
       0, 128, 131, 153,  25,   0, 
-    114,   0,  16,   0,   3,   0, 
+    114,   0,  16,   0,   4,   0, 
       0,   0,  26,   0,  16,   0, 
       1,   0,   0,   0,   1,  64, 
       0,   0,   0,   0,   0,   0, 
      70, 114,  16,   0,   0,   0, 
       0,   0,  55,   0,   0,   9, 
-    114,   0,  16,   0,   3,   0, 
+    114,   0,  16,   0,   4,   0, 
       0,   0, 246,  15,  16,   0, 
       1,   0,   0,   0,  70,   2, 
-     16,   0,   3,   0,   0,   0, 
+     16,   0,   4,   0,   0,   0, 
      70,   2,  16,   0,   0,   0, 
       0,   0,   1,   0,   0,   7, 
-     18,   0,  16,   0,   1,   0, 
+     34,   0,  16,   0,   1,   0, 
       0,   0,  58,   0,  16,   0, 
       1,   0,   0,   0,  10,   0, 
      16,   0,   1,   0,   0,   0, 
     167,   0,   0, 139,   2, 131, 
       0, 128, 131, 153,  25,   0, 
-    226,   0,  16,   0,   1,   0, 
+    114,   0,  16,   0,   5,   0, 
       0,   0,  42,   0,  16,   0, 
       1,   0,   0,   0,   1,  64, 
       0,   0,   0,   0,   0,   0, 
-      6, 121,  16,   0,   0,   0, 
+     70, 114,  16,   0,   0,   0, 
+      0,   0,  55,   0,   0,   9, 
+    210,   0,  16,   0,   1,   0, 
+      0,   0,   6,   0,  16,   0, 
+      1,   0,   0,   0,   6,   9, 
+     16,   0,   2,   0,   0,   0, 
+      6,   9,  16,   0,   4,   0, 
       0,   0,  55,   0,   0,   9, 
     114,   0,  16,   0,   1,   0, 
-      0,   0,   6,   0,  16,   0, 
-      1,   0,   0,   0, 150,   7, 
-     16,   0,   1,   0,   0,   0, 
-     70,   2,  16,   0,   0,   0, 
+      0,   0,  86,   5,  16,   0, 
+      1,   0,   0,   0,  70,   2, 
+     16,   0,   5,   0,   0,   0, 
+    134,   3,  16,   0,   1,   0, 
       0,   0,   0,   0,   0,   7, 
     114,   0,  16,   0,   0,   0, 
       0,   0,  70,   2,  16,   0, 
       0,   0,   0,   0,  70,   2, 
-     16,   0,   2,   0,   0,   0, 
+     16,   0,   3,   0,   0,   0, 
       0,   0,   0,   7, 114,   0, 
      16,   0,   0,   0,   0,   0, 
-     70,   2,  16,   0,   3,   0, 
+     70,   2,  16,   0,   4,   0, 
       0,   0,  70,   2,  16,   0, 
       0,   0,   0,   0,   0,   0, 
       0,   7, 114,   0,  16,   0, 
@@ -647,7 +654,7 @@ const BYTE CSBlob_YUV420[] =
       0,   0,  21,   0,   0,   1, 
      62,   0,   0,   1,  83,  84, 
      65,  84, 148,   0,   0,   0, 
-     52,   0,   0,   0,   4,   0, 
+     53,   0,   0,   0,   6,   0, 
       0,   0,   0,   0,   0,   0, 
       1,   0,   0,   0,  15,   0, 
       0,   0,  16,   0,   0,   0, 
@@ -660,7 +667,7 @@ const BYTE CSBlob_YUV420[] =
       4,   0,   0,   0,   0,   0, 
       0,   0,   0,   0,   0,   0, 
       0,   0,   0,   0,   0,   0, 
-      0,   0,   3,   0,   0,   0, 
+      0,   0,   4,   0,   0,   0, 
       6,   0,   0,   0,   0,   0, 
       0,   0,   0,   0,   0,   0, 
       0,   0,   0,   0,   0,   0, 

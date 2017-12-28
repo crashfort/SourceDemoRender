@@ -50,25 +50,18 @@ namespace
 
 	void Initialize(ExtensionData& ext)
 	{
-		auto findexport = [&](const char* name, auto& object, bool required)
+		auto findexport = [&](const char* name, auto& object, bool required = false)
 		{
-			auto addr = (void*)GetProcAddress(ext.Module, name);
-
-			if (!addr && required)
-			{
-				SDR::Error::Make("Extension \"%s\" missing export for \"%s\"", ext.Name.c_str(), name);
-			}
-
-			object = (decltype(object))addr;
+			SDR::Extension::FindExport(ext.Module, ext.Name.c_str(), name, object, required);
 		};
 
 		findexport("SDR_Query", ext.Query, true);
 		findexport("SDR_Initialize", ext.Initialize, true);
-		findexport("SDR_ConfigHandler", ext.ConfigHandler, false);
-		findexport("SDR_Ready", ext.Ready, false);
-		findexport("SDR_StartMovie", ext.StartMovie, false);
-		findexport("SDR_EndMovie", ext.EndMovie, false);
-		findexport("SDR_NewVideoFrame", ext.NewVideoFrame, false);
+		findexport("SDR_ConfigHandler", ext.ConfigHandler);
+		findexport("SDR_Ready", ext.Ready);
+		findexport("SDR_StartMovie", ext.StartMovie);
+		findexport("SDR_EndMovie", ext.EndMovie);
+		findexport("SDR_NewVideoFrame", ext.NewVideoFrame);
 
 		ext.Query(ext.Info);
 
@@ -98,7 +91,7 @@ namespace
 
 		Initialize(ext);
 
-		SDR::Log::Message("SDR: Loaded extension \"%s\"\n", ext.Name.c_str());
+		SDR::Log::Message("{dark}SDR: {white}Loaded extension {string}\"%s\"\n", ext.Name.c_str());
 
 		Loaded.emplace_back(std::move(ext));
 	}
@@ -191,12 +184,12 @@ namespace
 					return input;
 				};
 
-				str += SDR::String::GetFormattedString("SDR: File: \"%s\"\n", ext.Name.c_str());
-				str += SDR::String::GetFormattedString("SDR: Name: \"%s\"\n", safestr(ext.Info.Name));
-				str += SDR::String::GetFormattedString("SDR: Namespace: \"%s\"\n", safestr(ext.Info.Namespace));
-				str += SDR::String::GetFormattedString("SDR: Author: \"%s\"\n", safestr(ext.Info.Author));
-				str += SDR::String::GetFormattedString("SDR: Contact: \"%s\"\n", safestr(ext.Info.Contact));
-				str += SDR::String::GetFormattedString("SDR: Version: %d\n", ext.Info.Version);
+				str += SDR::String::Format("SDR: File: \"%s\"\n", ext.Name.c_str());
+				str += SDR::String::Format("SDR: Name: \"%s\"\n", safestr(ext.Info.Name));
+				str += SDR::String::Format("SDR: Namespace: \"%s\"\n", safestr(ext.Info.Namespace));
+				str += SDR::String::Format("SDR: Author: \"%s\"\n", safestr(ext.Info.Author));
+				str += SDR::String::Format("SDR: Contact: \"%s\"\n", safestr(ext.Info.Contact));
+				str += SDR::String::Format("SDR: Version: %d\n", ext.Info.Version);
 
 				if (index != maxindex)
 				{
@@ -350,25 +343,25 @@ void SDR::ExtensionManager::Events::Ready()
 
 	data.GetExternalBool = [](const char* name)
 	{
-		SDR::Console::Variable var(name);
+		auto var = SDR::Console::Variable::Find(name);
 		return var.GetBool();
 	};
 
 	data.GetExternalInt = [](const char* name)
 	{
-		SDR::Console::Variable var(name);
+		auto var = SDR::Console::Variable::Find(name);
 		return var.GetInt();
 	};
 
 	data.GetExternalFloat = [](const char* name)
 	{
-		SDR::Console::Variable var(name);
+		auto var = SDR::Console::Variable::Find(name);
 		return var.GetFloat();
 	};
 
 	data.GetExternalString = [](const char* name)
 	{
-		SDR::Console::Variable var(name);
+		auto var = SDR::Console::Variable::Find(name);
 		return var.GetString();
 	};
 

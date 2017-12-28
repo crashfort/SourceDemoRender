@@ -1,5 +1,5 @@
 #pragma once
-#include "rapidjson\document.h"
+#include <rapidjson\document.h>
 #include "File.hpp"
 #include "Error.hpp"
 

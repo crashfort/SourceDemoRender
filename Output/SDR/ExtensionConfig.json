@@ -62,5 +62,9 @@
 	"GarrysMod\\garrysmod":
 	{
 		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Black Mesa\\bms":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
 	}
 }

@@ -3,6 +3,7 @@
 #include <SDR Shared\Json.hpp>
 #include <SDR Shared\Hooking.hpp>
 #include <SDR Library API\ExportTypes.hpp>
+#include <SDR LauncherCLI API\LauncherCLIAPI.hpp>
 #include "Application.hpp"
 #include "Interface\Application\Extensions\ExtensionManager.hpp"
 
@@ -42,12 +43,11 @@ namespace
 
 		void ResolveInherit(ConfigObjectData* targetgame, const std::vector<ConfigObjectData>& source, rapidjson::Document::AllocatorType& alloc)
 		{
-			auto begin = targetgame->Properties.begin();
-			auto end = targetgame->Properties.end();
-
 			auto foundinherit = false;
 
-			for (auto it = begin; it != end; ++it)
+			std::vector<std::pair<std::string, rapidjson::Value>> temp;
+
+			for (auto it = targetgame->Properties.begin(); it != targetgame->Properties.end(); ++it)
 			{
 				if (it->first == "Inherit")
 				{
@@ -85,9 +85,16 @@ namespace
 
 								if (shouldadd)
 								{
-									targetgame->Properties.emplace_back(sourceprop.first, rapidjson::Value(sourceprop.second, alloc));
+									temp.emplace_back(std::make_pair(sourceprop.first, rapidjson::Value(sourceprop.second, alloc)));
 								}
 							}
+
+							for (auto&& orig : targetgame->Properties)
+							{
+								temp.emplace_back(std::move(orig));
+							}
+
+							targetgame->Properties = std::move(temp);
 
 							break;
 						}
@@ -108,6 +115,53 @@ namespace
 			}
 		}
 
+		void ResolveSort(ConfigObjectData* targetgame)
+		{
+			auto temp = std::move(targetgame->Properties);
+
+			auto addgroup = [&](const char* name)
+			{
+				for (auto&& prop : temp)
+				{
+					if (prop.first.empty())
+					{
+						continue;
+					}
+
+					if (prop.second.IsObject())
+					{
+						if (prop.second.HasMember("SortGroup"))
+						{
+							std::string group = prop.second["SortGroup"].GetString();
+
+							if (group == name)
+							{
+								targetgame->Properties.emplace_back(std::move(prop));
+							}
+						}
+					}
+				}
+			};
+
+			addgroup("Pointer");
+			addgroup("Info");
+			addgroup("Function");
+			addgroup("User1");
+			addgroup("User2");
+			addgroup("User3");
+			addgroup("User4");
+
+			for (auto&& rem : temp)
+			{
+				if (rem.first.empty())
+				{
+					continue;
+				}
+
+				targetgame->Properties.emplace_back(std::move(rem));
+			}
+		}
+
 		void PrintModuleState(bool value, const char* name)
 		{
 			if (!value)
@@ -117,13 +171,13 @@ namespace
 
 			else
 			{
-				SDR::Log::Message("SDR: Enabled module \"%s\"\n", name);
+				SDR::Log::Message("{dark}SDR: {white}Enabled module {string}\"%s\"\n", name);
 			}
 		}
 
 		void CallGameHandlers(ConfigObjectData* game)
 		{
-			SDR::Log::Message("SDR: Creating %d game modules\n", MainApplication.ModuleHandlers.size());
+			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", MainApplication.ModuleHandlers.size());
 
 			for (auto& prop : game->Properties)
 			{
@@ -178,23 +232,12 @@ namespace
 				return;
 			}
 
-			SDR::Log::Message("SDR: Creating %d extension modules\n", object->Properties.size());
+			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}extension modules\n", object->Properties.size());
 
 			for (auto& prop : object->Properties)
 			{
-				try
-				{
-					SDR::Error::ScopedContext e1(prop.first.c_str());
-
-					auto found = SDR::ExtensionManager::Events::CallHandlers(prop.first.c_str(), prop.second);
-					PrintModuleState(found, prop.first.c_str());
-				}
-
-				catch (const SDR::Error::Exception& error)
-				{
-					SDR::Error::Make("Could not enable module \"%s\"", prop.first.c_str());
-					throw;
-				}
+				auto found = SDR::ExtensionManager::Events::CallHandlers(prop.first.c_str(), prop.second);
+				PrintModuleState(found, prop.first.c_str());
 			}
 		}
 
@@ -248,6 +291,7 @@ namespace
 			}
 
 			ResolveInherit(object, GameConfigs, document.GetAllocator());
+			ResolveSort(object);
 			CallGameHandlers(object);
 
 			GameConfigs.clear();
@@ -462,7 +506,7 @@ void SDR::Setup()
 			throw;
 		}
 
-		SDR::Log::Message("SDR: Passed startup procedure: \"%s\"\n", entry.Name);
+		SDR::Log::Message("{dark}SDR: {white}Passed startup procedure: {string}\"%s\"\n", entry.Name);
 	}
 
 	MainApplication.StartupFunctions.clear();

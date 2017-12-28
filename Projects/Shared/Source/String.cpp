@@ -3,29 +3,29 @@
 
 namespace
 {
-	auto& GetConverter()
-	{
-		static std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-		return converter;
-	}
+	using ConvertType = std::wstring_convert<std::codecvt_utf8<wchar_t>>;
 }
 
 std::string SDR::String::ToUTF8(const std::wstring& input)
 {
-	return GetConverter().to_bytes(input);
+	ConvertType converter;
+	return converter.to_bytes(input);
 }
 
 std::string SDR::String::ToUTF8(const wchar_t* input)
 {
-	return GetConverter().to_bytes(input);
+	ConvertType converter;
+	return converter.to_bytes(input);
 }
 
 std::wstring SDR::String::FromUTF8(const std::string& input)
 {
-	return GetConverter().from_bytes(input);
+	ConvertType converter;
+	return converter.from_bytes(input);
 }
 
 std::wstring SDR::String::FromUTF8(const char* input)
 {
-	return GetConverter().from_bytes(input);
+	ConvertType converter;
+	return converter.from_bytes(input);
 }
