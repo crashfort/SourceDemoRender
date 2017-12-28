@@ -30,13 +30,10 @@ void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, const AVFrame* refe
 	*/
 	__declspec(align(16)) struct
 	{
-		int Strides[3];
-		int Padding1;
-		float CoeffY[3];
-		int Padding2;
-		float CoeffU[3];
-		int Padding3;
-		float CoeffV[3];
+		int Strides[4];
+		float CoeffY[4];
+		float CoeffU[4];
+		float CoeffV[4];
 	} yuvdata;
 
 	yuvdata.Strides[0] = reference->linesize[0];

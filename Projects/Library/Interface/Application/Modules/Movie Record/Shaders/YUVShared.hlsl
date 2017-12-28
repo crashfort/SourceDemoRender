@@ -7,13 +7,10 @@ RWBuffer<uint> ChannelV : register(u2);
 
 cbuffer YUVInputData : register(b1)
 {
-	int3 Strides;
-	int Padding1;
-	float3 CoeffY;
-	int Padding2;
-	float3 CoeffU;
-	int Padding3;
-	float3 CoeffV;
+	int4 Strides;
+	float4 CoeffY;
+	float4 CoeffU;
+	float4 CoeffV;
 };
 
 float Y_Full(float3 pix)
