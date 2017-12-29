@@ -1,7 +1,7 @@
 #pragma once
 #include <SDR Shared\String.hpp>
 
-namespace SDR::API
+namespace SDR::Library
 {
 	struct InitializeData
 	{

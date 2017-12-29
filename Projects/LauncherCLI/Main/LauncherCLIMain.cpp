@@ -3,7 +3,7 @@
 #include <SDR Shared\File.hpp>
 #include <SDR Shared\Json.hpp>
 #include <SDR Shared\IPC.hpp>
-#include <SDR Library API\ExportTypes.hpp>
+#include <SDR Library API\LibraryAPI.hpp>
 #include <SDR LauncherCLI API\LauncherCLIAPI.hpp>
 #include <rapidjson\document.h>
 #include <Shlwapi.h>
@@ -638,9 +638,9 @@ namespace
 		auto data = (InterProcessData*)param;
 
 		auto module = data->LoadLibraryAddr(data->LibraryNameAddr);
-		auto func = (SDR::API::SDR_Initialize)data->GetProcAddressAddr(module, data->ExportNameAddr);
+		auto func = (SDR::Library::SDR_Initialize)data->GetProcAddressAddr(module, data->ExportNameAddr);
 
-		SDR::API::InitializeData initdata;
+		SDR::Library::InitializeData initdata;
 		initdata.ResourcePath = data->ResourcePathAddr;
 		initdata.GamePath = data->GamePathAddr;
 		initdata.LauncherCLI = data->LauncherCLI;
@@ -902,7 +902,7 @@ namespace
 			SDR::Error::Make("Could not load SDR library for version display");
 		}
 
-		auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
+		auto func = (SDR::Library::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
 		auto version = func();
 
 		Local::Print("Library version: {number}%d\n", version);

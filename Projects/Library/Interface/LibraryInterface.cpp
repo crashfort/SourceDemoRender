@@ -1,7 +1,7 @@
 #include "PrecompiledHeader.hpp"
 #include "LibraryInterface.hpp"
 #include "Application\Application.hpp"
-#include <SDR Library API\ExportTypes.hpp>
+#include <SDR Library API\LibraryAPI.hpp>
 #include <SDR LauncherCLI API\LauncherCLIAPI.hpp>
 
 #include "Interface\Application\Modules\Shared\Console.hpp"
@@ -177,7 +177,7 @@ extern "C"
 		First actual pre-engine load function. Don't reference any
 		engine libraries here as they aren't loaded yet like in "Load".
 	*/
-	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::API::InitializeData& data)
+	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::Library::InitializeData& data)
 	{
 		Local::ResourcePath = data.ResourcePath;
 		Local::GamePath = data.GamePath;

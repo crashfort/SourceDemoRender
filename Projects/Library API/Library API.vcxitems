@@ -16,6 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Include\SDR Library API\ExportTypes.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)SDR Library API\ExportTypes.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SDR Library API\LibraryAPI.hpp" />
   </ItemGroup>
 </Project>
