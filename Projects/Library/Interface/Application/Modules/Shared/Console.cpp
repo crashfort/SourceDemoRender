@@ -561,7 +561,7 @@ namespace SDR::Console
 			In case of special UTF8 values the ArgV is split.
 		*/
 
-		while (true)
+		while (*args)
 		{
 			++args;
 
