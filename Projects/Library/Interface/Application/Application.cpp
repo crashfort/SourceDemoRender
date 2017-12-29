@@ -232,15 +232,27 @@ namespace
 				return;
 			}
 
-			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}extension modules\n", object->Properties.size());
+			std::vector<std::pair<std::string, rapidjson::Value>*> temp;
 
 			for (auto& prop : object->Properties)
 			{
 				if (SDR::ExtensionManager::IsNamespaceLoaded(prop.first.c_str()))
 				{
-					auto found = SDR::ExtensionManager::Events::CallHandlers(prop.first.c_str(), prop.second);
-					PrintModuleState(found, prop.first.c_str());
+					temp.emplace_back(&prop);
 				}
+			}
+
+			if (temp.empty())
+			{
+				return;
+			}
+
+			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}extension modules\n", temp.size());
+
+			for (auto& prop : temp)
+			{
+				auto found = SDR::ExtensionManager::Events::CallHandlers(prop->first.c_str(), prop->second);
+				PrintModuleState(found, prop->first.c_str());
 			}
 		}
 
