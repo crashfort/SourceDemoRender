@@ -239,6 +239,19 @@ bool SDR::ExtensionManager::HasExtensions()
 	return Loaded.empty() == false;
 }
 
+bool SDR::ExtensionManager::IsNamespaceLoaded(const char* object)
+{
+	for (const auto& ext : Loaded)
+	{
+		if (SDR::String::StartsWith(object, ext.Info.Namespace))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool SDR::ExtensionManager::Events::CallHandlers(const char* name, const rapidjson::Value& value)
 {
 	for (const auto& ext : Loaded)

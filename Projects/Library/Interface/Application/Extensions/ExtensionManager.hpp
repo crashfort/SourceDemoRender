@@ -7,6 +7,8 @@ namespace SDR::ExtensionManager
 	void LoadExtensions();
 	bool HasExtensions();
 
+	bool IsNamespaceLoaded(const char* object);
+
 	namespace Events
 	{
 		/*

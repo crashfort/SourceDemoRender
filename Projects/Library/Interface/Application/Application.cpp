@@ -236,8 +236,11 @@ namespace
 
 			for (auto& prop : object->Properties)
 			{
-				auto found = SDR::ExtensionManager::Events::CallHandlers(prop.first.c_str(), prop.second);
-				PrintModuleState(found, prop.first.c_str());
+				if (SDR::ExtensionManager::IsNamespaceLoaded(prop.first.c_str()))
+				{
+					auto found = SDR::ExtensionManager::Events::CallHandlers(prop.first.c_str(), prop.second);
+					PrintModuleState(found, prop.first.c_str());
+				}
 			}
 		}
 
