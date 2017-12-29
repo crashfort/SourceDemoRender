@@ -938,23 +938,7 @@ namespace
 
 				SDR::Profile::Reset();
 
-				/*
-					Retrieve everything after the initial "startmovie" token, in case
-					of special UTF8 names the ArgV is split.
-				*/
-				auto name = args.FullArgs();
-
-				while (true)
-				{
-					++name;
-
-					if (*name == ' ')
-					{
-						++name;
-						break;
-					}
-				}
-
+				auto name = args.FullValue();
 				ModuleStartMovie::Common::Procedure(name, width, height);
 			}
 		}

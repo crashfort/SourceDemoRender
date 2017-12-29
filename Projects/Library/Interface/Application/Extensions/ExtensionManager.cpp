@@ -434,6 +434,12 @@ void SDR::ExtensionManager::Events::Ready()
 		return target.Name.c_str();
 	};
 
+	data.GetCommandArgumentFullValue = [](const void* ptr)
+	{
+		SDR::Console::CommandArgs args(ptr);
+		return args.FullValue();
+	};
+
 	data.ExtensionKey = 0;
 
 	for (auto& ext : Loaded)

@@ -138,6 +138,11 @@ namespace SDR::Extension
 			the name with extension.
 		*/
 		const char*(*GetExtensionFileName)(uint32_t key);
+
+		/*
+			For command callbacks that take arguments, use these on the parameter.
+		*/
+		const char*(*GetCommandArgumentFullValue)(const void* ptr);
 	};
 
 	/*

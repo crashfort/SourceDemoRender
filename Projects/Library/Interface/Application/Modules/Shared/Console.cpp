@@ -551,6 +551,29 @@ namespace SDR::Console
 
 		return nullptr;
 	}
+
+	const char* CommandArgs::FullValue() const
+	{
+		auto args = FullArgs();
+
+		/*
+			Retrieve everything after the initial variable name token.
+			In case of special UTF8 values the ArgV is split.
+		*/
+
+		while (true)
+		{
+			++args;
+
+			if (SDR::String::IsSpace(*args))
+			{
+				++args;
+				break;
+			}
+		}
+
+		return args;
+	}
 }
 
 void SDR::Console::Load()
