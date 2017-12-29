@@ -734,13 +734,6 @@ namespace
 		initstage.WaitEvents(process);
 	}
 
-	template <size_t Size>
-	void RemoveFileName(char(&buffer)[Size])
-	{
-		PathRemoveFileSpecA(buffer);
-		strcat_s(buffer, "\\");
-	}
-
 	PROCESS_INFORMATION StartProcess(const std::string& dir, const std::string& exepath, const std::string& params)
 	{
 		char args[8192];
