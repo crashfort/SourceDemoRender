@@ -231,16 +231,36 @@ namespace SDR::Extension
 		Can be used to find an export in another extension.
 	*/
 	template <typename T>
-	inline void FindExport(HMODULE module, const char* modulename, const char* name, T& object, bool required = false)
+	inline void FindExport(HMODULE module, const char* name, T& object)
 	{
-		auto addr = (void*)GetProcAddress(module, name);
+		auto address = (void*)GetProcAddress(module, name);
 
-		if (!addr && required)
+		if (address == nullptr)
 		{
-			SDR::Error::Make("Extension \"%s\" missing export for \"%s\"", modulename, name);
+			throw false;
 		}
 
-		object = (decltype(object))addr;
+		object = (decltype(object))address;
+	}
+
+	/*
+		Can be used to find an export in another extension.
+	*/
+	template <typename T>
+	inline void FindExport(HMODULE module, const char* modulename, const char* name, T& object, bool required = false)
+	{
+		try
+		{
+			FindExport(module, name, object);
+		}
+
+		catch (bool value)
+		{
+			if (required)
+			{
+				SDR::Error::Make("Extension \"%s\" missing export for \"%s\"", modulename, name);
+			}
+		}
 	}
 
 	/*
