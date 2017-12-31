@@ -214,10 +214,8 @@ namespace LauncherUI
 			MoveBottomButton.IsEnabled = state;
 		}
 
-		void CreateConflict(ListBoxData item, ListBoxData dep)
+		void CreateConflictToolTip(ListBoxData item, string text)
 		{
-			item.TitleBlock.Foreground = System.Windows.Media.Brushes.Red;
-
 			if (item.BoxItem.ToolTip == null)
 			{
 				item.BoxItem.ToolTip = "";
@@ -228,7 +226,31 @@ namespace LauncherUI
 				item.BoxItem.ToolTip += "\n";
 			}
 
-			item.BoxItem.ToolTip += string.Format("\"{0}\" must be after \"{1}\" because it's listed as a dependency.", item.Name, dep.Name);
+			item.BoxItem.ToolTip += text;
+		}
+
+		void CreateStatusConflict(ListBoxData item, ListBoxData dep)
+		{
+			item.TitleBlock.Foreground = System.Windows.Media.Brushes.Red;
+
+			var text = string.Format("\"{0}\" has \"{1}\" listed as a dependency but it's not enabled.", item.Name, dep.Name);
+			CreateConflictToolTip(item, text);
+		}
+
+		void CreateExistanceConflict(ListBoxData item, string dep)
+		{
+			item.TitleBlock.Foreground = System.Windows.Media.Brushes.Red;
+
+			var text = string.Format("\"{0}\" has \"{1}\" listed as a dependency but it doesn't exist.", item.Name, dep);
+			CreateConflictToolTip(item, text);
+		}
+
+		void CreateOrderConflict(ListBoxData item, ListBoxData dep)
+		{
+			item.TitleBlock.Foreground = System.Windows.Media.Brushes.Red;
+
+			var text = string.Format("\"{0}\" must be after \"{1}\" because it's listed as a dependency.", item.Name, dep.Name);
+			CreateConflictToolTip(item, text);
 		}
 
 		void CheckConflicts()
@@ -237,13 +259,29 @@ namespace LauncherUI
 
 			foreach (var item in Extensions)
 			{
+				item.BoxItem.ToolTip = null;
+
 				foreach (var dep in item.Dependencies)
 				{
 					var them = Extensions.Find(other => other.FileName == dep);
 
+					if (them == null)
+					{
+						CreateExistanceConflict(item, dep);
+						conflicts = true;
+
+						continue;
+					}
+
+					if (!them.Enabled)
+					{
+						CreateStatusConflict(item, them);
+						conflicts = true;
+					}
+
 					if (them.Index > item.Index)
 					{
-						CreateConflict(item, them);
+						CreateOrderConflict(item, them);
 						conflicts = true;
 					}
 				}
@@ -378,6 +416,8 @@ namespace LauncherUI
 			{
 				UpdateSelectionButtonsState(ExtensionsList.SelectedIndex);
 			}
+
+			CheckConflicts();
 		}
 
 		void ExtensionEnabledCheck_Unchecked(object sender, RoutedEventArgs args)
@@ -395,6 +435,8 @@ namespace LauncherUI
 			{
 				UpdateSelectionButtonsState(ExtensionsList.SelectedIndex);
 			}
+
+			CheckConflicts();
 		}
 
 		void SwapItems(int index, int newindex)
