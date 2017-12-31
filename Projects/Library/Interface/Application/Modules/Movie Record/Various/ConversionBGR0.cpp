@@ -29,6 +29,11 @@ void SDR::D3D11::ConversionBGR0::DynamicBind(ID3D11DeviceContext* context)
 	context->CSSetUnorderedAccessViews(0, 1, uavs.begin(), nullptr);
 }
 
+void SDR::D3D11::ConversionBGR0::UnBind(ID3D11DeviceContext* context)
+{
+	Shader::CSResetUAV<1>(context, 0);
+}
+
 bool SDR::D3D11::ConversionBGR0::Download(ID3D11DeviceContext* context, Stream::FutureData& item)
 {
 	Profile::ScopedEntry e1(LocalProfiling::PushRGB);

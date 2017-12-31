@@ -82,11 +82,6 @@ namespace SDR::Stream
 			void Create(ID3D11Device* device, HANDLE dx9handle, const AVFrame* reference, bool staging);
 
 			/*
-				Between CS dispatches the resources should be unbound.
-			*/
-			void ResetShaderInputs(ID3D11DeviceContext* context);
-
-			/*
 				Weighs a new engine frame onto the existing work buffer.
 			*/
 			void NewFrame(SharedData& shared, float weight);

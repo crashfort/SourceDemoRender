@@ -170,17 +170,6 @@ namespace
 				context->RSSetViewports(1, &viewport);
 			}
 
-			inline void ResetShaderInputs(ID3D11DeviceContext* context)
-			{
-				const auto count = 1;
-
-				ID3D11ShaderResourceView* nullsrvs[count] = {};
-				ID3D11Buffer* nullcbufs[count] = {};
-
-				context->PSSetShaderResources(0, count, nullsrvs);
-				context->PSSetConstantBuffers(0, count, nullcbufs);
-			}
-
 			void Render(const SDR::Extension::NewVideoFrameData& data)
 			{
 				data.Context->IASetInputLayout(nullptr);
@@ -197,7 +186,8 @@ namespace
 
 				data.Context->Draw(4, 0);
 
-				ResetShaderInputs(data.Context);
+				SDR::D3D11::Shader::PSResetSRV<1>(data.Context, 0);
+				SDR::D3D11::Shader::PSResetCBV<1>(data.Context, 0);
 			}
 
 			void Present()

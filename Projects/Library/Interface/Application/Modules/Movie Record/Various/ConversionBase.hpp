@@ -21,6 +21,11 @@ namespace SDR::D3D11
 		virtual void DynamicBind(ID3D11DeviceContext* context) = 0;
 
 		/*
+			States that need update every frame.
+		*/
+		virtual void UnBind(ID3D11DeviceContext* context) = 0;
+
+		/*
 			Try to retrieve data to CPU after an operation.
 		*/
 		virtual bool Download(ID3D11DeviceContext* context, Stream::FutureData& item) = 0;

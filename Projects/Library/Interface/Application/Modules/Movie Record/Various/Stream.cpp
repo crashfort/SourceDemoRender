@@ -334,22 +334,6 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 	ConversionPtr->Create(device, reference, staging);
 }
 
-void SDR::Stream::StreamBase::DirectX11Data::ResetShaderInputs(ID3D11DeviceContext* context)
-{
-	/*
-		At most, 3 slots are used for the YUV buffers.
-	*/
-	const auto count = 3;
-
-	ID3D11ShaderResourceView* srvs[count] = {};
-	ID3D11UnorderedAccessView* uavs[count] = {};
-	ID3D11Buffer* cbufs[count] = {};
-
-	context->CSSetShaderResources(0, count, srvs);
-	context->CSSetUnorderedAccessViews(0, count, uavs, nullptr);
-	context->CSSetConstantBuffers(0, count, cbufs);
-}
-
 void SDR::Stream::StreamBase::DirectX11Data::NewFrame(SharedData& shared, float weight)
 {
 	auto context = shared.DirectX11.Context.Get();
@@ -393,12 +377,7 @@ void SDR::Stream::StreamBase::DirectX11Data::NewFrame(SharedData& shared, float 
 		context->Unmap(shared.DirectX11.SamplingConstantBuffer.Get(), 0);
 	}
 
-	auto cbufs =
-	{
-		shared.DirectX11.SharedConstantBuffer.Get(),
-		shared.DirectX11.SamplingConstantBuffer.Get()
-	};
-
+	auto cbufs = { shared.DirectX11.SharedConstantBuffer.Get(), shared.DirectX11.SamplingConstantBuffer.Get() };
 	context->CSSetConstantBuffers(0, 2, cbufs.begin());
 
 	context->CSSetShader(shared.DirectX11.SamplingShader.Get(), nullptr, 0);
@@ -414,7 +393,9 @@ void SDR::Stream::StreamBase::DirectX11Data::NewFrame(SharedData& shared, float 
 
 	context->Flush();
 
-	ResetShaderInputs(context);
+	D3D11::Shader::CSResetSRV<1>(context, 0);
+	D3D11::Shader::CSResetUAV<1>(context, 0);
+	D3D11::Shader::CSResetCBV<2>(context, 0);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::Clear(SharedData& shared)
@@ -431,7 +412,8 @@ void SDR::Stream::StreamBase::DirectX11Data::Clear(SharedData& shared)
 
 	Dispatch(shared);
 
-	ResetShaderInputs(context);
+	D3D11::Shader::CSResetUAV<1>(context, 0);
+	D3D11::Shader::CSResetCBV<1>(context, 0);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::Pass(SharedData& shared)
@@ -451,7 +433,9 @@ void SDR::Stream::StreamBase::DirectX11Data::Pass(SharedData& shared)
 
 	Dispatch(shared);
 
-	ResetShaderInputs(context);
+	D3D11::Shader::CSResetSRV<1>(context, 0);
+	D3D11::Shader::CSResetUAV<1>(context, 0);
+	D3D11::Shader::CSResetCBV<1>(context, 0);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::NewVideoFrame(SharedData& shared)
@@ -483,7 +467,10 @@ void SDR::Stream::StreamBase::DirectX11Data::Conversion(SharedData& shared)
 
 	Dispatch(shared);
 
-	ResetShaderInputs(context);
+	ConversionPtr->UnBind(context);
+
+	D3D11::Shader::CSResetSRV<1>(context, 0);
+	D3D11::Shader::CSResetCBV<1>(context, 0);
 }
 
 bool SDR::Stream::StreamBase::DirectX11Data::Download(SharedData& shared, FutureData& item)
