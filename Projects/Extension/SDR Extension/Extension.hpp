@@ -36,8 +36,7 @@ namespace SDR::Extension
 		int Version;
 
 		/*
-			Comma seperated string that contains the filenames of all extensions that need to
-			be executed before this one.
+			Comma seperated string that contains the filenames of other extensions that must exist.
 		*/
 		const char* Dependencies;
 	};
