@@ -48,6 +48,14 @@ namespace
 	std::vector<ExtensionData> Loaded;
 	std::vector<SDR::Console::Variable> Variables;
 
+	/*
+		Performance critical functions, don't loop over extensions that might not even implement them.
+	*/
+	namespace CriticalFunctions
+	{
+		std::vector<SDR::Extension::SDR_NewVideoFrame> NewVideoFrame;
+	}
+
 	void Initialize(ExtensionData& ext)
 	{
 		auto findexport = [&](const char* name, auto& object, bool required = false)
@@ -71,6 +79,11 @@ namespace
 		data.Warning = SDR::Log::Warning;
 
 		ext.Initialize(data);
+
+		if (ext.NewVideoFrame)
+		{
+			CriticalFunctions::NewVideoFrame.emplace_back(ext.NewVideoFrame);
+		}
 	}
 
 	void Load(const std::experimental::filesystem::path& path)
@@ -478,11 +491,8 @@ void SDR::ExtensionManager::Events::EndMovie()
 
 void SDR::ExtensionManager::Events::NewVideoFrame(const SDR::Extension::NewVideoFrameData& data)
 {
-	for (const auto& ext : Loaded)
+	for (auto func : CriticalFunctions::NewVideoFrame)
 	{
-		if (ext.NewVideoFrame)
-		{
-			ext.NewVideoFrame(data);
-		}
+		func(data);
 	}
 }
