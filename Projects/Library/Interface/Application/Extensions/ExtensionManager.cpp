@@ -292,167 +292,174 @@ bool SDR::ExtensionManager::Events::CallHandlers(const char* name, const rapidjs
 	return false;
 }
 
+namespace
+{
+	void SetupImportData(SDR::Extension::ImportData& data)
+	{
+		data.MakeBool = [](const char* name, const char* value)
+		{
+			auto var = SDR::Console::MakeBool(name, value);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeNumber = [](const char* name, const char* value)
+		{
+			auto var = SDR::Console::MakeNumber(name, value);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeNumberMin = [](const char* name, const char* value, float min)
+		{
+			auto var = SDR::Console::MakeNumber(name, value, min);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeNumberMinMax = [](const char* name, const char* value, float min, float max)
+		{
+			auto var = SDR::Console::MakeNumber(name, value, min, max);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeNumberMinMaxString = [](const char* name, const char* value, float min, float max)
+		{
+			auto var = SDR::Console::MakeNumberWithString(name, value, min, max);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.MakeString = [](const char* name, const char* value)
+		{
+			auto var = SDR::Console::MakeString(name, value);
+			Variables.emplace_back(std::move(var));
+
+			return Variables.size() - 1;
+		};
+
+		data.GetBool = [](uint32_t key)
+		{
+			auto& var = Variables[key];
+			return var.GetBool();
+		};
+
+		data.GetInt = [](uint32_t key)
+		{
+			auto& var = Variables[key];
+			return var.GetInt();
+		};
+
+		data.GetFloat = [](uint32_t key)
+		{
+			auto& var = Variables[key];
+			return var.GetFloat();
+		};
+
+		data.GetString = [](uint32_t key)
+		{
+			auto& var = Variables[key];
+			return var.GetString();
+		};
+
+		data.GetExternalBool = [](const char* name)
+		{
+			auto var = SDR::Console::Variable::Find(name);
+			return var.GetBool();
+		};
+
+		data.GetExternalInt = [](const char* name)
+		{
+			auto var = SDR::Console::Variable::Find(name);
+			return var.GetInt();
+		};
+
+		data.GetExternalFloat = [](const char* name)
+		{
+			auto var = SDR::Console::Variable::Find(name);
+			return var.GetFloat();
+		};
+
+		data.GetExternalString = [](const char* name)
+		{
+			auto var = SDR::Console::Variable::Find(name);
+			return var.GetString();
+		};
+
+		data.MakeCommandVoid = [](const char* name, SDR::Console::Types::CommandCallbackVoidType func)
+		{
+			SDR::Console::MakeCommand(name, func);
+		};
+
+		data.MakeCommandArgs = [](const char* name, SDR::Console::Types::CommandCallbackArgsType func)
+		{
+			SDR::Console::MakeCommand(name, func);
+		};
+
+		data.GetCommandArgumentCount = [](const void* ptr)
+		{
+			SDR::Console::CommandArgs args(ptr);
+			return args.Count();
+		};
+
+		data.GetCommandArgumentAt = [](const void* ptr, int index)
+		{
+			SDR::Console::CommandArgs args(ptr);
+			return args.At(index);
+		};
+
+		data.GetCommandArgumentFull = [](const void* ptr)
+		{
+			SDR::Console::CommandArgs args(ptr);
+			return args.FullArgs();
+		};
+
+		data.GetTimeNow = []()
+		{
+			auto now = std::chrono::high_resolution_clock::now();
+			auto start = std::chrono::duration<double>(now.time_since_epoch());
+
+			return start.count();
+		};
+
+		data.IsRecordingVideo = SDR::MovieRecord::ShouldRecord;
+		data.GetD3D9Device = SDR::SourceGlobals::GetD3D9DeviceEx;
+
+		data.GetExtensionCount = []()
+		{
+			return Loaded.size();
+		};
+
+		data.GetExtensionModule = [](uint32_t key)
+		{
+			auto& target = Loaded[key];
+			return target.Module;
+		};
+
+		data.GetExtensionFileName = [](uint32_t key)
+		{
+			auto& target = Loaded[key];
+			return target.Name.c_str();
+		};
+
+		data.GetCommandArgumentFullValue = [](const void* ptr)
+		{
+			SDR::Console::CommandArgs args(ptr);
+			return args.FullValue();
+		};
+	}
+}
+
 void SDR::ExtensionManager::Events::Ready()
 {
 	SDR::Extension::ImportData data = {};
-
-	data.MakeBool = [](const char* name, const char* value)
-	{
-		auto var = SDR::Console::MakeBool(name, value);
-		Variables.emplace_back(std::move(var));
-
-		return Variables.size() - 1;
-	};
-
-	data.MakeNumber = [](const char* name, const char* value)
-	{
-		auto var = SDR::Console::MakeNumber(name, value);
-		Variables.emplace_back(std::move(var));
-
-		return Variables.size() - 1;
-	};
-
-	data.MakeNumberMin = [](const char* name, const char* value, float min)
-	{
-		auto var = SDR::Console::MakeNumber(name, value, min);
-		Variables.emplace_back(std::move(var));
-
-		return Variables.size() - 1;
-	};
-
-	data.MakeNumberMinMax = [](const char* name, const char* value, float min, float max)
-	{
-		auto var = SDR::Console::MakeNumber(name, value, min, max);
-		Variables.emplace_back(std::move(var));
-
-		return Variables.size() - 1;
-	};
-
-	data.MakeNumberMinMaxString = [](const char* name, const char* value, float min, float max)
-	{
-		auto var = SDR::Console::MakeNumberWithString(name, value, min, max);
-		Variables.emplace_back(std::move(var));
-
-		return Variables.size() - 1;
-	};
-
-	data.MakeString = [](const char* name, const char* value)
-	{
-		auto var = SDR::Console::MakeString(name, value);
-		Variables.emplace_back(std::move(var));
-
-		return Variables.size() - 1;
-	};
-
-	data.GetBool = [](uint32_t key)
-	{
-		auto& var = Variables[key];
-		return var.GetBool();
-	};
-
-	data.GetInt = [](uint32_t key)
-	{
-		auto& var = Variables[key];
-		return var.GetInt();
-	};
-
-	data.GetFloat = [](uint32_t key)
-	{
-		auto& var = Variables[key];
-		return var.GetFloat();
-	};
-
-	data.GetString = [](uint32_t key)
-	{
-		auto& var = Variables[key];
-		return var.GetString();
-	};
-
-	data.GetExternalBool = [](const char* name)
-	{
-		auto var = SDR::Console::Variable::Find(name);
-		return var.GetBool();
-	};
-
-	data.GetExternalInt = [](const char* name)
-	{
-		auto var = SDR::Console::Variable::Find(name);
-		return var.GetInt();
-	};
-
-	data.GetExternalFloat = [](const char* name)
-	{
-		auto var = SDR::Console::Variable::Find(name);
-		return var.GetFloat();
-	};
-
-	data.GetExternalString = [](const char* name)
-	{
-		auto var = SDR::Console::Variable::Find(name);
-		return var.GetString();
-	};
-
-	data.MakeCommandVoid = [](const char* name, SDR::Console::Types::CommandCallbackVoidType func)
-	{
-		SDR::Console::MakeCommand(name, func);
-	};
-
-	data.MakeCommandArgs = [](const char* name, SDR::Console::Types::CommandCallbackArgsType func)
-	{
-		SDR::Console::MakeCommand(name, func);
-	};
-
-	data.GetCommandArgumentCount = [](const void* ptr)
-	{
-		SDR::Console::CommandArgs args(ptr);
-		return args.Count();
-	};
-
-	data.GetCommandArgumentAt = [](const void* ptr, int index)
-	{
-		SDR::Console::CommandArgs args(ptr);
-		return args.At(index);
-	};
-
-	data.GetCommandArgumentFull = [](const void* ptr)
-	{
-		SDR::Console::CommandArgs args(ptr);
-		return args.FullArgs();
-	};
-
-	data.GetTimeNow = []()
-	{
-		auto now = std::chrono::high_resolution_clock::now();
-		auto start = std::chrono::duration<double>(now.time_since_epoch());
-
-		return start.count();
-	};
-
-	data.IsRecordingVideo = SDR::MovieRecord::ShouldRecord;
-	data.GetD3D9Device = SDR::SourceGlobals::GetD3D9DeviceEx;
-
-	data.GetExtensionCount = []()
-	{
-		return Loaded.size();
-	};
-
-	data.GetExtensionModule = [](uint32_t key)
-	{
-		auto& target = Loaded[key];
-		return target.Module;
-	};
-
-	data.GetExtensionFileName = [](uint32_t key)
-	{
-		auto& target = Loaded[key];
-		return target.Name.c_str();
-	};
-
-	data.GetCommandArgumentFullValue = [](const void* ptr)
-	{
-		SDR::Console::CommandArgs args(ptr);
-		return args.FullValue();
-	};
+	SetupImportData(data);
 
 	data.ExtensionKey = 0;
 
