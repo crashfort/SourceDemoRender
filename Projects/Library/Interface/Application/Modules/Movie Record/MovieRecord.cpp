@@ -1,5 +1,6 @@
 #include "PrecompiledHeader.hpp"
 #include "MovieRecord.hpp"
+#include <SDR Shared\Table.hpp>
 #include "Interface\Application\Application.hpp"
 
 #include <ppltasks.h>
@@ -621,20 +622,6 @@ namespace
 						VerifyOutputDirectory(sdrpath);
 					}
 
-					auto linktabletovariable = [](const char* key, const auto& table, auto& variable)
-					{
-						for (const auto& entry : table)
-						{
-							if (_strcmpi(key, entry.first) == 0)
-							{
-								variable = entry.second;
-								return true;
-							}
-						}
-
-						return false;
-					};
-
 					/*
 						Default to 709 space and full range.
 					*/
@@ -649,7 +636,7 @@ namespace
 							std::make_pair("709", AVCOL_SPC_BT709)
 						};
 
-						linktabletovariable(Variables::Video::YUVColorSpace.GetString(), table, colorspace);
+						SDR::Table::LinkToVariable(Variables::Video::YUVColorSpace.GetString(), table, colorspace);
 					}
 
 					if (Variables::Video::LAV::SuppressLog.GetBool())
@@ -710,7 +697,7 @@ namespace
 
 						auto pxformatstr = Variables::Video::PixelFormat.GetString();
 
-						if (!linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat))
+						if (!SDR::Table::LinkToVariable(pxformatstr, vidconfig->PixelFormats, pxformat))
 						{
 							/*
 								User selected pixel format does not match any in config.
