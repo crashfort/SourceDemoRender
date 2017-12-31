@@ -208,8 +208,8 @@
 
 		"ConVar_Info":
 		{
-			"SortGroup": "Info",
 			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes August 17 2017",
+			"SortGroup": "Info",
 			"NeverAsStringFlag": 4096,
 			"Variant": 1,
 			"VTIndex_SetValueString": 10,
@@ -287,8 +287,8 @@
 		},
 		"ConVar_Info":
 		{
-			"SortGroup": "Info",
 			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes December 27 2017",
+			"SortGroup": "Info",
 			"NeverAsStringFlag": 4096,
 			"Variant": 1,
 			"VTIndex_SetValueString": 13,
