@@ -67,6 +67,6 @@ namespace SDR::String
 
 	inline bool IsEqual(const char* first, const char* other)
 	{
-		return strcmp(first, other) == 0;
+		return std::strcmp(first, other) == 0;
 	}
 }
