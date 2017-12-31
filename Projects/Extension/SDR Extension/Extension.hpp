@@ -34,6 +34,12 @@ namespace SDR::Extension
 		const char* Contact;
 		
 		int Version;
+
+		/*
+			Comma seperated string that contains the filenames of all extensions that need to
+			be executed before this one.
+		*/
+		const char* Dependencies;
 	};
 
 	/*

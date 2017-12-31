@@ -31,6 +31,8 @@ namespace LauncherUI
 				public IntPtr Contact;
 
 				public int Version;
+
+				public IntPtr Dependencies;
 			};
 
 			[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -47,6 +49,12 @@ namespace LauncherUI
 			public string RelativePath;
 			public string Author;
 			public int Version;
+			public List<string> Dependencies = new List<string>();
+
+			public System.Windows.Controls.ListBoxItem BoxItem;
+			public System.Windows.Controls.Grid ContentGrid;
+			public System.Windows.Controls.CheckBox StatusCheckBox;
+			public System.Windows.Controls.TextBlock TitleBlock;
 		}
 
 		List<ListBoxData> Extensions = new List<ListBoxData>();
@@ -103,6 +111,18 @@ namespace LauncherUI
 						}
 
 						data.Version = result.Version;
+
+						var depstr = Marshal.PtrToStringAnsi(result.Dependencies);
+
+						if (depstr != null)
+						{
+							var parts = depstr.Split(',');
+
+							foreach (var item in parts)
+							{
+								data.Dependencies.Add(item.Trim());
+							}
+						}
 
 						Extensions.Add(data);
 					}
@@ -194,6 +214,44 @@ namespace LauncherUI
 			MoveBottomButton.IsEnabled = state;
 		}
 
+		void CreateConflict(ListBoxData item, ListBoxData dep)
+		{
+			item.TitleBlock.Foreground = System.Windows.Media.Brushes.Red;
+
+			if (item.BoxItem.ToolTip == null)
+			{
+				item.BoxItem.ToolTip = "";
+			}
+
+			else
+			{
+				item.BoxItem.ToolTip += "\n";
+			}
+
+			item.BoxItem.ToolTip += string.Format("\"{0}\" must be after \"{1}\" because it's listed as a dependency.", item.Name, dep.Name);
+		}
+
+		void CheckConflicts()
+		{
+			bool conflicts = false;
+
+			foreach (var item in Extensions)
+			{
+				foreach (var dep in item.Dependencies)
+				{
+					var them = Extensions.Find(other => other.FileName == dep);
+
+					if (them.Index > item.Index)
+					{
+						CreateConflict(item, them);
+						conflicts = true;
+					}
+				}
+			}
+
+			OKButton.IsEnabled = !conflicts;
+		}
+
 		bool ShowDisabled = true;
 
 		void SyncWithUI()
@@ -213,8 +271,8 @@ namespace LauncherUI
 
 				item.Index = ExtensionsList.Items.Count;
 
-				var content = new System.Windows.Controls.Grid();
-				content.Height = 70;
+				item.ContentGrid = new System.Windows.Controls.Grid();
+				item.ContentGrid.Height = 70;
 
 				var enabledseq = new System.Windows.Controls.TextBlock();
 				enabledseq.FontSize = 15;
@@ -232,26 +290,26 @@ namespace LauncherUI
 				enabledseq.Inlines.Add(enabledtitle);
 				enabledseq.Inlines.Add(enabledstr);
 
-				var check = new System.Windows.Controls.CheckBox();
-				check.Content = enabledseq;
-				check.FontSize = 15;
-				check.HorizontalAlignment = HorizontalAlignment.Left;
-				check.VerticalAlignment = VerticalAlignment.Bottom;
-				check.Foreground = System.Windows.Media.Brushes.Gray;
-				check.VerticalContentAlignment = VerticalAlignment.Center;
+				item.StatusCheckBox = new System.Windows.Controls.CheckBox();
+				item.StatusCheckBox.Content = enabledseq;
+				item.StatusCheckBox.FontSize = 15;
+				item.StatusCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
+				item.StatusCheckBox.VerticalAlignment = VerticalAlignment.Bottom;
+				item.StatusCheckBox.Foreground = System.Windows.Media.Brushes.Gray;
+				item.StatusCheckBox.VerticalContentAlignment = VerticalAlignment.Center;
 
-				check.IsChecked = item.Enabled;
+				item.StatusCheckBox.IsChecked = item.Enabled;
 
-				check.DataContext = item;
-				check.Checked += ExtensionEnabledCheck_Checked;
-				check.Unchecked += ExtensionEnabledCheck_Unchecked;
+				item.StatusCheckBox.DataContext = item;
+				item.StatusCheckBox.Checked += ExtensionEnabledCheck_Checked;
+				item.StatusCheckBox.Unchecked += ExtensionEnabledCheck_Unchecked;
 
-				var title = new System.Windows.Controls.TextBlock();
-				title.Text = item.Name;
-				title.FontSize = 30;
-				title.FontWeight = FontWeights.Thin;
-				title.HorizontalAlignment = HorizontalAlignment.Left;
-				title.VerticalAlignment = VerticalAlignment.Top;
+				item.TitleBlock = new System.Windows.Controls.TextBlock();
+				item.TitleBlock.Text = item.Name;
+				item.TitleBlock.FontSize = 30;
+				item.TitleBlock.FontWeight = FontWeights.Thin;
+				item.TitleBlock.HorizontalAlignment = HorizontalAlignment.Left;
+				item.TitleBlock.VerticalAlignment = VerticalAlignment.Top;
 
 				var index = new System.Windows.Controls.TextBlock();
 				index.Text = string.Format("{0}#", ExtensionsList.Items.Count + 1);
@@ -262,10 +320,10 @@ namespace LauncherUI
 				index.VerticalAlignment = VerticalAlignment.Top;
 				index.FlowDirection = FlowDirection.RightToLeft;
 
-				var infostr = new System.Windows.Controls.TextBlock();
-				infostr.FontSize = 15;
-				infostr.HorizontalAlignment = HorizontalAlignment.Right;
-				infostr.VerticalAlignment = VerticalAlignment.Bottom;
+				var infoseq = new System.Windows.Controls.TextBlock();
+				infoseq.FontSize = 15;
+				infoseq.HorizontalAlignment = HorizontalAlignment.Right;
+				infoseq.VerticalAlignment = VerticalAlignment.Bottom;
 
 				var authortitle = new System.Windows.Controls.TextBlock();
 				authortitle.Text = "Author ";
@@ -283,18 +341,26 @@ namespace LauncherUI
 				versionstr.Text = item.Version.ToString();
 				versionstr.Foreground = System.Windows.Media.Brushes.Gray;
 
-				infostr.Inlines.Add(authortitle);
-				infostr.Inlines.Add(authorstr);
-				infostr.Inlines.Add(versiontitle);
-				infostr.Inlines.Add(versionstr);
+				infoseq.Inlines.Add(authortitle);
+				infoseq.Inlines.Add(authorstr);
+				infoseq.Inlines.Add(versiontitle);
+				infoseq.Inlines.Add(versionstr);
 
-				content.Children.Add(check);
-				content.Children.Add(title);
-				content.Children.Add(infostr);
-				content.Children.Add(index);
+				item.ContentGrid.Children.Add(item.StatusCheckBox);
+				item.ContentGrid.Children.Add(item.TitleBlock);
+				item.ContentGrid.Children.Add(infoseq);
+				item.ContentGrid.Children.Add(index);
 
-				ExtensionsList.Items.Add(content);
+				item.BoxItem = new System.Windows.Controls.ListBoxItem();
+				item.BoxItem.Content = item.ContentGrid;
+				item.BoxItem.BorderThickness = new Thickness(0);
+				item.BoxItem.Margin = new Thickness(0);
+				item.BoxItem.Padding = new Thickness(10);
+
+				ExtensionsList.Items.Add(item.BoxItem);
 			}
+
+			CheckConflicts();
 		}
 
 		void ExtensionEnabledCheck_Checked(object sender, RoutedEventArgs args)
