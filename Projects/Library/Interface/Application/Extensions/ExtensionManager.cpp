@@ -36,13 +36,13 @@ namespace
 
 		SDR::Extension::QueryData Info;
 
-		SDR::Extension::ExportTypes::SDR_Query Query;
-		SDR::Extension::ExportTypes::SDR_Initialize Initialize;
-		SDR::Extension::ExportTypes::SDR_ConfigHandler ConfigHandler;
-		SDR::Extension::ExportTypes::SDR_Ready Ready;
-		SDR::Extension::ExportTypes::SDR_StartMovie StartMovie;
-		SDR::Extension::ExportTypes::SDR_EndMovie EndMovie;
-		SDR::Extension::ExportTypes::SDR_NewVideoFrame NewVideoFrame;
+		SDR::Extension::SDR_Query Query;
+		SDR::Extension::SDR_Initialize Initialize;
+		SDR::Extension::SDR_ConfigHandler ConfigHandler;
+		SDR::Extension::SDR_Ready Ready;
+		SDR::Extension::SDR_StartMovie StartMovie;
+		SDR::Extension::SDR_EndMovie EndMovie;
+		SDR::Extension::SDR_NewVideoFrame NewVideoFrame;
 	};
 
 	std::vector<ExtensionData> Loaded;
