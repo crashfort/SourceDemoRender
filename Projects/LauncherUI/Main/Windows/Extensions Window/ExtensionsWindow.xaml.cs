@@ -259,6 +259,7 @@ namespace LauncherUI
 
 			foreach (var item in Extensions)
 			{
+				item.TitleBlock.Foreground = System.Windows.Media.Brushes.Black;
 				item.BoxItem.ToolTip = null;
 
 				foreach (var dep in item.Dependencies)
