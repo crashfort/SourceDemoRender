@@ -262,6 +262,11 @@ namespace LauncherUI
 				item.TitleBlock.Foreground = System.Windows.Media.Brushes.Black;
 				item.BoxItem.ToolTip = null;
 
+				if (!item.Enabled)
+				{
+					continue;
+				}
+
 				foreach (var dep in item.Dependencies)
 				{
 					var them = Extensions.Find(other => other.FileName == dep);
