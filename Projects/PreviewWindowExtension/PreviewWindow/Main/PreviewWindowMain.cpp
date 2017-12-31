@@ -427,7 +427,7 @@ extern "C"
 		query.Author = "crashfort";
 		query.Contact = "https://github.com/crashfort/";
 
-		query.Version = 2;
+		query.Version = 3;
 	}
 
 	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::Extension::InitializeData& data)
@@ -474,9 +474,10 @@ extern "C"
 
 	__declspec(dllexport) void __cdecl SDR_NewVideoFrame(const SDR::Extension::NewVideoFrameData& data)
 	{
+		auto lock = Synchro::Ptr->WindowPtrCS.Lock();
+
 		if (Window::WindowPtr)
 		{
-			auto lock = Synchro::Ptr->WindowPtrCS.Lock();
 			Window::WindowPtr->Update(data);
 		}
 	}
