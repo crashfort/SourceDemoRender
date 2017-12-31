@@ -190,7 +190,7 @@ namespace
 				str += SDR::String::Format("SDR: Author: \"%s\"\n", safestr(ext.Info.Author));
 				str += SDR::String::Format("SDR: Contact: \"%s\"\n", safestr(ext.Info.Contact));
 				str += SDR::String::Format("SDR: Version: %d\n", ext.Info.Version);
-				str += SDR::String::Format("SDR: Dependencies: %d\n", safestr(ext.Info.Dependencies));
+				str += SDR::String::Format("SDR: Dependencies: \"%s\"\n", safestr(ext.Info.Dependencies));
 
 				if (index != maxindex)
 				{
