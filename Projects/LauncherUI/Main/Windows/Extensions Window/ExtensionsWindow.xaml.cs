@@ -401,12 +401,12 @@ namespace LauncherUI
 			CheckConflicts();
 		}
 
-		void ExtensionEnabledCheck_Checked(object sender, RoutedEventArgs args)
+		void SetExtensionStatusFromEvent(object sender, bool value)
 		{
 			var control = sender as System.Windows.Controls.CheckBox;
 			var data = (ListBoxData)control.DataContext;
 
-			data.Enabled = true;
+			data.Enabled = value;
 
 			var oldindex = ExtensionsList.SelectedIndex;
 
@@ -420,23 +420,14 @@ namespace LauncherUI
 			CheckConflicts();
 		}
 
+		void ExtensionEnabledCheck_Checked(object sender, RoutedEventArgs args)
+		{
+			SetExtensionStatusFromEvent(sender, true);
+		}
+
 		void ExtensionEnabledCheck_Unchecked(object sender, RoutedEventArgs args)
 		{
-			var control = sender as System.Windows.Controls.CheckBox;
-			var data = (ListBoxData)control.DataContext;
-
-			data.Enabled = false;
-
-			var oldindex = ExtensionsList.SelectedIndex;
-
-			ExtensionsList.SelectedIndex = data.Index;
-
-			if (oldindex == data.Index)
-			{
-				UpdateSelectionButtonsState(ExtensionsList.SelectedIndex);
-			}
-
-			CheckConflicts();
+			SetExtensionStatusFromEvent(sender, false);
 		}
 
 		void SwapItems(int index, int newindex)
