@@ -63,9 +63,29 @@ namespace LauncherUI
 		{
 			InitializeComponent();
 
+			CreateDirectoriesIfMissing();
+
 			PopulateList();
 			ResolveFromLocalOrder();
 			SyncWithUI();
+		}
+
+		void CreateDirectoriesIfMissing()
+		{
+			if (!System.IO.Directory.Exists("Extensions"))
+			{
+				System.IO.Directory.CreateDirectory("Extensions");
+			}
+
+			if (!System.IO.Directory.Exists("Extensions\\Enabled"))
+			{
+				System.IO.Directory.CreateDirectory("Extensions\\Enabled");
+			}
+
+			if (!System.IO.Directory.Exists("Extensions\\Disabled"))
+			{
+				System.IO.Directory.CreateDirectory("Extensions\\Disabled");
+			}
 		}
 
 		void LoadExtensionsFromPath(string path, bool enabled)
