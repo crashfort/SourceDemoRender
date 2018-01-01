@@ -467,7 +467,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Conversion(SharedData& shared)
 
 	Dispatch(shared);
 
-	ConversionPtr->UnBind(context);
+	ConversionPtr->Unbind(context);
 
 	D3D11::Shader::CSResetSRV<1>(context, 0);
 	D3D11::Shader::CSResetCBV<1>(context, 0);

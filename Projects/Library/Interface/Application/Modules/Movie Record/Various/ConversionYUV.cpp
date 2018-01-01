@@ -94,7 +94,7 @@ void SDR::D3D11::ConversionYUV::DynamicBind(ID3D11DeviceContext* context)
 	context->CSSetUnorderedAccessViews(0, 3, uavs.begin(), nullptr);
 }
 
-void SDR::D3D11::ConversionYUV::UnBind(ID3D11DeviceContext* context)
+void SDR::D3D11::ConversionYUV::Unbind(ID3D11DeviceContext* context)
 {
 	Shader::CSResetCBV<1>(context, 1);
 	Shader::CSResetUAV<3>(context, 0);
