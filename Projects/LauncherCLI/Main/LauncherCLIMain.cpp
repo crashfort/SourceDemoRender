@@ -407,7 +407,7 @@ namespace
 				rect.right = 960;
 				rect.bottom = 640;
 
-				const auto style = WS_OVERLAPPEDWINDOW ^ WS_MAXIMIZEBOX | WS_CLIPCHILDREN;
+				const auto style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN;
 
 				AdjustWindowRect(&rect, style, false);
 
