@@ -2,19 +2,19 @@
 
 namespace
 {
-	void MessageDefault(std::string&& text)
+	void MessageDefault(const char* text)
 	{
-		printf_s(text.c_str());
+		printf_s(text);
 	}
 
-	void MessageColorDefault(SDR::Shared::Color col, std::string&& text)
+	void MessageColorDefault(SDR::Shared::Color col, const char* text)
 	{
-		printf_s(text.c_str());
+		printf_s(text);
 	}
 	
-	void WarningDefault(std::string&& text)
+	void WarningDefault(const char* text)
 	{
-		printf_s(text.c_str());
+		printf_s(text);
 	}
 
 	SDR::Log::LogFunctionType MessageImpl = MessageDefault;
@@ -37,17 +37,17 @@ void SDR::Log::SetWarningFunction(LogFunctionType func)
 	WarningImpl = func;
 }
 
-void SDR::Log::Message(std::string&& text)
+void SDR::Log::Message(const char* text)
 {
-	MessageImpl(std::move(text));
+	MessageImpl(text);
 }
 
-void SDR::Log::MessageColor(Shared::Color col, std::string&& text)
+void SDR::Log::MessageColor(Shared::Color col, const char* text)
 {
-	MessageColorImpl(col, std::move(text));
+	MessageColorImpl(col, text);
 }
 
-void SDR::Log::Warning(std::string&& text)
+void SDR::Log::Warning(const char* text)
 {
-	WarningImpl(std::move(text));
+	WarningImpl(text);
 }

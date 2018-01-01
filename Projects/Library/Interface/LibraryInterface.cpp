@@ -81,10 +81,10 @@ namespace
 		bool Failure = false;
 	};
 
-	void WriteToLauncherCLI(const std::string& text)
+	void WriteToLauncherCLI(const char* text)
 	{
 		SDR::LauncherCLI::AddMessageData data;
-		strcpy_s(data.Text, text.c_str());
+		strcpy_s(data.Text, text);
 
 		COPYDATASTRUCT copydata = {};
 		copydata.dwData = SDR::LauncherCLI::Messages::AddMessage;
@@ -108,20 +108,20 @@ void SDR::Library::Load()
 	/*
 		Temporary communication gates. All text output has to go to the launcher console.
 	*/
-	SDR::Log::SetMessageFunction([](std::string&& text)
+	SDR::Log::SetMessageFunction([](const char* text)
 	{
 		WriteToLauncherCLI(text);
 	});
 
-	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color color, std::string&& text)
+	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color color, const char* text)
 	{
 		WriteToLauncherCLI(text);
 	});
 
-	SDR::Log::SetWarningFunction([](std::string&& text)
+	SDR::Log::SetWarningFunction([](const char* text)
 	{
-		auto format = SDR::String::Format("{red}%s", text.c_str());
-		WriteToLauncherCLI(format);
+		auto format = SDR::String::Format("{red}%s", text);
+		WriteToLauncherCLI(format.c_str());
 	});
 
 	auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Load);

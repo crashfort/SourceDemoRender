@@ -359,7 +359,7 @@ void SDR::Stream::StreamBase::DirectX11Data::NewFrame(SharedData& shared, float 
 
 		if (FAILED(hr))
 		{
-			Log::Warning("SDR: Could not map sampling constant buffer\n"s);
+			Log::Warning("SDR: Could not map sampling constant buffer\n");
 		}
 
 		else

@@ -127,13 +127,13 @@ namespace
 
 		catch (SDR::File::ScopedFile::ExceptionType status)
 		{
-			SDR::Log::Warning("SDR: Could not find extension order config"s);
+			SDR::Log::Warning("SDR: Could not find extension order config");
 			return;
 		}
 
 		if (!document.IsArray())
 		{
-			SDR::Log::Warning("SDR: Extension order config not an array"s);
+			SDR::Log::Warning("SDR: Extension order config not an array");
 			return;
 		}
 
@@ -176,7 +176,7 @@ namespace
 		{
 			if (Loaded.empty())
 			{
-				SDR::Log::Message("SDR: No extensions loaded\n"s);
+				SDR::Log::Message("SDR: No extensions loaded\n");
 				return;
 			}
 
@@ -210,7 +210,7 @@ namespace
 					str += "\n";
 				}
 
-				SDR::Log::Message(std::move(str));
+				SDR::Log::Message(str.c_str());
 
 				++index;
 			}

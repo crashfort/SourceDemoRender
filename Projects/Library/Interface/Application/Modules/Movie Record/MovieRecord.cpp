@@ -138,7 +138,7 @@ namespace
 
 			if (res == 0)
 			{
-				SDR::Log::Warning("SDR: Could not retrieve process memory info\n"s);
+				SDR::Log::Warning("SDR: Could not retrieve process memory info\n");
 				return true;
 			}
 
@@ -229,7 +229,7 @@ namespace
 
 				if (FAILED(hr))
 				{
-					SDR::Log::Warning("SDR: Could not copy D3D9 RT -> D3D11 RT\n"s);
+					SDR::Log::Warning("SDR: Could not copy D3D9 RT -> D3D11 RT\n");
 					return false;
 				}
 
@@ -464,7 +464,7 @@ namespace
 						{
 							if (_strcmpi(newstr, preset) == 0)
 							{
-								SDR::Log::Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n"s);
+								SDR::Log::Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
 								break;
 							}
 						}
@@ -532,7 +532,7 @@ namespace
 
 				if (*ext == 0)
 				{
-					SDR::Log::Warning("SDR: No file extension. Available video containers:\n"s);
+					SDR::Log::Warning("SDR: No file extension. Available video containers:\n");
 
 					showcontainers();
 
@@ -555,7 +555,7 @@ namespace
 
 					if (!found)
 					{
-						SDR::Log::Warning("SDR: Unknown file extension. Available video containers:\n"s);
+						SDR::Log::Warning("SDR: Unknown file extension. Available video containers:\n");
 
 						showcontainers();
 
@@ -859,7 +859,7 @@ namespace
 					SDR::ExtensionManager::Events::StartMovie(data);
 				}
 
-				SDR::Log::Message("SDR: Started movie\n"s);
+				SDR::Log::Message("SDR: Started movie\n");
 			}
 		}
 
@@ -909,13 +909,13 @@ namespace
 
 				if (CurrentMovie.IsStarted)
 				{
-					SDR::Log::Message("SDR: Movie is already started\n"s);
+					SDR::Log::Message("SDR: Movie is already started\n");
 					return;
 				}
 
 				if (args.Count() < 2)
 				{
-					SDR::Log::Message("SDR: Name is required for startmovie, see Github page for help\n"s);
+					SDR::Log::Message("SDR: Name is required for startmovie, see Github page for help\n");
 					return;
 				}
 
@@ -968,7 +968,7 @@ namespace
 			{
 				if (!CurrentMovie.IsStarted)
 				{
-					SDR::Log::Message("SDR: No movie is started\n"s);
+					SDR::Log::Message("SDR: No movie is started\n");
 					return;
 				}
 
@@ -987,7 +987,7 @@ namespace
 				auto nofocustime = SDR::Console::Variable::Find("engine_no_focus_sleep");
 				nofocustime.SetValue(CurrentMovie.OldEngineSleepTime);
 
-				SDR::Log::Message("SDR: Ending movie\n"s);
+				SDR::Log::Message("SDR: Ending movie\n");
 
 				if (BufferedFrames > 0)
 				{
@@ -1022,7 +1022,7 @@ namespace
 						SDR::EngineClient::FlashWindow();
 					}
 
-					SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Movie is now complete\n"s);
+					SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Movie is now complete\n");
 
 					SDR::Profile::ShowResults();
 				};
@@ -1130,7 +1130,7 @@ namespace
 	{
 		if (IsStoppingAsync)
 		{
-			SDR::Log::Message("SDR: Already stopping asynchronously\n"s);
+			SDR::Log::Message("SDR: Already stopping asynchronously\n");
 
 			while (IsStoppingAsync)
 			{

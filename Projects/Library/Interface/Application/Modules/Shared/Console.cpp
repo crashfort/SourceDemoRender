@@ -606,30 +606,30 @@ void SDR::Console::Load()
 		SDR::Error::Make("Could not find console warning export"s);
 	}
 
-	SDR::Log::SetMessageFunction([](std::string&& text)
+	SDR::Log::SetMessageFunction([](const char* text)
 	{
 		if (ModulePrint::MessageVariant == 0)
 		{
 			auto casted = (ModulePrint::Variant0::MessageType)ModulePrint::MessageAddr;
-			casted(text.c_str());
+			casted(text);
 		}
 	});
 
-	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, std::string&& text)
+	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, const char* text)
 	{
 		if (ModulePrint::MessageColorVariant == 0)
 		{
 			auto casted = (ModulePrint::Variant0::MessageColorType)ModulePrint::MessageColorAddr;
-			casted(col, text.c_str());
+			casted(col, text);
 		}
 	});
 
-	SDR::Log::SetWarningFunction([](std::string&& text)
+	SDR::Log::SetWarningFunction([](const char* text)
 	{
 		if (ModulePrint::WarningVariant == 0)
 		{
 			auto casted = (ModulePrint::Variant0::WarningType)ModulePrint::WarningAddr;
-			casted(text.c_str());
+			casted(text);
 		}
 	});
 

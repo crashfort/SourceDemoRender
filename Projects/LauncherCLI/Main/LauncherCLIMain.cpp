@@ -913,9 +913,9 @@ namespace
 
 int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int showcommand)
 {
-	SDR::Log::SetWarningFunction([](std::string&& text)
+	SDR::Log::SetWarningFunction([](const char* text)
 	{
-		Local::Print("{red}%s", text.c_str());
+		Local::Print("{red}%s", text);
 	});
 
 	try

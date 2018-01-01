@@ -4,32 +4,35 @@
 
 namespace SDR::Log
 {
-	using LogFunctionType = void(*)(std::string&& text);
-	using LogFunctionColorType = void(*)(Shared::Color col, std::string&& text);
+	using LogFunctionType = void(*)(const char* text);
+	using LogFunctionColorType = void(*)(Shared::Color col, const char* text);
 
 	void SetMessageFunction(LogFunctionType func);
 	void SetMessageColorFunction(LogFunctionColorType func);
 	void SetWarningFunction(LogFunctionType func);
 
-	void Message(std::string&& text);
-	void MessageColor(Shared::Color col, std::string&& text);
-	void Warning(std::string&& text);
+	void Message(const char* text);
+	void MessageColor(Shared::Color col, const char* text);
+	void Warning(const char* text);
 
 	template <typename... Args>
 	void Message(const char* format, Args&&... args)
 	{
-		Message(String::Format(format, std::forward<Args>(args)...));
+		auto text = String::Format(format, std::forward<Args>(args)...);
+		Message(text.c_str());
 	}
 
 	template <typename... Args>
 	void MessageColor(Shared::Color col, const char* format, Args&&... args)
 	{
-		MessageColor(col, String::Format(format, std::forward<Args>(args)...));
+		auto text = String::Format(format, std::forward<Args>(args)...);
+		MessageColor(col, text.c_str());
 	}
 
 	template <typename... Args>
 	void Warning(const char* format, Args&&... args)
 	{
-		Warning(String::Format(format, std::forward<Args>(args)...));
+		auto text = String::Format(format, std::forward<Args>(args)...);
+		Warning(text.c_str());
 	}
 }
