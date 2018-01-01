@@ -106,7 +106,13 @@ namespace SDR::Hooking
 	void* GetAddressFromJsonFlex(const rapidjson::Value& value);
 	void* GetAddressFromJsonPattern(const rapidjson::Value& value);
 
-	int GetVariantFromJson(const rapidjson::Value& value);
+	int GetVariantFromJson(const rapidjson::Value& value, int max);
+
+	template <typename T, typename... Rest>
+	int GetVariantFromJson(const rapidjson::Value& value)
+	{
+		return GetVariantFromJson(value, sizeof...(Rest) + 1);
+	}
 
 	void WarnAboutHookVariant(int variant);
 	void WarnIfVariantOutOfBounds(int variant, int max);

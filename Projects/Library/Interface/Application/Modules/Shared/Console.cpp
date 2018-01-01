@@ -43,7 +43,7 @@ namespace
 				"ConCommandBase_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::Hooking::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson<Variant0::Data>(value);
 				}
 			)
 		);
@@ -78,7 +78,7 @@ namespace
 				"CCommand_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::Hooking::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson<Variant0::Data>(value);
 				}
 			)
 		);
@@ -131,7 +131,7 @@ namespace
 				"ConCommand_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::Hooking::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson<Variant0::Data>(value);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -217,7 +217,7 @@ namespace
 				"ConVar_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::Hooking::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson<Variant0::Data, Variant1::Data>(value);
 					NeverAsStringFlag = SDR::Json::GetInt(value, "NeverAsStringFlag");
 					
 					VTIndex_SetValueString = SDR::Json::GetInt(value, "VTIndex_SetValueString");

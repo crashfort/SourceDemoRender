@@ -334,13 +334,17 @@ void* SDR::Hooking::GetAddressFromJsonPattern(const rapidjson::Value& value)
 	return address.Get();
 }
 
-int SDR::Hooking::GetVariantFromJson(const rapidjson::Value& value)
+int SDR::Hooking::GetVariantFromJson(const rapidjson::Value& value, int max)
 {
 	SDR::Error::ScopedContext e1("GetVariantFromJson"s);
 
 	if (JsonHasVariant(value))
 	{
-		return SDR::Json::GetInt(value, "Variant");
+		auto ret = SDR::Json::GetInt(value, "Variant");
+
+		WarnIfVariantOutOfBounds(ret, max);
+
+		return ret;
 	}
 
 	return 0;
@@ -436,9 +440,7 @@ void SDR::Hooking::GenericVariantInit(ModuleShared::Variant::Entry& entry, const
 	SDR::Error::ScopedContext e1("GenericVariantInit"s);
 
 	auto addr = GetAddressFromJsonFlex(value);
-	auto variant = GetVariantFromJson(value);
-
-	WarnIfVariantOutOfBounds(variant, entry.VariantCount);
+	auto variant = GetVariantFromJson(value, entry.VariantCount);
 
 	ModuleShared::SetFromAddress(entry, addr, variant);
 }
@@ -493,10 +495,8 @@ void SDR::Hooking::GenericHookVariantInit(std::initializer_list<GenericHookInitP
 {
 	SDR::Error::ScopedContext e1("GenericHookVariantInit"s);
 
-	auto variant = GetVariantFromJson(value);
 	auto size = hooks.size();
-
-	WarnIfVariantOutOfBounds(variant, size);
+	auto variant = GetVariantFromJson(value, size);
 
 	auto target = *(hooks.begin() + variant);
 
