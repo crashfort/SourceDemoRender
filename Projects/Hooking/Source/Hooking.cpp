@@ -356,7 +356,7 @@ void SDR::Hooking::WarnIfVariantOutOfBounds(int variant, int max)
 
 	if (variant < 0 || variant >= max)
 	{
-		SDR::Error::Make("SDR: Variant overload %d not in bounds (%d max)\n", variant, max);
+		SDR::Error::Make("Variant overload %d not in bounds (%d max)", variant, max);
 	}
 }
 
