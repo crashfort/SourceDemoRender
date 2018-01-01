@@ -350,11 +350,6 @@ int SDR::Hooking::GetVariantFromJson(const rapidjson::Value& value, int max)
 	return 0;
 }
 
-void SDR::Hooking::WarnAboutHookVariant(int variant)
-{
-	SDR::Log::Warning("SDR: No such hook overload in variant %d\n", variant);
-}
-
 void SDR::Hooking::WarnIfVariantOutOfBounds(int variant, int max)
 {
 	SDR::Error::ScopedContext e1("WarnIfVariantOutOfBounds"s);

@@ -114,7 +114,6 @@ namespace SDR::Hooking
 		return GetVariantFromJson(value, sizeof...(Rest) + 1);
 	}
 
-	void WarnAboutHookVariant(int variant);
 	void WarnIfVariantOutOfBounds(int variant, int max);
 
 	void* GetVirtualAddressFromIndex(void* ptr, int index);
