@@ -915,7 +915,7 @@ namespace
 
 				if (args.Count() < 2)
 				{
-					SDR::Log::Message("SDR: Name is required for startmovie, see Github page for help\n");
+					SDR::Log::Message("SDR: Name is required for startmovie, see GitHub page for help\n");
 					return;
 				}
 
