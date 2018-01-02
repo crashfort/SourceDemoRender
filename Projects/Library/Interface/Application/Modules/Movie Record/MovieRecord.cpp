@@ -666,9 +666,9 @@ namespace
 						FormatsType PixelFormats;
 					};
 
-					const auto yuv420 = std::make_pair("yuv420", AV_PIX_FMT_YUV420P);
-					const auto yuv444 = std::make_pair("yuv444", AV_PIX_FMT_YUV444P);
-					const auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
+					auto yuv420 = std::make_pair("yuv420", AV_PIX_FMT_YUV420P);
+					auto yuv444 = std::make_pair("yuv444", AV_PIX_FMT_YUV444P);
+					auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
 
 					VideoConfigurationData table[] =
 					{
@@ -676,7 +676,7 @@ namespace
 						VideoConfigurationData::Make("libx264rgb", { bgr0 }),
 					};
 
-					const VideoConfigurationData* vidconfig = nullptr;
+					VideoConfigurationData* vidconfig = nullptr;
 
 					{
 						auto encoderstr = Variables::Video::Encoder.GetString();
@@ -684,7 +684,7 @@ namespace
 
 						SDR::Error::ThrowIfNull(encoder, "Video encoder \"%s\" not found", encoderstr);
 
-						for (const auto& config : table)
+						for (auto& config : table)
 						{
 							if (config.Encoder == encoder)
 							{
@@ -705,10 +705,7 @@ namespace
 
 						auto isrgbtype = [](AVPixelFormat format)
 						{
-							auto table =
-							{
-								AV_PIX_FMT_BGR0,
-							};
+							auto table = { AV_PIX_FMT_BGR0 };
 
 							for (auto entry : table)
 							{
