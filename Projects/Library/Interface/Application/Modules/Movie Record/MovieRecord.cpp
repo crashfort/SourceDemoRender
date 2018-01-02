@@ -215,17 +215,13 @@ namespace
 			{
 				auto dx9device = SDR::SourceGlobals::GetD3D9DeviceEx();
 
+				auto rt = stream->DirectX9.GameRenderTarget0.Get();
+				auto surface = stream->DirectX9.SharedSurface.Surface.Get();
+
 				/*
 					The DX11 texture now contains this data.
 				*/
-				auto hr = dx9device->StretchRect
-				(
-					stream->DirectX9.GameRenderTarget0.Get(),
-					nullptr,
-					stream->DirectX9.SharedSurface.Surface.Get(),
-					nullptr,
-					D3DTEXF_NONE
-				);
+				auto hr = dx9device->StretchRect(rt, nullptr, surface, nullptr, D3DTEXF_NONE);
 
 				if (FAILED(hr))
 				{
@@ -657,11 +653,13 @@ namespace
 					{
 						using FormatsType = std::vector<std::pair<const char*, AVPixelFormat>>;
 
-						VideoConfigurationData(const char* name, FormatsType&& formats) :
-							Encoder(avcodec_find_encoder_by_name(name)),
-							PixelFormats(std::move(formats))
+						static VideoConfigurationData Make(const char* name, FormatsType&& formats)
 						{
+							VideoConfigurationData ret;
+							ret.Encoder = avcodec_find_encoder_by_name(name);
+							ret.PixelFormats = std::move(formats);
 
+							return ret;
 						}
 
 						AVCodec* Encoder;
@@ -674,8 +672,8 @@ namespace
 
 					VideoConfigurationData table[] =
 					{
-						VideoConfigurationData("libx264", { yuv420, yuv444 }),
-						VideoConfigurationData("libx264rgb", { bgr0 }),
+						VideoConfigurationData::Make("libx264", { yuv420, yuv444 }),
+						VideoConfigurationData::Make("libx264rgb", { bgr0 }),
 					};
 
 					const VideoConfigurationData* vidconfig = nullptr;
@@ -735,13 +733,14 @@ namespace
 
 						stream->DirectX9.Create(SDR::SourceGlobals::GetD3D9DeviceEx(), width, height);
 
-						stream->DirectX11.Create
-						(
-							movie.VideoStreamShared.DirectX11.Device.Get(),
-							stream->DirectX9.SharedSurface.SharedHandle,
-							stream->Video.Frame.Get(),
-							MovieData::UseStaging()
-						);
+						{
+							auto device = movie.VideoStreamShared.DirectX11.Device.Get();
+							auto sharedhandle = stream->DirectX9.SharedSurface.SharedHandle;
+							auto frame = stream->Video.Frame.Get();
+							auto staging = MovieData::UseStaging();
+
+							stream->DirectX11.Create(device, sharedhandle, frame, staging);
+						}
 
 						/*
 							Destroy any deferred D3D11 resources created by above functions.

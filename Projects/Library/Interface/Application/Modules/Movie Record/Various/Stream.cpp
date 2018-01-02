@@ -62,19 +62,7 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 	*/
 	Error::Microsoft::ThrowIfFailed
 	(
-		D3D11CreateDevice
-		(
-			nullptr,
-			D3D_DRIVER_TYPE_HARDWARE,
-			0,
-			flags,
-			nullptr,
-			0,
-			D3D11_SDK_VERSION,
-			Device.GetAddressOf(),
-			&createdlevel,
-			Context.GetAddressOf()
-		),
+		D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, flags, nullptr, 0, D3D11_SDK_VERSION, Device.GetAddressOf(), &createdlevel, Context.GetAddressOf()),
 		"Could not create D3D11 device"
 	);
 
@@ -158,17 +146,7 @@ void SDR::Stream::StreamBase::DirectX9Data::SharedSurfaceData::Create(IDirect3DD
 			This change was first made in:
 			https://github.com/crashfort/SourceDemoRender/commit/eaabd701ce413cc372aeabe57755ce37e4bf741c
 		*/
-		device->CreateTexture
-		(
-			width,
-			height,
-			1,
-			D3DUSAGE_RENDERTARGET,
-			D3DFMT_A8R8G8B8,
-			D3DPOOL_DEFAULT,
-			Texture.GetAddressOf(),
-			&SharedHandle
-		),
+		device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, Texture.GetAddressOf(), &SharedHandle),
 		"Could not create D3D9 shared texture"
 	);
 
@@ -341,14 +319,7 @@ void SDR::Stream::StreamBase::DirectX11Data::NewFrame(SharedData& shared, float 
 	{
 		D3D11_MAPPED_SUBRESOURCE mapped;
 
-		auto hr = context->Map
-		(
-			shared.DirectX11.SamplingConstantBuffer.Get(),
-			0,
-			D3D11_MAP_WRITE_DISCARD,
-			0,
-			&mapped
-		);
+		auto hr = context->Map(shared.DirectX11.SamplingConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
 
 		if (FAILED(hr))
 		{
@@ -358,13 +329,7 @@ void SDR::Stream::StreamBase::DirectX11Data::NewFrame(SharedData& shared, float 
 		else
 		{
 			shared.DirectX11.SamplingConstantData.Weight = weight;
-
-			std::memcpy
-			(
-				mapped.pData,
-				&shared.DirectX11.SamplingConstantData,
-				sizeof(shared.DirectX11.SamplingConstantData)
-			);
+			std::memcpy(mapped.pData, &shared.DirectX11.SamplingConstantData, sizeof(shared.DirectX11.SamplingConstantData));
 		}
 
 		context->Unmap(shared.DirectX11.SamplingConstantBuffer.Get(), 0);
