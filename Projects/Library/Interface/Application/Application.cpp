@@ -5,6 +5,7 @@
 #include <SDR Library API\LibraryAPI.hpp>
 #include <SDR LauncherCLI API\LauncherCLIAPI.hpp>
 #include "Application.hpp"
+#include "ConfigSystem.hpp"
 #include "Interface\Application\Extensions\ExtensionManager.hpp"
 
 namespace
@@ -20,148 +21,6 @@ namespace
 
 	namespace Config
 	{
-		template <typename NodeType, typename FuncType>
-		void MemberLoop(NodeType& node, FuncType callback)
-		{
-			auto& begin = node.MemberBegin();
-			auto& end = node.MemberEnd();
-
-			for (auto it = begin; it != end; ++it)
-			{
-				callback(it);
-			}
-		}
-
-		struct ConfigObjectData
-		{
-			std::string ObjectName;
-			std::vector<std::pair<std::string, rapidjson::Value>> Properties;
-		};
-
-		std::vector<ConfigObjectData> GameConfigs;
-		std::vector<ConfigObjectData> ExtensionConfigs;
-
-		void ResolveInherit(ConfigObjectData* targetgame, const std::vector<ConfigObjectData>& source, rapidjson::Document::AllocatorType& alloc)
-		{
-			auto foundinherit = false;
-
-			std::vector<std::pair<std::string, rapidjson::Value>> temp;
-
-			for (auto it = targetgame->Properties.begin(); it != targetgame->Properties.end(); ++it)
-			{
-				if (it->first == "Inherit")
-				{
-					foundinherit = true;
-
-					if (!it->second.IsString())
-					{
-						SDR::Error::Make("SDR: \"%s\" inherit field not a string\n", targetgame->ObjectName.c_str());
-					}
-
-					std::string from = it->second.GetString();
-
-					targetgame->Properties.erase(it);
-
-					for (const auto& game : source)
-					{
-						bool foundgame = false;
-
-						if (game.ObjectName == from)
-						{
-							foundgame = true;
-
-							for (const auto& sourceprop : game.Properties)
-							{
-								bool shouldadd = true;
-
-								for (const auto& destprop : targetgame->Properties)
-								{
-									if (sourceprop.first == destprop.first)
-									{
-										shouldadd = false;
-										break;
-									}
-								}
-
-								if (shouldadd)
-								{
-									temp.emplace_back(std::make_pair(sourceprop.first, rapidjson::Value(sourceprop.second, alloc)));
-								}
-							}
-
-							for (auto&& orig : targetgame->Properties)
-							{
-								temp.emplace_back(std::move(orig));
-							}
-
-							targetgame->Properties = std::move(temp);
-
-							break;
-						}
-
-						if (!foundgame)
-						{
-							SDR::Error::Make("\"%s\" inherit target \"%s\" not found", targetgame->ObjectName.c_str(), from.c_str());
-						}
-					}
-
-					break;
-				}
-			}
-
-			if (foundinherit)
-			{
-				ResolveInherit(targetgame, source, alloc);
-			}
-		}
-
-		void ResolveSort(ConfigObjectData* targetgame)
-		{
-			auto temp = std::move(targetgame->Properties);
-
-			auto addgroup = [&](const char* name)
-			{
-				for (auto&& prop : temp)
-				{
-					if (prop.first.empty())
-					{
-						continue;
-					}
-
-					if (prop.second.IsObject())
-					{
-						if (prop.second.HasMember("SortGroup"))
-						{
-							std::string group = prop.second["SortGroup"].GetString();
-
-							if (group == name)
-							{
-								targetgame->Properties.emplace_back(std::move(prop));
-							}
-						}
-					}
-				}
-			};
-
-			addgroup("Pointer");
-			addgroup("Info");
-			addgroup("Function");
-			addgroup("User1");
-			addgroup("User2");
-			addgroup("User3");
-			addgroup("User4");
-
-			for (auto&& rem : temp)
-			{
-				if (rem.first.empty())
-				{
-					continue;
-				}
-
-				targetgame->Properties.emplace_back(std::move(rem));
-			}
-		}
-
 		void PrintModuleState(bool value, const char* name)
 		{
 			if (!value)
@@ -175,7 +34,10 @@ namespace
 			}
 		}
 
-		void CallGameHandlers(ConfigObjectData* game)
+		std::vector<SDR::ConfigSystem::ObjectData> GameConfigs;
+		std::vector<SDR::ConfigSystem::ObjectData> ExtensionConfigs;
+
+		void CallGameHandlers(SDR::ConfigSystem::ObjectData* game)
 		{
 			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", MainApplication.ModuleHandlers.size());
 
@@ -225,7 +87,7 @@ namespace
 			MainApplication.ModuleHandlers.clear();
 		}
 
-		void CallExtensionHandlers(ConfigObjectData* object)
+		void CallExtensionHandlers(SDR::ConfigSystem::ObjectData* object)
 		{
 			if (object->Properties.empty())
 			{
@@ -256,16 +118,16 @@ namespace
 			}
 		}
 
-		ConfigObjectData* PopulateAndFindObject(rapidjson::Document& document, std::vector<ConfigObjectData>& dest)
+		SDR::ConfigSystem::ObjectData* PopulateAndFindObject(rapidjson::Document& document, std::vector<SDR::ConfigSystem::ObjectData>& dest)
 		{
-			MemberLoop(document, [&](rapidjson::Document::MemberIterator gameit)
+			SDR::ConfigSystem::MemberLoop(document, [&](rapidjson::Document::MemberIterator gameit)
 			{
 				dest.emplace_back();
 				auto& curobj = dest.back();
 
 				curobj.ObjectName = gameit->name.GetString();
 
-				MemberLoop(gameit->value, [&](rapidjson::Document::MemberIterator gamedata)
+				SDR::ConfigSystem::MemberLoop(gameit->value, [&](rapidjson::Document::MemberIterator gamedata)
 				{
 					curobj.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
 				});
