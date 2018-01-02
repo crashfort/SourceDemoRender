@@ -899,7 +899,7 @@ namespace
 
 		if (!library)
 		{
-			SDR::Error::Make("Could not load SDR library for version display");
+			SDR::Error::Make("Could not load SDR library for version display"s);
 		}
 
 		auto func = (SDR::Library::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
@@ -935,12 +935,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 
 		ShowLibraryVersion();
 
-		/*
-			/GAME "" /PARAMS "" /
-		*/
 		if (argc < 1)
 		{
-			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PATH \"<game path>\" /PARAMS \"<startup params>\"");
+			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PATH \"<game path>\" /PARAMS \"<startup params>\""s);
 		}
 
 		std::string exepath;
@@ -974,12 +971,12 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 
 		if (exepath.empty())
 		{
-			SDR::Error::Make("Required switch \"/GAME\" not found");
+			SDR::Error::Make("Required switch \"/GAME\" not found"s);
 		}
 
 		if (gamepath.empty())
 		{
-			SDR::Error::Make("Required switch \"/PATH\" not found");
+			SDR::Error::Make("Required switch \"/PATH\" not found"s);
 		}
 
 		EnsureFileIsPresent(Local::LibraryName);
