@@ -749,21 +749,11 @@ namespace
 
 		PROCESS_INFORMATION procinfo;
 
+		auto flags = CREATE_NEW_PROCESS_GROUP | CREATE_SUSPENDED | DETACHED_PROCESS;
+
 		SDR::Error::Microsoft::ThrowIfZero
 		(
-			CreateProcessA
-			(
-				exepath.c_str(),
-				args,
-				nullptr,
-				nullptr,
-				false,
-				CREATE_NEW_PROCESS_GROUP | CREATE_SUSPENDED | DETACHED_PROCESS,
-				nullptr,
-				dir.c_str(),
-				&startinfo,
-				&procinfo
-			),
+			CreateProcessA(exepath.c_str(), args, nullptr, nullptr, false, flags, nullptr, dir.c_str(), &startinfo, &procinfo),
 			"Could not create process"
 		);
 
