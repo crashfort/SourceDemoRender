@@ -1054,7 +1054,7 @@ namespace
 
 			void __cdecl NewFunction()
 			{
-				Common::Procedure(true);
+				Common::Procedure(false);
 			}
 		}
 
