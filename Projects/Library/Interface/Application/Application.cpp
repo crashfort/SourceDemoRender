@@ -140,8 +140,8 @@ namespace
 				SDR::Error::Make("Could not find current game in game config"s);
 			}
 
-			ResolveInherit(object, GameConfigs, document.GetAllocator());
-			ResolveSort(object);
+			SDR::ConfigSystem::ResolveInherit(object, GameConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveSort(object);
 			CallGameHandlers(object);
 
 			GameConfigs.clear();
@@ -169,7 +169,7 @@ namespace
 				SDR::Error::Make("Could not find current game in extension config"s);
 			}
 
-			ResolveInherit(object, ExtensionConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveInherit(object, ExtensionConfigs, document.GetAllocator());
 			CallExtensionHandlers(object);
 
 			ExtensionConfigs.clear();
