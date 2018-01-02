@@ -38,6 +38,14 @@ namespace
 		{
 			SDR::Log::Message("SDR: Library version: %d\n", LibraryVersion);
 		}
+
+		/*
+			Creation has to be delayed as the necessary console stuff isn't available earlier.
+		*/
+		SDR::StartupFunctionAdder A1("LibraryInterface console commands", []()
+		{
+			SDR::Console::MakeCommand("sdr_version", Commands::Version);
+		});
 	}
 
 	void RegisterLAV()
@@ -45,14 +53,6 @@ namespace
 		avcodec_register_all();
 		av_register_all();
 	}
-
-	/*
-		Creation has to be delayed as the necessary console stuff isn't available earlier.
-	*/
-	SDR::StartupFunctionAdder A1("LibraryInterface console commands", []()
-	{
-		SDR::Console::MakeCommand("sdr_version", Commands::Version);
-	});
 
 	struct LoadFuncData : SDR::LauncherCLI::ShadowState
 	{
