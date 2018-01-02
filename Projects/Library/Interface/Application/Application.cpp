@@ -142,8 +142,8 @@ namespace
 
 			SDR::ConfigSystem::ResolveInherit(object, GameConfigs, document.GetAllocator());
 			SDR::ConfigSystem::ResolveSort(object);
+			
 			CallGameHandlers(object);
-
 			GameConfigs.clear();
 		}
 
@@ -170,8 +170,9 @@ namespace
 			}
 
 			SDR::ConfigSystem::ResolveInherit(object, ExtensionConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveSort(object);
+			
 			CallExtensionHandlers(object);
-
 			ExtensionConfigs.clear();
 		}
 	}
