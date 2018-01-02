@@ -105,25 +105,6 @@ namespace
 
 void SDR::Library::Load()
 {
-	/*
-		Temporary communication gates. All text output has to go to the launcher console.
-	*/
-	SDR::Log::SetMessageFunction([](const char* text)
-	{
-		WriteToLauncherCLI(text);
-	});
-
-	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color color, const char* text)
-	{
-		WriteToLauncherCLI(text);
-	});
-
-	SDR::Log::SetWarningFunction([](const char* text)
-	{
-		auto format = SDR::String::Format("{red}%s", text);
-		WriteToLauncherCLI(format.c_str());
-	});
-
 	auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Load);
 
 	try
@@ -184,6 +165,25 @@ extern "C"
 		Local::LauncherCLI = data.LauncherCLI;
 
 		SDR::Error::SetPrintFormat("SDR: %s\n");
+
+		/*
+			Temporary communication gates. All text output has to go to the launcher window.
+		*/
+		SDR::Log::SetMessageFunction([](const char* text)
+		{
+			WriteToLauncherCLI(text);
+		});
+
+		SDR::Log::SetMessageColorFunction([](SDR::Shared::Color color, const char* text)
+		{
+			WriteToLauncherCLI(text);
+		});
+
+		SDR::Log::SetWarningFunction([](const char* text)
+		{
+			auto format = SDR::String::Format("{red}%s", text);
+			WriteToLauncherCLI(format.c_str());
+		});
 
 		auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Initialize);
 
