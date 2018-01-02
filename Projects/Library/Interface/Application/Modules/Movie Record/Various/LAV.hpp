@@ -15,6 +15,21 @@ extern "C"
 
 #undef __STDC_CONSTANT_MACROS
 
+namespace SDR::Error::LAV
+{
+	/*
+		For use with unrecoverable errors.
+	*/
+	template <typename... Args>
+	inline void ThrowIfFailed(int code, const char* format, Args&&... args)
+	{
+		if (code < 0)
+		{
+			Make(format, std::forward<Args>(args)...);
+		}
+	}
+}
+
 namespace SDR::LAV
 {
 	struct ScopedFormatContext
