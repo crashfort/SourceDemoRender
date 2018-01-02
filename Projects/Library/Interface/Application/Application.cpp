@@ -118,7 +118,7 @@ namespace
 			}
 		}
 
-		SDR::ConfigSystem::ObjectData* PopulateAndFindObject(rapidjson::Document& document, std::vector<SDR::ConfigSystem::ObjectData>& dest)
+		SDR::ConfigSystem::ObjectData* FindAndPopulateObject(rapidjson::Document& document, std::vector<SDR::ConfigSystem::ObjectData>& dest)
 		{
 			SDR::ConfigSystem::MemberLoop(document, [&](rapidjson::Document::MemberIterator gameit)
 			{
@@ -160,7 +160,7 @@ namespace
 				SDR::Error::Make("Could not find game config"s);
 			}
 
-			auto object = PopulateAndFindObject(document, GameConfigs);
+			auto object = FindAndPopulateObject(document, GameConfigs);
 
 			if (!object)
 			{
@@ -188,7 +188,7 @@ namespace
 				SDR::Error::Make("Could not find extension config"s);
 			}
 
-			auto object = PopulateAndFindObject(document, ExtensionConfigs);
+			auto object = FindAndPopulateObject(document, ExtensionConfigs);
 
 			if (!object)
 			{
