@@ -118,34 +118,6 @@ namespace
 			}
 		}
 
-		SDR::ConfigSystem::ObjectData* FindAndPopulateObject(rapidjson::Document& document, std::vector<SDR::ConfigSystem::ObjectData>& dest)
-		{
-			SDR::ConfigSystem::MemberLoop(document, [&](rapidjson::Document::MemberIterator gameit)
-			{
-				dest.emplace_back();
-				auto& curobj = dest.back();
-
-				curobj.ObjectName = gameit->name.GetString();
-
-				SDR::ConfigSystem::MemberLoop(gameit->value, [&](rapidjson::Document::MemberIterator gamedata)
-				{
-					curobj.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
-				});
-			});
-
-			auto gamename = SDR::Library::GetGamePath();
-
-			for (auto& obj : dest)
-			{
-				if (SDR::String::EndsWith(gamename, obj.ObjectName.c_str()))
-				{
-					return &obj;
-				}
-			}
-
-			return nullptr;
-		}
-
 		void SetupGame()
 		{
 			rapidjson::Document document;
@@ -160,7 +132,8 @@ namespace
 				SDR::Error::Make("Could not find game config"s);
 			}
 
-			auto object = FindAndPopulateObject(document, GameConfigs);
+			auto searcher = SDR::Library::GetGamePath();
+			auto object = SDR::ConfigSystem::FindAndPopulateObject(document, searcher, GameConfigs);
 
 			if (!object)
 			{
@@ -188,7 +161,8 @@ namespace
 				SDR::Error::Make("Could not find extension config"s);
 			}
 
-			auto object = FindAndPopulateObject(document, ExtensionConfigs);
+			auto searcher = SDR::Library::GetGamePath();
+			auto object = FindAndPopulateObject(document, searcher, ExtensionConfigs);
 
 			if (!object)
 			{

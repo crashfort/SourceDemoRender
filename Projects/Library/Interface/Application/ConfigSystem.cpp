@@ -1,6 +1,32 @@
 #include "PrecompiledHeader.hpp"
 #include "ConfigSystem.hpp"
 
+SDR::ConfigSystem::ObjectData* SDR::ConfigSystem::FindAndPopulateObject(rapidjson::Document& document, const char* searcher, std::vector<ObjectData>& dest)
+{
+	SDR::ConfigSystem::MemberLoop(document, [&](rapidjson::Document::MemberIterator it)
+	{
+		dest.emplace_back();
+		auto& curobj = dest.back();
+
+		curobj.ObjectName = it->name.GetString();
+
+		SDR::ConfigSystem::MemberLoop(it->value, [&](rapidjson::Document::MemberIterator data)
+		{
+			curobj.Properties.emplace_back(data->name.GetString(), std::move(data->value));
+		});
+	});
+
+	for (auto& obj : dest)
+	{
+		if (SDR::String::EndsWith(searcher, obj.ObjectName.c_str()))
+		{
+			return &obj;
+		}
+	}
+
+	return nullptr;
+}
+
 void SDR::ConfigSystem::ResolveInherit(ObjectData* object, const std::vector<ObjectData>& source, rapidjson::Document::AllocatorType& alloc)
 {
 	auto foundinherit = false;
