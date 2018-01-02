@@ -3,14 +3,14 @@
 
 SDR::ConfigSystem::ObjectData* SDR::ConfigSystem::FindAndPopulateObject(rapidjson::Document& document, const char* searcher, std::vector<ObjectData>& dest)
 {
-	SDR::ConfigSystem::MemberLoop(document, [&](rapidjson::Document::MemberIterator it)
+	MemberLoop(document, [&](rapidjson::Document::MemberIterator it)
 	{
 		dest.emplace_back();
 		auto& curobj = dest.back();
 
 		curobj.ObjectName = it->name.GetString();
 
-		SDR::ConfigSystem::MemberLoop(it->value, [&](rapidjson::Document::MemberIterator data)
+		MemberLoop(it->value, [&](rapidjson::Document::MemberIterator data)
 		{
 			curobj.Properties.emplace_back(data->name.GetString(), std::move(data->value));
 		});
@@ -18,7 +18,7 @@ SDR::ConfigSystem::ObjectData* SDR::ConfigSystem::FindAndPopulateObject(rapidjso
 
 	for (auto& obj : dest)
 	{
-		if (SDR::String::EndsWith(searcher, obj.ObjectName.c_str()))
+		if (String::EndsWith(searcher, obj.ObjectName.c_str()))
 		{
 			return &obj;
 		}
@@ -41,7 +41,7 @@ void SDR::ConfigSystem::ResolveInherit(ObjectData* object, const std::vector<Obj
 
 			if (!it->second.IsString())
 			{
-				SDR::Error::Make("SDR: \"%s\" inherit field not a string\n", object->ObjectName.c_str());
+				Error::Make("SDR: \"%s\" inherit field not a string\n", object->ObjectName.c_str());
 			}
 
 			std::string from = it->second.GetString();
@@ -87,7 +87,7 @@ void SDR::ConfigSystem::ResolveInherit(ObjectData* object, const std::vector<Obj
 
 				if (!foundparent)
 				{
-					SDR::Error::Make("\"%s\" inherit target \"%s\" not found", object->ObjectName.c_str(), from.c_str());
+					Error::Make("\"%s\" inherit target \"%s\" not found", object->ObjectName.c_str(), from.c_str());
 				}
 			}
 
