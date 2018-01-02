@@ -462,21 +462,10 @@ namespace
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override);
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override);
 
-			auto codes =
-			{
-				MH_EnableHook(A::ThisHook.TargetFunction),
-				MH_EnableHook(ExA::ThisHook.TargetFunction),
-				MH_EnableHook(W::ThisHook.TargetFunction),
-				MH_EnableHook(ExW::ThisHook.TargetFunction),
-			};
-
-			for (auto code : codes)
-			{
-				if (code != MH_OK)
-				{
-					SDR::Error::Make("Could not enable library intercepts"s);
-				}
-			}
+			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(A::ThisHook.TargetFunction), "Could not enable library intercept A");
+			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(ExA::ThisHook.TargetFunction), "Could not enable library intercept ExA");
+			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(W::ThisHook.TargetFunction), "Could not enable library intercept W");
+			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(ExW::ThisHook.TargetFunction), "Could not enable library intercept ExW");
 		}
 
 		void End()
