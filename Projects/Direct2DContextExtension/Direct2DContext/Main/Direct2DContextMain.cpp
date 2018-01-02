@@ -53,7 +53,7 @@ namespace
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
-			SDR::Error::MS::ThrowIfFailed
+			SDR::Error::Microsoft::ThrowIfFailed
 			(
 				data.Device->CreateTexture2D(&desc, nullptr, Direct2DTexture.GetAddressOf()),
 				"Could not create texture for Direct2D usage"
@@ -64,7 +64,7 @@ namespace
 			srvdesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			srvdesc.Texture2D.MipLevels = 1;
 
-			SDR::Error::MS::ThrowIfFailed
+			SDR::Error::Microsoft::ThrowIfFailed
 			(
 				data.Device->CreateShaderResourceView(Direct2DTexture.Get(), &srvdesc, Direct2DTextureSRV.GetAddressOf()),
 				"Could not create SRV for Direct2D texture"
@@ -74,7 +74,7 @@ namespace
 
 			Microsoft::WRL::ComPtr<IDXGISurface> surface;
 
-			SDR::Error::MS::ThrowIfFailed
+			SDR::Error::Microsoft::ThrowIfFailed
 			(
 				Direct2DTexture.As(&surface),
 				"Could not query texture as a IDXGISurface"
@@ -85,7 +85,7 @@ namespace
 			props.threadingMode = D2D1_THREADING_MODE_SINGLE_THREADED;
 			props.debugLevel = D2D1_DEBUG_LEVEL_NONE;
 
-			SDR::Error::MS::ThrowIfFailed
+			SDR::Error::Microsoft::ThrowIfFailed
 			(
 				D2D1CreateDeviceContext(surface.Get(), props, Direct2DContext.GetAddressOf()),
 				"Could not create Direct2D device context"
@@ -117,7 +117,7 @@ namespace
 
 			Direct2DContext->SetTextAntialiasMode(aamode);
 
-			SDR::Error::MS::ThrowIfFailed
+			SDR::Error::Microsoft::ThrowIfFailed
 			(
 				DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)DirectWriteFactory.GetAddressOf()),
 				"Could not create DirectWrite factory"

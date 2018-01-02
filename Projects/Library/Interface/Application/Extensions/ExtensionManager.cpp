@@ -99,7 +99,7 @@ namespace
 
 		if (!ext.Module)
 		{
-			SDR::Error::MS::ThrowLastError("Could not load extension \"%s\"", ext.Name.c_str());
+			SDR::Error::Microsoft::ThrowLastError("Could not load extension \"%s\"", ext.Name.c_str());
 		}
 
 		Initialize(ext);

@@ -51,12 +51,12 @@ namespace
 			{
 				if (!MainReady.Event.IsValid())
 				{
-					SDR::Error::MS::ThrowLastError("Could not create event \"MainReady\"");
+					SDR::Error::Microsoft::ThrowLastError("Could not create event \"MainReady\"");
 				}
 
 				if (!WindowCreated.Event.IsValid())
 				{
-					SDR::Error::MS::ThrowLastError("Could not create event \"WindowCreated\"");
+					SDR::Error::Microsoft::ThrowLastError("Could not create event \"WindowCreated\"");
 				}
 			}
 
@@ -88,7 +88,7 @@ namespace
 
 			if (!library)
 			{
-				SDR::Error::MS::ThrowLastError("Could not load rich edit control library");
+				SDR::Error::Microsoft::ThrowLastError("Could not load rich edit control library");
 			}
 
 			auto classname = MSFTEDIT_CLASS;
@@ -399,7 +399,7 @@ namespace
 
 					if (error != ERROR_CLASS_ALREADY_EXISTS)
 					{
-						SDR::Error::MS::ThrowLastError("Could not register owner window class");
+						SDR::Error::Microsoft::ThrowLastError("Could not register owner window class");
 					}
 				}
 
@@ -421,14 +421,14 @@ namespace
 
 				if (!WindowHandle)
 				{
-					SDR::Error::MS::ThrowLastError("Could not create window");
+					SDR::Error::Microsoft::ThrowLastError("Could not create window");
 				}
 
 				TextControl = CreateRichEdit(WindowHandle, 0, 0, width, height, instance);
 
 				if (!TextControl)
 				{
-					SDR::Error::MS::ThrowLastError("Could not create rich edit control");
+					SDR::Error::Microsoft::ThrowLastError("Could not create rich edit control");
 				}
 
 				SetWindowSubclass(TextControl, TextControlProcedure, 0, 0);
@@ -514,7 +514,7 @@ namespace
 		{
 			SIZE_T written;
 
-			SDR::Error::MS::ThrowIfZero
+			SDR::Error::Microsoft::ThrowIfZero
 			(
 				WriteProcessMemory(Process, Address, address, size, &written),
 				"Could not write process memory"
@@ -583,10 +583,10 @@ namespace
 			auto failname = SDR::LauncherCLI::CreateEventFailureName(stage);
 
 			EventSuccess.Attach(CreateEventA(nullptr, false, false, successname.c_str()));
-			SDR::Error::MS::ThrowIfZero(EventSuccess.Get(), "Could not create success event in stage \"%s\"", StageName);
+			SDR::Error::Microsoft::ThrowIfZero(EventSuccess.Get(), "Could not create success event in stage \"%s\"", StageName);
 
 			EventFailure.Attach(CreateEventA(nullptr, false, false, failname.c_str()));
-			SDR::Error::MS::ThrowIfZero(EventFailure.Get(), "Could not create failure event in stage \"%s\"", StageName);
+			SDR::Error::Microsoft::ThrowIfZero(EventFailure.Get(), "Could not create failure event in stage \"%s\"", StageName);
 		}
 
 		void WaitEvents(HANDLE process)
@@ -715,7 +715,7 @@ namespace
 		/*
 			Enqueue the function to run on ResumeThread with parameter of InterProcessData.
 		*/
-		SDR::Error::MS::ThrowIfZero
+		SDR::Error::Microsoft::ThrowIfZero
 		(
 			QueueUserAPC((PAPCFUNC)funcaddr, thread, (ULONG_PTR)dataaddr),
 			"Could not queue APC for process"
@@ -749,7 +749,7 @@ namespace
 
 		PROCESS_INFORMATION procinfo;
 
-		SDR::Error::MS::ThrowIfZero
+		SDR::Error::Microsoft::ThrowIfZero
 		(
 			CreateProcessA
 			(
@@ -826,7 +826,7 @@ namespace
 		}
 
 		char curdir[SDR::File::NameSize];
-		SDR::Error::MS::ThrowIfZero(GetCurrentDirectoryA(sizeof(curdir), curdir), "Could not get current directory");
+		SDR::Error::Microsoft::ThrowIfZero(GetCurrentDirectoryA(sizeof(curdir), curdir), "Could not get current directory");
 		strcat_s(curdir, "\\");
 
 		/*

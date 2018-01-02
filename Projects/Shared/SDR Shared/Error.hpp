@@ -77,7 +77,7 @@ namespace SDR::Error
 		}
 	}
 
-	namespace MS
+	namespace Microsoft
 	{
 		/*
 			For use with unrecoverable errors.

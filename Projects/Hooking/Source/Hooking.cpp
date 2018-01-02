@@ -167,7 +167,7 @@ SDR::Hooking::ModuleInformation::ModuleInformation(const char* name) : Name(name
 
 	MODULEINFO info;
 
-	SDR::Error::MS::ThrowIfZero
+	SDR::Error::Microsoft::ThrowIfZero
 	(
 		K32GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(name), &info, sizeof(info)),
 		"Could not get module information for \"%s\"", name

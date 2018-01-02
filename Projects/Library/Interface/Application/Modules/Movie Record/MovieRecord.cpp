@@ -419,7 +419,7 @@ namespace
 
 				if (!res)
 				{
-					SDR::Error::MS::ThrowLastError("Could not access wanted output directory");
+					SDR::Error::Microsoft::ThrowLastError("Could not access wanted output directory");
 				}
 			}
 
@@ -511,7 +511,7 @@ namespace
 
 				if (!file.IsValid())
 				{
-					SDR::Error::MS::ThrowLastError("Could not create file, name probably invalid");
+					SDR::Error::Microsoft::ThrowLastError("Could not create file, name probably invalid");
 				}
 			}
 

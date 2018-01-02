@@ -78,7 +78,7 @@ void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, const AVFrame* refe
 	D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
 	cbufsubdesc.pSysMem = &yuvdata;
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		device->CreateBuffer(&cbufdesc, &cbufsubdesc, ConstantBuffer.GetAddressOf()),
 		"Could not create constant buffer for YUV GPU buffer"

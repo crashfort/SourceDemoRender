@@ -60,7 +60,7 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 		https://msdn.microsoft.com/en-us/library/windows/desktop/ff476082.aspx
 		Not providing a feature level array makes it try 11.0 first and then lesser feature levels.
 	*/
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		D3D11CreateDevice
 		(
@@ -94,7 +94,7 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 		cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			Device->CreateBuffer(&cbufdesc, nullptr, SamplingConstantBuffer.GetAddressOf()),
 			"Could not create sampling constant buffer"
@@ -121,7 +121,7 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 		D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
 		cbufsubdesc.pSysMem = &cbufdata;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			Device->CreateBuffer(&cbufdesc, &cbufsubdesc, SharedConstantBuffer.GetAddressOf()),
 			"Could not create constant buffer for shared shader data"
@@ -142,7 +142,7 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 
 void SDR::Stream::StreamBase::DirectX9Data::SharedSurfaceData::Create(IDirect3DDevice9Ex* device, int width, int height)
 {
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		/*
 			Once shared with D3D11, it is interpreted as
@@ -172,7 +172,7 @@ void SDR::Stream::StreamBase::DirectX9Data::SharedSurfaceData::Create(IDirect3DD
 		"Could not create D3D9 shared texture"
 	);
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		Texture->GetSurfaceLevel(0, Surface.GetAddressOf()),
 		"Could not get D3D9 surface from texture"
@@ -183,7 +183,7 @@ void SDR::Stream::StreamBase::DirectX9Data::Create(IDirect3DDevice9Ex* device, i
 {
 	SharedSurface.Create(device, width, height);
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		device->GetRenderTarget(0, GameRenderTarget0.GetAddressOf()),
 		"SDR: Could not get D3D9 RT\n"
@@ -194,19 +194,19 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 {
 	Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		device->OpenSharedResource(dx9handle, IID_PPV_ARGS(tempresource.GetAddressOf())),
 		"Could not open shared D3D9 resource"
 	);
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		tempresource.As(&SharedTexture),
 		"Could not query shared D3D9 resource as a D3D11 2D texture"
 	);
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		device->CreateShaderResourceView(SharedTexture.Get(), nullptr, SharedTextureSRV.GetAddressOf()),
 		"Could not create SRV for D3D11 backbuffer texture"
@@ -232,7 +232,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		bufdesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 		bufdesc.StructureByteStride = size;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			device->CreateBuffer(&bufdesc, nullptr, WorkBuffer.GetAddressOf()),
 			"Could not create GPU work buffer"
@@ -243,7 +243,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		uavdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 		uavdesc.Buffer.NumElements = px;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			device->CreateUnorderedAccessView(WorkBuffer.Get(), &uavdesc, WorkBufferUAV.GetAddressOf()),
 			"Could not create UAV for GPU work buffer"
@@ -254,7 +254,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		srvdesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 		srvdesc.Buffer.NumElements = px;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			device->CreateShaderResourceView(WorkBuffer.Get(), &srvdesc, WorkBufferSRV.GetAddressOf()),
 			"Could not create SRV for GPU work buffer"
