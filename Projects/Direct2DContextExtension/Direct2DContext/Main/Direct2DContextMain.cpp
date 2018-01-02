@@ -70,7 +70,7 @@ namespace
 				"Could not create SRV for Direct2D texture"
 			);
 
-			SDR::D3D11::OpenShader(data.Device, "OverlayUAV", SDR::D3D11::MakeBlob(CSBlob_OverlayUAV), OverlayShader.GetAddressOf());
+			SDR::D3D11::OpenShader(data.Device, "OverlayUAV", SDR::D3D11::BlobData::Make(CSBlob_OverlayUAV), OverlayShader.GetAddressOf());
 
 			Microsoft::WRL::ComPtr<IDXGISurface> surface;
 

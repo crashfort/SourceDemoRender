@@ -130,13 +130,13 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 
 	if (sampling)
 	{
-		D3D11::OpenShader(Device.Get(), "Sampling", SDR::D3D11::MakeBlob(CSBlob_Sampling), SamplingShader.GetAddressOf());
-		D3D11::OpenShader(Device.Get(), "ClearUAV", SDR::D3D11::MakeBlob(CSBlob_ClearUAV), ClearShader.GetAddressOf());
+		D3D11::OpenShader(Device.Get(), "Sampling", SDR::D3D11::BlobData::Make(CSBlob_Sampling), SamplingShader.GetAddressOf());
+		D3D11::OpenShader(Device.Get(), "ClearUAV", SDR::D3D11::BlobData::Make(CSBlob_ClearUAV), ClearShader.GetAddressOf());
 	}
 
 	else
 	{
-		D3D11::OpenShader(Device.Get(), "PassUAV", SDR::D3D11::MakeBlob(CSBlob_PassUAV), PassShader.GetAddressOf());
+		D3D11::OpenShader(Device.Get(), "PassUAV", SDR::D3D11::BlobData::Make(CSBlob_PassUAV), PassShader.GetAddressOf());
 	}
 }
 
@@ -265,21 +265,15 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 	{
 		using FactoryType = std::function<std::unique_ptr<D3D11::ConversionBase>()>;
 
-		RuleData
-		(
-			AVPixelFormat format,
-			const char* name,
-			const BYTE* data,
-			size_t datasize,
-			const FactoryType& factory
-		) :
-			Format(format),
-			ShaderName(name),
-			Data(data),
-			DataSize(datasize),
-			Factory(factory)
+		static RuleData Make(AVPixelFormat format, const char* name, const SDR::D3D11::BlobData& blob, const FactoryType& factory)
 		{
+			RuleData ret;
+			ret.Format = format;
+			ret.ShaderName = name;
+			ret.ShaderBlob = blob;
+			ret.Factory = factory;
 
+			return ret;
 		}
 
 		bool Matches(const AVFrame* ref) const
@@ -288,8 +282,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		}
 
 		AVPixelFormat Format;
-		const BYTE* Data;
-		size_t DataSize;
+		SDR::D3D11::BlobData ShaderBlob;
 		const char* ShaderName;
 		FactoryType Factory;
 	};
@@ -306,9 +299,9 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 
 	RuleData table[] =
 	{
-		RuleData(AV_PIX_FMT_YUV420P, "YUV420", CSBlob_YUV420, sizeof(CSBlob_YUV420), yuvfactory),
-		RuleData(AV_PIX_FMT_YUV444P, "YUV444", CSBlob_YUV444, sizeof(CSBlob_YUV444), yuvfactory),
-		RuleData(AV_PIX_FMT_BGR0, "BGR0", CSBlob_BGR0, sizeof(CSBlob_BGR0), bgr0factory),
+		RuleData::Make(AV_PIX_FMT_YUV420P, "YUV420", SDR::D3D11::BlobData::Make(CSBlob_YUV420), yuvfactory),
+		RuleData::Make(AV_PIX_FMT_YUV444P, "YUV444", SDR::D3D11::BlobData::Make(CSBlob_YUV444), yuvfactory),
+		RuleData::Make(AV_PIX_FMT_BGR0, "BGR0", SDR::D3D11::BlobData::Make(CSBlob_BGR0), bgr0factory),
 	};
 
 	RuleData* found = nullptr;
@@ -328,7 +321,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		Error::Make("No conversion rule found for \"%s\"", name);
 	}
 
-	D3D11::OpenShader(device, found->ShaderName, SDR::D3D11::MakeBlob(found->Data, found->DataSize), ConversionShader.GetAddressOf());
+	D3D11::OpenShader(device, found->ShaderName, found->ShaderBlob, ConversionShader.GetAddressOf());
 
 	ConversionPtr = found->Factory();
 	ConversionPtr->Create(device, reference, staging);

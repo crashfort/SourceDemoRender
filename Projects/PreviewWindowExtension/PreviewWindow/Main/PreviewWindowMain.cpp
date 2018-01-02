@@ -146,8 +146,8 @@ namespace
 					"Could not create render target view"
 				);
 
-				SDR::D3D11::OpenShader(data.Device, "PixelShader", SDR::D3D11::MakeBlob(PSBlob_PixelShader), PixelShader.GetAddressOf());
-				SDR::D3D11::OpenShader(data.Device, "VertexShader", SDR::D3D11::MakeBlob(VSBlob_VertexShader), VertexShader.GetAddressOf());
+				SDR::D3D11::OpenShader(data.Device, "PixelShader", SDR::D3D11::BlobData::Make(PSBlob_PixelShader), PixelShader.GetAddressOf());
+				SDR::D3D11::OpenShader(data.Device, "VertexShader", SDR::D3D11::BlobData::Make(VSBlob_VertexShader), VertexShader.GetAddressOf());
 			}
 
 			void Update(const SDR::Extension::NewVideoFrameData& data)

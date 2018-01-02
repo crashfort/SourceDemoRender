@@ -6,28 +6,24 @@ namespace SDR::D3D11
 {
 	struct BlobData
 	{
+		template <size_t Size>
+		static BlobData Make(const BYTE(&data)[Size])
+		{
+			return Make(data, Size);
+		}
+
+		static BlobData Make(const BYTE* data, size_t size)
+		{
+			BlobData ret;
+			ret.Data = data;
+			ret.Size = size;
+
+			return ret;
+		}
+
 		const BYTE* Data;
 		size_t Size;
 	};
-
-	template <size_t Size>
-	BlobData MakeBlob(const BYTE(&data)[Size])
-	{
-		BlobData ret;
-		ret.Data = data;
-		ret.Size = Size;
-
-		return ret;
-	}
-
-	inline BlobData MakeBlob(const BYTE* data, size_t size)
-	{
-		BlobData ret;
-		ret.Data = data;
-		ret.Size = size;
-
-		return ret;
-	}
 
 	void OpenShader(ID3D11Device* device, const char* name, const BlobData& blob, ID3D11ComputeShader** shader);
 	void OpenShader(ID3D11Device* device, const char* name, const BlobData& blob, ID3D11VertexShader** shader);
