@@ -63,22 +63,38 @@ namespace
 
 			EventSuccess.Attach(OpenEventA(EVENT_MODIFY_STATE, false, successname.c_str()));
 			EventFailure.Attach(OpenEventA(EVENT_MODIFY_STATE, false, failname.c_str()));
+
+			if (!EventSuccess.IsValid())
+			{
+				SDR::Error::Microsoft::ThrowLastError("Could not open success event");
+			}
+
+			if (!EventFailure.IsValid())
+			{
+				SDR::Error::Microsoft::ThrowLastError("Could not open failure event");
+			}
 		}
 
 		~LoadFuncData()
 		{
 			if (Failure)
 			{
-				SetEvent(EventFailure.Get());
+				if (EventFailure.IsValid())
+				{
+					SetEvent(EventFailure.Get());
+				}
 			}
 
 			else
 			{
-				SetEvent(EventSuccess.Get());
+				if (EventSuccess.IsValid())
+				{
+					SetEvent(EventSuccess.Get());
+				}
 			}
 		}
 
-		bool Failure = false;
+		bool Failure = true;
 	};
 
 	void WriteToLauncherCLI(const char* text)
@@ -105,10 +121,10 @@ namespace
 
 void SDR::Library::Load()
 {
-	auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Load);
-
 	try
 	{
+		auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Load);
+
 		SDR::Setup();
 		SDR::Log::Message("{dark}SDR: {green}Source Demo Render loaded\n");
 
@@ -116,11 +132,13 @@ void SDR::Library::Load()
 			Give all output to the game console now.
 		*/
 		Console::Load();
+
+		localdata->Failure = false;
 	}
 
 	catch (const SDR::Error::Exception& error)
 	{
-		localdata->Failure = true;
+		return;
 	}
 }
 
@@ -185,16 +203,16 @@ extern "C"
 			WriteToLauncherCLI(format.c_str());
 		});
 
-		auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Initialize);
-
 		try
 		{
+			auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Initialize);
 			SDR::PreEngineSetup();
+
+			localdata->Failure = false;
 		}
 
 		catch (const SDR::Error::Exception& error)
 		{
-			localdata->Failure = true;
 			return;
 		}
 
