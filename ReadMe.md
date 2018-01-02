@@ -67,7 +67,7 @@ Some versions can open `libx264rgb` videos which is the recommended way as there
 This video editor can open everything SDR outputs.
 
 ## Extensions
-External modules can extend SDR with other functions. The public interface that your module should implement is available at [Extension.hpp](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/Extension/SDR%20Extension/Extension.hpp). Example projects are at [Sample Extension](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/SampleExtension/Sample/Main/SampleExtensionMain.cpp) and [Preview Window](https://github.com/crashfort/SourceDemoRender/tree/master/Projects/PreviewWindowExtension/PreviewWindow/Main).
+External modules can extend SDR with other functions. The public interface that your module should implement is available at [Extension.hpp](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/Extension/SDR%20Extension/Extension.hpp). Example projects are at [Sample Extension](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/SampleExtension/Sample/Main/SampleExtensionMain.cpp), [Preview Window](https://github.com/crashfort/SourceDemoRender/tree/master/Projects/PreviewWindowExtension/PreviewWindow/Main), [Direct2D Context](https://github.com/crashfort/SourceDemoRender/tree/master/Projects/Direct2DContextExtension).
 
 The launcher has a feature to manage all your extensions. In this window you can quickly view, enable or disable, and order your extensions.
 
@@ -84,6 +84,11 @@ This extension will open up a new window which will display how everything looks
 This extension will gather the current player velocity and display it in a highly customizable format.
 
 ![Velocity Text Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Extensions/VelocityText1.png)
+
+### Direct2D Context
+**Availability:** Free, included
+
+This extension creates a rendering context that all other extensions can use without having to recreate it all the time.
 
 ## General commands
 <table>
