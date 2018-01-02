@@ -62,7 +62,7 @@ void SDR::Profile::ShowResults()
 			auto avg = entry.TotalTime / entry.Calls;
 			auto ms = avg / 1.0ms;
 
-			Log::Message("SDR: %s (%u): avg %0.4f ms\n", entry.Name, entry.Calls, ms);
+			Log::Message("SDR: \"%s\" (%u): avg %0.4f ms\n", entry.Name, entry.Calls, ms);
 		}
 
 		++index;
