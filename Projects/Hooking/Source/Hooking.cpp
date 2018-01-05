@@ -486,7 +486,7 @@ void SDR::Hooking::CreateHookAPI(const wchar_t* module, const char* name, HookMo
 	}
 }
 
-void SDR::Hooking::GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const rapidjson::Value& value)
+int SDR::Hooking::GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const rapidjson::Value& value)
 {
 	SDR::Error::ScopedContext e1("GenericHookVariantInit"s);
 
@@ -496,6 +496,8 @@ void SDR::Hooking::GenericHookVariantInit(std::initializer_list<GenericHookInitP
 	auto target = *(hooks.begin() + variant);
 
 	CreateHookBareShort(target.Hook, target.Override, value);
+
+	return variant;
 }
 
 #endif

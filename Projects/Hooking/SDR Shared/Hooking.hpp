@@ -270,7 +270,7 @@ namespace SDR::Hooking
 		void* Override;
 	};
 
-	void GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const rapidjson::Value& value);
+	int GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const rapidjson::Value& value);
 
 	#endif
 
