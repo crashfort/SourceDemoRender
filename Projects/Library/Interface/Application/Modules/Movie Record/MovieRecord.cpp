@@ -403,22 +403,21 @@ namespace
 
 			void Procedure()
 			{
-				auto& movie = CurrentMovie;
 				bool dopasses = SDR::MovieRecord::ShouldRecordVideo();
 
 				if (dopasses)
 				{
 					MovieData::WaitForBufferedItems();
 
-					if (movie.VideoStream->FirstFrame)
+					if (CurrentMovie.VideoStream->FirstFrame)
 					{
-						movie.VideoStream->FirstFrame = false;
-						CopyDX9ToDX11(movie.VideoStream.get());
+						CurrentMovie.VideoStream->FirstFrame = false;
+						CopyDX9ToDX11(CurrentMovie.VideoStream.get());
 					}
 
 					else
 					{
-						Pass(movie.VideoStream.get());
+						Pass(CurrentMovie.VideoStream.get());
 					}
 				}
 			}
