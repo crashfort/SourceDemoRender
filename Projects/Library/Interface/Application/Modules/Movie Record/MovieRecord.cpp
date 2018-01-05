@@ -1287,18 +1287,23 @@ namespace
 		);
 	}
 
-	namespace ModuleWriteMovieFrame
+	namespace ModuleVideoMode
 	{
-		namespace Variant0
+		void* Ptr;
+
+		namespace WriteMovieFrame
 		{
-			void __fastcall NewFunction(void* thisptr, void* edx, void* info);
-
-			using OverrideType = decltype(NewFunction)*;
-			SDR::Hooking::HookModule<OverrideType> ThisHook;
-
-			void __fastcall NewFunction(void* thisptr, void* edx, void* info)
+			namespace Variant0
 			{
-				
+				void __fastcall NewFunction(void* thisptr, void* edx, void* info);
+
+				using OverrideType = decltype(NewFunction)*;
+				SDR::Hooking::HookModule<OverrideType> ThisHook;
+
+				void __fastcall NewFunction(void* thisptr, void* edx, void* info)
+				{
+
+				}
 			}
 		}
 
@@ -1306,12 +1311,25 @@ namespace
 		(
 			SDR::ModuleHandlerAdder
 			(
-				"WriteMovieFrame",
+				"VideoModePtr",
+				[](const rapidjson::Value& value)
+				{
+					auto address = SDR::Hooking::GetAddressFromJsonPattern(value);
+					
+					Ptr = **(void***)address;
+					SDR::Error::ThrowIfNull(Ptr);
+
+					SDR::Hooking::ModuleShared::Registry::SetKeyValue("VideoModePtr", Ptr);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"VideoMode_WriteMovieFrame",
 				[](const rapidjson::Value& value)
 				{
 					SDR::Hooking::GenericHookVariantInit
 					(
-						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						{SDR::Hooking::GenericHookInitParam(WriteMovieFrame::Variant0::ThisHook, WriteMovieFrame::Variant0::NewFunction)},
 						value
 					);
 				}

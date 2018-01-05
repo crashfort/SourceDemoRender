@@ -468,7 +468,7 @@ void SDR::Hooking::CreateHookBareShort(HookModuleBare& hook, void* override, con
 {
 	SDR::Error::ScopedContext e1("CreateHookBareShort"s);
 
-	auto address = GetAddressFromJsonPattern(value);
+	auto address = GetAddressFromJsonFlex(value);
 	CreateHookBare(hook, override, address);
 }
 
