@@ -1274,7 +1274,13 @@ namespace
 
 				if (CurrentMovie.AudioWriter)
 				{
-					ThisHook.GetOriginal()(mixahead);
+					if (CurrentMovie.FirstFrame)
+					{
+						CurrentMovie.FirstFrame = false;
+						return;
+					}
+
+					ThisHook.GetOriginal()(0);
 				}
 			}
 		}
