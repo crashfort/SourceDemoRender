@@ -205,6 +205,9 @@ namespace
 				char* String;
 				int StringLength;
 
+				float FloatValue;
+				int IntValue;
+
 				uint8_t Unknown[128];
 			};
 
@@ -420,7 +423,7 @@ namespace SDR::Console
 		else if (ModuleConVar::Variant == 1)
 		{
 			auto ptr = (ModuleConVar::Variant1::Data*)Opaque;
-			return atoi(ptr->String);
+			return ptr->IntValue ^ (uintptr_t)ptr;
 		}
 
 		return 0;
@@ -437,7 +440,17 @@ namespace SDR::Console
 		else if (ModuleConVar::Variant == 1)
 		{
 			auto ptr = (ModuleConVar::Variant1::Data*)Opaque;
-			return atof(ptr->String);
+
+			union
+			{
+				int IntValue;
+				float FloatValue;
+			} temp;
+
+			temp.FloatValue = ptr->FloatValue;
+			temp.IntValue ^= (uintptr_t)ptr;
+
+			return temp.FloatValue;
 		}
 
 		return 0;
