@@ -1129,7 +1129,6 @@ namespace
 						CurrentMovie.ThreadHandle.join();
 					}
 
-					SDR::Console::Variable::SetValue("host_framerate", 0);
 					SDR::Console::Variable::SetValue("mat_queue_mode", CurrentMovie.OldMatQueueModeValue);
 
 					/*
@@ -1140,6 +1139,7 @@ namespace
 					SDR::ExtensionManager::Events::EndMovie();
 				}
 
+				SDR::Console::Variable::SetValue("host_framerate", 0);
 				SDR::Console::Variable::SetValue("engine_no_focus_sleep", CurrentMovie.OldEngineSleepTime);
 
 				CurrentMovie = {};
@@ -1217,11 +1217,6 @@ namespace
 					Ending movie must be synchronous with extensions.
 				*/
 				ModuleEndMovie::Common::Procedure();
-
-				if (CurrentMovie.AudioWriter)
-				{
-					ModuleEndMovie::CallOriginal();
-				}
 			}
 		}
 
