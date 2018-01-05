@@ -126,9 +126,8 @@
 		},
 		"ConVar_Info":
 		{
-			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes August 17 2017",
+			"Comment": "VT indexes August 17 2017",
 			"SortGroup": "Info",
-			"NeverAsStringFlag": 4096,
 			"Variant": 0,
 			"VTIndex_SetValueString": 10,
 			"VTIndex_SetValueFloat": 11,
@@ -247,9 +246,8 @@
 
 		"ConVar_Info":
 		{
-			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes August 17 2017",
+			"Comment": "VT indexes August 17 2017",
 			"SortGroup": "Info",
-			"NeverAsStringFlag": 4096,
 			"Variant": 1,
 			"VTIndex_SetValueString": 10,
 			"VTIndex_SetValueFloat": 11,
@@ -326,9 +324,8 @@
 		},
 		"ConVar_Info":
 		{
-			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes December 27 2017",
+			"Comment": "VT indexes December 27 2017",
 			"SortGroup": "Info",
-			"NeverAsStringFlag": 4096,
 			"Variant": 1,
 			"VTIndex_SetValueString": 13,
 			"VTIndex_SetValueFloat": 14,

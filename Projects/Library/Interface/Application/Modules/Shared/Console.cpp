@@ -148,7 +148,6 @@ namespace
 	namespace ModuleConVar
 	{
 		int Variant;
-		int NeverAsStringFlag;
 		int VTIndex_SetValueString;
 		int VTIndex_SetValueFloat;
 		int VTIndex_SetValueInt;
@@ -218,7 +217,6 @@ namespace
 				[](const rapidjson::Value& value)
 				{
 					Variant = SDR::Hooking::GetVariantFromJson<Variant0::Data, Variant1::Data>(value);
-					NeverAsStringFlag = SDR::Json::GetInt(value, "NeverAsStringFlag");
 					
 					VTIndex_SetValueString = SDR::Json::GetInt(value, "VTIndex_SetValueString");
 					VTIndex_SetValueFloat = SDR::Json::GetInt(value, "VTIndex_SetValueFloat");
@@ -658,22 +656,22 @@ void SDR::Console::MakeCommand(const char* name, Types::CommandCallbackArgsType 
 
 SDR::Console::Variable SDR::Console::MakeBool(const char* name, const char* value)
 {
-	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, 0, true, 1);
+	return MakeGenericVariable(name, value, 0, true, 0, true, 1);
 }
 
 SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value)
 {
-	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag);
+	return MakeGenericVariable(name, value, 0);
 }
 
 SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value, float min)
 {
-	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, min);
+	return MakeGenericVariable(name, value, 0, true, min);
 }
 
 SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value, float min, float max)
 {
-	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, min, true, max);
+	return MakeGenericVariable(name, value, 0, true, min, true, max);
 }
 
 SDR::Console::Variable SDR::Console::MakeNumberWithString(const char* name, const char* value, float min, float max)
