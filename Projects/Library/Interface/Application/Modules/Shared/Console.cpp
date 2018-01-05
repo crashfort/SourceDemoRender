@@ -195,8 +195,16 @@ namespace
 
 		namespace Variant1
 		{
-			struct Data : Variant0::Data
+			struct Data : ModuleConCommandBase::Variant0::Data
 			{
+				void* VTable_IConVar;
+
+				void* Parent;
+				const char* DefaultValue;
+
+				char* String;
+				int StringLength;
+
 				uint8_t Unknown[128];
 			};
 
