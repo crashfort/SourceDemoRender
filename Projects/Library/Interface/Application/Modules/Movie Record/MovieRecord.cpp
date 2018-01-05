@@ -1083,8 +1083,6 @@ namespace
 
 	namespace ModuleEndMovie
 	{
-		int Variant;
-
 		namespace Common
 		{
 			void Procedure()
@@ -1179,14 +1177,6 @@ namespace
 			}
 		}
 
-		void CallOriginal()
-		{
-			if (Variant == 0)
-			{
-				Variant0::CallOriginal();
-			}
-		}
-
 		auto Adders = SDR::CreateAdders
 		(
 			SDR::ModuleHandlerAdder
@@ -1194,7 +1184,7 @@ namespace
 				"EndMovie",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::Hooking::GenericHookVariantInit
+					SDR::Hooking::GenericHookVariantInit
 					(
 						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
