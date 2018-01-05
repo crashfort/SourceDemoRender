@@ -7,7 +7,7 @@
 #include "FutureData.hpp"
 #include "ConversionBase.hpp"
 #include "Video.hpp"
-#include "readerwriterqueue.h"
+#include <readerwriterqueue.h>
 
 namespace SDR::Stream
 {
