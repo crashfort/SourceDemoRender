@@ -428,7 +428,7 @@ namespace
 			return start.count();
 		};
 
-		data.IsRecordingVideo = SDR::MovieRecord::ShouldRecord;
+		data.IsRecordingVideo = SDR::MovieRecord::ShouldRecordVideo;
 		data.GetD3D9Device = SDR::SourceGlobals::GetD3D9DeviceEx;
 
 		data.GetExtensionCount = []()
