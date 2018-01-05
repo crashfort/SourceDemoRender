@@ -681,7 +681,7 @@ namespace
 
 			void AudioProcedure(const char* name)
 			{
-				auto audio = std::make_unique<SDR::Audio::Writer>();
+				CurrentMovie.AudioWriter = std::make_unique<SDR::Audio::Writer>();
 
 				auto sdrpath = ModuleStartMovie::Common::GetOutputDirectory();
 				auto audioname = ModuleStartMovie::Common::BuildAudioStreamName(sdrpath, name);
@@ -689,9 +689,7 @@ namespace
 				/*
 					This is the only supported format.
 				*/
-				audio->Open(audioname.c_str(), 44'100, 16, 2);
-
-				CurrentMovie.AudioWriter = std::move(audio);
+				CurrentMovie.AudioWriter->Open(audioname.c_str(), 44'100, 16, 2);
 
 				/*
 					Ensure minimal audio latency.
