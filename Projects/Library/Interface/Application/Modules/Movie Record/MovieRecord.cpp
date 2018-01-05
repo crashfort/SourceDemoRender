@@ -230,6 +230,11 @@ namespace
 			double TimePerFrame;
 		} SamplingData;
 
+		/*
+			Skip first frame as it will always be black when capturing the engine backbuffer.
+		*/
+		bool FirstFrame = true;
+
 		SDR::Stream::SharedData VideoStreamShared;
 		
 		std::unique_ptr<SDR::Stream::QueueType> VideoQueue;
@@ -409,9 +414,9 @@ namespace
 				{
 					MovieData::WaitForBufferedItems();
 
-					if (CurrentMovie.VideoStream->FirstFrame)
+					if (CurrentMovie.FirstFrame)
 					{
-						CurrentMovie.VideoStream->FirstFrame = false;
+						CurrentMovie.FirstFrame = false;
 						CopyDX9ToDX11(CurrentMovie.VideoStream.get());
 					}
 

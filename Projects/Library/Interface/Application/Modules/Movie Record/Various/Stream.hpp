@@ -139,11 +139,6 @@ namespace SDR::Stream
 
 		SDR::Video::Writer Video;
 
-		/*
-			Skip first frame as it will always be black when capturing the engine backbuffer.
-		*/
-		bool FirstFrame = true;
-
 		struct
 		{
 			double Remainder = 0;
