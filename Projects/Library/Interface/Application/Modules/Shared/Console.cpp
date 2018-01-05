@@ -454,21 +454,26 @@ namespace SDR::Console
 		return nullptr;
 	}
 
-	void Variable::SetValue(const char* value)
+	void Variable::SetValue(bool value)
 	{
-		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueString);
+		SetValue((int)value);
+	}
+	
+	void Variable::SetValue(int value)
+	{
+		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueInt);
 
 		if (func)
 		{
 			if (ModuleConVar::Variant == 0)
 			{
-				auto casted = (ModuleConVar::Variant0::SetValueStringType)func;
+				auto casted = (ModuleConVar::Variant0::SetValueIntType)func;
 				casted(Opaque, nullptr, value);
 			}
 
 			else if (ModuleConVar::Variant == 1)
 			{
-				auto casted = (ModuleConVar::Variant1::SetValueStringType)func;
+				auto casted = (ModuleConVar::Variant1::SetValueIntType)func;
 				casted(Opaque, nullptr, value);
 			}
 		}
@@ -494,21 +499,21 @@ namespace SDR::Console
 		}
 	}
 
-	void Variable::SetValue(int value)
+	void Variable::SetValue(const char* value)
 	{
-		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueInt);
+		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueString);
 
 		if (func)
 		{
 			if (ModuleConVar::Variant == 0)
 			{
-				auto casted = (ModuleConVar::Variant0::SetValueIntType)func;
+				auto casted = (ModuleConVar::Variant0::SetValueStringType)func;
 				casted(Opaque, nullptr, value);
 			}
 
 			else if (ModuleConVar::Variant == 1)
 			{
-				auto casted = (ModuleConVar::Variant1::SetValueIntType)func;
+				auto casted = (ModuleConVar::Variant1::SetValueStringType)func;
 				casted(Opaque, nullptr, value);
 			}
 		}
