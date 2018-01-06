@@ -2,5 +2,5 @@
 
 namespace SDR::MovieRecord
 {
-	bool ShouldRecord();
+	bool ShouldRecordVideo();
 }

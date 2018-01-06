@@ -53,8 +53,6 @@ void SDR::Profile::Reset()
 
 void SDR::Profile::ShowResults()
 {
-	int index = 0;
-
 	for (const auto& entry : GlobalState.Entries)
 	{
 		if (entry.Calls > 0)
@@ -62,9 +60,7 @@ void SDR::Profile::ShowResults()
 			auto avg = entry.TotalTime / entry.Calls;
 			auto ms = avg / 1.0ms;
 
-			Log::Message("SDR: %s (%u): avg %0.4f ms\n", entry.Name, entry.Calls, ms);
+			Log::Message("SDR: \"%s\" (%u): avg %0.4f ms\n", entry.Name, entry.Calls, ms);
 		}
-
-		++index;
 	}
 }

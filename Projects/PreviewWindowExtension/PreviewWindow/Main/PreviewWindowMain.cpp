@@ -45,12 +45,12 @@ namespace
 			{
 				if (!MainReady.Event.IsValid())
 				{
-					SDR::Error::MS::ThrowLastError("Could not create event \"MainReady\"");
+					SDR::Error::Microsoft::ThrowLastError("Could not create event \"MainReady\"");
 				}
 
 				if (!WindowCreated.Event.IsValid())
 				{
-					SDR::Error::MS::ThrowLastError("Could not create event \"WindowCreated\"");
+					SDR::Error::Microsoft::ThrowLastError("Could not create event \"WindowCreated\"");
 				}
 			}
 
@@ -87,7 +87,7 @@ namespace
 
 				Microsoft::WRL::ComPtr<IDXGIDevice1> dxgidevice;
 
-				SDR::Error::MS::ThrowIfFailed
+				SDR::Error::Microsoft::ThrowIfFailed
 				(
 					data.Device->QueryInterface(dxgidevice.GetAddressOf()),
 					"Could not query D3D11 device as a DXGI device"
@@ -95,7 +95,7 @@ namespace
 
 				Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiadapter;
 
-				SDR::Error::MS::ThrowIfFailed
+				SDR::Error::Microsoft::ThrowIfFailed
 				(
 					dxgidevice->GetAdapter(dxgiadapter.GetAddressOf()),
 					"Could not get device adapter"
@@ -103,7 +103,7 @@ namespace
 
 				Microsoft::WRL::ComPtr<IDXGIFactory2> dxgifactory;
 
-				SDR::Error::MS::ThrowIfFailed
+				SDR::Error::Microsoft::ThrowIfFailed
 				(
 					dxgiadapter->GetParent(IID_PPV_ARGS(dxgifactory.GetAddressOf())),
 					"Could not get parent of adapter"
@@ -120,13 +120,13 @@ namespace
 				DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreendesc = {};
 				fullscreendesc.Windowed = true;
 
-				SDR::Error::MS::ThrowIfFailed
+				SDR::Error::Microsoft::ThrowIfFailed
 				(
 					dxgifactory->CreateSwapChainForHwnd(data.Device, content, &swapdesc, &fullscreendesc, nullptr, SwapChain.GetAddressOf()),
 					"Could not create swap chain"
 				);
 
-				SDR::Error::MS::ThrowIfFailed
+				SDR::Error::Microsoft::ThrowIfFailed
 				(
 					dxgifactory->MakeWindowAssociation(owner, DXGI_MWA_NO_ALT_ENTER),
 					"Could not set window association"
@@ -134,20 +134,20 @@ namespace
 
 				Microsoft::WRL::ComPtr<ID3D11Texture2D> backbuffer;
 
-				SDR::Error::MS::ThrowIfFailed
+				SDR::Error::Microsoft::ThrowIfFailed
 				(
 					SwapChain->GetBuffer(0, IID_PPV_ARGS(backbuffer.GetAddressOf())),
 					"Could not get buffer from swap chain"
 				);
 
-				SDR::Error::MS::ThrowIfFailed
+				SDR::Error::Microsoft::ThrowIfFailed
 				(
 					data.Device->CreateRenderTargetView(backbuffer.Get(), nullptr, RenderTargetView.GetAddressOf()),
 					"Could not create render target view"
 				);
 
-				SDR::D3D11::OpenShader(data.Device, "PixelShader", SDR::D3D11::MakeBlob(PSBlob_PixelShader), PixelShader.GetAddressOf());
-				SDR::D3D11::OpenShader(data.Device, "VertexShader", SDR::D3D11::MakeBlob(VSBlob_VertexShader), VertexShader.GetAddressOf());
+				SDR::D3D11::OpenShader(data.Device, "PixelShader", SDR::D3D11::BlobData::Make(PSBlob_PixelShader), PixelShader.GetAddressOf());
+				SDR::D3D11::OpenShader(data.Device, "VertexShader", SDR::D3D11::BlobData::Make(VSBlob_VertexShader), VertexShader.GetAddressOf());
 			}
 
 			void Update(const SDR::Extension::NewVideoFrameData& data)
@@ -170,17 +170,6 @@ namespace
 				context->RSSetViewports(1, &viewport);
 			}
 
-			inline void ResetShaderInputs(ID3D11DeviceContext* context)
-			{
-				const auto count = 1;
-
-				ID3D11ShaderResourceView* nullsrvs[count] = {};
-				ID3D11Buffer* nullcbufs[count] = {};
-
-				context->PSSetShaderResources(0, count, nullsrvs);
-				context->PSSetConstantBuffers(0, count, nullcbufs);
-			}
-
 			void Render(const SDR::Extension::NewVideoFrameData& data)
 			{
 				data.Context->IASetInputLayout(nullptr);
@@ -197,7 +186,8 @@ namespace
 
 				data.Context->Draw(4, 0);
 
-				ResetShaderInputs(data.Context);
+				SDR::D3D11::Shader::PSResetSRV<1>(data.Context, 0);
+				SDR::D3D11::Shader::PSResetCBV<1>(data.Context, 0);
 			}
 
 			void Present()
@@ -311,7 +301,7 @@ namespace
 
 					if (error != ERROR_CLASS_ALREADY_EXISTS)
 					{
-						SDR::Error::MS::ThrowLastError("Could not register owner window class");
+						SDR::Error::Microsoft::ThrowLastError("Could not register owner window class");
 					}
 				}
 
@@ -333,7 +323,7 @@ namespace
 
 				if (!owner)
 				{
-					SDR::Error::MS::ThrowLastError("Could not create window");
+					SDR::Error::Microsoft::ThrowLastError("Could not create window");
 				}
 			}
 
@@ -353,7 +343,7 @@ namespace
 
 					if (error != ERROR_CLASS_ALREADY_EXISTS)
 					{
-						SDR::Error::MS::ThrowLastError("Could not register content window class");
+						SDR::Error::Microsoft::ThrowLastError("Could not register content window class");
 					}
 				}
 
@@ -375,7 +365,7 @@ namespace
 
 				if (!content)
 				{
-					SDR::Error::MS::ThrowLastError("Could not create window");
+					SDR::Error::Microsoft::ThrowLastError("Could not create window");
 				}
 			}
 
@@ -437,7 +427,7 @@ extern "C"
 		query.Author = "crashfort";
 		query.Contact = "https://github.com/crashfort/";
 
-		query.Version = 2;
+		query.Version = 3;
 	}
 
 	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::Extension::InitializeData& data)
@@ -484,9 +474,10 @@ extern "C"
 
 	__declspec(dllexport) void __cdecl SDR_NewVideoFrame(const SDR::Extension::NewVideoFrameData& data)
 	{
+		auto lock = Synchro::Ptr->WindowPtrCS.Lock();
+
 		if (Window::WindowPtr)
 		{
-			auto lock = Synchro::Ptr->WindowPtrCS.Lock();
 			Window::WindowPtr->Update(data);
 		}
 	}

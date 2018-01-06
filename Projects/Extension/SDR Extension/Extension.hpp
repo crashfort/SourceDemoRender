@@ -34,6 +34,11 @@ namespace SDR::Extension
 		const char* Contact;
 		
 		int Version;
+
+		/*
+			Comma seperated string that contains the filenames of other extensions that must exist.
+		*/
+		const char* Dependencies;
 	};
 
 	/*
@@ -138,6 +143,11 @@ namespace SDR::Extension
 			the name with extension.
 		*/
 		const char*(*GetExtensionFileName)(uint32_t key);
+
+		/*
+			For command callbacks that take arguments, use these on the parameter.
+		*/
+		const char*(*GetCommandArgumentFullValue)(const void* ptr);
 	};
 
 	/*
@@ -226,69 +236,87 @@ namespace SDR::Extension
 		Can be used to find an export in another extension.
 	*/
 	template <typename T>
-	inline void FindExport(HMODULE module, const char* modulename, const char* name, T& object, bool required = false)
+	inline void FindExport(HMODULE module, const char* name, T& object)
 	{
-		auto addr = (void*)GetProcAddress(module, name);
+		auto address = (void*)GetProcAddress(module, name);
 
-		if (!addr && required)
+		if (address == nullptr)
 		{
-			SDR::Error::Make("Extension \"%s\" missing export for \"%s\"", modulename, name);
+			throw false;
 		}
 
-		object = (decltype(object))addr;
+		object = (decltype(object))address;
+	}
+
+	/*
+		Can be used to find an export in another extension.
+	*/
+	template <typename T>
+	inline void FindExport(HMODULE module, const char* modulename, const char* name, T& object, bool required = false)
+	{
+		try
+		{
+			FindExport(module, name, object);
+		}
+
+		catch (bool value)
+		{
+			if (required)
+			{
+				SDR::Error::Make("Extension \"%s\" missing export for \"%s\"", modulename, name);
+			}
+		}
 	}
 
 	/*
 		These are the correct signatures that extensions should use.
 	*/
-	namespace ExportTypes
-	{
-		/*
-			Fill in information about your extension.
-		*/
-		using SDR_Query = void(__cdecl*)(QueryData& query);
+	
+	/*
+		Fill in information about your extension.
+	*/
+	using SDR_Query = void(__cdecl*)(QueryData& query);
 
-		/*
-			Called directly after "SDR_Query" to set up initial extension state.
-		*/
-		using SDR_Initialize = void(__cdecl*)(const InitializeData& data);
+	/*
+		Called directly after "SDR_Query" to set up initial extension state.
+	*/
+	using SDR_Initialize = void(__cdecl*)(const InitializeData& data);
 
-		/*
-			For every matching namespace entry in ExtensionConfig.json, this is the callback.
-			Return true if the handler was found by name.
+	/*
+		For every matching namespace entry in ExtensionConfig.json, this is the callback.
+		Return true if the handler was found by name.
 
-			Optional.
-		*/
-		using SDR_ConfigHandler = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
+		Optional.
+	*/
+	using SDR_ConfigHandler = bool(__cdecl*)(const char* name, const rapidjson::Value& value);
 
-		/*
-			Called when SDR is fully loaded. The parameter can be stored off for future use,
-			it's the gateway for communicating with the main library.
+	/*
+		Called when SDR is fully loaded. The parameter can be stored off for future use,
+		it's the gateway for communicating with the main library.
 
-			Optional.
-		*/
-		using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);
+		Optional.
+	*/
+	using SDR_Ready = void(__cdecl*)(const SDR::Extension::ImportData& data);
 
-		/*
-			Called after the main library handles the start movie command.
+	/*
+		Called after the main library handles the start movie command.
 
-			Optional.
-		*/
-		using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);
+		Optional.
+	*/
+	using SDR_StartMovie = void(__cdecl*)(const StartMovieData& data);
 
-		/*
-			Called after all processing by the main library is done.
+	/*
+		Called after all processing by the main library is done.
 
-			Optional.
-		*/
-		using SDR_EndMovie = void(__cdecl*)();
+		Optional.
+	*/
+	using SDR_EndMovie = void(__cdecl*)();
 
-		/*
-			Called when a new video frame is ready. The content can be manipulated or viewed before it gets written.
-			The execution order of the extensions is important here.
+	/*
+		Called when a new video frame is ready. The content can be manipulated or viewed before it gets written.
+		The execution order of the extensions is important here.
 
-			Optional.
-		*/
-		using SDR_NewVideoFrame = void(__cdecl*)(const NewVideoFrameData& data);
-	}
+		Optional.
+	*/
+	using SDR_NewVideoFrame = void(__cdecl*)(const NewVideoFrameData& data);
 }

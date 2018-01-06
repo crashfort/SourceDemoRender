@@ -77,22 +77,7 @@ namespace SDR::Error
 		}
 	}
 
-	namespace LAV
-	{
-		/*
-			For use with unrecoverable errors.
-		*/
-		template <typename... Args>
-		inline void ThrowIfFailed(int code, const char* format, Args&&... args)
-		{
-			if (code < 0)
-			{
-				Make(format, std::forward<Args>(args)...);
-			}
-		}
-	}
-
-	namespace MS
+	namespace Microsoft
 	{
 		/*
 			For use with unrecoverable errors.

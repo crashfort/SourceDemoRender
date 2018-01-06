@@ -7,7 +7,7 @@
 #include "FutureData.hpp"
 #include "ConversionBase.hpp"
 #include "Video.hpp"
-#include "readerwriterqueue.h"
+#include <readerwriterqueue.h>
 
 namespace SDR::Stream
 {
@@ -82,11 +82,6 @@ namespace SDR::Stream
 			void Create(ID3D11Device* device, HANDLE dx9handle, const AVFrame* reference, bool staging);
 
 			/*
-				Between CS dispatches the resources should be unbound.
-			*/
-			void ResetShaderInputs(ID3D11DeviceContext* context);
-
-			/*
 				Weighs a new engine frame onto the existing work buffer.
 			*/
 			void NewFrame(SharedData& shared, float weight);
@@ -143,11 +138,6 @@ namespace SDR::Stream
 		} DirectX11;
 
 		SDR::Video::Writer Video;
-
-		/*
-			Skip first frame as it will always be black when capturing the engine backbuffer.
-		*/
-		bool FirstFrame = true;
 
 		struct
 		{

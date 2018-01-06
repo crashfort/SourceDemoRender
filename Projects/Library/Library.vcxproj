@@ -117,8 +117,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Interface\Application\Application.hpp" />
+    <ClInclude Include="Interface\Application\ConfigSystem.hpp" />
     <ClInclude Include="Interface\Application\Extensions\ExtensionManager.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\MovieRecord.hpp" />
+    <ClInclude Include="Interface\Application\Modules\Movie Record\Various\Audio.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBase.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.hpp" />
     <ClInclude Include="Interface\Application\Modules\Movie Record\Various\ConversionYUV.hpp" />
@@ -137,7 +139,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Interface\Application\Application.cpp" />
+    <ClCompile Include="Interface\Application\ConfigSystem.cpp" />
     <ClCompile Include="Interface\Application\Extensions\ExtensionManager.cpp" />
+    <ClCompile Include="Interface\Application\Modules\Movie Record\Various\Audio.cpp" />
     <ClCompile Include="Interface\Application\Modules\Movie Record\Various\ConversionBGR0.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

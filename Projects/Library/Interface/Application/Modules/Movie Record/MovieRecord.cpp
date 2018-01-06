@@ -1,10 +1,11 @@
 #include "PrecompiledHeader.hpp"
 #include "MovieRecord.hpp"
+#include <SDR Shared\Table.hpp>
 #include "Interface\Application\Application.hpp"
 
-#include <ppltasks.h>
-
 #include "Various\Stream.hpp"
+#include "Various\Audio.hpp"
+#include <readerwriterqueue.h>
 #include "Various\Profile.hpp"
 #include "Interface\Application\Modules\Shared\EngineClient.hpp"
 #include "Interface\Application\Modules\Shared\MaterialSystem.hpp"
@@ -21,6 +22,11 @@ namespace
 		SDR::Console::Variable OutputDirectory;
 		SDR::Console::Variable FlashWindow;
 		SDR::Console::Variable ExitOnFinish;
+
+		namespace Audio
+		{
+			SDR::Console::Variable Enable;
+		}
 
 		namespace Video
 		{
@@ -77,6 +83,8 @@ namespace
 			Video::X264::CRF = SDR::Console::MakeNumberWithString("sdr_video_x264_crf", "0", 0, 51);
 			Video::X264::Preset = SDR::Console::MakeString("sdr_video_x264_preset", "ultrafast");
 			Video::X264::Intra = SDR::Console::MakeBool("sdr_video_x264_intra", "1");
+
+			Audio::Enable = SDR::Console::MakeBool("sdr_audio_only", "0");
 		});
 	}
 }
@@ -106,12 +114,17 @@ namespace
 
 namespace
 {
+	std::atomic_int32_t BufferedItems;
+	std::atomic_bool ShouldStopThread;
+
 	struct MovieData
 	{
 		bool IsStarted = false;
 
 		int OldMatQueueModeValue;
 		int OldEngineSleepTime;
+		
+		float OldAudioMixAhead;
 
 		/*
 			Whether to use an extra intermediate buffer for GPU -> CPU transfer.
@@ -137,11 +150,75 @@ namespace
 
 			if (res == 0)
 			{
-				SDR::Log::Warning("SDR: Could not retrieve process memory info\n"s);
+				SDR::Log::Warning("SDR: Could not retrieve process memory info\n");
 				return true;
 			}
 
 			return desc.WorkingSetSize > INT32_MAX;
+		}
+
+		void VideoThread()
+		{
+			SDR::Stream::FutureData videoitem;
+
+			while (!ShouldStopThread)
+			{
+				while (VideoQueue->try_dequeue(videoitem))
+				{
+					--BufferedItems;
+
+					videoitem.Writer->SetFrameInput(videoitem.Planes);
+					videoitem.Writer->SendRawFrame();
+				}
+			}
+		}
+
+		void AudioThread()
+		{
+			std::vector<int16_t> audioitem;
+
+			while (!ShouldStopThread)
+			{
+				while (AudioQueue->try_dequeue(audioitem))
+				{
+					--BufferedItems;
+
+					AudioWriter->WritePCM16Samples(audioitem);
+				}
+			}
+		}
+	
+		template <typename T>
+		void CreateProcessingThread(T func)
+		{
+			BufferedItems = 0;
+			ShouldStopThread = false;
+
+			ThreadHandle = std::thread(func);
+		}
+
+		void SetVideoThread()
+		{
+			CreateProcessingThread(std::bind(&MovieData::VideoThread, this));
+		}
+
+		void SetAudioThread()
+		{
+			CreateProcessingThread(std::bind(&MovieData::AudioThread, this));
+		}
+
+		static void WaitForBufferedItems()
+		{
+			/*
+				Don't risk running out of memory. Just let the encoding finish so we start fresh with no buffered frames.
+			*/
+			if (MovieData::WouldNewFrameOverflow())
+			{
+				while (BufferedItems)
+				{
+					std::this_thread::sleep_for(1ms);
+				}
+			}
 		}
 
 		struct
@@ -153,40 +230,35 @@ namespace
 			double TimePerFrame;
 		} SamplingData;
 
+		/*
+			Skip first frame as it will always be black when capturing the engine backbuffer.
+		*/
+		bool FirstFrame = true;
+
 		SDR::Stream::SharedData VideoStreamShared;
+		
+		std::unique_ptr<SDR::Stream::QueueType> VideoQueue;
 		std::unique_ptr<SDR::Stream::StreamBase> VideoStream;
 
-		std::thread FrameBufferThreadHandle;
-		std::unique_ptr<SDR::Stream::QueueType> VideoQueue;
+		using AudioQueueType = moodycamel::ReaderWriterQueue<std::vector<int16_t>>;
+		
+		std::unique_ptr<AudioQueueType> AudioQueue;
+		std::unique_ptr<SDR::Audio::Writer> AudioWriter;
+
+		std::thread ThreadHandle;
 	};
 
 	MovieData CurrentMovie;
-	std::atomic_int32_t BufferedFrames;
-	std::atomic_bool ShouldStopFrameThread;
-	std::atomic_bool IsStoppingAsync;
-
-	void FrameBufferThread()
-	{
-		auto& movie = CurrentMovie;
-
-		SDR::Stream::FutureData item;
-
-		while (!ShouldStopFrameThread)
-		{
-			while (movie.VideoQueue->try_dequeue(item))
-			{
-				--BufferedFrames;
-
-				item.Writer->SetFrameInput(item.Planes);
-				item.Writer->SendRawFrame();
-			}
-		}
-	}
 }
 
-bool SDR::MovieRecord::ShouldRecord()
+bool SDR::MovieRecord::ShouldRecordVideo()
 {
 	if (!CurrentMovie.IsStarted)
+	{
+		return false;
+	}
+
+	if (CurrentMovie.AudioWriter)
 	{
 		return false;
 	}
@@ -214,21 +286,17 @@ namespace
 			{
 				auto dx9device = SDR::SourceGlobals::GetD3D9DeviceEx();
 
+				auto rt = stream->DirectX9.GameRenderTarget0.Get();
+				auto surface = stream->DirectX9.SharedSurface.Surface.Get();
+
 				/*
 					The DX11 texture now contains this data.
 				*/
-				auto hr = dx9device->StretchRect
-				(
-					stream->DirectX9.GameRenderTarget0.Get(),
-					nullptr,
-					stream->DirectX9.SharedSurface.Surface.Get(),
-					nullptr,
-					D3DTEXF_NONE
-				);
+				auto hr = dx9device->StretchRect(rt, nullptr, surface, nullptr, D3DTEXF_NONE);
 
 				if (FAILED(hr))
 				{
-					SDR::Log::Warning("SDR: Could not copy D3D9 RT -> D3D11 RT\n"s);
+					SDR::Log::Warning("SDR: Could not copy D3D9 RT -> D3D11 RT\n");
 					return false;
 				}
 
@@ -255,7 +323,7 @@ namespace
 
 					if (res)
 					{
-						++BufferedFrames;
+						++BufferedItems;
 						CurrentMovie.VideoQueue->enqueue(std::move(item));
 					}
 				};
@@ -340,31 +408,21 @@ namespace
 
 			void Procedure()
 			{
-				auto& movie = CurrentMovie;
-				bool dopasses = SDR::MovieRecord::ShouldRecord();
+				bool dopasses = SDR::MovieRecord::ShouldRecordVideo();
 
 				if (dopasses)
 				{
-					/*
-						Don't risk running out of memory. Just let the encoding finish so we start fresh with no buffered frames.
-					*/
-					if (MovieData::WouldNewFrameOverflow())
-					{
-						while (BufferedFrames)
-						{
-							std::this_thread::sleep_for(1ms);
-						}
-					}
+					MovieData::WaitForBufferedItems();
 
-					if (movie.VideoStream->FirstFrame)
+					if (CurrentMovie.FirstFrame)
 					{
-						movie.VideoStream->FirstFrame = false;
-						CopyDX9ToDX11(movie.VideoStream.get());
+						CurrentMovie.FirstFrame = false;
+						CopyDX9ToDX11(CurrentMovie.VideoStream.get());
 					}
 
 					else
 					{
-						Pass(movie.VideoStream.get());
+						Pass(CurrentMovie.VideoStream.get());
 					}
 				}
 			}
@@ -403,6 +461,8 @@ namespace
 
 	namespace ModuleStartMovie
 	{
+		int Variant;
+
 		namespace Common
 		{
 			void VerifyOutputDirectory(const std::string& path)
@@ -418,7 +478,7 @@ namespace
 
 				if (!res)
 				{
-					SDR::Error::MS::ThrowLastError("Could not access wanted output directory");
+					SDR::Error::Microsoft::ThrowLastError("Could not access wanted output directory");
 				}
 			}
 
@@ -427,6 +487,19 @@ namespace
 				char finalname[SDR::File::NameSize];
 
 				PathCombineA(finalname, savepath.c_str(), filename);
+
+				return { finalname };
+			}
+
+			std::wstring BuildAudioStreamName(const std::string& savepath, const char* filename)
+			{
+				wchar_t finalname[SDR::File::NameSize];
+
+				auto savepathw = SDR::String::FromUTF8(savepath);
+				auto filenamew = SDR::String::FromUTF8(filename);
+
+				PathCombineW(finalname, savepathw.c_str(), filenamew.c_str());
+				PathRenameExtensionW(finalname, L".wav");
 
 				return { finalname };
 			}
@@ -463,7 +536,7 @@ namespace
 						{
 							if (_strcmpi(newstr, preset) == 0)
 							{
-								SDR::Log::Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n"s);
+								SDR::Log::Warning("SDR: Slow encoder preset chosen, this might not work very well for realtime\n");
 								break;
 							}
 						}
@@ -510,7 +583,7 @@ namespace
 
 				if (!file.IsValid())
 				{
-					SDR::Error::MS::ThrowLastError("Could not create file, name probably invalid");
+					SDR::Error::Microsoft::ThrowLastError("Could not create file, name probably invalid");
 				}
 			}
 
@@ -531,7 +604,7 @@ namespace
 
 				if (*ext == 0)
 				{
-					SDR::Log::Warning("SDR: No file extension. Available video containers:\n"s);
+					SDR::Log::Warning("SDR: No file extension. Available video containers:\n");
 
 					showcontainers();
 
@@ -554,7 +627,7 @@ namespace
 
 					if (!found)
 					{
-						SDR::Log::Warning("SDR: Unknown file extension. Available video containers:\n"s);
+						SDR::Log::Warning("SDR: Unknown file extension. Available video containers:\n");
 
 						showcontainers();
 
@@ -563,7 +636,7 @@ namespace
 				}
 			}
 
-			std::string TrimFilename(const char* filename)
+			std::string TrimFileName(const char* filename)
 			{
 				std::string newname = filename;
 
@@ -591,43 +664,153 @@ namespace
 				return newname;
 			}
 
-			void Procedure(const char* filename, int width, int height)
+			std::string GetOutputDirectory()
 			{
-				auto newname = TrimFilename(filename);
-				filename = newname.c_str();
+				std::string ret = Variables::OutputDirectory.GetString();
 
-				CurrentMovie = {};
-
-				auto& movie = CurrentMovie;
-
-				try
+				/*
+					No desired path, use resource root.
+				*/
+				if (ret.empty())
 				{
-					WarnAboutExtension(filename);
-					WarnAboutName(filename);
-					WarnAboutVariableValues();
+					ret = SDR::Library::GetResourcePath();
+				}
 
-					std::string sdrpath = Variables::OutputDirectory.GetString();
+				else
+				{
+					VerifyOutputDirectory(ret);
+				}
 
-					/*
-						No desired path, use resource root.
-					*/
-					if (sdrpath.empty())
+				return ret;
+			}
+
+			void AudioProcedure(const char* name)
+			{
+				CurrentMovie.AudioWriter = std::make_unique<SDR::Audio::Writer>();
+
+				auto sdrpath = ModuleStartMovie::Common::GetOutputDirectory();
+				auto audioname = ModuleStartMovie::Common::BuildAudioStreamName(sdrpath, name);
+
+				/*
+					This is the only supported format.
+				*/
+				CurrentMovie.AudioWriter->Open(audioname.c_str(), 44'100, 16, 2);
+
+				/*
+					Ensure minimal audio latency.
+				*/
+				CurrentMovie.OldAudioMixAhead = SDR::Console::Variable::SetValueGetOld<float>("snd_mixahead", 0);
+
+				/*
+					Allow fast processing when game window is not focused.
+				*/
+				CurrentMovie.OldEngineSleepTime = SDR::Console::Variable::SetValueGetOld<int>("engine_no_focus_sleep", 0);
+
+				CurrentMovie.AudioQueue = std::make_unique<MovieData::AudioQueueType>(256);
+					
+				CurrentMovie.SetAudioThread();
+			}
+
+			void VideoProcedure(const char* filename, int width, int height)
+			{
+				WarnAboutExtension(filename);
+				WarnAboutVariableValues();
+
+				auto sdrpath = GetOutputDirectory();
+
+				/*
+					Default to 709 space and full range.
+				*/
+				auto colorspace = AVCOL_SPC_BT709;
+				auto colorrange = AVCOL_RANGE_JPEG;
+				auto pxformat = AV_PIX_FMT_NONE;
+
+				{
+					auto table =
 					{
-						sdrpath = SDR::Library::GetResourcePath();
+						std::make_pair("601", AVCOL_SPC_BT470BG),
+						std::make_pair("709", AVCOL_SPC_BT709)
+					};
+
+					SDR::Table::LinkToVariable(Variables::Video::YUVColorSpace.GetString(), table, colorspace);
+				}
+
+				if (Variables::Video::LAV::SuppressLog.GetBool())
+				{
+					av_log_set_level(AV_LOG_QUIET);
+					av_log_set_callback(nullptr);
+				}
+
+				else
+				{
+					av_log_set_level(AV_LOG_INFO);
+					av_log_set_callback(LAVLogFunction);
+				}
+
+				CurrentMovie.VideoStream = std::make_unique<SDR::Stream::StreamBase>();
+
+				struct VideoConfigurationData
+				{
+					using FormatsType = std::vector<std::pair<const char*, AVPixelFormat>>;
+
+					static VideoConfigurationData Make(const char* name, FormatsType&& formats)
+					{
+						VideoConfigurationData ret;
+						ret.Encoder = avcodec_find_encoder_by_name(name);
+						ret.PixelFormats = std::move(formats);
+
+						return ret;
 					}
 
-					else
-					{
-						VerifyOutputDirectory(sdrpath);
-					}
+					AVCodec* Encoder;
+					FormatsType PixelFormats;
+				};
 
-					auto linktabletovariable = [](const char* key, const auto& table, auto& variable)
+				auto yuv420 = std::make_pair("yuv420", AV_PIX_FMT_YUV420P);
+				auto yuv444 = std::make_pair("yuv444", AV_PIX_FMT_YUV444P);
+				auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
+
+				VideoConfigurationData table[] =
+				{
+					VideoConfigurationData::Make("libx264", { yuv420, yuv444 }),
+					VideoConfigurationData::Make("libx264rgb", { bgr0 }),
+				};
+
+				VideoConfigurationData* vidconfig = nullptr;
+
+				{
+					auto encoderstr = Variables::Video::Encoder.GetString();
+					auto encoder = avcodec_find_encoder_by_name(encoderstr);
+
+					SDR::Error::ThrowIfNull(encoder, "Video encoder \"%s\" not found", encoderstr);
+
+					for (auto& config : table)
 					{
-						for (const auto& entry : table)
+						if (config.Encoder == encoder)
 						{
-							if (_strcmpi(key, entry.first) == 0)
+							vidconfig = &config;
+							break;
+						}
+					}
+
+					auto pxformatstr = Variables::Video::PixelFormat.GetString();
+
+					if (!SDR::Table::LinkToVariable(pxformatstr, vidconfig->PixelFormats, pxformat))
+					{
+						/*
+							User selected pixel format does not match any in config.
+						*/
+						pxformat = vidconfig->PixelFormats[0].second;
+					}
+
+					auto isrgbtype = [](AVPixelFormat format)
+					{
+						auto table = { AV_PIX_FMT_BGR0 };
+
+						for (auto entry : table)
+						{
+							if (format == entry)
 							{
-								variable = entry.second;
 								return true;
 							}
 						}
@@ -635,177 +818,65 @@ namespace
 						return false;
 					};
 
-					/*
-						Default to 709 space and full range.
-					*/
-					auto colorspace = AVCOL_SPC_BT709;
-					auto colorrange = AVCOL_RANGE_JPEG;
-					auto pxformat = AV_PIX_FMT_NONE;
-
+					if (isrgbtype(pxformat))
 					{
-						auto table =
-						{
-							std::make_pair("601", AVCOL_SPC_BT470BG),
-							std::make_pair("709", AVCOL_SPC_BT709)
-						};
-
-						linktabletovariable(Variables::Video::YUVColorSpace.GetString(), table, colorspace);
+						colorspace = AVCOL_SPC_RGB;
+						colorrange = AVCOL_RANGE_UNSPECIFIED;
 					}
 
-					if (Variables::Video::LAV::SuppressLog.GetBool())
-					{
-						av_log_set_level(AV_LOG_QUIET);
-						av_log_set_callback(nullptr);
-					}
+					CurrentMovie.VideoStream->Video.Frame.Assign(width, height, pxformat, colorspace, colorrange);
 
-					else
-					{
-						av_log_set_level(AV_LOG_INFO);
-						av_log_set_callback(LAVLogFunction);
-					}
+					CurrentMovie.VideoStreamShared.DirectX11.Create(width, height, MovieData::UseSampling());
 
-					auto stream = std::make_unique<SDR::Stream::StreamBase>();
-
-					struct VideoConfigurationData
-					{
-						using FormatsType = std::vector<std::pair<const char*, AVPixelFormat>>;
-
-						VideoConfigurationData(const char* name, FormatsType&& formats) :
-							Encoder(avcodec_find_encoder_by_name(name)),
-							PixelFormats(std::move(formats))
-						{
-
-						}
-
-						AVCodec* Encoder;
-						FormatsType PixelFormats;
-					};
-
-					const auto yuv420 = std::make_pair("yuv420", AV_PIX_FMT_YUV420P);
-					const auto yuv444 = std::make_pair("yuv444", AV_PIX_FMT_YUV444P);
-					const auto bgr0 = std::make_pair("bgr0", AV_PIX_FMT_BGR0);
-
-					VideoConfigurationData table[] =
-					{
-						VideoConfigurationData("libx264", { yuv420, yuv444 }),
-						VideoConfigurationData("libx264rgb", { bgr0 }),
-					};
-
-					const VideoConfigurationData* vidconfig = nullptr;
+					CurrentMovie.VideoStream->DirectX9.Create(SDR::SourceGlobals::GetD3D9DeviceEx(), width, height);
 
 					{
-						auto encoderstr = Variables::Video::Encoder.GetString();
-						auto encoder = avcodec_find_encoder_by_name(encoderstr);
+						auto device = CurrentMovie.VideoStreamShared.DirectX11.Device.Get();
+						auto sharedhandle = CurrentMovie.VideoStream->DirectX9.SharedSurface.SharedHandle;
+						auto frame = CurrentMovie.VideoStream->Video.Frame.Get();
+						auto staging = MovieData::UseStaging();
 
-						SDR::Error::ThrowIfNull(encoder, "Video encoder \"%s\" not found", encoderstr);
-
-						for (const auto& config : table)
-						{
-							if (config.Encoder == encoder)
-							{
-								vidconfig = &config;
-								break;
-							}
-						}
-
-						auto pxformatstr = Variables::Video::PixelFormat.GetString();
-
-						if (!linktabletovariable(pxformatstr, vidconfig->PixelFormats, pxformat))
-						{
-							/*
-								User selected pixel format does not match any in config.
-							*/
-							pxformat = vidconfig->PixelFormats[0].second;
-						}
-
-						auto isrgbtype = [](AVPixelFormat format)
-						{
-							auto table =
-							{
-								AV_PIX_FMT_BGR0,
-							};
-
-							for (auto entry : table)
-							{
-								if (format == entry)
-								{
-									return true;
-								}
-							}
-
-							return false;
-						};
-
-						if (isrgbtype(pxformat))
-						{
-							colorspace = AVCOL_SPC_RGB;
-							colorrange = AVCOL_RANGE_UNSPECIFIED;
-						}
-
-						stream->Video.Frame.Assign(width, height, pxformat, colorspace, colorrange);
-
-						movie.VideoStreamShared.DirectX11.Create(width, height, MovieData::UseSampling());
-
-						stream->DirectX9.Create(SDR::SourceGlobals::GetD3D9DeviceEx(), width, height);
-
-						stream->DirectX11.Create
-						(
-							movie.VideoStreamShared.DirectX11.Device.Get(),
-							stream->DirectX9.SharedSurface.SharedHandle,
-							stream->Video.Frame.Get(),
-							MovieData::UseStaging()
-						);
-
-						/*
-							Destroy any deferred D3D11 resources created by above functions.
-						*/
-						movie.VideoStreamShared.DirectX11.Context->Flush();
-
-						auto name = BuildVideoStreamName(sdrpath, filename);
-
-						stream->Video.OpenFileForWrite(name.c_str());
-						stream->Video.SetEncoder(vidconfig->Encoder);
-					}
-
-					{
-						SDR::LAV::ScopedAVDictionary options;
-
-						if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
-						{
-							namespace X264 = Variables::Video::X264;
-
-							auto preset = X264::Preset.GetString();
-							auto crf = X264::CRF.GetString();
-							auto intra = X264::Intra.GetBool();
-
-							options.Set("preset", preset);
-							options.Set("crf", crf);
-
-							if (intra)
-							{
-								/*
-									Setting every frame as a keyframe gives the ability to use the video in a video editor with ease.
-								*/
-								options.Set("x264-params", "keyint=1");
-							}
-						}
-
-						auto fps = Variables::Video::Framerate.GetInt();
-						stream->Video.OpenEncoder(fps, options.Get());
-
-						stream->Video.WriteHeader();
+						CurrentMovie.VideoStream->DirectX11.Create(device, sharedhandle, frame, staging);
 					}
 
 					/*
-						All went well, move state over.
+						Destroy any deferred D3D11 resources created by above functions.
 					*/
-					movie.VideoStream = std::move(stream);
+					CurrentMovie.VideoStreamShared.DirectX11.Context->Flush();
+
+					auto name = BuildVideoStreamName(sdrpath, filename);
+
+					CurrentMovie.VideoStream->Video.OpenFileForWrite(name.c_str());
+					CurrentMovie.VideoStream->Video.SetEncoder(vidconfig->Encoder);
 				}
 
-				catch (const SDR::Error::Exception& error)
 				{
-					CurrentMovie = {};
-					return;
+					SDR::LAV::ScopedAVDictionary options;
+
+					if (vidconfig->Encoder->id == AV_CODEC_ID_H264)
+					{
+						namespace X264 = Variables::Video::X264;
+
+						auto preset = X264::Preset.GetString();
+						auto crf = X264::CRF.GetString();
+						auto intra = X264::Intra.GetBool();
+
+						options.Set("preset", preset);
+						options.Set("crf", crf);
+
+						if (intra)
+						{
+							/*
+								Setting every frame as a keyframe gives the ability to use the video in a video editor with ease.
+							*/
+							options.Set("x264-params", "keyint=1");
+						}
+					}
+
+					auto fps = Variables::Video::Framerate.GetInt();
+					
+					CurrentMovie.VideoStream->Video.OpenEncoder(fps, options.Get());
+					CurrentMovie.VideoStream->Video.WriteHeader();
 				}
 
 				/*
@@ -818,48 +889,36 @@ namespace
 
 				auto enginerate = fps;
 
-				movie.SamplingData.Enabled = MovieData::UseSampling();
-
-				if (movie.SamplingData.Enabled)
+				if (MovieData::UseSampling())
 				{
 					enginerate *= mult;
-
-					movie.SamplingData.Exposure = exposure;
-					movie.SamplingData.TimePerSample = 1.0 / enginerate;
-					movie.SamplingData.TimePerFrame = 1.0 / fps;
 				}
 
-				auto hostframerate = SDR::Console::Variable::Find("host_framerate");
-				hostframerate.SetValue(enginerate);
-
-				auto matqueuemode = SDR::Console::Variable::Find("mat_queue_mode");
-				movie.OldMatQueueModeValue = matqueuemode.GetInt();
+				SDR::Console::Variable::SetValue("host_framerate", enginerate);
 
 				/*
 					Force single threaded processing or else there will be flickering.
 				*/
-				matqueuemode.SetValue(0);
-
-				auto nofocustime = SDR::Console::Variable::Find("engine_no_focus_sleep");
-				movie.OldEngineSleepTime = nofocustime.GetInt();
+				CurrentMovie.OldMatQueueModeValue = SDR::Console::Variable::SetValueGetOld<int>("mat_queue_mode", 0);
 
 				/*
 					Allow fast processing when game window is not focused.
 				*/
-				nofocustime.SetValue(0);
+				CurrentMovie.OldEngineSleepTime = SDR::Console::Variable::SetValueGetOld<int>("engine_no_focus_sleep", 0);
 
-				movie.VideoQueue = std::make_unique<SDR::Stream::QueueType>(256);
+				CurrentMovie.SamplingData.Enabled = MovieData::UseSampling();
 
-				movie.IsStarted = true;
-				BufferedFrames = 0;
-				ShouldStopFrameThread = false;
-				IsStoppingAsync = false;
+				CurrentMovie.SamplingData.Exposure = exposure;
+				CurrentMovie.SamplingData.TimePerSample = 1.0 / enginerate;
+				CurrentMovie.SamplingData.TimePerFrame = 1.0 / fps;
 
-				movie.FrameBufferThreadHandle = std::thread(FrameBufferThread);
+				CurrentMovie.VideoQueue = std::make_unique<SDR::Stream::QueueType>(256);
+
+				CurrentMovie.SetVideoThread();
 
 				{
 					SDR::Extension::StartMovieData data;
-					data.Device = movie.VideoStreamShared.DirectX11.Device.Get();
+					data.Device = CurrentMovie.VideoStreamShared.DirectX11.Device.Get();
 					
 					data.Width = width;
 					data.Height = height;
@@ -871,8 +930,6 @@ namespace
 
 					SDR::ExtensionManager::Events::StartMovie(data);
 				}
-
-				SDR::Log::Message("SDR: Started movie\n"s);
 			}
 		}
 
@@ -886,9 +943,27 @@ namespace
 			using OverrideType = decltype(NewFunction)*;
 			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
+			void CallOriginalForAudio()
+			{
+				auto fps = Variables::Video::Framerate.GetInt();
+
+				/*
+					Value 4 means WAV audio flag. The original function is only called with audio processing.
+				*/
+				ThisHook.GetOriginal()("x", 4, 0, 0, fps, 0, 0);
+			}
+
 			void __cdecl NewFunction(const char* filename, int flags, int width, int height, float framerate, int jpegquality, int unk)
 			{
-				Common::Procedure(filename, width, height);
+				
+			}
+		}
+
+		void CallOriginalForAudio()
+		{
+			if (Variant == 0)
+			{
+				Variant0::CallOriginalForAudio();
 			}
 		}
 
@@ -899,7 +974,7 @@ namespace
 				"StartMovie",
 				[](const rapidjson::Value& value)
 				{
-					SDR::Hooking::GenericHookVariantInit
+					Variant = SDR::Hooking::GenericHookVariantInit
 					(
 						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
 						value
@@ -922,13 +997,13 @@ namespace
 
 				if (CurrentMovie.IsStarted)
 				{
-					SDR::Log::Message("SDR: Movie is already started\n"s);
+					SDR::Log::Message("SDR: Processing is already started\n");
 					return;
 				}
 
 				if (args.Count() < 2)
 				{
-					SDR::Log::Message("SDR: Name is required for startmovie, see Github page for help\n"s);
+					SDR::Log::Message("SDR: Name is required for \"startmovie\", see GitHub page for help\n");
 					return;
 				}
 
@@ -938,24 +1013,41 @@ namespace
 
 				SDR::Profile::Reset();
 
-				/*
-					Retrieve everything after the initial "startmovie" token, in case
-					of special UTF8 names the ArgV is split.
-				*/
-				auto name = args.FullArgs();
+				auto name = args.FullValue();
 
-				while (true)
+				auto newname = ModuleStartMovie::Common::TrimFileName(name);
+				name = newname.c_str();
+
+				CurrentMovie = {};
+
+				try
 				{
-					++name;
+					ModuleStartMovie::Common::WarnAboutName(name);
 
-					if (*name == ' ')
+					if (Variables::Audio::Enable.GetBool())
 					{
-						++name;
-						break;
+						SDR::Log::Message("SDR: Started audio processing\n");
+
+						ModuleStartMovie::Common::AudioProcedure(name);
+						ModuleStartMovie::CallOriginalForAudio();
 					}
+
+					else
+					{
+						SDR::Log::Message("SDR: Started video processing\n");
+
+						ModuleStartMovie::Common::VideoProcedure(name, width, height);
+					}
+
+					CurrentMovie.IsStarted = true;
 				}
 
-				ModuleStartMovie::Common::Procedure(name, width, height);
+				catch (const SDR::Error::Exception& error)
+				{
+					SDR::Log::Warning("SDR: Could not start processing\n");
+
+					CurrentMovie = {};
+				}
 			}
 		}
 
@@ -993,11 +1085,11 @@ namespace
 	{
 		namespace Common
 		{
-			void Procedure(bool async)
+			void Procedure()
 			{
 				if (!CurrentMovie.IsStarted)
 				{
-					SDR::Log::Message("SDR: No movie is started\n"s);
+					SDR::Log::Message("SDR: No processing is started\n");
 					return;
 				}
 
@@ -1007,29 +1099,35 @@ namespace
 					Don't call original function as we don't call the engine's startmovie.
 				*/
 
-				auto hostframerate = SDR::Console::Variable::Find("host_framerate");
-				hostframerate.SetValue(0);
+				SDR::Log::Message("SDR: Ending processing\n");
 
-				auto matqueuemode = SDR::Console::Variable::Find("mat_queue_mode");
-				matqueuemode.SetValue(CurrentMovie.OldMatQueueModeValue);
-
-				auto nofocustime = SDR::Console::Variable::Find("engine_no_focus_sleep");
-				nofocustime.SetValue(CurrentMovie.OldEngineSleepTime);
-
-				SDR::Log::Message("SDR: Ending movie\n"s);
-
-				if (BufferedFrames > 0)
+				if (CurrentMovie.AudioWriter)
 				{
-					SDR::Log::Message("SDR: There are %d buffered frames remaining\n", BufferedFrames.load());
+					if (!ShouldStopThread)
+					{
+						ShouldStopThread = true;
+						CurrentMovie.ThreadHandle.join();
+					}
+
+					CurrentMovie.AudioWriter->Finish();
+
+					SDR::Console::Variable::SetValue("snd_mixahead", CurrentMovie.OldAudioMixAhead);
 				}
 
-				auto func = []()
+				else
 				{
-					if (!ShouldStopFrameThread)
+					if (BufferedItems > 0)
 					{
-						ShouldStopFrameThread = true;
-						CurrentMovie.FrameBufferThreadHandle.join();
+						SDR::Log::Message("SDR: There are %d buffered frames remaining\n", BufferedItems.load());
 					}
+
+					if (!ShouldStopThread)
+					{
+						ShouldStopThread = true;
+						CurrentMovie.ThreadHandle.join();
+					}
+
+					SDR::Console::Variable::SetValue("mat_queue_mode", CurrentMovie.OldMatQueueModeValue);
 
 					/*
 						Let the encoder finish all the delayed frames.
@@ -1037,41 +1135,27 @@ namespace
 					CurrentMovie.VideoStream->Video.Finish();
 
 					SDR::ExtensionManager::Events::EndMovie();
-
-					CurrentMovie = {};
-
-					if (Variables::ExitOnFinish.GetBool())
-					{
-						SDR::EngineClient::ClientCommand("quit\n");
-						return;
-					}
-
-					if (Variables::FlashWindow.GetBool())
-					{
-						SDR::EngineClient::FlashWindow();
-					}
-
-					SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Movie is now complete\n"s);
-
-					SDR::Profile::ShowResults();
-				};
-
-				if (async)
-				{
-					IsStoppingAsync = true;
-
-					auto task = concurrency::create_task(func);
-
-					task.then([]()
-					{
-						IsStoppingAsync = false;
-					});
 				}
 
-				else
+				SDR::Console::Variable::SetValue("host_framerate", 0);
+				SDR::Console::Variable::SetValue("engine_no_focus_sleep", CurrentMovie.OldEngineSleepTime);
+
+				CurrentMovie = {};
+
+				if (Variables::ExitOnFinish.GetBool())
 				{
-					func();
+					SDR::EngineClient::ClientCommand("quit\n");
+					return;
 				}
+
+				if (Variables::FlashWindow.GetBool())
+				{
+					SDR::EngineClient::FlashWindow();
+				}
+
+				SDR::Log::MessageColor({ 88, 255, 39 }, "SDR: Processing is now complete\n");
+
+				SDR::Profile::ShowResults();
 			}
 		}
 
@@ -1082,9 +1166,14 @@ namespace
 			using OverrideType = decltype(NewFunction)*;
 			SDR::Hooking::HookModule<OverrideType> ThisHook;
 
+			void CallOriginal()
+			{
+				ThisHook.GetOriginal()();
+			}
+
 			void __cdecl NewFunction()
 			{
-				Common::Procedure(true);
+				
 			}
 		}
 
@@ -1117,7 +1206,7 @@ namespace
 				/*
 					Ending movie must be synchronous with extensions.
 				*/
-				ModuleEndMovie::Common::Procedure(false);
+				ModuleEndMovie::Common::Procedure();
 			}
 		}
 
@@ -1151,25 +1240,6 @@ namespace
 		);
 	}
 
-	/*
-		This function handles the event when endmovie wasn't called on quit.
-		The cleaning up cannot be done asynchronously as the module itself gets unloaded.
-	*/
-	SDR::ShutdownFunctionAdder A1([]()
-	{
-		if (IsStoppingAsync)
-		{
-			SDR::Log::Message("SDR: Already stopping asynchronously\n"s);
-
-			while (IsStoppingAsync)
-			{
-				std::this_thread::sleep_for(1ms);
-			}
-		}
-
-		ModuleEndMovie::Common::Procedure(false);
-	});
-
 	namespace ModuleSUpdateGuts
 	{
 		namespace Variant0
@@ -1184,6 +1254,18 @@ namespace
 				if (!CurrentMovie.IsStarted)
 				{
 					ThisHook.GetOriginal()(mixahead);
+					return;
+				}
+
+				if (CurrentMovie.AudioWriter)
+				{
+					if (CurrentMovie.FirstFrame)
+					{
+						CurrentMovie.FirstFrame = false;
+						return;
+					}
+
+					ThisHook.GetOriginal()(0);
 				}
 			}
 		}
@@ -1193,6 +1275,158 @@ namespace
 			SDR::ModuleHandlerAdder
 			(
 				"SUpdateGuts",
+				[](const rapidjson::Value& value)
+				{
+					SDR::Hooking::GenericHookVariantInit
+					(
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						value
+					);
+				}
+			)
+		);
+	}
+
+	namespace ModuleVideoMode
+	{
+		void* Ptr;
+
+		namespace WriteMovieFrame
+		{
+			namespace Variant0
+			{
+				void __fastcall NewFunction(void* thisptr, void* edx, void* info);
+
+				using OverrideType = decltype(NewFunction)*;
+				SDR::Hooking::HookModule<OverrideType> ThisHook;
+
+				void __fastcall NewFunction(void* thisptr, void* edx, void* info)
+				{
+
+				}
+			}
+		}
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"VideoModePtr",
+				[](const rapidjson::Value& value)
+				{
+					auto address = SDR::Hooking::GetAddressFromJsonPattern(value);
+					
+					Ptr = **(void***)address;
+					SDR::Error::ThrowIfNull(Ptr);
+
+					SDR::Hooking::ModuleShared::Registry::SetKeyValue("VideoModePtr", Ptr);
+				}
+			),
+			SDR::ModuleHandlerAdder
+			(
+				"VideoMode_WriteMovieFrame",
+				[](const rapidjson::Value& value)
+				{
+					SDR::Hooking::GenericHookVariantInit
+					(
+						{SDR::Hooking::GenericHookInitParam(WriteMovieFrame::Variant0::ThisHook, WriteMovieFrame::Variant0::NewFunction)},
+						value
+					);
+				}
+			)
+		);
+	}
+
+	namespace ModuleWaveCreateTmpFile
+	{
+		namespace Variant0
+		{
+			void __cdecl NewFunction(const char* filename, int rate, int bits, int channels);
+
+			using OverrideType = decltype(NewFunction)*;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
+
+			void __cdecl NewFunction(const char* filename, int rate, int bits, int channels)
+			{
+				
+			}
+		}
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WaveCreateTmpFile",
+				[](const rapidjson::Value& value)
+				{
+					SDR::Hooking::GenericHookVariantInit
+					(
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						value
+					);
+				}
+			)
+		);
+	}
+
+	namespace ModuleWaveAppendTmpFile
+	{
+		namespace Variant0
+		{
+			void __cdecl NewFunction(const char* filename, void* buffer, int samplebits, int samplecount);
+
+			using OverrideType = decltype(NewFunction)*;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
+
+			void __cdecl NewFunction(const char* filename, void* buffer, int samplebits, int samplecount)
+			{
+				MovieData::WaitForBufferedItems();
+
+				auto start = static_cast<int16_t*>(buffer);
+				auto length = samplecount * samplebits / 8;
+
+				++BufferedItems;
+				CurrentMovie.AudioQueue->emplace(start, start + length);
+			}
+		}
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WaveAppendTmpFile",
+				[](const rapidjson::Value& value)
+				{
+					SDR::Hooking::GenericHookVariantInit
+					(
+						{SDR::Hooking::GenericHookInitParam(Variant0::ThisHook, Variant0::NewFunction)},
+						value
+					);
+				}
+			)
+		);
+	}
+
+	namespace ModuleWaveFixupTmpFile
+	{
+		namespace Variant0
+		{
+			void __cdecl NewFunction(const char* filename);
+
+			using OverrideType = decltype(NewFunction)*;
+			SDR::Hooking::HookModule<OverrideType> ThisHook;
+
+			void __cdecl NewFunction(const char* filename)
+			{
+				
+			}
+		}
+
+		auto Adders = SDR::CreateAdders
+		(
+			SDR::ModuleHandlerAdder
+			(
+				"WaveFixupTmpFile",
 				[](const rapidjson::Value& value)
 				{
 					SDR::Hooking::GenericHookVariantInit

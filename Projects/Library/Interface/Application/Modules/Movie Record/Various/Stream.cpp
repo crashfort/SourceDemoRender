@@ -60,21 +60,9 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 		https://msdn.microsoft.com/en-us/library/windows/desktop/ff476082.aspx
 		Not providing a feature level array makes it try 11.0 first and then lesser feature levels.
 	*/
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
-		D3D11CreateDevice
-		(
-			nullptr,
-			D3D_DRIVER_TYPE_HARDWARE,
-			0,
-			flags,
-			nullptr,
-			0,
-			D3D11_SDK_VERSION,
-			Device.GetAddressOf(),
-			&createdlevel,
-			Context.GetAddressOf()
-		),
+		D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, flags, nullptr, 0, D3D11_SDK_VERSION, Device.GetAddressOf(), &createdlevel, Context.GetAddressOf()),
 		"Could not create D3D11 device"
 	);
 
@@ -94,7 +82,7 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 		cbufdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		cbufdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			Device->CreateBuffer(&cbufdesc, nullptr, SamplingConstantBuffer.GetAddressOf()),
 			"Could not create sampling constant buffer"
@@ -121,7 +109,7 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 		D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
 		cbufsubdesc.pSysMem = &cbufdata;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			Device->CreateBuffer(&cbufdesc, &cbufsubdesc, SharedConstantBuffer.GetAddressOf()),
 			"Could not create constant buffer for shared shader data"
@@ -130,19 +118,19 @@ void SDR::Stream::SharedData::DirectX11Data::Create(int width, int height, bool 
 
 	if (sampling)
 	{
-		D3D11::OpenShader(Device.Get(), "Sampling", SDR::D3D11::MakeBlob(CSBlob_Sampling), SamplingShader.GetAddressOf());
-		D3D11::OpenShader(Device.Get(), "ClearUAV", SDR::D3D11::MakeBlob(CSBlob_ClearUAV), ClearShader.GetAddressOf());
+		D3D11::OpenShader(Device.Get(), "Sampling", SDR::D3D11::BlobData::Make(CSBlob_Sampling), SamplingShader.GetAddressOf());
+		D3D11::OpenShader(Device.Get(), "ClearUAV", SDR::D3D11::BlobData::Make(CSBlob_ClearUAV), ClearShader.GetAddressOf());
 	}
 
 	else
 	{
-		D3D11::OpenShader(Device.Get(), "PassUAV", SDR::D3D11::MakeBlob(CSBlob_PassUAV), PassShader.GetAddressOf());
+		D3D11::OpenShader(Device.Get(), "PassUAV", SDR::D3D11::BlobData::Make(CSBlob_PassUAV), PassShader.GetAddressOf());
 	}
 }
 
 void SDR::Stream::StreamBase::DirectX9Data::SharedSurfaceData::Create(IDirect3DDevice9Ex* device, int width, int height)
 {
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		/*
 			Once shared with D3D11, it is interpreted as
@@ -158,21 +146,11 @@ void SDR::Stream::StreamBase::DirectX9Data::SharedSurfaceData::Create(IDirect3DD
 			This change was first made in:
 			https://github.com/crashfort/SourceDemoRender/commit/eaabd701ce413cc372aeabe57755ce37e4bf741c
 		*/
-		device->CreateTexture
-		(
-			width,
-			height,
-			1,
-			D3DUSAGE_RENDERTARGET,
-			D3DFMT_A8R8G8B8,
-			D3DPOOL_DEFAULT,
-			Texture.GetAddressOf(),
-			&SharedHandle
-		),
+		device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, Texture.GetAddressOf(), &SharedHandle),
 		"Could not create D3D9 shared texture"
 	);
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		Texture->GetSurfaceLevel(0, Surface.GetAddressOf()),
 		"Could not get D3D9 surface from texture"
@@ -183,7 +161,7 @@ void SDR::Stream::StreamBase::DirectX9Data::Create(IDirect3DDevice9Ex* device, i
 {
 	SharedSurface.Create(device, width, height);
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		device->GetRenderTarget(0, GameRenderTarget0.GetAddressOf()),
 		"SDR: Could not get D3D9 RT\n"
@@ -194,19 +172,19 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 {
 	Microsoft::WRL::ComPtr<ID3D11Resource> tempresource;
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		device->OpenSharedResource(dx9handle, IID_PPV_ARGS(tempresource.GetAddressOf())),
 		"Could not open shared D3D9 resource"
 	);
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		tempresource.As(&SharedTexture),
 		"Could not query shared D3D9 resource as a D3D11 2D texture"
 	);
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		device->CreateShaderResourceView(SharedTexture.Get(), nullptr, SharedTextureSRV.GetAddressOf()),
 		"Could not create SRV for D3D11 backbuffer texture"
@@ -232,7 +210,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		bufdesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 		bufdesc.StructureByteStride = size;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			device->CreateBuffer(&bufdesc, nullptr, WorkBuffer.GetAddressOf()),
 			"Could not create GPU work buffer"
@@ -243,7 +221,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		uavdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 		uavdesc.Buffer.NumElements = px;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			device->CreateUnorderedAccessView(WorkBuffer.Get(), &uavdesc, WorkBufferUAV.GetAddressOf()),
 			"Could not create UAV for GPU work buffer"
@@ -254,7 +232,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		srvdesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 		srvdesc.Buffer.NumElements = px;
 
-		Error::MS::ThrowIfFailed
+		Error::Microsoft::ThrowIfFailed
 		(
 			device->CreateShaderResourceView(WorkBuffer.Get(), &srvdesc, WorkBufferSRV.GetAddressOf()),
 			"Could not create SRV for GPU work buffer"
@@ -265,21 +243,15 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 	{
 		using FactoryType = std::function<std::unique_ptr<D3D11::ConversionBase>()>;
 
-		RuleData
-		(
-			AVPixelFormat format,
-			const char* name,
-			const BYTE* data,
-			size_t datasize,
-			const FactoryType& factory
-		) :
-			Format(format),
-			ShaderName(name),
-			Data(data),
-			DataSize(datasize),
-			Factory(factory)
+		static RuleData Make(AVPixelFormat format, const char* name, const SDR::D3D11::BlobData& blob, const FactoryType& factory)
 		{
+			RuleData ret;
+			ret.Format = format;
+			ret.ShaderName = name;
+			ret.ShaderBlob = blob;
+			ret.Factory = factory;
 
+			return ret;
 		}
 
 		bool Matches(const AVFrame* ref) const
@@ -288,8 +260,7 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		}
 
 		AVPixelFormat Format;
-		const BYTE* Data;
-		size_t DataSize;
+		SDR::D3D11::BlobData ShaderBlob;
 		const char* ShaderName;
 		FactoryType Factory;
 	};
@@ -306,9 +277,9 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 
 	RuleData table[] =
 	{
-		RuleData(AV_PIX_FMT_YUV420P, "YUV420", CSBlob_YUV420, sizeof(CSBlob_YUV420), yuvfactory),
-		RuleData(AV_PIX_FMT_YUV444P, "YUV444", CSBlob_YUV444, sizeof(CSBlob_YUV444), yuvfactory),
-		RuleData(AV_PIX_FMT_BGR0, "BGR0", CSBlob_BGR0, sizeof(CSBlob_BGR0), bgr0factory),
+		RuleData::Make(AV_PIX_FMT_YUV420P, "YUV420", SDR::D3D11::BlobData::Make(CSBlob_YUV420), yuvfactory),
+		RuleData::Make(AV_PIX_FMT_YUV444P, "YUV444", SDR::D3D11::BlobData::Make(CSBlob_YUV444), yuvfactory),
+		RuleData::Make(AV_PIX_FMT_BGR0, "BGR0", SDR::D3D11::BlobData::Make(CSBlob_BGR0), bgr0factory),
 	};
 
 	RuleData* found = nullptr;
@@ -328,26 +299,10 @@ void SDR::Stream::StreamBase::DirectX11Data::Create(ID3D11Device* device, HANDLE
 		Error::Make("No conversion rule found for \"%s\"", name);
 	}
 
-	D3D11::OpenShader(device, found->ShaderName, SDR::D3D11::MakeBlob(found->Data, found->DataSize), ConversionShader.GetAddressOf());
+	D3D11::OpenShader(device, found->ShaderName, found->ShaderBlob, ConversionShader.GetAddressOf());
 
 	ConversionPtr = found->Factory();
 	ConversionPtr->Create(device, reference, staging);
-}
-
-void SDR::Stream::StreamBase::DirectX11Data::ResetShaderInputs(ID3D11DeviceContext* context)
-{
-	/*
-		At most, 3 slots are used for the YUV buffers.
-	*/
-	const auto count = 3;
-
-	ID3D11ShaderResourceView* srvs[count] = {};
-	ID3D11UnorderedAccessView* uavs[count] = {};
-	ID3D11Buffer* cbufs[count] = {};
-
-	context->CSSetShaderResources(0, count, srvs);
-	context->CSSetUnorderedAccessViews(0, count, uavs, nullptr);
-	context->CSSetConstantBuffers(0, count, cbufs);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::NewFrame(SharedData& shared, float weight)
@@ -364,41 +319,23 @@ void SDR::Stream::StreamBase::DirectX11Data::NewFrame(SharedData& shared, float 
 	{
 		D3D11_MAPPED_SUBRESOURCE mapped;
 
-		auto hr = context->Map
-		(
-			shared.DirectX11.SamplingConstantBuffer.Get(),
-			0,
-			D3D11_MAP_WRITE_DISCARD,
-			0,
-			&mapped
-		);
+		auto hr = context->Map(shared.DirectX11.SamplingConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
 
 		if (FAILED(hr))
 		{
-			Log::Warning("SDR: Could not map sampling constant buffer\n"s);
+			Log::Warning("SDR: Could not map sampling constant buffer\n");
 		}
 
 		else
 		{
 			shared.DirectX11.SamplingConstantData.Weight = weight;
-
-			std::memcpy
-			(
-				mapped.pData,
-				&shared.DirectX11.SamplingConstantData,
-				sizeof(shared.DirectX11.SamplingConstantData)
-			);
+			std::memcpy(mapped.pData, &shared.DirectX11.SamplingConstantData, sizeof(shared.DirectX11.SamplingConstantData));
 		}
 
 		context->Unmap(shared.DirectX11.SamplingConstantBuffer.Get(), 0);
 	}
 
-	auto cbufs =
-	{
-		shared.DirectX11.SharedConstantBuffer.Get(),
-		shared.DirectX11.SamplingConstantBuffer.Get()
-	};
-
+	auto cbufs = { shared.DirectX11.SharedConstantBuffer.Get(), shared.DirectX11.SamplingConstantBuffer.Get() };
 	context->CSSetConstantBuffers(0, 2, cbufs.begin());
 
 	context->CSSetShader(shared.DirectX11.SamplingShader.Get(), nullptr, 0);
@@ -414,7 +351,9 @@ void SDR::Stream::StreamBase::DirectX11Data::NewFrame(SharedData& shared, float 
 
 	context->Flush();
 
-	ResetShaderInputs(context);
+	D3D11::Shader::CSResetSRV<1>(context, 0);
+	D3D11::Shader::CSResetUAV<1>(context, 0);
+	D3D11::Shader::CSResetCBV<2>(context, 0);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::Clear(SharedData& shared)
@@ -431,7 +370,8 @@ void SDR::Stream::StreamBase::DirectX11Data::Clear(SharedData& shared)
 
 	Dispatch(shared);
 
-	ResetShaderInputs(context);
+	D3D11::Shader::CSResetUAV<1>(context, 0);
+	D3D11::Shader::CSResetCBV<1>(context, 0);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::Pass(SharedData& shared)
@@ -451,7 +391,9 @@ void SDR::Stream::StreamBase::DirectX11Data::Pass(SharedData& shared)
 
 	Dispatch(shared);
 
-	ResetShaderInputs(context);
+	D3D11::Shader::CSResetSRV<1>(context, 0);
+	D3D11::Shader::CSResetUAV<1>(context, 0);
+	D3D11::Shader::CSResetCBV<1>(context, 0);
 }
 
 void SDR::Stream::StreamBase::DirectX11Data::NewVideoFrame(SharedData& shared)
@@ -483,7 +425,10 @@ void SDR::Stream::StreamBase::DirectX11Data::Conversion(SharedData& shared)
 
 	Dispatch(shared);
 
-	ResetShaderInputs(context);
+	ConversionPtr->Unbind(context);
+
+	D3D11::Shader::CSResetSRV<1>(context, 0);
+	D3D11::Shader::CSResetCBV<1>(context, 0);
 }
 
 bool SDR::Stream::StreamBase::DirectX11Data::Download(SharedData& shared, FutureData& item)

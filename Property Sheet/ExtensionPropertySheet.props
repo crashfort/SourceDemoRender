@@ -10,6 +10,8 @@
     <ClCompile>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>$(SDR_RAPIDJSON_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <FxCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)..\Shader Definitions\SDR Shader Definitions\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>

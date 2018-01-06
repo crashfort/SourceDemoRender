@@ -3,9 +3,10 @@
 #include <SDR Shared\File.hpp>
 #include <SDR Shared\Json.hpp>
 #include <SDR Shared\IPC.hpp>
-#include <SDR Library API\ExportTypes.hpp>
+#include <SDR Library API\LibraryAPI.hpp>
 #include <SDR LauncherCLI API\LauncherCLIAPI.hpp>
 #include <rapidjson\document.h>
+#include <readerwriterqueue.h>
 #include <Shlwapi.h>
 #include <wrl.h>
 #include <cstdio>
@@ -51,14 +52,16 @@ namespace
 			{
 				if (!MainReady.Event.IsValid())
 				{
-					SDR::Error::MS::ThrowLastError("Could not create event \"MainReady\"");
+					SDR::Error::Microsoft::ThrowLastError("Could not create event \"MainReady\"");
 				}
 
 				if (!WindowCreated.Event.IsValid())
 				{
-					SDR::Error::MS::ThrowLastError("Could not create event \"WindowCreated\"");
+					SDR::Error::Microsoft::ThrowLastError("Could not create event \"WindowCreated\"");
 				}
 			}
+
+			Microsoft::WRL::Wrappers::CriticalSection TextCS;
 
 			EventData MainReady;
 			EventData WindowCreated;
@@ -82,13 +85,21 @@ namespace
 {
 	namespace Window
 	{
+		namespace Messages
+		{
+			enum
+			{
+				NewLogText = WM_APP
+			};
+		}
+
 		HWND CreateRichEdit(HWND owner, int x, int y, int width, int height, HINSTANCE instance)
 		{
 			auto library = LoadLibraryA("Msftedit.dll");
 
 			if (!library)
 			{
-				SDR::Error::MS::ThrowLastError("Could not load rich edit control library");
+				SDR::Error::Microsoft::ThrowLastError("Could not load rich edit control library");
 			}
 
 			auto classname = MSFTEDIT_CLASS;
@@ -124,6 +135,8 @@ namespace
 			COLORREF Color;
 			std::string Text;
 		};
+
+		moodycamel::ReaderWriterQueue<std::vector<TextFormatData>> TextQueue;
 
 		std::vector<TextFormatData> FormatText(const char* text)
 		{
@@ -215,25 +228,10 @@ namespace
 				return;
 			}
 
-			CHARRANGE range;
-			range.cpMin = -1;
-			range.cpMax = -1;
+			auto lock = Synchro::Ptr->TextCS.Lock();
 
-			auto charformat = GetDefaultFormat();
-
-			auto textformats = FormatText(text);
-
-			for (const auto& entry : textformats)
-			{
-				charformat.crTextColor = entry.Color;
-
-				SendMessageA(TextControl, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charformat);
-
-				SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
-				SendMessageA(TextControl, EM_REPLACESEL, 0, (LPARAM)entry.Text.c_str());
-			}
-
-			SendMessageA(TextControl, WM_VSCROLL, SB_BOTTOM, 0);
+			TextQueue.emplace(FormatText(text));
+			PostMessageA(WindowHandle, Messages::NewLogText, 0, 0);
 		}
 
 		LRESULT CALLBACK TextControlProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, UINT_PTR subid, DWORD_PTR ref)
@@ -271,6 +269,31 @@ namespace
 			}
 
 			return DefSubclassProc(hwnd, message, wparam, lparam);
+		}
+
+		void WorkOnTextQueue()
+		{
+			CHARRANGE range;
+			range.cpMin = -1;
+			range.cpMax = -1;
+
+			auto charformat = GetDefaultFormat();
+
+			std::vector<TextFormatData> item;
+
+			while (TextQueue.try_dequeue(item))
+			{
+				for (const auto& entry : item)
+				{
+					charformat.crTextColor = entry.Color;
+
+					SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
+					SendMessageA(TextControl, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charformat);
+					SendMessageA(TextControl, EM_REPLACESEL, 0, (LPARAM)entry.Text.c_str());
+				}
+			}
+
+			SendMessageA(TextControl, WM_VSCROLL, SB_BOTTOM, 0);
 		}
 
 		LRESULT CALLBACK WindowProcedureOwner(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -311,8 +334,21 @@ namespace
 
 				case WM_CONTEXTMENU:
 				{
-					auto posx = GET_X_LPARAM(lparam);
-					auto posy = GET_Y_LPARAM(lparam);
+					POINT pos;
+					pos.x = GET_X_LPARAM(lparam);
+					pos.y = GET_Y_LPARAM(lparam);
+
+					RECT rect;
+					GetClientRect(TextControl, &rect);
+
+					ScreenToClient(TextControl, &pos);
+
+					if (PtInRect(&rect, pos) == 0)
+					{
+						return 0;
+					}
+
+					ClientToScreen(TextControl, &pos);
 
 					auto menu = CreatePopupMenu();
 
@@ -326,7 +362,7 @@ namespace
 					AppendMenuA(menu, MF_SEPARATOR, 0, nullptr);
 					AppendMenuA(menu, MF_STRING, QuitIndex, "Quit");
 
-					auto selection = TrackPopupMenu(menu, TPM_RETURNCMD, posx, posy, 0, WindowHandle, nullptr);
+					auto selection = TrackPopupMenu(menu, TPM_RETURNCMD, pos.x, pos.y, 0, WindowHandle, nullptr);
 
 					if (selection == SelectAllIndex)
 					{
@@ -342,7 +378,8 @@ namespace
 					}
 
 					DestroyMenu(menu);
-					break;
+					
+					return 1;
 				}
 
 				case WM_GETMINMAXINFO:
@@ -351,6 +388,12 @@ namespace
 					info->ptMinTrackSize.x = 640;
 					info->ptMinTrackSize.y = 360;
 
+					return 0;
+				}
+
+				case Messages::NewLogText:
+				{
+					WorkOnTextQueue();
 					return 0;
 				}
 			}
@@ -399,7 +442,7 @@ namespace
 
 					if (error != ERROR_CLASS_ALREADY_EXISTS)
 					{
-						SDR::Error::MS::ThrowLastError("Could not register owner window class");
+						SDR::Error::Microsoft::ThrowLastError("Could not register owner window class");
 					}
 				}
 
@@ -407,7 +450,7 @@ namespace
 				rect.right = 960;
 				rect.bottom = 640;
 
-				const auto style = WS_OVERLAPPEDWINDOW ^ WS_MAXIMIZEBOX | WS_CLIPCHILDREN;
+				const auto style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN;
 
 				AdjustWindowRect(&rect, style, false);
 
@@ -421,14 +464,14 @@ namespace
 
 				if (!WindowHandle)
 				{
-					SDR::Error::MS::ThrowLastError("Could not create window");
+					SDR::Error::Microsoft::ThrowLastError("Could not create window");
 				}
 
 				TextControl = CreateRichEdit(WindowHandle, 0, 0, width, height, instance);
 
 				if (!TextControl)
 				{
-					SDR::Error::MS::ThrowLastError("Could not create rich edit control");
+					SDR::Error::Microsoft::ThrowLastError("Could not create rich edit control");
 				}
 
 				SetWindowSubclass(TextControl, TextControlProcedure, 0, 0);
@@ -514,7 +557,7 @@ namespace
 		{
 			SIZE_T written;
 
-			SDR::Error::MS::ThrowIfZero
+			SDR::Error::Microsoft::ThrowIfZero
 			(
 				WriteProcessMemory(Process, Address, address, size, &written),
 				"Could not write process memory"
@@ -583,10 +626,10 @@ namespace
 			auto failname = SDR::LauncherCLI::CreateEventFailureName(stage);
 
 			EventSuccess.Attach(CreateEventA(nullptr, false, false, successname.c_str()));
-			SDR::Error::MS::ThrowIfZero(EventSuccess.Get(), "Could not create success event in stage \"%s\"", StageName);
+			SDR::Error::Microsoft::ThrowIfZero(EventSuccess.Get(), "Could not create success event in stage \"%s\"", StageName);
 
 			EventFailure.Attach(CreateEventA(nullptr, false, false, failname.c_str()));
-			SDR::Error::MS::ThrowIfZero(EventFailure.Get(), "Could not create failure event in stage \"%s\"", StageName);
+			SDR::Error::Microsoft::ThrowIfZero(EventFailure.Get(), "Could not create failure event in stage \"%s\"", StageName);
 		}
 
 		void WaitEvents(HANDLE process)
@@ -637,27 +680,20 @@ namespace
 	{
 		auto data = (InterProcessData*)param;
 
-		auto library = data->LibraryNameAddr;
-		auto loadexport = data->ExportNameAddr;
-		auto respath = data->ResourcePathAddr;
-		auto gamepath = data->GamePathAddr;
-		auto hwnd = data->LauncherCLI;
+		auto module = data->LoadLibraryAddr(data->LibraryNameAddr);
+		auto func = (SDR::Library::SDR_Initialize)data->GetProcAddressAddr(module, data->ExportNameAddr);
 
-		auto module = data->LoadLibraryAddr(library);
-		auto func = (SDR::API::SDR_Initialize)data->GetProcAddressAddr(module, loadexport);
-
-		SDR::API::InitializeData initdata;
-		initdata.ResourcePath = respath;
-		initdata.GamePath = gamepath;
-		initdata.LauncherCLI = hwnd;
+		SDR::Library::InitializeData initdata;
+		initdata.ResourcePath = data->ResourcePathAddr;
+		initdata.GamePath = data->GamePathAddr;
+		initdata.LauncherCLI = data->LauncherCLI;
 
 		func(initdata);
 	}
 
-	void InjectProcess(HANDLE process, HANDLE thread, const std::string& resourcepath, const std::string& gamepath)
+	void InjectProcess(void* address, HANDLE process, HANDLE thread, const std::string& resourcepath, const std::string& gamepath)
 	{
-		VirtualMemory memory(process, 4096);
-		ProcessWriter writer(process, memory.Address);
+		ProcessWriter writer(process, address);
 
 		/*
 			Produced from ProcessAPC above in Release with machine code listing output.
@@ -667,36 +703,27 @@ namespace
 		{
 			0x55,
 			0x8b, 0xec,
-			0x83, 0xec, 0x10,
-			0x53,
+			0x83, 0xec, 0x0c,
 			0x56,
-			0x57,
-			0x8b, 0x7d, 0x08,
-			0x8b, 0x47, 0x14,
-			0xff, 0x77, 0x08,
-			0x8b, 0x77, 0x0c,
-			0x8b, 0x5f, 0x10,
-			0x89, 0x45, 0x08,
-			0x8b, 0x47, 0x18,
-			0x89, 0x45, 0xfc,
-			0x8b, 0x07,
+			0x8b, 0x75, 0x08,
+			0xff, 0x76, 0x08,
+			0x8b, 0x06,
 			0xff, 0xd0,
-			0x56,
+			0xff, 0x76, 0x0c,
 			0x50,
-			0x8b, 0x47, 0x04,
+			0x8b, 0x46, 0x04,
 			0xff, 0xd0,
-			0x8b, 0x4d, 0x08,
+			0x8b, 0x4e, 0x10,
 			0x89, 0x4d, 0xf4,
-			0x8b, 0x4d, 0xfc,
+			0x8b, 0x4e, 0x14,
 			0x89, 0x4d, 0xf8,
-			0x8d, 0x4d, 0xf0,
+			0x8b, 0x4e, 0x18,
+			0x89, 0x4d, 0xfc,
+			0x8d, 0x4d, 0xf4,
 			0x51,
-			0x89, 0x5d, 0xf0,
 			0xff, 0xd0,
 			0x83, 0xc4, 0x04,
-			0x5f,
 			0x5e,
-			0x5b,
 			0x8b, 0xe5,
 			0x5d,
 			0xc2, 0x04, 0x00,
@@ -730,7 +757,7 @@ namespace
 		/*
 			Enqueue the function to run on ResumeThread with parameter of InterProcessData.
 		*/
-		SDR::Error::MS::ThrowIfZero
+		SDR::Error::Microsoft::ThrowIfZero
 		(
 			QueueUserAPC((PAPCFUNC)funcaddr, thread, (ULONG_PTR)dataaddr),
 			"Could not queue APC for process"
@@ -749,13 +776,6 @@ namespace
 		initstage.WaitEvents(process);
 	}
 
-	template <size_t Size>
-	void RemoveFileName(char(&buffer)[Size])
-	{
-		PathRemoveFileSpecA(buffer);
-		strcat_s(buffer, "\\");
-	}
-
 	PROCESS_INFORMATION StartProcess(const std::string& dir, const std::string& exepath, const std::string& params)
 	{
 		char args[8192];
@@ -771,21 +791,11 @@ namespace
 
 		PROCESS_INFORMATION procinfo;
 
-		SDR::Error::MS::ThrowIfZero
+		auto flags = CREATE_NEW_PROCESS_GROUP | CREATE_SUSPENDED | DETACHED_PROCESS;
+
+		SDR::Error::Microsoft::ThrowIfZero
 		(
-			CreateProcessA
-			(
-				exepath.c_str(),
-				args,
-				nullptr,
-				nullptr,
-				false,
-				CREATE_NEW_PROCESS_GROUP | CREATE_SUSPENDED | DETACHED_PROCESS,
-				nullptr,
-				dir.c_str(),
-				&startinfo,
-				&procinfo
-			),
+			CreateProcessA(exepath.c_str(), args, nullptr, nullptr, false, flags, nullptr, dir.c_str(), &startinfo, &procinfo),
 			"Could not create process"
 		);
 
@@ -848,7 +858,7 @@ namespace
 		}
 
 		char curdir[SDR::File::NameSize];
-		SDR::Error::MS::ThrowIfZero(GetCurrentDirectoryA(sizeof(curdir), curdir), "Could not get current directory");
+		SDR::Error::Microsoft::ThrowIfZero(GetCurrentDirectoryA(sizeof(curdir), curdir), "Could not get current directory");
 		strcat_s(curdir, "\\");
 
 		/*
@@ -876,7 +886,9 @@ namespace
 
 		Local::Print("Injecting into: {string}\"%s\"\n", displayname.c_str());
 
-		InjectProcess(process.Get(), thread.Get(), curdir, gamefolder);
+		VirtualMemory memory(process.Get(), 4096);
+
+		InjectProcess(memory.Address, process.Get(), thread.Get(), curdir, gamefolder);
 
 		/*
 			Wait until the end of SDR::Library::Load() and then read back all messages.
@@ -892,7 +904,7 @@ namespace
 		}
 	}
 
-	void SimulateMachineCode()
+	int SimulateMachineCode()
 	{
 		InterProcessData data;
 		data.LoadLibraryAddr = LoadLibraryA;
@@ -909,7 +921,7 @@ namespace
 
 		SleepEx(0, 1);
 
-		return;
+		return 0;
 	}
 
 	void ShowLibraryVersion()
@@ -921,10 +933,10 @@ namespace
 
 		if (!library)
 		{
-			SDR::Error::Make("Could not load SDR library for version display");
+			SDR::Error::Make("Could not load SDR library for version display"s);
 		}
 
-		auto func = (SDR::API::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
+		auto func = (SDR::Library::SDR_LibraryVersion)GetProcAddress(library, "SDR_LibraryVersion");
 		auto version = func();
 
 		Local::Print("Library version: {number}%d\n", version);
@@ -935,9 +947,9 @@ namespace
 
 int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int showcommand)
 {
-	SDR::Log::SetWarningFunction([](std::string&& text)
+	SDR::Log::SetWarningFunction([](const char* text)
 	{
-		Local::Print("{red}%s", text.c_str());
+		Local::Print("{red}%s", text);
 	});
 
 	try
@@ -957,12 +969,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 
 		ShowLibraryVersion();
 
-		/*
-			/GAME "" /PARAMS "" /
-		*/
 		if (argc < 1)
 		{
-			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PATH \"<game path>\" /PARAMS \"<startup params>\"");
+			SDR::Error::Make("Arguments: /GAME \"<exe path>\" /PATH \"<game path>\" /PARAMS \"<startup params>\""s);
 		}
 
 		std::string exepath;
@@ -996,12 +1005,12 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 
 		if (exepath.empty())
 		{
-			SDR::Error::Make("Required switch \"/GAME\" not found");
+			SDR::Error::Make("Required switch \"/GAME\" not found"s);
 		}
 
 		if (gamepath.empty())
 		{
-			SDR::Error::Make("Required switch \"/PATH\" not found");
+			SDR::Error::Make("Required switch \"/PATH\" not found"s);
 		}
 
 		EnsureFileIsPresent(Local::LibraryName);

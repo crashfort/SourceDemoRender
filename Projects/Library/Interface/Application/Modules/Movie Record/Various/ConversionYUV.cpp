@@ -30,13 +30,10 @@ void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, const AVFrame* refe
 	*/
 	__declspec(align(16)) struct
 	{
-		int Strides[3];
-		int Padding1;
-		float CoeffY[3];
-		int Padding2;
-		float CoeffU[3];
-		int Padding3;
-		float CoeffV[3];
+		int Strides[4];
+		float CoeffY[4];
+		float CoeffU[4];
+		float CoeffV[4];
 	} yuvdata;
 
 	yuvdata.Strides[0] = reference->linesize[0];
@@ -81,7 +78,7 @@ void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, const AVFrame* refe
 	D3D11_SUBRESOURCE_DATA cbufsubdesc = {};
 	cbufsubdesc.pSysMem = &yuvdata;
 
-	Error::MS::ThrowIfFailed
+	Error::Microsoft::ThrowIfFailed
 	(
 		device->CreateBuffer(&cbufdesc, &cbufsubdesc, ConstantBuffer.GetAddressOf()),
 		"Could not create constant buffer for YUV GPU buffer"
@@ -95,6 +92,12 @@ void SDR::D3D11::ConversionYUV::DynamicBind(ID3D11DeviceContext* context)
 
 	auto uavs = { Y.View.Get(), U.View.Get(), V.View.Get() };
 	context->CSSetUnorderedAccessViews(0, 3, uavs.begin(), nullptr);
+}
+
+void SDR::D3D11::ConversionYUV::Unbind(ID3D11DeviceContext* context)
+{
+	Shader::CSResetCBV<1>(context, 1);
+	Shader::CSResetUAV<3>(context, 0);
 }
 
 bool SDR::D3D11::ConversionYUV::Download(ID3D11DeviceContext* context, Stream::FutureData& item)
@@ -120,7 +123,7 @@ bool SDR::D3D11::ConversionYUV::Download(ID3D11DeviceContext* context, Stream::F
 		{
 			pass = false;
 
-			Log::Warning("SDR: Could not map D3D11 YUV buffers\n"s);
+			Log::Warning("SDR: Could not map D3D11 YUV buffers\n");
 			break;
 		}
 	}

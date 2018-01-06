@@ -43,7 +43,7 @@ namespace
 				"ConCommandBase_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::Hooking::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson<Variant0::Data>(value);
 				}
 			)
 		);
@@ -78,7 +78,7 @@ namespace
 				"CCommand_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::Hooking::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson<Variant0::Data>(value);
 				}
 			)
 		);
@@ -131,7 +131,7 @@ namespace
 				"ConCommand_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::Hooking::GetVariantFromJson(value);
+					Variant = SDR::Hooking::GetVariantFromJson<Variant0::Data>(value);
 				}
 			),
 			SDR::ModuleHandlerAdder
@@ -148,7 +148,6 @@ namespace
 	namespace ModuleConVar
 	{
 		int Variant;
-		int NeverAsStringFlag;
 		int VTIndex_SetValueString;
 		int VTIndex_SetValueFloat;
 		int VTIndex_SetValueInt;
@@ -196,8 +195,19 @@ namespace
 
 		namespace Variant1
 		{
-			struct Data : Variant0::Data
+			struct Data : ModuleConCommandBase::Variant0::Data
 			{
+				void* VTable_IConVar;
+
+				void* Parent;
+				const char* DefaultValue;
+
+				char* String;
+				int StringLength;
+
+				float FloatValue;
+				int IntValue;
+
 				uint8_t Unknown[128];
 			};
 
@@ -205,9 +215,9 @@ namespace
 
 			SDR::Hooking::ModuleShared::Variant::Function<Constructor3Type> Constructor3(Entries::Constructor3);
 
-			using SetValueStringType = Variant0::SetValueStringType;
-			using SetValueFloatType = Variant0::SetValueFloatType;
-			using SetValueIntType = Variant0::SetValueIntType;
+			using SetValueStringType = void(__fastcall*)(void* thisptr, void* edx, const char* value);
+			using SetValueFloatType = void(__fastcall*)(void* thisptr, void* edx, float value, int unk);
+			using SetValueIntType = void(__fastcall*)(void* thisptr, void* edx, int value);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -217,8 +227,7 @@ namespace
 				"ConVar_Info",
 				[](const rapidjson::Value& value)
 				{
-					Variant = SDR::Hooking::GetVariantFromJson(value);
-					NeverAsStringFlag = SDR::Json::GetInt(value, "NeverAsStringFlag");
+					Variant = SDR::Hooking::GetVariantFromJson<Variant0::Data, Variant1::Data>(value);
 					
 					VTIndex_SetValueString = SDR::Json::GetInt(value, "VTIndex_SetValueString");
 					VTIndex_SetValueFloat = SDR::Json::GetInt(value, "VTIndex_SetValueFloat");
@@ -414,7 +423,7 @@ namespace SDR::Console
 		else if (ModuleConVar::Variant == 1)
 		{
 			auto ptr = (ModuleConVar::Variant1::Data*)Opaque;
-			return atoi(ptr->String);
+			return ptr->IntValue ^ (uintptr_t)ptr;
 		}
 
 		return 0;
@@ -431,7 +440,17 @@ namespace SDR::Console
 		else if (ModuleConVar::Variant == 1)
 		{
 			auto ptr = (ModuleConVar::Variant1::Data*)Opaque;
-			return atof(ptr->String);
+
+			union
+			{
+				int IntValue;
+				float FloatValue;
+			} temp;
+
+			temp.FloatValue = ptr->FloatValue;
+			temp.IntValue ^= (uintptr_t)ptr;
+
+			return temp.FloatValue;
 		}
 
 		return 0;
@@ -454,21 +473,26 @@ namespace SDR::Console
 		return nullptr;
 	}
 
-	void Variable::SetValue(const char* value)
+	void Variable::SetValue(bool value)
 	{
-		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueString);
+		SetValue((int)value);
+	}
+	
+	void Variable::SetValue(int value)
+	{
+		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueInt);
 
 		if (func)
 		{
 			if (ModuleConVar::Variant == 0)
 			{
-				auto casted = (ModuleConVar::Variant0::SetValueStringType)func;
+				auto casted = (ModuleConVar::Variant0::SetValueIntType)func;
 				casted(Opaque, nullptr, value);
 			}
 
 			else if (ModuleConVar::Variant == 1)
 			{
-				auto casted = (ModuleConVar::Variant1::SetValueStringType)func;
+				auto casted = (ModuleConVar::Variant1::SetValueIntType)func;
 				casted(Opaque, nullptr, value);
 			}
 		}
@@ -489,26 +513,26 @@ namespace SDR::Console
 			else if (ModuleConVar::Variant == 1)
 			{
 				auto casted = (ModuleConVar::Variant1::SetValueFloatType)func;
-				casted(Opaque, nullptr, value);
+				casted(Opaque, nullptr, value, 0);
 			}
 		}
 	}
 
-	void Variable::SetValue(int value)
+	void Variable::SetValue(const char* value)
 	{
-		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueInt);
+		auto func = SDR::Hooking::GetVirtualAddressFromIndex(Opaque, ModuleConVar::VTIndex_SetValueString);
 
 		if (func)
 		{
 			if (ModuleConVar::Variant == 0)
 			{
-				auto casted = (ModuleConVar::Variant0::SetValueIntType)func;
+				auto casted = (ModuleConVar::Variant0::SetValueStringType)func;
 				casted(Opaque, nullptr, value);
 			}
 
 			else if (ModuleConVar::Variant == 1)
 			{
-				auto casted = (ModuleConVar::Variant1::SetValueIntType)func;
+				auto casted = (ModuleConVar::Variant1::SetValueStringType)func;
 				casted(Opaque, nullptr, value);
 			}
 		}
@@ -551,6 +575,29 @@ namespace SDR::Console
 
 		return nullptr;
 	}
+
+	const char* CommandArgs::FullValue() const
+	{
+		auto args = FullArgs();
+
+		/*
+			Retrieve everything after the initial variable name token.
+			In case of special UTF8 values the ArgV is split.
+		*/
+
+		while (*args)
+		{
+			++args;
+
+			if (SDR::String::IsSpace(*args))
+			{
+				++args;
+				break;
+			}
+		}
+
+		return args;
+	}
 }
 
 void SDR::Console::Load()
@@ -583,30 +630,30 @@ void SDR::Console::Load()
 		SDR::Error::Make("Could not find console warning export"s);
 	}
 
-	SDR::Log::SetMessageFunction([](std::string&& text)
+	SDR::Log::SetMessageFunction([](const char* text)
 	{
 		if (ModulePrint::MessageVariant == 0)
 		{
 			auto casted = (ModulePrint::Variant0::MessageType)ModulePrint::MessageAddr;
-			casted(text.c_str());
+			casted(text);
 		}
 	});
 
-	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, std::string&& text)
+	SDR::Log::SetMessageColorFunction([](SDR::Shared::Color col, const char* text)
 	{
 		if (ModulePrint::MessageColorVariant == 0)
 		{
 			auto casted = (ModulePrint::Variant0::MessageColorType)ModulePrint::MessageColorAddr;
-			casted(col, text.c_str());
+			casted(col, text);
 		}
 	});
 
-	SDR::Log::SetWarningFunction([](std::string&& text)
+	SDR::Log::SetWarningFunction([](const char* text)
 	{
 		if (ModulePrint::WarningVariant == 0)
 		{
 			auto casted = (ModulePrint::Variant0::WarningType)ModulePrint::WarningAddr;
-			casted(text.c_str());
+			casted(text);
 		}
 	});
 
@@ -630,22 +677,22 @@ void SDR::Console::MakeCommand(const char* name, Types::CommandCallbackArgsType 
 
 SDR::Console::Variable SDR::Console::MakeBool(const char* name, const char* value)
 {
-	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, 0, true, 1);
+	return MakeGenericVariable(name, value, 0, true, 0, true, 1);
 }
 
 SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value)
 {
-	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag);
+	return MakeGenericVariable(name, value, 0);
 }
 
 SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value, float min)
 {
-	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, min);
+	return MakeGenericVariable(name, value, 0, true, min);
 }
 
 SDR::Console::Variable SDR::Console::MakeNumber(const char* name, const char* value, float min, float max)
 {
-	return MakeGenericVariable(name, value, ModuleConVar::NeverAsStringFlag, true, min, true, max);
+	return MakeGenericVariable(name, value, 0, true, min, true, max);
 }
 
 SDR::Console::Variable SDR::Console::MakeNumberWithString(const char* name, const char* value, float min, float max)

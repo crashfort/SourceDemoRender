@@ -15,6 +15,7 @@
 		"MaterialSystem_GetBackBufferDimensions":
 		{
 			"Comment": "Static CSS IMaterialSystem vtable offset June 4 2017",
+			"SortGroup": "Function",
 			"VTPtrName": "MaterialsPtr",
 			"VTIndex": 31
 		},
@@ -29,24 +30,28 @@
 		"EngineClient_ConsoleVisible":
 		{
 			"Comment": "Static CSS CEngineClient vtable offset August 13 2017",
+			"SortGroup": "Function",
 			"VTPtrName": "EngineClientPtr",
 			"VTIndex": 11
 		},
 		"EngineClient_FlashWindow":
 		{
 			"Comment": "Static CSS CEngineClient vtable offset August 13 2017",
+			"SortGroup": "Function",
 			"VTPtrName": "EngineClientPtr",
 			"VTIndex": 135
 		},
 		"EngineClient_ClientCommand":
 		{
 			"Comment": "Static CSS CEngineClient vtable offset August 13 2017",
+			"SortGroup": "Function",
 			"VTPtrName": "EngineClientPtr",
 			"VTIndex": 7
 		},
 		"D3D9_Device":
 		{
 			"Comment": "0x100CDDF9 static CSS IDA address December 27 2017",
+			"SortGroup": "Pointer",
 			"Module": "shaderapidx9.dll",
 			"Pattern": "A1 ?? ?? ?? ?? 6A 00 56 6A 00 8B 08 6A 15 68 ?? ?? ?? ?? 6A 00 6A 01 6A 01 50 FF 51 5C 85 C0 79 06 C7 06 ?? ?? ?? ??",
 			"Offset": 1
@@ -54,6 +59,7 @@
 		"DrawLoading":
 		{
 			"Comment": "0x10105EA0 static CSS IDA address April 22 2017",
+			"SortGroup": "Pointer",
 			"Module": "engine.dll",
 			"Pattern": "80 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? E8 ?? ?? ?? ?? 6A 00 8B C8 8B 10 FF 92 ?? ?? ?? ?? 6A 00 E8 ?? ?? ?? ?? 6A 01 C6 05 ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 6A 01 E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ??",
 			"Offset": 2
@@ -61,12 +67,14 @@
 		"View_Render":
 		{
 			"Comment": "0x100D5EA0 static CSS IDA address May 22 2017",
+			"SortGroup": "Function",
 			"Module": "client.dll",
 			"Pattern": "55 8B EC 8B 55 08 83 7A 08 00 74 17 83 7A 0C 00 74 11 8B 0D ?? ?? ?? ?? 52 8B 01 FF 50 14 E8 ?? ?? ?? ?? 5D C2 04 00"
 		},
 		"StartMovie":
 		{
 			"Comment": "0x100BF276 static CSS IDA address December 27 2017",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 20 ?? ?? ?? 8B E5 5D C3",
 			"IsRelativeJump": true
@@ -74,24 +82,28 @@
 		"StartMovieCommand":
 		{
 			"Comment": "0x100BEF40 static CSS IDA address December 27 2017",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "55 8B EC 83 EC 08 83 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ??"
 		},
 		"EndMovie":
 		{
 			"Comment": "0x100BAE40 static CSS IDA address May 22 2016",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "80 3D ?? ?? ?? ?? ?? 0F 84 ?? ?? ?? ?? D9 05 ?? ?? ?? ?? 51 B9 ?? ?? ?? ?? D9 1C 24 E8 ?? ?? ?? ?? C7 05 ?? ?? ?? ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 85 C9 74 38"
 		},
 		"EndMovieCommand":
 		{
 			"Comment": "0x100BE970 static CSS IDA address June 29 2017",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "80 3D ?? ?? ?? ?? ?? 75 0F 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 04 C3 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 C3"
 		},
 		"SUpdateGuts":
 		{
 			"Comment": "0x1006E1B4 static CSS IDA address December 27 2017",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "D9 1C 24 E8 ?? ?? ?? ?? 83 C4 04 83 7D ?? 00 7C ?? 8B ?? ?? 85 ??",
 			"Offset": 3,
@@ -108,14 +120,14 @@
 		"Cvar_FindVar":
 		{
 			"Comment": "Static CSS vtable offset August 8 2017 (0x1009D6B8)",
+			"SortGroup": "Function",
 			"VTPtrName": "CvarPtr",
 			"VTIndex": 13
 		},
 		"ConVar_Info":
 		{
-			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes August 17 2017",
+			"Comment": "VT indexes August 17 2017",
 			"SortGroup": "Info",
-			"NeverAsStringFlag": 4096,
 			"Variant": 0,
 			"VTIndex_SetValueString": 10,
 			"VTIndex_SetValueFloat": 11,
@@ -124,6 +136,7 @@
 		"ConVar_Constructor3":
 		{
 			"Comment": "0x10049680 static CSS IDA address December 19 2017",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "D9 E8 51 D9 1C 24 D9 EE 6A 01 51 D9 1C 24 6A 01 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 59 C3",
 			"IsRelativeJump": true,
@@ -147,6 +160,7 @@
 		"ConCommand_Constructor1":
 		{
 			"Comment": "0x10048F40 static CSS IDA address December 19 2017",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "6A 00 6A 00 6A 00 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 59 C3",
 			"IsRelativeJump": true,
@@ -165,6 +179,45 @@
 
 			"WarningVariant": 0,
 			"WarningExport": "Warning"
+		},
+		"VideoModePtr":
+		{
+			"Comment": "0x10162866 static CSS IDA address January 5 2018",
+			"SortGroup": "Pointer",
+			"Module": "engine.dll",
+			"Pattern": "8B 0D ?? ?? ?? ?? D9 05 ?? ?? ?? ?? DD 1C 24 8B 01 FF 50 3C 8B 0D ?? ?? ?? ?? 50 8B 01 FF 50 38",
+			"Offset": 2
+		},
+		"VideoMode_WriteMovieFrame":
+		{
+			"Comment": "Static CSS CVideoMode_MaterialSystem vtable offset Janaury 5 2018",
+			"SortGroup": "Function",
+			"VTPtrName": "VideoModePtr",
+			"VTIndex": 26
+		},
+		"WaveCreateTmpFile":
+		{
+			"Comment": "0x1007C634 static CSS IDA address Janaury 5 2018",
+			"Module": "engine.dll",
+			"Pattern": "A1 ?? ?? ?? ?? C1 E8 02 A8 01 74 16 6A 02 6A 10 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 10 C3",
+			"IsRelativeJump": true,
+			"Offset": 26
+		},
+		"WaveAppendTmpFile":
+		{
+			"Comment": "0x1007C84B static CSS IDA address January 5 2018",
+			"Module": "engine.dll",
+			"Pattern": "56 6A 10 57 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 83 C4 10",
+			"IsRelativeJump": true,
+			"Offset": 9
+		},
+		"WaveFixupTmpFile":
+		{
+			"Comment": "0x1007C5D9 static CSS IDA address January 5 2018",
+			"Module": "engine.dll",
+			"Pattern": "A1 ?? ?? ?? ?? C1 E8 02 A8 01 74 0B 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 59",
+			"IsRelativeJump": true,
+			"Offset": 17
 		}
 	},
 	"Half-Life 2\\hl2":
@@ -193,9 +246,8 @@
 
 		"ConVar_Info":
 		{
+			"Comment": "VT indexes August 17 2017",
 			"SortGroup": "Info",
-			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes August 17 2017",
-			"NeverAsStringFlag": 4096,
 			"Variant": 1,
 			"VTIndex_SetValueString": 10,
 			"VTIndex_SetValueFloat": 11,
@@ -223,18 +275,21 @@
 		"View_Render":
 		{
 			"Comment": "0x10167380 static GMOD IDA address December 27 2017",
+			"SortGroup": "Function",
 			"Module": "client.dll",
 			"Pattern": "55 8B EC 57 8B 7D 08 83 7F 08 00 0F 84 ?? ?? ?? ?? 83 7F 0C 00 0F 84 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 56 8B 01 FF 90 ?? ?? ?? ?? 8B F0 85 F6 74 06 8B 06 8B CE FF 10 8B 06 8B CE 6A 00 FF 50 10 8B 06 8B CE FF 50 04 8B 0D ?? ?? ?? ?? 5E 85 C9 74 1C 6A 7F E8 ?? ?? ?? ?? 84 C0 74 11 8B 0D ?? ?? ?? ?? 6A 00 E8 ?? ?? ?? ?? 84 C0 75 33"
 		},
 		"StartMovieCommand":
 		{
 			"Comment": "0x100A9E90 static GMOD IDA address December 18 2017",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "55 8B EC 83 EC 0C 83 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 53 8B 5D 08 56 83 3B 02 7D 6C 8B 35 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF D6 68 ?? ?? ?? ?? FF D6 68 ?? ?? ?? ?? FF D6 68 ?? ?? ?? ?? FF D6 68 ?? ?? ?? ?? FF D6 68 ?? ?? ?? ?? FF D6 68 ?? ?? ?? ?? FF D6 6A 5A"
 		},
 		"SUpdateGuts":
 		{
 			"Comment": "0x1005C402 static GMOD IDA address December 18 2017",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "E8 ?? ?? ?? ?? 83 C4 04 8D 4D BC E8 ?? ?? ?? ?? 8B E5 5D C3",
 			"IsRelativeJump": true
@@ -242,6 +297,7 @@
 		"ConCommand_Constructor1":
 		{
 			"Comment": "0x1024BC00 static GMOD IDA address August 27 2017",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "55 8B EC 8B 45 0C 8B 55 18 85 D2 56 8B F1 0F 95 C1 89 46 18 B8 ?? ?? ?? ?? 0F 45 C2 C7 46 ?? ?? ?? ?? ?? 89 46 1C 8A 46 20 24 FE C7 06 ?? ?? ?? ?? 0A C8 C6 46 08 00 8B 45 08 80 E1 FB 80 C9 02 89 46 0C 8B 45 10 85 C0 88 4E 20 B9 ?? ?? ?? ?? 0F 45 C8 8B 45 14 89 4E 10 89 46 14 A8 01 75 10 A1 ?? ?? ?? ?? 89 46 04 89 35 ?? ?? ?? ?? EB 07"
 		}
@@ -255,20 +311,21 @@
 		"Cvar_FindVar":
 		{
 			"Comment": "Static BMS vtable offset December 27 2017 (0x1009DF28)",
+			"SortGroup": "Function",
 			"VTPtrName": "CvarPtr",
 			"VTIndex": 16
 		},
 		"MaterialSystem_GetBackBufferDimensions":
 		{
 			"Comment": "Static BMS CMaterialSystem vtable index December 27 2017",
+			"SortGroup": "Function",
 			"VTPtrName": "MaterialsPtr",
 			"VTIndex": 34
 		},
 		"ConVar_Info":
 		{
+			"Comment": "VT indexes December 27 2017",
 			"SortGroup": "Info",
-			"Comment": "4096 (1 << 12) in iconvar.h August 8 2017. VT indexes December 27 2017",
-			"NeverAsStringFlag": 4096,
 			"Variant": 1,
 			"VTIndex_SetValueString": 13,
 			"VTIndex_SetValueFloat": 14,

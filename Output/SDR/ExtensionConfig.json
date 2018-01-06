@@ -4,6 +4,7 @@
 		"VelocityText_GetLocalPlayer":
 		{
 			"Comment": "0x101A7623 static CSS IDA address December 18 2017",
+			"SortGroup": "Function",
 			"Module": "client.dll",
 			"Pattern": "E8 ?? ?? ?? ?? 8B D8 85 DB 74 2E 8B 13 8B CB",
 			"IsRelativeJump": true
@@ -11,6 +12,7 @@
 		"VelocityText_ClientEntityLocalVelocity":
 		{
 			"Comment": "0x10097866 static CSS IDA address December 15 2017",
+			"SortGroup": "Function",
 			"Module": "client.dll",
 			"Pattern": "E8 ?? ?? ?? ?? 83 C4 0C 5B 5F 5E 8B E5 5D C2 04 00 D9 07 D9 9E ?? ?? ?? ?? D9 47 04 D9 9E ?? ?? ?? ?? D9 47 08 D9 9E ?? ?? ?? ?? 5B 5F 5E 8B E5 5D C2 04 00",
 			"Offset": 21
@@ -18,6 +20,7 @@
 		"VelocityText_ClientEntityAbsoluteVelocity":
 		{
 			"Comment": "0x100977CA static CSS IDA address December 15 2017",
+			"SortGroup": "Function",
 			"Module": "client.dll",
 			"Pattern": "D9 9E ?? ?? ?? ?? D9 47 04 D9 9E ?? ?? ?? ?? D9 47 08 D9 9E ?? ?? ?? ?? 8B 8E ?? ?? ?? ?? 83 F9 FF 0F 84 ?? ?? ?? ??",
 			"Offset": 2
@@ -25,12 +28,14 @@
 		"VelocityText_PlayerByIndex":
 		{
 			"Comment": "0x1019CB30 static CSS IDA address December 15 2017",
+			"SortGroup": "Function",
 			"Module": "client.dll",
 			"Pattern": "55 8B EC 8B 0D ?? ?? ?? ?? 56 FF 75 08 E8 ?? ?? ?? ?? 8B F0 85 F6 74 15 8B 16 8B CE 8B 92 ?? ?? ?? ?? FF D2 84 C0 74 05 8B C6 5E 5D C3 33 C0 5E 5D C3"
 		},
 		"VelocityText_GetSpectatorTarget":
 		{
 			"Comment": "0x100D6240 static CSS IDA address December 15 2017",
+			"SortGroup": "Function",
 			"Module": "client.dll",
 			"Pattern": "E8 ?? ?? ?? ?? 85 C0 74 16 8B 10 8B C8 FF 92 ?? ?? ?? ?? 85 C0 74 08 8D 48 08 8B 01 FF 60 24 33 C0 C3"
 		}

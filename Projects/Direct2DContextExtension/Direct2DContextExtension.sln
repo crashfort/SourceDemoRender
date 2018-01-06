@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Direct2DContext", "Direct2DContext\Direct2DContext.vcxproj", "{72EACA43-F48A-4B45-846B-B867C514CFFD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console Types", "..\Console Types\Console Types.vcxitems", "{3AA441C9-9A1C-45A0-8DB7-191124401A75}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Direct3D11", "..\Direct3D11\Direct3D11.vcxitems", "{751BADE2-721F-4138-BCF1-846B33DCE585}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Extension", "..\Extension\Extension.vcxitems", "{574D1CCA-F375-4E5C-950B-9E2B1B7A2A92}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shared", "..\Shared\Shared.vcxitems", "{45D41ACC-2C3C-43D2-BC10-02AA73FFC7C7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Direct2DContext API", "Direct2DContext API\Direct2DContext API.vcxitems", "{90C11EF9-DC50-427F-8F56-2D6E90DE8933}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		..\Console Types\Console Types.vcxitems*{3aa441c9-9a1c-45a0-8db7-191124401a75}*SharedItemsImports = 9
+		..\Shared\Shared.vcxitems*{45d41acc-2c3c-43d2-bc10-02aa73ffc7c7}*SharedItemsImports = 9
+		..\Extension\Extension.vcxitems*{574d1cca-f375-4e5c-950b-9e2b1b7a2a92}*SharedItemsImports = 9
+		..\Console Types\Console Types.vcxitems*{72eaca43-f48a-4b45-846b-b867c514cffd}*SharedItemsImports = 4
+		Direct2DContext API\Direct2DContext API.vcxitems*{72eaca43-f48a-4b45-846b-b867c514cffd}*SharedItemsImports = 4
+		..\Direct3D11\Direct3D11.vcxitems*{72eaca43-f48a-4b45-846b-b867c514cffd}*SharedItemsImports = 4
+		..\Extension\Extension.vcxitems*{72eaca43-f48a-4b45-846b-b867c514cffd}*SharedItemsImports = 4
+		..\Shared\Shared.vcxitems*{72eaca43-f48a-4b45-846b-b867c514cffd}*SharedItemsImports = 4
+		..\Direct3D11\Direct3D11.vcxitems*{751bade2-721f-4138-bcf1-846b33dce585}*SharedItemsImports = 9
+		Direct2DContext API\Direct2DContext API.vcxitems*{90c11ef9-dc50-427f-8f56-2d6e90de8933}*SharedItemsImports = 9
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{72EACA43-F48A-4B45-846B-B867C514CFFD}.Debug|x86.ActiveCfg = Debug|Win32
+		{72EACA43-F48A-4B45-846B-B867C514CFFD}.Debug|x86.Build.0 = Debug|Win32
+		{72EACA43-F48A-4B45-846B-B867C514CFFD}.Release|x86.ActiveCfg = Release|Win32
+		{72EACA43-F48A-4B45-846B-B867C514CFFD}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

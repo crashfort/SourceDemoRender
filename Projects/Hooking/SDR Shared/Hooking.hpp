@@ -106,9 +106,14 @@ namespace SDR::Hooking
 	void* GetAddressFromJsonFlex(const rapidjson::Value& value);
 	void* GetAddressFromJsonPattern(const rapidjson::Value& value);
 
-	int GetVariantFromJson(const rapidjson::Value& value);
+	int GetVariantFromJson(const rapidjson::Value& value, int max);
 
-	void WarnAboutHookVariant(int variant);
+	template <typename T, typename... Rest>
+	int GetVariantFromJson(const rapidjson::Value& value)
+	{
+		return GetVariantFromJson(value, sizeof...(Rest) + 1);
+	}
+
 	void WarnIfVariantOutOfBounds(int variant, int max);
 
 	void* GetVirtualAddressFromIndex(void* ptr, int index);
@@ -265,7 +270,7 @@ namespace SDR::Hooking
 		void* Override;
 	};
 
-	void GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const rapidjson::Value& value);
+	int GenericHookVariantInit(std::initializer_list<GenericHookInitParam> hooks, const rapidjson::Value& value);
 
 	#endif
 

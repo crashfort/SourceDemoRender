@@ -2,9 +2,10 @@
 #include "Interface\LibraryInterface.hpp"
 #include <SDR Shared\Json.hpp>
 #include <SDR Shared\Hooking.hpp>
-#include <SDR Library API\ExportTypes.hpp>
+#include <SDR Library API\LibraryAPI.hpp>
 #include <SDR LauncherCLI API\LauncherCLIAPI.hpp>
 #include "Application.hpp"
+#include "ConfigSystem.hpp"
 #include "Interface\Application\Extensions\ExtensionManager.hpp"
 
 namespace
@@ -20,148 +21,6 @@ namespace
 
 	namespace Config
 	{
-		template <typename NodeType, typename FuncType>
-		void MemberLoop(NodeType& node, FuncType callback)
-		{
-			auto& begin = node.MemberBegin();
-			auto& end = node.MemberEnd();
-
-			for (auto it = begin; it != end; ++it)
-			{
-				callback(it);
-			}
-		}
-
-		struct ConfigObjectData
-		{
-			std::string ObjectName;
-			std::vector<std::pair<std::string, rapidjson::Value>> Properties;
-		};
-
-		std::vector<ConfigObjectData> GameConfigs;
-		std::vector<ConfigObjectData> ExtensionConfigs;
-
-		void ResolveInherit(ConfigObjectData* targetgame, const std::vector<ConfigObjectData>& source, rapidjson::Document::AllocatorType& alloc)
-		{
-			auto foundinherit = false;
-
-			std::vector<std::pair<std::string, rapidjson::Value>> temp;
-
-			for (auto it = targetgame->Properties.begin(); it != targetgame->Properties.end(); ++it)
-			{
-				if (it->first == "Inherit")
-				{
-					foundinherit = true;
-
-					if (!it->second.IsString())
-					{
-						SDR::Error::Make("SDR: \"%s\" inherit field not a string\n", targetgame->ObjectName.c_str());
-					}
-
-					std::string from = it->second.GetString();
-
-					targetgame->Properties.erase(it);
-
-					for (const auto& game : source)
-					{
-						bool foundgame = false;
-
-						if (game.ObjectName == from)
-						{
-							foundgame = true;
-
-							for (const auto& sourceprop : game.Properties)
-							{
-								bool shouldadd = true;
-
-								for (const auto& destprop : targetgame->Properties)
-								{
-									if (sourceprop.first == destprop.first)
-									{
-										shouldadd = false;
-										break;
-									}
-								}
-
-								if (shouldadd)
-								{
-									temp.emplace_back(std::make_pair(sourceprop.first, rapidjson::Value(sourceprop.second, alloc)));
-								}
-							}
-
-							for (auto&& orig : targetgame->Properties)
-							{
-								temp.emplace_back(std::move(orig));
-							}
-
-							targetgame->Properties = std::move(temp);
-
-							break;
-						}
-
-						if (!foundgame)
-						{
-							SDR::Error::Make("\"%s\" inherit target \"%s\" not found", targetgame->ObjectName.c_str(), from.c_str());
-						}
-					}
-
-					break;
-				}
-			}
-
-			if (foundinherit)
-			{
-				ResolveInherit(targetgame, source, alloc);
-			}
-		}
-
-		void ResolveSort(ConfigObjectData* targetgame)
-		{
-			auto temp = std::move(targetgame->Properties);
-
-			auto addgroup = [&](const char* name)
-			{
-				for (auto&& prop : temp)
-				{
-					if (prop.first.empty())
-					{
-						continue;
-					}
-
-					if (prop.second.IsObject())
-					{
-						if (prop.second.HasMember("SortGroup"))
-						{
-							std::string group = prop.second["SortGroup"].GetString();
-
-							if (group == name)
-							{
-								targetgame->Properties.emplace_back(std::move(prop));
-							}
-						}
-					}
-				}
-			};
-
-			addgroup("Pointer");
-			addgroup("Info");
-			addgroup("Function");
-			addgroup("User1");
-			addgroup("User2");
-			addgroup("User3");
-			addgroup("User4");
-
-			for (auto&& rem : temp)
-			{
-				if (rem.first.empty())
-				{
-					continue;
-				}
-
-				targetgame->Properties.emplace_back(std::move(rem));
-			}
-		}
-
 		void PrintModuleState(bool value, const char* name)
 		{
 			if (!value)
@@ -175,7 +34,10 @@ namespace
 			}
 		}
 
-		void CallGameHandlers(ConfigObjectData* game)
+		std::vector<SDR::ConfigSystem::ObjectData> GameConfigs;
+		std::vector<SDR::ConfigSystem::ObjectData> ExtensionConfigs;
+
+		void CallGameHandlers(SDR::ConfigSystem::ObjectData* game)
 		{
 			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", MainApplication.ModuleHandlers.size());
 
@@ -225,48 +87,35 @@ namespace
 			MainApplication.ModuleHandlers.clear();
 		}
 
-		void CallExtensionHandlers(ConfigObjectData* object)
+		void CallExtensionHandlers(SDR::ConfigSystem::ObjectData* object)
 		{
 			if (object->Properties.empty())
 			{
 				return;
 			}
 
-			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}extension modules\n", object->Properties.size());
+			std::vector<std::pair<std::string, rapidjson::Value>*> temp;
 
 			for (auto& prop : object->Properties)
 			{
-				auto found = SDR::ExtensionManager::Events::CallHandlers(prop.first.c_str(), prop.second);
-				PrintModuleState(found, prop.first.c_str());
-			}
-		}
-
-		ConfigObjectData* PopulateAndFindObject(rapidjson::Document& document, std::vector<ConfigObjectData>& dest)
-		{
-			MemberLoop(document, [&](rapidjson::Document::MemberIterator gameit)
-			{
-				dest.emplace_back();
-				auto& curobj = dest.back();
-
-				curobj.ObjectName = gameit->name.GetString();
-
-				MemberLoop(gameit->value, [&](rapidjson::Document::MemberIterator gamedata)
+				if (SDR::ExtensionManager::IsNamespaceLoaded(prop.first.c_str()))
 				{
-					curobj.Properties.emplace_back(gamedata->name.GetString(), std::move(gamedata->value));
-				});
-			});
-
-			auto gamename = SDR::Library::GetGamePath();
-
-			for (auto& obj : dest)
-			{
-				if (SDR::String::EndsWith(gamename, obj.ObjectName.c_str()))
-				{
-					return &obj;
+					temp.emplace_back(&prop);
 				}
 			}
 
-			return nullptr;
+			if (temp.empty())
+			{
+				return;
+			}
+
+			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}extension modules\n", temp.size());
+
+			for (auto& prop : temp)
+			{
+				auto found = SDR::ExtensionManager::Events::CallHandlers(prop->first.c_str(), prop->second);
+				PrintModuleState(found, prop->first.c_str());
+			}
 		}
 
 		void SetupGame()
@@ -283,17 +132,18 @@ namespace
 				SDR::Error::Make("Could not find game config"s);
 			}
 
-			auto object = PopulateAndFindObject(document, GameConfigs);
+			auto searcher = SDR::Library::GetGamePath();
+			auto object = SDR::ConfigSystem::FindAndPopulateObject(document, searcher, GameConfigs);
 
 			if (!object)
 			{
 				SDR::Error::Make("Could not find current game in game config"s);
 			}
 
-			ResolveInherit(object, GameConfigs, document.GetAllocator());
-			ResolveSort(object);
+			SDR::ConfigSystem::ResolveInherit(object, GameConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveSort(object);
+			
 			CallGameHandlers(object);
-
 			GameConfigs.clear();
 		}
 
@@ -311,16 +161,18 @@ namespace
 				SDR::Error::Make("Could not find extension config"s);
 			}
 
-			auto object = PopulateAndFindObject(document, ExtensionConfigs);
+			auto searcher = SDR::Library::GetGamePath();
+			auto object = FindAndPopulateObject(document, searcher, ExtensionConfigs);
 
 			if (!object)
 			{
 				SDR::Error::Make("Could not find current game in extension config"s);
 			}
 
-			ResolveInherit(object, ExtensionConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveInherit(object, ExtensionConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveSort(object);
+			
 			CallExtensionHandlers(object);
-
 			ExtensionConfigs.clear();
 		}
 	}
@@ -447,21 +299,29 @@ namespace
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override);
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override);
 
-			auto codes =
-			{
+			SDR::Error::MH::ThrowIfFailed
+			(
 				MH_EnableHook(A::ThisHook.TargetFunction),
-				MH_EnableHook(ExA::ThisHook.TargetFunction),
-				MH_EnableHook(W::ThisHook.TargetFunction),
-				MH_EnableHook(ExW::ThisHook.TargetFunction),
-			};
+				"Could not enable library intercept A"
+			);
 
-			for (auto code : codes)
-			{
-				if (code != MH_OK)
-				{
-					SDR::Error::Make("Could not enable library intercepts"s);
-				}
-			}
+			SDR::Error::MH::ThrowIfFailed
+			(
+				MH_EnableHook(ExA::ThisHook.TargetFunction),
+				"Could not enable library intercept ExA"			
+			);
+
+			SDR::Error::MH::ThrowIfFailed
+			(
+				MH_EnableHook(W::ThisHook.TargetFunction),
+				"Could not enable library intercept W"
+			);
+			
+			SDR::Error::MH::ThrowIfFailed
+			(
+				MH_EnableHook(ExW::ThisHook.TargetFunction),
+				"Could not enable library intercept ExW"
+			);
 		}
 
 		void End()
@@ -476,12 +336,11 @@ namespace
 
 void SDR::PreEngineSetup()
 {
-	auto res = SDR::Hooking::Initialize();
-
-	if (res != MH_OK)
-	{
-		SDR::Error::Make("Could not initialize hooks"s);
-	}
+	SDR::Error::MH::ThrowIfFailed
+	(
+		SDR::Hooking::Initialize(),
+		"Could not initialize hooks"
+	);
 
 	LoadLibraryIntercept::Start();
 }

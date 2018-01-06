@@ -34,6 +34,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)SDR Shared\Log.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SDR Shared\String.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SDR Shared\TargetWindowsVersion.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SDR Shared\Table.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Source\Error.cpp">
