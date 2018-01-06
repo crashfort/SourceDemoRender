@@ -215,9 +215,9 @@ namespace
 
 			SDR::Hooking::ModuleShared::Variant::Function<Constructor3Type> Constructor3(Entries::Constructor3);
 
-			using SetValueStringType = Variant0::SetValueStringType;
-			using SetValueFloatType = Variant0::SetValueFloatType;
-			using SetValueIntType = Variant0::SetValueIntType;
+			using SetValueStringType = void(__fastcall*)(void* thisptr, void* edx, const char* value);
+			using SetValueFloatType = void(__fastcall*)(void* thisptr, void* edx, float value, int unk);
+			using SetValueIntType = void(__fastcall*)(void* thisptr, void* edx, int value);
 		}
 
 		auto Adders = SDR::CreateAdders
@@ -513,7 +513,7 @@ namespace SDR::Console
 			else if (ModuleConVar::Variant == 1)
 			{
 				auto casted = (ModuleConVar::Variant1::SetValueFloatType)func;
-				casted(Opaque, nullptr, value);
+				casted(Opaque, nullptr, value, 0);
 			}
 		}
 	}
