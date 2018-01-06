@@ -165,7 +165,7 @@ This extension creates a rendering context that all other extensions can use wit
 		<tr>
 			<td>sdr_audio_only</td>
 			<td>
-				Only process audio. All video variables will be ignored and audio will be processed as fast as possible.
+				Only process audio. All video variables except <b>sdr_video_fps</b> will be ignored and audio will be processed as fast as possible.
 				<br/><br/>
 				<b>Values:</b> 0 or 1 <br/>
 				<b>Default:</b> 0 <br/>
