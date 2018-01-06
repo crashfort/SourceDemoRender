@@ -334,8 +334,21 @@ namespace
 
 				case WM_CONTEXTMENU:
 				{
-					auto posx = GET_X_LPARAM(lparam);
-					auto posy = GET_Y_LPARAM(lparam);
+					POINT pos;
+					pos.x = GET_X_LPARAM(lparam);
+					pos.y = GET_Y_LPARAM(lparam);
+
+					RECT rect;
+					GetClientRect(TextControl, &rect);
+
+					ScreenToClient(TextControl, &pos);
+
+					if (PtInRect(&rect, pos) == 0)
+					{
+						return 0;
+					}
+
+					ClientToScreen(TextControl, &pos);
 
 					auto menu = CreatePopupMenu();
 
@@ -349,7 +362,7 @@ namespace
 					AppendMenuA(menu, MF_SEPARATOR, 0, nullptr);
 					AppendMenuA(menu, MF_STRING, QuitIndex, "Quit");
 
-					auto selection = TrackPopupMenu(menu, TPM_RETURNCMD, posx, posy, 0, WindowHandle, nullptr);
+					auto selection = TrackPopupMenu(menu, TPM_RETURNCMD, pos.x, pos.y, 0, WindowHandle, nullptr);
 
 					if (selection == SelectAllIndex)
 					{
@@ -365,7 +378,8 @@ namespace
 					}
 
 					DestroyMenu(menu);
-					break;
+					
+					return 1;
 				}
 
 				case WM_GETMINMAXINFO:
