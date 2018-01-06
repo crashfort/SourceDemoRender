@@ -6,6 +6,7 @@
 #include <SDR Library API\LibraryAPI.hpp>
 #include <SDR LauncherCLI API\LauncherCLIAPI.hpp>
 #include <rapidjson\document.h>
+#include <readerwriterqueue.h>
 #include <Shlwapi.h>
 #include <wrl.h>
 #include <cstdio>
@@ -60,6 +61,8 @@ namespace
 				}
 			}
 
+			Microsoft::WRL::Wrappers::CriticalSection TextCS;
+
 			EventData MainReady;
 			EventData WindowCreated;
 		};
@@ -82,6 +85,14 @@ namespace
 {
 	namespace Window
 	{
+		namespace Messages
+		{
+			enum
+			{
+				NewLogText = WM_APP
+			};
+		}
+
 		HWND CreateRichEdit(HWND owner, int x, int y, int width, int height, HINSTANCE instance)
 		{
 			auto library = LoadLibraryA("Msftedit.dll");
@@ -124,6 +135,8 @@ namespace
 			COLORREF Color;
 			std::string Text;
 		};
+
+		moodycamel::ReaderWriterQueue<std::vector<TextFormatData>> TextQueue;
 
 		std::vector<TextFormatData> FormatText(const char* text)
 		{
@@ -215,25 +228,10 @@ namespace
 				return;
 			}
 
-			CHARRANGE range;
-			range.cpMin = -1;
-			range.cpMax = -1;
+			auto lock = Synchro::Ptr->TextCS.Lock();
 
-			auto charformat = GetDefaultFormat();
-
-			auto textformats = FormatText(text);
-
-			for (const auto& entry : textformats)
-			{
-				charformat.crTextColor = entry.Color;
-
-				SendMessageA(TextControl, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charformat);
-
-				SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
-				SendMessageA(TextControl, EM_REPLACESEL, 0, (LPARAM)entry.Text.c_str());
-			}
-
-			SendMessageA(TextControl, WM_VSCROLL, SB_BOTTOM, 0);
+			TextQueue.emplace(FormatText(text));
+			PostMessageA(WindowHandle, Messages::NewLogText, 0, 0);
 		}
 
 		LRESULT CALLBACK TextControlProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, UINT_PTR subid, DWORD_PTR ref)
@@ -271,6 +269,31 @@ namespace
 			}
 
 			return DefSubclassProc(hwnd, message, wparam, lparam);
+		}
+
+		void WorkOnTextQueue()
+		{
+			CHARRANGE range;
+			range.cpMin = -1;
+			range.cpMax = -1;
+
+			auto charformat = GetDefaultFormat();
+
+			std::vector<TextFormatData> item;
+
+			while (TextQueue.try_dequeue(item))
+			{
+				for (const auto& entry : item)
+				{
+					charformat.crTextColor = entry.Color;
+
+					SendMessageA(TextControl, EM_EXSETSEL, 0, (LPARAM)&range);
+					SendMessageA(TextControl, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charformat);
+					SendMessageA(TextControl, EM_REPLACESEL, 0, (LPARAM)entry.Text.c_str());
+				}
+			}
+
+			SendMessageA(TextControl, WM_VSCROLL, SB_BOTTOM, 0);
 		}
 
 		LRESULT CALLBACK WindowProcedureOwner(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -351,6 +374,12 @@ namespace
 					info->ptMinTrackSize.x = 640;
 					info->ptMinTrackSize.y = 360;
 
+					return 0;
+				}
+
+				case Messages::NewLogText:
+				{
+					WorkOnTextQueue();
 					return 0;
 				}
 			}
