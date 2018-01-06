@@ -109,23 +109,15 @@ namespace
 
 		SendMessageA(Local::LauncherCLI, WM_COPYDATA, 0, (LPARAM)&copydata);
 	}
-
-	auto CreateShadowLoadState(SDR::LauncherCLI::StageType stage)
-	{
-		auto localdata = std::make_unique<LoadFuncData>();
-		localdata->Create(stage);
-
-		return localdata;
-	}
 }
 
 void SDR::Library::Load()
 {
-	std::unique_ptr<LoadFuncData> localdata;
+	auto localdata = std::make_unique<LoadFuncData>();
 
 	try
 	{
-		localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Load);
+		localdata->Create(SDR::LauncherCLI::StageType::Load);
 
 		SDR::Setup();
 		SDR::Log::Message("{dark}SDR: {green}Source Demo Render loaded\n");
@@ -205,11 +197,11 @@ extern "C"
 			WriteToLauncherCLI(format.c_str());
 		});
 
-		std::unique_ptr<LoadFuncData> localdata;
+		auto localdata = std::make_unique<LoadFuncData>();
 
 		try
 		{
-			localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Initialize);
+			localdata->Create(SDR::LauncherCLI::StageType::Initialize);
 			
 			SDR::PreEngineSetup();
 
