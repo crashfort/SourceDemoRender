@@ -155,6 +155,25 @@ This extension creates a rendering context that all other extensions can use wit
 	</tbody>
 </table>
 
+## Audio variables
+<table>
+	<thead>
+		<th>Name</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
+		<tr>
+			<td>sdr_audio_only</td>
+			<td>
+				Only process audio. All video variables will be ignored and audio will be processed as fast as possible.
+				<br/><br/>
+				<b>Values:</b> 0 or 1 <br/>
+				<b>Default:</b> 0 <br/>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
 ## Video variables
 <table>
 	<thead>
