@@ -121,9 +121,11 @@ namespace
 
 void SDR::Library::Load()
 {
+	std::unique_ptr<LoadFuncData> localdata;
+
 	try
 	{
-		auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Load);
+		localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Load);
 
 		SDR::Setup();
 		SDR::Log::Message("{dark}SDR: {green}Source Demo Render loaded\n");
@@ -203,9 +205,12 @@ extern "C"
 			WriteToLauncherCLI(format.c_str());
 		});
 
+		std::unique_ptr<LoadFuncData> localdata;
+
 		try
 		{
-			auto localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Initialize);
+			localdata = CreateShadowLoadState(SDR::LauncherCLI::StageType::Initialize);
+			
 			SDR::PreEngineSetup();
 
 			localdata->Failure = false;

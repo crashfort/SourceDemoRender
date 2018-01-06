@@ -691,10 +691,9 @@ namespace
 		func(initdata);
 	}
 
-	void InjectProcess(HANDLE process, HANDLE thread, const std::string& resourcepath, const std::string& gamepath)
+	void InjectProcess(void* address, HANDLE process, HANDLE thread, const std::string& resourcepath, const std::string& gamepath)
 	{
-		VirtualMemory memory(process, 4096);
-		ProcessWriter writer(process, memory.Address);
+		ProcessWriter writer(process, address);
 
 		/*
 			Produced from ProcessAPC above in Release with machine code listing output.
@@ -887,7 +886,9 @@ namespace
 
 		Local::Print("Injecting into: {string}\"%s\"\n", displayname.c_str());
 
-		InjectProcess(process.Get(), thread.Get(), curdir, gamefolder);
+		VirtualMemory memory(process.Get(), 4096);
+
+		InjectProcess(memory.Address, process.Get(), thread.Get(), curdir, gamefolder);
 
 		/*
 			Wait until the end of SDR::Library::Load() and then read back all messages.
