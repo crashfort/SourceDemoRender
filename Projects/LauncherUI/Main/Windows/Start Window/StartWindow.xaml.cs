@@ -114,6 +114,28 @@ namespace LauncherUI
 			return ret;
 		}
 
+		string GetFileHashString(string filename)
+		{
+			byte[] hash;
+
+			using (var hasher = System.Security.Cryptography.SHA1.Create())
+			{
+				using (var stream = System.IO.File.OpenRead(filename))
+				{
+					hash = hasher.ComputeHash(stream);
+				}
+			}
+
+			string ret = "";
+
+			foreach (var item in hash)
+			{
+				ret += item.ToString("X2");
+			}
+
+			return ret;
+		}
+
 		SequenceData ExtensionSequence(string document)
 		{
 			var ret = new SequenceData();
@@ -129,22 +151,30 @@ namespace LauncherUI
 					continue;
 				}
 
-				var keyname = string.Format("{0}Version", item.Query.Namespace);
-
-				if (json.ContainsKey(keyname))
+				if (json.ContainsKey(item.Query.Namespace))
 				{
-					int local = item.Query.Version;
-					int web = json[keyname];
+					var root = json[item.Query.Namespace];
 
-					if (web > local)
+					int localver = item.Query.Version;
+					int webver = root["Version"];
+
+					if (webver > localver)
 					{
 						ret.HasMessage = true;
 
 						var name = item.Query.Name;
 
-						var format = string.Format("Update is available for extension \"{0}\" from version {1} to {2}.", name, local, web);
+						var format = string.Format("Update is available for extension \"{0}\" from version {1} to {2}.", name, localver, webver);
 
 						AddLogText(format);
+					}
+
+					var localhash = GetFileHashString(item.RelativePath);
+					string webhash = root["Hash"];
+
+					if (localhash == webhash)
+					{
+						SDR.VerifiedExtensions.Add(item.FileName);
 					}
 				}
 			}

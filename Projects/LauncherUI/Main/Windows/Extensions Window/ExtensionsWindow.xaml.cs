@@ -267,6 +267,12 @@ namespace LauncherUI
 
 				var enabledstr = new System.Windows.Controls.TextBlock();
 				enabledstr.Text = item.Info.FileName;
+
+				if (!SDR.VerifiedExtensions.IsVerified(item.Info.FileName))
+				{
+					enabledstr.Text += " (Unverified)";
+				}
+
 				enabledstr.Foreground = System.Windows.Media.Brushes.Gray;
 
 				enabledseq.Inlines.Add(enabledtitle);
