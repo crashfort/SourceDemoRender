@@ -107,7 +107,7 @@ namespace LauncherUI
 
 			else if (libraryweb > librarylocal)
 			{
-				AddLogText("Library update is available from {0} to {1}. Press Upgrade to view release.", librarylocal, libraryweb);
+				AddLogText("Library update is available from version {0} to {1}. Press Upgrade to view release.", librarylocal, libraryweb);
 				UpgradeButton.IsEnabled = true;
 			}
 
