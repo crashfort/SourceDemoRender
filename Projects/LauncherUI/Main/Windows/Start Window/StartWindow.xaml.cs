@@ -91,7 +91,7 @@ namespace LauncherUI
 			public bool HasMessage = false;
 		}
 
-		SequenceData CheckSDRVersions(string document)
+		SequenceData ProgramSequence(string document)
 		{
 			var ret = new SequenceData();
 
@@ -114,7 +114,7 @@ namespace LauncherUI
 			return ret;
 		}
 
-		SequenceData CheckExtensionVersions(string document)
+		SequenceData ExtensionSequence(string document)
 		{
 			var ret = new SequenceData();
 
@@ -152,7 +152,7 @@ namespace LauncherUI
 			return ret;
 		}
 
-		async Task<SequenceData> UpdateConfigs()
+		async Task<SequenceData> ConfigSequence()
 		{
 			var ret = new SequenceData();
 
@@ -199,9 +199,9 @@ namespace LauncherUI
 
 				var responses = new SequenceData[]
 				{
-					CheckSDRVersions(document),
-					CheckExtensionVersions(document),
-					await UpdateConfigs()
+					ProgramSequence(document),
+					ExtensionSequence(document),
+					await ConfigSequence()
 				};
 
 				foreach (var item in responses)
