@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Net.Http;
@@ -141,6 +140,9 @@ namespace LauncherUI
 			var ret = new SequenceData();
 
 			var exts = SDR.Loader.LoadAll("Extensions\\Enabled\\");
+			var disabled = SDR.Loader.LoadAll("Extensions\\Disabled\\");
+
+			exts.AddRange(disabled);
 
 			var json = System.Json.JsonValue.Parse(document);
 
@@ -165,7 +167,6 @@ namespace LauncherUI
 						var name = item.Query.Name;
 
 						var format = string.Format("Update is available for extension \"{0}\" from version {1} to {2}.", name, localver, webver);
-
 						AddLogText(format);
 					}
 
