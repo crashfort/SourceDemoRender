@@ -9,10 +9,6 @@ namespace LauncherUI
 {
 	public partial class StartWindow : Window
 	{
-		[DllImport("SourceDemoRender.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-		static extern int SDR_LibraryVersion();
-
-		int LocalVersion = SDR_LibraryVersion();
 		HttpClient NetClient = new HttpClient();
 
 		string UpdateBranch = "master";
@@ -55,14 +51,9 @@ namespace LauncherUI
 			return string.Format("https://raw.githubusercontent.com/crashfort/SourceDemoRender/{0}/{1}", UpdateBranch, file);
 		}
 
-		async Task<int> GetGitHubLibraryVersion()
+		async Task<string> GetGitHubVersionsDocument()
 		{
-			var path = BuildGitHubPath("Version/Latest.json");
-
-			var content = await NetClient.GetStringAsync(path);
-			var document = System.Json.JsonValue.Parse(content);
-
-			return document["LibraryVersion"];
+			return await NetClient.GetStringAsync(BuildGitHubPath("Version/Latest.json"));
 		}
 
 		async Task<string> GetGitHubGameConfig()
@@ -95,66 +86,143 @@ namespace LauncherUI
 			StatusText.Text += string.Format(format + "\n", args);
 		}
 
+		class SequenceData
+		{
+			public bool HasMessage = false;
+		}
+
+		SequenceData CheckSDRVersions(string document)
+		{
+			var ret = new SequenceData();
+
+			var json = System.Json.JsonValue.Parse(document);
+			int libraryweb = json["LibraryVersion"];
+
+			int librarylocal = SDR.LibraryAPI.GetLibraryVersion();
+
+			if (libraryweb == librarylocal)
+			{
+				AddLogText("Using the latest library version.");
+			}
+
+			else if (libraryweb > librarylocal)
+			{
+				AddLogText("Library update is available from {0} to {1}. Press Upgrade to view release.", librarylocal, libraryweb);
+				UpgradeButton.IsEnabled = true;
+			}
+
+			return ret;
+		}
+
+		SequenceData CheckExtensionVersions(string document)
+		{
+			var ret = new SequenceData();
+
+			var exts = SDR.Loader.LoadAll("Extensions\\Enabled\\");
+
+			var json = System.Json.JsonValue.Parse(document);
+
+			foreach (var item in exts)
+			{
+				if (item.Query.Namespace == null)
+				{
+					continue;
+				}
+
+				var keyname = string.Format("{0}Version", item.Query.Namespace);
+
+				if (json.ContainsKey(keyname))
+				{
+					int local = item.Query.Version;
+					int web = json[keyname];
+
+					if (web > local)
+					{
+						ret.HasMessage = true;
+
+						var name = item.Query.Name;
+
+						var format = string.Format("Update is available for extension \"{0}\" from version {1} to {2}.", name, local, web);
+
+						AddLogText(format);
+					}
+				}
+			}
+
+			return ret;
+		}
+
+		async Task<SequenceData> UpdateConfigs()
+		{
+			var ret = new SequenceData();
+
+			if (ShouldFileBeUpdated("GameConfig.json"))
+			{
+				var webconfig = await GetGitHubGameConfig();
+				System.IO.File.WriteAllText("GameConfig.json", webconfig, new System.Text.UTF8Encoding(false));
+
+				AddLogText("Latest game config was downloaded.");
+			}
+
+			else
+			{
+				AddLogText("Game config is set to read only so it will not be updated.");
+				ret.HasMessage = true;
+			}
+
+			if (ShouldFileBeUpdated("ExtensionConfig.json"))
+			{
+				var webconfig = await GetGitHubExtensionConfig();
+				System.IO.File.WriteAllText("ExtensionConfig.json", webconfig, new System.Text.UTF8Encoding(false));
+
+				AddLogText("Latest extension config was downloaded.");
+			}
+
+			else
+			{
+				AddLogText("Extension config is set to read only so it will not be updated.");
+				ret.HasMessage = true;
+			}
+
+			return ret;
+		}
+
 		async void MainProcedure()
 		{
-			AddLogText("Looking for SDR updates.");
+			AddLogText("Looking for updates.");
 
-			bool autoskip = false;
+			bool pause = false;
 
 			try
 			{
-				var webver = await GetGitHubLibraryVersion();
+				var document = await GetGitHubVersionsDocument();
 
-				if (LocalVersion == webver)
+				var responses = new SequenceData[]
 				{
-					AddLogText("Using the latest library version.");
-					autoskip = true;
-				}
+					CheckSDRVersions(document),
+					CheckExtensionVersions(document),
+					await UpdateConfigs()
+				};
 
-				else if (webver > LocalVersion)
+				foreach (var item in responses)
 				{
-					AddLogText("Library update is available from {0} to {1}. Press Upgrade to view release.", LocalVersion, webver);
-					UpgradeButton.IsEnabled = true;
-				}
-
-				if (ShouldFileBeUpdated("GameConfig.json"))
-				{
-					var webconfig = await GetGitHubGameConfig();
-					System.IO.File.WriteAllText("GameConfig.json", webconfig, new System.Text.UTF8Encoding(false));
-
-					AddLogText("Latest game config was downloaded.");
-				}
-
-				else
-				{
-					AddLogText("Game config is set to read only so it will not be updated.");
-					autoskip = false;
-				}
-
-				if (ShouldFileBeUpdated("ExtensionConfig.json"))
-				{
-					var webconfig = await GetGitHubExtensionConfig();
-					System.IO.File.WriteAllText("ExtensionConfig.json", webconfig, new System.Text.UTF8Encoding(false));
-
-					AddLogText("Latest extension config was downloaded.");
-				}
-
-				else
-				{
-					AddLogText("Extension config is set to read only so it will not be updated.");
-					autoskip = false;
+					if (item.HasMessage)
+					{
+						pause = true;
+						break;
+					}
 				}
 			}
 
 			catch (Exception error)
 			{
 				AddLogText(error.Message);
-				autoskip = false;
+				pause = true;
 			}
 
 			StartButton.IsEnabled = true;
 
-			if (autoskip)
+			if (pause == false)
 			{
 				ProceedToMainWindow();
 			}

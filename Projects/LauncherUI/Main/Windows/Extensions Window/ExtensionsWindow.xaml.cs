@@ -62,6 +62,8 @@ namespace LauncherUI
 				data.Info = item;
 				data.Enabled = enabled;
 
+				SDR.QueryData.FillNullStrings(ref data.Info.Query);
+
 				Extensions.Add(data);
 			}
 		}

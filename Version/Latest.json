@@ -1,3 +1,7 @@
 {
-	"LibraryVersion": 29
+	"LibraryVersion": 29,
+
+	"PreviewWindowVersion": 3,
+	"VelocityTextVersion": 3,
+	"Direct2DContextVersion": 1
 }

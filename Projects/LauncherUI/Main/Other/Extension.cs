@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LauncherUI.SDR
 {
@@ -21,27 +18,26 @@ namespace LauncherUI.SDR
 	};
 
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-	public delegate void QueryType(ref QueryDataPtr data);
+	public delegate void SDR_Query(ref QueryDataPtr data);
 
 	public class QueryData
 	{
+		public static void FillNullStrings(ref QueryData data)
+		{
+			data.Name = data.Name ?? "N/A";
+			data.Namespace = data.Namespace ?? "N/A";
+			data.Author = data.Author ?? "N/A";
+			data.Contact = data.Contact ?? "N/A";
+		}
+
 		public static QueryData FromPtr(QueryDataPtr ptr)
 		{
 			var ret = new QueryData();
 
 			ret.Name = Marshal.PtrToStringAnsi(ptr.Name);
-
-			if (ret.Name == null)
-			{
-				ret.Name = "Unnamed Extension";
-			}
-
+			ret.Namespace = Marshal.PtrToStringAnsi(ptr.Namespace);
 			ret.Author = Marshal.PtrToStringAnsi(ptr.Author);
-
-			if (ret.Author == null)
-			{
-				ret.Author = "Unnamed Author";
-			}
+			ret.Contact = Marshal.PtrToStringAnsi(ptr.Contact);
 
 			ret.Version = ptr.Version;
 
@@ -102,7 +98,7 @@ namespace LauncherUI.SDR
 
 					if (address != IntPtr.Zero)
 					{
-						var function = Marshal.GetDelegateForFunctionPointer<SDR.QueryType>(address);
+						var function = Marshal.GetDelegateForFunctionPointer<SDR_Query>(address);
 
 						var result = new QueryDataPtr();
 						function(ref result);
