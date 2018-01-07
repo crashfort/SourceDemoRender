@@ -93,6 +93,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Main\Other\Extension.cs" />
+    <Compile Include="Main\Other\Windows.cs" />
     <Compile Include="Main\Windows\Extensions Window\ExtensionsWindow.xaml.cs">
       <DependentUpon>ExtensionsWindow.xaml</DependentUpon>
     </Compile>
