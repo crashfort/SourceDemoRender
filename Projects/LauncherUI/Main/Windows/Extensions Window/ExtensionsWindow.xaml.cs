@@ -54,7 +54,7 @@ namespace LauncherUI
 
 		void LoadExtensionsFromPath(string path, bool enabled)
 		{
-			var exts = SDR.Loader.LoadAll(path);
+			var exts = SDR.ExtensionLoader.LoadAll(path);
 
 			foreach (var item in exts)
 			{

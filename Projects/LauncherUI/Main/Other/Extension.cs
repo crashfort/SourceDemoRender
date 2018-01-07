@@ -76,7 +76,7 @@ namespace LauncherUI.SDR
 		public QueryData Query;
 	}
 
-	public static class Loader
+	public static class ExtensionLoader
 	{
 		static public List<ExtensionData> LoadAll(string path)
 		{

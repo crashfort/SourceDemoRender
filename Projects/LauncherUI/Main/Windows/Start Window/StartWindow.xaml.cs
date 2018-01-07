@@ -139,8 +139,8 @@ namespace LauncherUI
 		{
 			var ret = new SequenceData();
 
-			var exts = SDR.Loader.LoadAll("Extensions\\Enabled\\");
-			var disabled = SDR.Loader.LoadAll("Extensions\\Disabled\\");
+			var exts = SDR.ExtensionLoader.LoadAll("Extensions\\Enabled\\");
+			var disabled = SDR.ExtensionLoader.LoadAll("Extensions\\Disabled\\");
 
 			exts.AddRange(disabled);
 
