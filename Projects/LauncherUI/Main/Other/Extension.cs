@@ -15,7 +15,7 @@ namespace LauncherUI.SDR
 		public int Version;
 
 		public IntPtr Dependencies;
-	};
+	}
 
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	public delegate void SDR_Query(ref QueryDataPtr data);
@@ -66,7 +66,7 @@ namespace LauncherUI.SDR
 		public int Version;
 
 		public List<string> Dependencies;
-	};
+	}
 
 	public class ExtensionData
 	{
@@ -74,7 +74,7 @@ namespace LauncherUI.SDR
 		public string FileName;
 
 		public QueryData Query;
-	};
+	}
 
 	public static class Loader
 	{
@@ -121,5 +121,5 @@ namespace LauncherUI.SDR
 
 			return ret;
 		}
-	};
+	}
 }
