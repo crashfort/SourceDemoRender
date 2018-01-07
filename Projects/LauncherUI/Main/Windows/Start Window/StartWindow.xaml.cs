@@ -157,17 +157,20 @@ namespace LauncherUI
 				{
 					var root = json[item.Query.Namespace];
 
-					int localver = item.Query.Version;
-					int webver = root["Version"];
-
-					if (webver > localver)
+					if (disabled.Find(other => other.RelativePath == item.RelativePath) != null)
 					{
-						ret.HasMessage = true;
+						int localver = item.Query.Version;
+						int webver = root["Version"];
 
-						var name = item.Query.Name;
+						if (webver > localver)
+						{
+							ret.HasMessage = true;
 
-						var format = string.Format("Update is available for extension \"{0}\" from version {1} to {2}.", name, localver, webver);
-						AddLogText(format);
+							var name = item.Query.Name;
+
+							var format = string.Format("Update is available for extension \"{0}\" from version {1} to {2}.", name, localver, webver);
+							AddLogText(format);
+						}
 					}
 
 					var localhash = GetFileHashString(item.RelativePath);
