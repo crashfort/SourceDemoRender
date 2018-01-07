@@ -157,7 +157,7 @@ namespace LauncherUI
 				{
 					var root = json[item.Query.Namespace];
 
-					if (disabled.Find(other => other.RelativePath == item.RelativePath) != null)
+					if (disabled.Find(other => other.RelativePath == item.RelativePath) == null)
 					{
 						int localver = item.Query.Version;
 						int webver = root["Version"];
