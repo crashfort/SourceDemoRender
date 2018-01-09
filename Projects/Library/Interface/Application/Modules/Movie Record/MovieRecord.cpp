@@ -174,6 +174,8 @@ namespace
 					videoitem.Writer->SetFrameInput(videoitem.Planes);
 					videoitem.Writer->SendRawFrame();
 				}
+
+				std::this_thread::yield();
 			}
 		}
 
@@ -189,6 +191,8 @@ namespace
 
 					AudioWriter->WritePCM16Samples(audioitem);
 				}
+
+				std::this_thread::yield();
 			}
 		}
 	
