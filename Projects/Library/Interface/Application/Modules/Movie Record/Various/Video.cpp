@@ -42,13 +42,18 @@ void SDR::Video::Writer::SetEncoder(AVCodec* encoder)
 	CodecContext = Stream->codec;
 }
 
-void SDR::Video::Writer::OpenEncoder(int framerate, AVDictionary** options)
+void SDR::Video::Writer::OpenEncoder(int framerate, int threads, AVDictionary** options)
 {
 	CodecContext->width = Frame->width;
 	CodecContext->height = Frame->height;
 	CodecContext->pix_fmt = (AVPixelFormat)Frame->format;
 	CodecContext->colorspace = Frame->colorspace;
 	CodecContext->color_range = Frame->color_range;
+
+	if (threads > 0)
+	{
+		CodecContext->thread_count = threads;
+	}
 
 	if (FormatContext->oformat->flags & AVFMT_GLOBALHEADER)
 	{

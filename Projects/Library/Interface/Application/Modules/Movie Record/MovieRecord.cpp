@@ -35,6 +35,7 @@ namespace
 			SDR::Console::Variable YUVColorSpace;
 			SDR::Console::Variable Encoder;
 			SDR::Console::Variable PixelFormat;
+			SDR::Console::Variable Threads;
 
 			namespace LAV
 			{
@@ -73,6 +74,7 @@ namespace
 			Video::YUVColorSpace = SDR::Console::MakeString("sdr_video_yuvspace", "709");
 			Video::Encoder = SDR::Console::MakeString("sdr_video_encoder", "libx264rgb");
 			Video::PixelFormat = SDR::Console::MakeString("sdr_video_pxformat", "");
+			Video::Threads = SDR::Console::MakeNumber("sdr_video_threads", "0", 0);
 
 			Video::LAV::SuppressLog = SDR::Console::MakeBool("sdr_video_lav_suppresslog", "1");
 
@@ -893,8 +895,9 @@ namespace
 					}
 
 					auto fps = Variables::Video::Framerate.GetInt();
+					auto threads = Variables::Video::Threads.GetInt();
 					
-					CurrentMovie.VideoStream->Video.OpenEncoder(fps, options.Get());
+					CurrentMovie.VideoStream->Video.OpenEncoder(fps, threads, options.Get());
 					CurrentMovie.VideoStream->Video.WriteHeader();
 				}
 

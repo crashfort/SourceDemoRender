@@ -15,7 +15,7 @@ namespace SDR::Video
 
 		void OpenFileForWrite(const char* path);
 		void SetEncoder(AVCodec* encoder);
-		void OpenEncoder(int framerate, AVDictionary** options);
+		void OpenEncoder(int framerate, int threads, AVDictionary** options);
 
 		void WriteHeader();
 		void WriteTrailer();
