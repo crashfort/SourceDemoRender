@@ -71,6 +71,7 @@ namespace
 		findexport("SDR_EndMovie", ext.EndMovie);
 		findexport("SDR_NewVideoFrame", ext.NewVideoFrame);
 
+		ext.Info = {};
 		ext.Query(ext.Info);
 
 		SDR::Extension::InitializeData data = {};
