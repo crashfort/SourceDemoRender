@@ -95,7 +95,6 @@
     </ApplicationDefinition>
     <Compile Include="Main\Other\Extension.cs" />
     <Compile Include="Main\Other\LibraryAPI.cs" />
-    <Compile Include="Main\Other\Verified.cs" />
     <Compile Include="Main\Other\Windows.cs" />
     <Compile Include="Main\Windows\Extensions Window\ExtensionsWindow.xaml.cs">
       <DependentUpon>ExtensionsWindow.xaml</DependentUpon>

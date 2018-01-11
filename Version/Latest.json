@@ -3,22 +3,18 @@
 
 	"PreviewWindow":
 	{
-		"Version": 3,
-		"Hash": "50C852FC9ACCB479C4DE684DF99B3E4CB3A30F27"
+		"Version": 3
 	},
 	"VelocityText":
 	{
-		"Version": 3,
-		"Hash": "77CD470ED44F7BD83D6ED49759F0DD4C5347586C"
+		"Version": 4
 	},
 	"Direct2DContext":
 	{
-		"Version": 1,
-		"Hash": "0E6AB697D13D8E197254FBC77E8B2D54B73E0B36"
+		"Version": 1
 	},
 	"MultiProcess":
 	{
-		"Version": 1,
-		"Hash": "57E2A697DDFD78BF647C5A593B864E92328B68A5"
+		"Version": 1
 	}
 }
