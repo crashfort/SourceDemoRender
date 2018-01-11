@@ -24,7 +24,7 @@ namespace LauncherUI
 		{
 			public string DisplayName;
 			public string ExpectedExecutableName;
-		};
+		}
 
 		CurrentGameVerifyData CurrentVerifyGame = new CurrentGameVerifyData();
 

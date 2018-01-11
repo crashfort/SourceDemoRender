@@ -25,7 +25,8 @@ namespace
 
 		namespace Audio
 		{
-			SDR::Console::Variable Enable;
+			SDR::Console::Variable OnlyAudio;
+			SDR::Console::Variable DisableVideo;
 		}
 
 		namespace Video
@@ -34,6 +35,7 @@ namespace
 			SDR::Console::Variable YUVColorSpace;
 			SDR::Console::Variable Encoder;
 			SDR::Console::Variable PixelFormat;
+			SDR::Console::Variable Threads;
 
 			namespace LAV
 			{
@@ -72,6 +74,7 @@ namespace
 			Video::YUVColorSpace = SDR::Console::MakeString("sdr_video_yuvspace", "709");
 			Video::Encoder = SDR::Console::MakeString("sdr_video_encoder", "libx264rgb");
 			Video::PixelFormat = SDR::Console::MakeString("sdr_video_pxformat", "");
+			Video::Threads = SDR::Console::MakeNumber("sdr_video_threads", "0", 0);
 
 			Video::LAV::SuppressLog = SDR::Console::MakeBool("sdr_video_lav_suppresslog", "1");
 
@@ -84,7 +87,8 @@ namespace
 			Video::X264::Preset = SDR::Console::MakeString("sdr_video_x264_preset", "ultrafast");
 			Video::X264::Intra = SDR::Console::MakeBool("sdr_video_x264_intra", "1");
 
-			Audio::Enable = SDR::Console::MakeBool("sdr_audio_only", "0");
+			Audio::OnlyAudio = SDR::Console::MakeBool("sdr_audio_only", "0");
+			Audio::DisableVideo = SDR::Console::MakeBool("sdr_audio_disable_video", "1");
 		});
 	}
 }
@@ -170,6 +174,8 @@ namespace
 					videoitem.Writer->SetFrameInput(videoitem.Planes);
 					videoitem.Writer->SendRawFrame();
 				}
+
+				std::this_thread::yield();
 			}
 		}
 
@@ -185,6 +191,8 @@ namespace
 
 					AudioWriter->WritePCM16Samples(audioitem);
 				}
+
+				std::this_thread::yield();
 			}
 		}
 	
@@ -258,17 +266,17 @@ bool SDR::MovieRecord::ShouldRecordVideo()
 		return false;
 	}
 
-	if (CurrentMovie.AudioWriter)
-	{
-		return false;
-	}
-
 	if (SDR::SourceGlobals::IsDrawingLoading())
 	{
 		return false;
 	}
 
 	if (SDR::EngineClient::IsConsoleVisible())
+	{
+		return false;
+	}
+
+	if (CurrentMovie.AudioWriter)
 	{
 		return false;
 	}
@@ -437,6 +445,23 @@ namespace
 
 			void __fastcall NewFunction(void* thisptr, void* edx, void* rect)
 			{
+				if (!CurrentMovie.IsStarted)
+				{
+					ThisHook.GetOriginal()(thisptr, edx, rect);
+					return;
+				}
+
+				if (Variables::Audio::DisableVideo.GetBool())
+				{
+					if (!SDR::EngineClient::IsConsoleVisible() && !SDR::SourceGlobals::IsDrawingLoading())
+					{
+						if (CurrentMovie.AudioWriter)
+						{
+							return;
+						}
+					}
+				}
+
 				ThisHook.GetOriginal()(thisptr, edx, rect);
 				Common::Procedure();
 			}
@@ -874,8 +899,9 @@ namespace
 					}
 
 					auto fps = Variables::Video::Framerate.GetInt();
+					auto threads = Variables::Video::Threads.GetInt();
 					
-					CurrentMovie.VideoStream->Video.OpenEncoder(fps, options.Get());
+					CurrentMovie.VideoStream->Video.OpenEncoder(fps, threads, options.Get());
 					CurrentMovie.VideoStream->Video.WriteHeader();
 				}
 
@@ -1024,7 +1050,7 @@ namespace
 				{
 					ModuleStartMovie::Common::WarnAboutName(name);
 
-					if (Variables::Audio::Enable.GetBool())
+					if (Variables::Audio::OnlyAudio.GetBool())
 					{
 						SDR::Log::Message("SDR: Started audio processing\n");
 

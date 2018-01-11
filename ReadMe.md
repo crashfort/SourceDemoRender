@@ -90,6 +90,11 @@ This extension will gather the current player velocity and display it in a highl
 
 This extension creates a rendering context that all other extensions can use without having to recreate it all the time.
 
+### Multi Process
+**Availability:** Contact me
+
+This extension will allow you to render with multiple instances of SDR for parallel video creation.
+
 ## General commands
 <table>
 	<thead>
@@ -169,6 +174,15 @@ This extension creates a rendering context that all other extensions can use wit
 				<br/><br/>
 				<b>Values:</b> 0 or 1 <br/>
 				<b>Default:</b> 0 <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_audio_disable_video</td>
+			<td>
+				Disable all video processing when audio is being processed.
+				<br/><br/>
+				<b>Values:</b> 0 or 1 <br/>
+				<b>Default:</b> 1 <br/>
 			</td>
 		</tr>
 	</tbody>
@@ -281,6 +295,15 @@ This extension creates a rendering context that all other extensions can use wit
 				<br/><br/>
 				<b>Values:</b> 601 or 709 <br/>
 				<b>Default:</b> 709 <br/>
+			</td>
+		</tr>
+		<tr>
+			<td>sdr_video_threads</td>
+			<td>
+				How many threads to use for video encoding. If this value is zero, the application will automatically decide how many threads to use.
+				<br/><br/>
+				<b>Values:</b> 0 or higher <br/>
+				<b>Default:</b> 0 <br/>
 			</td>
 		</tr>
 	</tbody>

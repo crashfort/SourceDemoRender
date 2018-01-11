@@ -8,48 +8,12 @@ namespace LauncherUI
 {
 	public partial class ExtensionsWindow : Window
 	{
-		static class WindowsAPI
-		{
-			[DllImport("kernel32.dll")]
-			public static extern IntPtr LoadLibrary(string name);
-
-			[DllImport("kernel32.dll")]
-			public static extern IntPtr GetProcAddress(IntPtr module, string name);
-
-			[DllImport("kernel32.dll")]
-			public static extern bool FreeLibrary(IntPtr module);
-		}
-
-		static class SDR
-		{
-			[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-			public struct QueryData
-			{
-				public IntPtr Name;
-				public IntPtr Namespace;
-				public IntPtr Author;
-				public IntPtr Contact;
-
-				public int Version;
-
-				public IntPtr Dependencies;
-			};
-
-			[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-			public delegate void QueryType(ref QueryData data);
-		}
-
 		class ListBoxData
 		{
 			public bool Enabled;
 			public int Index;
 
-			public string Name;
-			public string FileName;
-			public string RelativePath;
-			public string Author;
-			public int Version;
-			public List<string> Dependencies = new List<string>();
+			public SDR.ExtensionData Info;
 
 			public System.Windows.Controls.ListBoxItem BoxItem;
 			public System.Windows.Controls.Grid ContentGrid;
@@ -90,68 +54,17 @@ namespace LauncherUI
 
 		void LoadExtensionsFromPath(string path, bool enabled)
 		{
-			var files = System.IO.Directory.GetFiles(path, "*.dll", System.IO.SearchOption.TopDirectoryOnly);
+			var exts = SDR.ExtensionLoader.LoadAll(path);
 
-			foreach (var file in files)
+			foreach (var item in exts)
 			{
-				var library = IntPtr.Zero;
+				var data = new ListBoxData();
+				data.Info = item;
+				data.Enabled = enabled;
 
-				try
-				{
-					library = WindowsAPI.LoadLibrary(file);
+				SDR.QueryData.FillNullStrings(ref data.Info.Query);
 
-					var address = WindowsAPI.GetProcAddress(library, "SDR_Query");
-
-					if (address != IntPtr.Zero)
-					{
-						var function = Marshal.GetDelegateForFunctionPointer<SDR.QueryType>(address);
-
-						var result = new SDR.QueryData();
-						function(ref result);
-
-						var fileinfo = new System.IO.FileInfo(file);
-
-						var data = new ListBoxData();
-						data.RelativePath = file;
-						data.Enabled = enabled;
-						data.FileName = fileinfo.Name;
-
-						data.Name = Marshal.PtrToStringAnsi(result.Name);
-
-						if (data.Name == null)
-						{
-							data.Name = "Unnamed Extension";
-						}
-
-						data.Author = Marshal.PtrToStringAnsi(result.Author);
-
-						if (data.Author == null)
-						{
-							data.Author = "Unnamed Author";
-						}
-
-						data.Version = result.Version;
-
-						var depstr = Marshal.PtrToStringAnsi(result.Dependencies);
-
-						if (depstr != null)
-						{
-							var parts = depstr.Split(',');
-
-							foreach (var item in parts)
-							{
-								data.Dependencies.Add(item.Trim());
-							}
-						}
-
-						Extensions.Add(data);
-					}
-				}
-
-				finally
-				{
-					WindowsAPI.FreeLibrary(library);
-				}
+				Extensions.Add(data);
 			}
 		}
 
@@ -198,7 +111,7 @@ namespace LauncherUI
 				{
 					if (temp.Enabled)
 					{
-						if (item == temp.FileName)
+						if (item == temp.Info.FileName)
 						{
 							Extensions.Add(temp);
 							copy.Remove(temp);
@@ -253,7 +166,7 @@ namespace LauncherUI
 		{
 			item.TitleBlock.Foreground = System.Windows.Media.Brushes.Red;
 
-			var text = string.Format("\"{0}\" has \"{1}\" listed as a dependency but it's not enabled.", item.Name, dep.Name);
+			var text = string.Format("\"{0}\" has \"{1}\" listed as a dependency but it's not enabled.", item.Info.Query.Name, dep.Info.Query.Name);
 			CreateConflictToolTip(item, text);
 		}
 
@@ -261,7 +174,7 @@ namespace LauncherUI
 		{
 			item.TitleBlock.Foreground = System.Windows.Media.Brushes.Red;
 
-			var text = string.Format("\"{0}\" has \"{1}\" listed as a dependency but it doesn't exist.", item.Name, dep);
+			var text = string.Format("\"{0}\" has \"{1}\" listed as a dependency but it doesn't exist.", item.Info.Query.Name, dep);
 			CreateConflictToolTip(item, text);
 		}
 
@@ -269,7 +182,7 @@ namespace LauncherUI
 		{
 			item.TitleBlock.Foreground = System.Windows.Media.Brushes.Red;
 
-			var text = string.Format("\"{0}\" must be after \"{1}\" because it's listed as a dependency.", item.Name, dep.Name);
+			var text = string.Format("\"{0}\" must be after \"{1}\" because it's listed as a dependency.", item.Info.Query.Name, dep.Info.Query.Name);
 			CreateConflictToolTip(item, text);
 		}
 
@@ -287,9 +200,14 @@ namespace LauncherUI
 					continue;
 				}
 
-				foreach (var dep in item.Dependencies)
+				if (item.Info.Query.Dependencies == null)
 				{
-					var them = Extensions.Find(other => other.FileName == dep);
+					continue;
+				}
+
+				foreach (var dep in item.Info.Query.Dependencies)
+				{
+					var them = Extensions.Find(other => other.Info.FileName == dep);
 
 					if (them == null)
 					{
@@ -348,7 +266,7 @@ namespace LauncherUI
 				enabledtitle.Foreground = System.Windows.Media.Brushes.Black;
 
 				var enabledstr = new System.Windows.Controls.TextBlock();
-				enabledstr.Text = item.FileName;
+				enabledstr.Text = item.Info.FileName;
 				enabledstr.Foreground = System.Windows.Media.Brushes.Gray;
 
 				enabledseq.Inlines.Add(enabledtitle);
@@ -369,7 +287,7 @@ namespace LauncherUI
 				item.StatusCheckBox.Unchecked += ExtensionEnabledCheck_Unchecked;
 
 				item.TitleBlock = new System.Windows.Controls.TextBlock();
-				item.TitleBlock.Text = item.Name;
+				item.TitleBlock.Text = item.Info.Query.Name;
 				item.TitleBlock.FontSize = 30;
 				item.TitleBlock.FontWeight = FontWeights.Thin;
 				item.TitleBlock.HorizontalAlignment = HorizontalAlignment.Left;
@@ -394,7 +312,7 @@ namespace LauncherUI
 				authortitle.Foreground = System.Windows.Media.Brushes.Black;
 
 				var authorstr = new System.Windows.Controls.TextBlock();
-				authorstr.Text = item.Author;
+				authorstr.Text = item.Info.Query.Author;
 				authorstr.Foreground = System.Windows.Media.Brushes.Gray;
 
 				var versiontitle = new System.Windows.Controls.TextBlock();
@@ -402,7 +320,7 @@ namespace LauncherUI
 				versiontitle.Foreground = System.Windows.Media.Brushes.Black;
 
 				var versionstr = new System.Windows.Controls.TextBlock();
-				versionstr.Text = item.Version.ToString();
+				versionstr.Text = item.Info.Query.Version.ToString();
 				versionstr.Foreground = System.Windows.Media.Brushes.Gray;
 
 				infoseq.Inlines.Add(authortitle);
@@ -565,23 +483,23 @@ namespace LauncherUI
 			{
 				if (item.Enabled)
 				{
-					saverestore.Add(item.FileName);
+					saverestore.Add(item.Info.FileName);
 
-					var newlocation = System.IO.Path.Combine(enabledpath, item.FileName);
+					var newlocation = System.IO.Path.Combine(enabledpath, item.Info.FileName);
 
-					if (item.RelativePath != newlocation)
+					if (item.Info.RelativePath != newlocation)
 					{
-						System.IO.File.Move(item.RelativePath, newlocation);
+						System.IO.File.Move(item.Info.RelativePath, newlocation);
 					}
 				}
 
 				else
 				{
-					var newlocation = System.IO.Path.Combine(disabledpath, item.FileName);
+					var newlocation = System.IO.Path.Combine(disabledpath, item.Info.FileName);
 
-					if (item.RelativePath != newlocation)
+					if (item.Info.RelativePath != newlocation)
 					{
-						System.IO.File.Move(item.RelativePath, newlocation);
+						System.IO.File.Move(item.Info.RelativePath, newlocation);
 					}
 				}
 			}

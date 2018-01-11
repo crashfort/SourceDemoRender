@@ -1,3 +1,20 @@
 {
-	"LibraryVersion": 29
+	"LibraryVersion": 30,
+
+	"PreviewWindow":
+	{
+		"Version": 3
+	},
+	"VelocityText":
+	{
+		"Version": 4
+	},
+	"Direct2DContext":
+	{
+		"Version": 1
+	},
+	"MultiProcess":
+	{
+		"Version": 1
+	}
 }
