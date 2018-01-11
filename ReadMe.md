@@ -383,3 +383,7 @@ The X axis is the multiplication and the Y axis is the exposure.
 	</tbody>
 </table>
 
+## How to build
+The dependencies that cannot be automatically downloaded are outlined in ``SourceDemoRender/Property Sheet/PropertySheet.props``. You can edit this file manually or through Visual Studio in **View -> Property Manager**. The links for each of these projects is available at [Open Source Licenses](https://github.com/crashfort/SourceDemoRender/tree/master/Open%20Source%20Licenses). The NuGet package manager should handle the rest.
+
+Prebuilt V140 libraries can be found here [FFmpeg V140 Static](https://crashfort.github.io/Files/SDR/FFmpeg%20V140%20Static.7z).
