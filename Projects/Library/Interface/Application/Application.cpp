@@ -128,7 +128,7 @@ namespace
 
 			SDR::ConfigSystem::ResolveInherit(object, gameobjs);
 			SDR::ConfigSystem::ResolveSort(object);
-			
+
 			GameObject = std::move(*object);
 
 			CallGameHandlers();
@@ -239,7 +239,7 @@ namespace
 			{
 				TableType<wchar_t> table =
 				{
-					
+
 				};
 
 				CheckTable(table, name);
@@ -321,29 +321,10 @@ namespace
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override);
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override);
 
-			SDR::Error::MH::ThrowIfFailed
-			(
-				MH_EnableHook(A::ThisHook.TargetFunction),
-				"Could not enable library intercept A"
-			);
-
-			SDR::Error::MH::ThrowIfFailed
-			(
-				MH_EnableHook(ExA::ThisHook.TargetFunction),
-				"Could not enable library intercept ExA"			
-			);
-
-			SDR::Error::MH::ThrowIfFailed
-			(
-				MH_EnableHook(W::ThisHook.TargetFunction),
-				"Could not enable library intercept W"
-			);
-			
-			SDR::Error::MH::ThrowIfFailed
-			(
-				MH_EnableHook(ExW::ThisHook.TargetFunction),
-				"Could not enable library intercept ExW"
-			);
+			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(A::ThisHook.TargetFunction), "Could not enable library intercept A");
+			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(ExA::ThisHook.TargetFunction), "Could not enable library intercept ExA");
+			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(W::ThisHook.TargetFunction), "Could not enable library intercept W");
+			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(ExW::ThisHook.TargetFunction), "Could not enable library intercept ExW");
 		}
 
 		void End()
@@ -370,7 +351,7 @@ void SDR::PreEngineSetup()
 void SDR::Setup()
 {
 	LoadLibraryIntercept::End();
-	
+
 	ThisApplication.SetupGame();
 	ThisApplication.CallStartupFunctions();
 
