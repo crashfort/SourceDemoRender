@@ -607,11 +607,6 @@ namespace
 		void* Address = nullptr;
 		HANDLE Process;
 	};
-
-	using ScopedHandle = Microsoft::WRL::Wrappers::HandleT
-	<
-		Microsoft::WRL::Wrappers::HandleTraits::HANDLENullTraits
-	>;
 }
 
 namespace
@@ -874,6 +869,9 @@ namespace
 		Local::Print("Starting: {string}\"%s\"\n", displayname.c_str());
 
 		auto info = StartProcess(gamefolder, exepath, params);
+
+		using HandleTraits = Microsoft::WRL::Wrappers::HandleTraits::HANDLENullTraits;
+		using ScopedHandle = Microsoft::WRL::Wrappers::HandleT<HandleTraits>;
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
