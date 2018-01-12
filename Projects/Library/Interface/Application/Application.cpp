@@ -71,7 +71,7 @@ namespace
 
 				PrintModuleState(found, prop.Name.c_str());
 			}
-		}
+}
 
 		void CallExtensionHandlers()
 		{
@@ -131,7 +131,16 @@ namespace
 
 			GameObject = std::move(*object);
 
-			CallGameHandlers();
+			for (auto& prop : GameObject.Properties)
+			{
+				if (prop.Value.IsObject())
+				{
+					if (prop.Value.HasMember("Module"))
+					{
+						RemainingGameProperties.emplace_back(&prop);
+					}
+				}
+			}
 		}
 
 		void SetupExtensions()
@@ -160,8 +169,6 @@ namespace
 			SDR::ConfigSystem::ResolveSort(object);
 
 			ExtensionObject = std::move(*object);
-
-			CallExtensionHandlers();
 		}
 
 		void CallStartupFunctions()
@@ -192,6 +199,8 @@ namespace
 
 		SDR::ConfigSystem::ObjectData GameObject;
 		SDR::ConfigSystem::ObjectData ExtensionObject;
+
+		std::list<SDR::ConfigSystem::PropertyData*> RemainingGameProperties;
 	};
 
 	ApplicationData ThisApplication;
@@ -203,46 +212,24 @@ namespace
 	{
 		namespace Common
 		{
-			template <typename T>
-			using TableType = std::initializer_list<std::pair<const T*, std::function<void()>>>;
-
-			template <typename T>
-			void CheckTable(const TableType<T>& table, const T* name)
-			{
-				for (auto& entry : table)
-				{
-					if (SDR::String::EndsWith(name, entry.first))
-					{
-						entry.second();
-						break;
-					}
-				}
-			}
-
 			void Load(HMODULE module, const char* name)
 			{
-				TableType<char> table =
+				ThisApplication.RemainingGameProperties.remove_if([=](const SDR::ConfigSystem::PropertyData* prop)
 				{
-					std::make_pair("server.dll", []()
+					auto target = prop->Value["Module"].GetString();
+
+					if (SDR::String::EndsWith(name, target))
 					{
-						/*
-							This should be changed in the future.
-						*/
-						SDR::Library::Load();
-					})
-				};
+						return true;
+					}
 
-				CheckTable(table, name);
-			}
+					return false;
+				});
 
-			void Load(HMODULE module, const wchar_t* name)
-			{
-				TableType<wchar_t> table =
+				if (ThisApplication.RemainingGameProperties.empty())
 				{
-
-				};
-
-				CheckTable(table, name);
+					SDR::Library::Load();
+				}
 			}
 		}
 
@@ -280,59 +267,19 @@ namespace
 			}
 		}
 
-		namespace W
-		{
-			SDR::Hooking::HookModule<decltype(LoadLibraryW)*> ThisHook;
-
-			HMODULE WINAPI Override(LPCWSTR name)
-			{
-				auto ret = ThisHook.GetOriginal()(name);
-
-				if (ret)
-				{
-					Common::Load(ret, name);
-				}
-
-				return ret;
-			}
-		}
-
-		namespace ExW
-		{
-			SDR::Hooking::HookModule<decltype(LoadLibraryExW)*> ThisHook;
-
-			HMODULE WINAPI Override(LPCWSTR name, HANDLE file, DWORD flags)
-			{
-				auto ret = ThisHook.GetOriginal()(name, file, flags);
-
-				if (ret)
-				{
-					Common::Load(ret, name);
-				}
-
-				return ret;
-			}
-		}
-
 		void Start()
 		{
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override);
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override);
-			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override);
-			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override);
 
 			SDR::Error::MH::ThrowIfFailed(A::ThisHook.Enable(), "Could not enable library intercept A");
 			SDR::Error::MH::ThrowIfFailed(ExA::ThisHook.Enable(), "Could not enable library intercept ExA");
-			SDR::Error::MH::ThrowIfFailed(W::ThisHook.Enable(), "Could not enable library intercept W");
-			SDR::Error::MH::ThrowIfFailed(ExW::ThisHook.Enable(), "Could not enable library intercept ExW");
 		}
 
 		void End()
 		{
 			A::ThisHook.Disable();
 			ExA::ThisHook.Disable();
-			W::ThisHook.Disable();
-			ExW::ThisHook.Disable();
 		}
 	}
 }
@@ -346,22 +293,28 @@ void SDR::PreEngineSetup()
 	);
 
 	LoadLibraryIntercept::Start();
+
+	ThisApplication.SetupGame();
+	ThisApplication.SetupExtensions();
 }
 
 void SDR::Setup()
 {
 	LoadLibraryIntercept::End();
 
-	ThisApplication.SetupGame();
+	ThisApplication.CallGameHandlers();
 	ThisApplication.CallStartupFunctions();
 
 	ExtensionManager::LoadExtensions();
 
 	if (SDR::ExtensionManager::HasExtensions())
 	{
-		ThisApplication.SetupExtensions();
+		ThisApplication.CallExtensionHandlers();
+		
 		ExtensionManager::Events::Ready();
 	}
+
+	ThisApplication = {};
 }
 
 void SDR::AddStartupFunction(const StartupFuncData& data)

@@ -7,6 +7,7 @@
 #include <wrl.h>
 
 #include <vector>
+#include <list>
 #include <string>
 #include <chrono>
 #include <thread>
