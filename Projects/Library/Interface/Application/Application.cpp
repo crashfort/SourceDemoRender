@@ -297,11 +297,7 @@ namespace
 
 void SDR::PreEngineSetup()
 {
-	SDR::Error::MH::ThrowIfFailed
-	(
-		SDR::Hooking::Initialize(),
-		"Could not initialize hooks"
-	);
+	SDR::Error::MH::ThrowIfFailed(SDR::Hooking::Initialize(), "Could not initialize hooks");
 
 	LoadLibraryIntercept::Start();
 
