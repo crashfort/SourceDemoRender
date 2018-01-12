@@ -137,7 +137,7 @@ namespace
 				{
 					if (prop.Value.HasMember("Module"))
 					{
-						RemainingProperties.emplace_back(&prop);
+						RemainingModules.emplace_back(prop.Value["Module"].GetString());
 					}
 				}
 			}
@@ -176,7 +176,7 @@ namespace
 				{
 					if (prop.Value.HasMember("Module"))
 					{
-						RemainingProperties.emplace_back(&prop);
+						RemainingModules.emplace_back(prop.Value["Module"].GetString());
 					}
 				}
 			}
@@ -211,7 +211,7 @@ namespace
 		SDR::ConfigSystem::ObjectData GameObject;
 		SDR::ConfigSystem::ObjectData ExtensionObject;
 
-		std::list<SDR::ConfigSystem::PropertyData*> RemainingProperties;
+		std::list<const char*> RemainingModules;
 	};
 
 	ApplicationData ThisApplication;
@@ -225,11 +225,9 @@ namespace
 		{
 			void Load(HMODULE module, const char* name)
 			{
-				ThisApplication.RemainingProperties.remove_if([=](const SDR::ConfigSystem::PropertyData* prop)
+				ThisApplication.RemainingModules.remove_if([=](const char* listmodule)
 				{
-					auto target = prop->Value["Module"].GetString();
-
-					if (SDR::String::EndsWith(name, target))
+					if (SDR::String::EndsWith(name, listmodule))
 					{
 						return true;
 					}
@@ -237,7 +235,7 @@ namespace
 					return false;
 				});
 
-				if (ThisApplication.RemainingProperties.empty())
+				if (ThisApplication.RemainingModules.empty())
 				{
 					SDR::Library::Load();
 				}
