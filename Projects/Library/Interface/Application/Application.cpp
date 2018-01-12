@@ -18,11 +18,6 @@ namespace
 			{
 				SDR::Log::Warning("SDR: No handler found for \"%s\"\n", name);
 			}
-
-			else
-			{
-				SDR::Log::Message("{dark}SDR: {white}Enabled module {string}\"%s\"\n", name);
-			}
 		}
 
 		void CallGameHandlers()
@@ -184,6 +179,8 @@ namespace
 
 		void CallStartupFunctions()
 		{
+			SDR::Log::Message("{dark}SDR: {white}Calling {number}%d {white}startup procedures\n", StartupFunctions.size());
+
 			for (auto entry : StartupFunctions)
 			{
 				try
@@ -197,8 +194,6 @@ namespace
 					SDR::Error::Make("Could not pass startup procedure \"%s\"", entry.Name);
 					throw;
 				}
-
-				SDR::Log::Message("{dark}SDR: {white}Passed startup procedure: {string}\"%s\"\n", entry.Name);
 			}
 		}
 
@@ -211,7 +206,7 @@ namespace
 		SDR::ConfigSystem::ObjectData GameObject;
 		SDR::ConfigSystem::ObjectData ExtensionObject;
 
-		std::list<const char*> RemainingModules;
+		std::list<std::string> RemainingModules;
 	};
 
 	ApplicationData ThisApplication;
@@ -225,9 +220,9 @@ namespace
 		{
 			void Load(HMODULE module, const char* name)
 			{
-				ThisApplication.RemainingModules.remove_if([=](const char* listmodule)
+				ThisApplication.RemainingModules.remove_if([=](const std::string& other)
 				{
-					if (SDR::String::EndsWith(name, listmodule))
+					if (SDR::String::EndsWith(name, other.c_str()))
 					{
 						return true;
 					}
@@ -301,6 +296,15 @@ void SDR::PreEngineSetup()
 
 	ThisApplication.SetupGame();
 	ThisApplication.SetupExtensions();
+
+	{
+		auto copy = ThisApplication.RemainingModules;
+
+		copy.sort();
+		copy.unique();
+
+		SDR::Log::Message("{dark}SDR: {white}Waiting for {number}%d {white}game modules to load\n", copy.size());
+	}
 }
 
 void SDR::Setup()

@@ -104,8 +104,6 @@ namespace
 
 		Initialize(ext);
 
-		SDR::Log::Message("{dark}SDR: {white}Loaded extension {string}\"%s\"\n", ext.Name.c_str());
-
 		Loaded.emplace_back(std::move(ext));
 	}
 
@@ -246,6 +244,11 @@ void SDR::ExtensionManager::LoadExtensions()
 	}
 
 	ResolveOrder();
+
+	for (const auto& ext : Loaded)
+	{
+		SDR::Log::Message("{dark}SDR: {white}Loaded extension {string}\"%s\"\n", ext.Name.c_str());
+	}
 }
 
 bool SDR::ExtensionManager::HasExtensions()
