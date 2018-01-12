@@ -71,7 +71,7 @@ namespace
 
 				PrintModuleState(found, prop.Name.c_str());
 			}
-}
+		}
 
 		void CallExtensionHandlers()
 		{
@@ -315,7 +315,7 @@ void SDR::Setup()
 	if (SDR::ExtensionManager::HasExtensions())
 	{
 		ThisApplication.CallExtensionHandlers();
-		
+
 		ExtensionManager::Events::Ready();
 	}
 
