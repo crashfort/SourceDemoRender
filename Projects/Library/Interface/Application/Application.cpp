@@ -321,18 +321,18 @@ namespace
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override);
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override);
 
-			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(A::ThisHook.TargetFunction), "Could not enable library intercept A");
-			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(ExA::ThisHook.TargetFunction), "Could not enable library intercept ExA");
-			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(W::ThisHook.TargetFunction), "Could not enable library intercept W");
-			SDR::Error::MH::ThrowIfFailed(MH_EnableHook(ExW::ThisHook.TargetFunction), "Could not enable library intercept ExW");
+			SDR::Error::MH::ThrowIfFailed(A::ThisHook.Enable(), "Could not enable library intercept A");
+			SDR::Error::MH::ThrowIfFailed(ExA::ThisHook.Enable(), "Could not enable library intercept ExA");
+			SDR::Error::MH::ThrowIfFailed(W::ThisHook.Enable(), "Could not enable library intercept W");
+			SDR::Error::MH::ThrowIfFailed(ExW::ThisHook.Enable(), "Could not enable library intercept ExW");
 		}
 
 		void End()
 		{
-			MH_DisableHook(A::ThisHook.TargetFunction);
-			MH_DisableHook(ExA::ThisHook.TargetFunction);
-			MH_DisableHook(W::ThisHook.TargetFunction);
-			MH_DisableHook(ExW::ThisHook.TargetFunction);
+			A::ThisHook.Disable();
+			ExA::ThisHook.Disable();
+			W::ThisHook.Disable();
+			ExW::ThisHook.Disable();
 		}
 	}
 }

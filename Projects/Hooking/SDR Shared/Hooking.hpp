@@ -78,6 +78,16 @@ namespace SDR::Hooking
 
 	struct HookModuleBare
 	{
+		MH_STATUS Enable() const
+		{
+			return MH_EnableHook(TargetFunction);
+		}
+
+		MH_STATUS Disable() const
+		{
+			return MH_DisableHook(TargetFunction);
+		}
+
 		void* TargetFunction;
 		void* NewFunction;
 		void* OriginalFunction;
