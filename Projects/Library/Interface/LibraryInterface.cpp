@@ -136,11 +136,6 @@ void SDR::Library::Load()
 	}
 }
 
-void SDR::Library::Unload()
-{
-	SDR::Close();
-}
-
 const char* SDR::Library::GetGamePath()
 {
 	return Local::GamePath.c_str();

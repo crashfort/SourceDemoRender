@@ -10,16 +10,7 @@
 
 namespace
 {
-	struct Application
-	{
-		std::vector<SDR::ModuleHandlerData> ModuleHandlers;
-		std::vector<SDR::StartupFuncData> StartupFunctions;
-		std::vector<SDR::ShutdownFuncType> ShutdownFunctions;
-	};
-
-	Application MainApplication;
-
-	namespace Config
+	struct ApplicationData
 	{
 		void PrintModuleState(bool value, const char* name)
 		{
@@ -34,12 +25,9 @@ namespace
 			}
 		}
 
-		std::vector<SDR::ConfigSystem::ObjectData> GameConfigs;
-		std::vector<SDR::ConfigSystem::ObjectData> ExtensionConfigs;
-
 		void CallGameHandlers(SDR::ConfigSystem::ObjectData* game)
 		{
-			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", MainApplication.ModuleHandlers.size());
+			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", ModuleHandlers.size());
 
 			for (auto& prop : game->Properties)
 			{
@@ -58,7 +46,7 @@ namespace
 
 				bool found = false;
 
-				for (auto& handler : MainApplication.ModuleHandlers)
+				for (auto& handler : ModuleHandlers)
 				{
 					if (prop.Name == handler.Name)
 					{
@@ -83,8 +71,6 @@ namespace
 
 				PrintModuleState(found, prop.Name.c_str());
 			}
-
-			MainApplication.ModuleHandlers.clear();
 		}
 
 		void CallExtensionHandlers(SDR::ConfigSystem::ObjectData* object)
@@ -120,6 +106,8 @@ namespace
 
 		void SetupGame()
 		{
+			std::vector<SDR::ConfigSystem::ObjectData> gameobjs;
+
 			rapidjson::Document document;
 
 			try
@@ -133,22 +121,23 @@ namespace
 			}
 
 			auto searcher = SDR::Library::GetGamePath();
-			auto object = SDR::ConfigSystem::FindAndPopulateObject(document, searcher, GameConfigs);
+			auto object = SDR::ConfigSystem::FindAndPopulateObject(document, searcher, gameobjs);
 
 			if (!object)
 			{
 				SDR::Error::Make("Could not find current game in game config"s);
 			}
 
-			SDR::ConfigSystem::ResolveInherit(object, GameConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveInherit(object, gameobjs, document.GetAllocator());
 			SDR::ConfigSystem::ResolveSort(object);
 			
 			CallGameHandlers(object);
-			GameConfigs.clear();
 		}
 
 		void SetupExtensions()
 		{
+			std::vector<SDR::ConfigSystem::ObjectData> extobjs;
+
 			rapidjson::Document document;
 
 			try
@@ -162,21 +151,48 @@ namespace
 			}
 
 			auto searcher = SDR::Library::GetGamePath();
-			auto object = FindAndPopulateObject(document, searcher, ExtensionConfigs);
+			auto object = FindAndPopulateObject(document, searcher, extobjs);
 
 			if (!object)
 			{
 				SDR::Error::Make("Could not find current game in extension config"s);
 			}
 
-			SDR::ConfigSystem::ResolveInherit(object, ExtensionConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveInherit(object, extobjs, document.GetAllocator());
 			SDR::ConfigSystem::ResolveSort(object);
 			
 			CallExtensionHandlers(object);
-			ExtensionConfigs.clear();
 		}
-	}
 
+		void CallStartupFunctions()
+		{
+			for (auto entry : StartupFunctions)
+			{
+				try
+				{
+					SDR::Error::ScopedContext e1(entry.Name);
+					entry.Function();
+				}
+
+				catch (const SDR::Error::Exception& error)
+				{
+					SDR::Error::Make("Could not pass startup procedure \"%s\"", entry.Name);
+					throw;
+				}
+
+				SDR::Log::Message("{dark}SDR: {white}Passed startup procedure: {string}\"%s\"\n", entry.Name);
+			}
+		}
+
+		std::vector<SDR::ModuleHandlerData> ModuleHandlers;
+		std::vector<SDR::StartupFuncData> StartupFunctions;
+	};
+
+	ApplicationData ThisApplication;
+}
+
+namespace
+{
 	namespace LoadLibraryIntercept
 	{
 		namespace Common
@@ -349,57 +365,24 @@ void SDR::Setup()
 {
 	LoadLibraryIntercept::End();
 	
-	Config::SetupGame();
-
-	for (auto entry : MainApplication.StartupFunctions)
-	{
-		try
-		{
-			SDR::Error::ScopedContext e1(entry.Name);
-			entry.Function();
-		}
-
-		catch (const SDR::Error::Exception& error)
-		{
-			SDR::Error::Make("Could not pass startup procedure \"%s\"", entry.Name);
-			throw;
-		}
-
-		SDR::Log::Message("{dark}SDR: {white}Passed startup procedure: {string}\"%s\"\n", entry.Name);
-	}
-
-	MainApplication.StartupFunctions.clear();
+	ThisApplication.SetupGame();
+	ThisApplication.CallStartupFunctions();
 
 	ExtensionManager::LoadExtensions();
 
 	if (SDR::ExtensionManager::HasExtensions())
 	{
-		Config::SetupExtensions();
+		ThisApplication.SetupExtensions();
 		ExtensionManager::Events::Ready();
 	}
 }
 
-void SDR::Close()
-{
-	for (auto func : MainApplication.ShutdownFunctions)
-	{
-		func();
-	}
-
-	SDR::Hooking::Shutdown();
-}
-
 void SDR::AddStartupFunction(const StartupFuncData& data)
 {
-	MainApplication.StartupFunctions.emplace_back(data);
-}
-
-void SDR::AddShutdownFunction(ShutdownFuncType function)
-{
-	MainApplication.ShutdownFunctions.emplace_back(function);
+	ThisApplication.StartupFunctions.emplace_back(data);
 }
 
 void SDR::AddModuleHandler(const ModuleHandlerData& data)
 {
-	MainApplication.ModuleHandlers.emplace_back(data);
+	ThisApplication.ModuleHandlers.emplace_back(data);
 }
