@@ -9,7 +9,7 @@
 	<Grid Margin="10">
 		<StackPanel>
 			<TextBlock TextWrapping="Wrap" Text="Select your game and set optional launch options." FontSize="15"/>
-			<Label Content="Game" Margin="0,10,0,0" FontSize="15"/>
+			<Label Content="Game" Margin="0,10,0,0" FontSize="15" Padding="0,5,5,5"/>
 			<Grid>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*"/>
@@ -21,7 +21,7 @@
 					<Button Height="32" Content="Remove" Margin="10,0,0,0" Width="100" FontSize="15" Click="RemoveGameButton_Click" IsEnabled="{Binding ElementName=GameComboBox, Path=Items.Count}"/>
 				</StackPanel>
 			</Grid>
-			<Label Content="Launch Options" Margin="0,10,0,0" FontSize="15"/>
+			<Label Content="Launch Options" Margin="0,10,0,0" FontSize="15" Padding="0,5,5,5"/>
 			<TextBox x:Name="LaunchOptionsTextBox" Height="32" Text="" FontSize="15" VerticalContentAlignment="Center"/>
 		</StackPanel>
 		<Grid>
