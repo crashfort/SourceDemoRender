@@ -946,6 +946,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 
 	try
 	{
+		EnsureFileIsPresent(Local::LibraryName);
+		EnsureFileIsPresent(Local::GameConfigName);
+
 		Synchro::Create();
 
 		Window::Create(instance);
@@ -1004,9 +1007,6 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 		{
 			SDR::Error::Make("Required switch \"/PATH\" not found"s);
 		}
-
-		EnsureFileIsPresent(Local::LibraryName);
-		EnsureFileIsPresent(Local::GameConfigName);
 
 		MainProcedure(exepath, gamepath, params);
 	}
