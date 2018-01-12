@@ -50,7 +50,6 @@ namespace
 						try
 						{
 							SDR::Error::ScopedContext e1(handler.Name);
-
 							handler.Function(prop.Value);
 						}
 
