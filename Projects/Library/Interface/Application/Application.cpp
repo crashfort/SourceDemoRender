@@ -46,12 +46,12 @@ namespace
 				/*
 					Ignore these, they are only used by the launcher.
 				*/
-				if (prop.first == "DisplayName")
+				if (prop.Name == "DisplayName")
 				{
 					continue;
 				}
 
-				else if (prop.first == "ExecutableName")
+				else if (prop.Name == "ExecutableName")
 				{
 					continue;
 				}
@@ -60,7 +60,7 @@ namespace
 
 				for (auto& handler : MainApplication.ModuleHandlers)
 				{
-					if (prop.first == handler.Name)
+					if (prop.Name == handler.Name)
 					{
 						found = true;
 
@@ -68,7 +68,7 @@ namespace
 						{
 							SDR::Error::ScopedContext e1(handler.Name);
 
-							handler.Function(prop.second);
+							handler.Function(prop.Value);
 						}
 
 						catch (const SDR::Error::Exception& error)
@@ -81,7 +81,7 @@ namespace
 					}
 				}
 
-				PrintModuleState(found, prop.first.c_str());
+				PrintModuleState(found, prop.Name.c_str());
 			}
 
 			MainApplication.ModuleHandlers.clear();
@@ -94,11 +94,11 @@ namespace
 				return;
 			}
 
-			std::vector<std::pair<std::string, rapidjson::Value>*> temp;
+			std::vector<SDR::ConfigSystem::PropertyData*> temp;
 
 			for (auto& prop : object->Properties)
 			{
-				if (SDR::ExtensionManager::IsNamespaceLoaded(prop.first.c_str()))
+				if (SDR::ExtensionManager::IsNamespaceLoaded(prop.Name.c_str()))
 				{
 					temp.emplace_back(&prop);
 				}
@@ -113,8 +113,8 @@ namespace
 
 			for (auto& prop : temp)
 			{
-				auto found = SDR::ExtensionManager::Events::CallHandlers(prop->first.c_str(), prop->second);
-				PrintModuleState(found, prop->first.c_str());
+				auto found = SDR::ExtensionManager::Events::CallHandlers(prop->Name.c_str(), prop->Value);
+				PrintModuleState(found, prop->Name.c_str());
 			}
 		}
 
