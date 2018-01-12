@@ -31,7 +31,7 @@ SDR::ConfigSystem::ObjectData* SDR::ConfigSystem::FindAndPopulateObject(rapidjso
 	return nullptr;
 }
 
-void SDR::ConfigSystem::ResolveInherit(ObjectData* object, std::vector<ObjectData>& source, rapidjson::Document::AllocatorType& alloc)
+void SDR::ConfigSystem::ResolveInherit(ObjectData* object, std::vector<ObjectData>& source)
 {
 	auto foundinherit = false;
 
@@ -101,7 +101,7 @@ void SDR::ConfigSystem::ResolveInherit(ObjectData* object, std::vector<ObjectDat
 
 	if (foundinherit)
 	{
-		ResolveInherit(object, source, alloc);
+		ResolveInherit(object, source);
 	}
 }
 

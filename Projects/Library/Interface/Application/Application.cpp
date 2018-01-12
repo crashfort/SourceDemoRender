@@ -25,11 +25,11 @@ namespace
 			}
 		}
 
-		void CallGameHandlers(SDR::ConfigSystem::ObjectData* game)
+		void CallGameHandlers()
 		{
 			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", ModuleHandlers.size());
 
-			for (auto& prop : game->Properties)
+			for (auto& prop : GameObject.Properties)
 			{
 				/*
 					Ignore these, they are only used by the launcher.
@@ -73,16 +73,16 @@ namespace
 			}
 		}
 
-		void CallExtensionHandlers(SDR::ConfigSystem::ObjectData* object)
+		void CallExtensionHandlers()
 		{
-			if (object->Properties.empty())
+			if (ExtensionObject.Properties.empty())
 			{
 				return;
 			}
 
 			std::vector<SDR::ConfigSystem::PropertyData*> temp;
 
-			for (auto& prop : object->Properties)
+			for (auto& prop : ExtensionObject.Properties)
 			{
 				if (SDR::ExtensionManager::IsNamespaceLoaded(prop.Name.c_str()))
 				{
@@ -108,11 +108,9 @@ namespace
 		{
 			std::vector<SDR::ConfigSystem::ObjectData> gameobjs;
 
-			rapidjson::Document document;
-
 			try
 			{
-				document = SDR::Json::FromFile(SDR::Library::BuildResourcePath("GameConfig.json"));
+				GameConfigDocument = SDR::Json::FromFile(SDR::Library::BuildResourcePath("GameConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
@@ -121,28 +119,28 @@ namespace
 			}
 
 			auto searcher = SDR::Library::GetGamePath();
-			auto object = SDR::ConfigSystem::FindAndPopulateObject(document, searcher, gameobjs);
+			auto object = SDR::ConfigSystem::FindAndPopulateObject(GameConfigDocument, searcher, gameobjs);
 
 			if (!object)
 			{
 				SDR::Error::Make("Could not find current game in game config"s);
 			}
 
-			SDR::ConfigSystem::ResolveInherit(object, gameobjs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveInherit(object, gameobjs);
 			SDR::ConfigSystem::ResolveSort(object);
 			
-			CallGameHandlers(object);
+			GameObject = std::move(*object);
+
+			CallGameHandlers();
 		}
 
 		void SetupExtensions()
 		{
 			std::vector<SDR::ConfigSystem::ObjectData> extobjs;
 
-			rapidjson::Document document;
-
 			try
 			{
-				document = SDR::Json::FromFile(SDR::Library::BuildResourcePath("ExtensionConfig.json"));
+				ExtensionConfigDocument = SDR::Json::FromFile(SDR::Library::BuildResourcePath("ExtensionConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
@@ -151,17 +149,19 @@ namespace
 			}
 
 			auto searcher = SDR::Library::GetGamePath();
-			auto object = FindAndPopulateObject(document, searcher, extobjs);
+			auto object = FindAndPopulateObject(ExtensionConfigDocument, searcher, extobjs);
 
 			if (!object)
 			{
 				SDR::Error::Make("Could not find current game in extension config"s);
 			}
 
-			SDR::ConfigSystem::ResolveInherit(object, extobjs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveInherit(object, extobjs);
 			SDR::ConfigSystem::ResolveSort(object);
-			
-			CallExtensionHandlers(object);
+
+			ExtensionObject = std::move(*object);
+
+			CallExtensionHandlers();
 		}
 
 		void CallStartupFunctions()
@@ -186,6 +186,12 @@ namespace
 
 		std::vector<SDR::ModuleHandlerData> ModuleHandlers;
 		std::vector<SDR::StartupFuncData> StartupFunctions;
+
+		rapidjson::Document GameConfigDocument;
+		rapidjson::Document ExtensionConfigDocument;
+
+		SDR::ConfigSystem::ObjectData GameObject;
+		SDR::ConfigSystem::ObjectData ExtensionObject;
 	};
 
 	ApplicationData ThisApplication;

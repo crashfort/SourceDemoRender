@@ -34,6 +34,6 @@ namespace SDR::ConfigSystem
 
 	ObjectData* FindAndPopulateObject(rapidjson::Document& document, const char* searcher, std::vector<ObjectData>& dest);
 
-	void ResolveInherit(ObjectData* object, std::vector<ObjectData>& source, rapidjson::Document::AllocatorType& alloc);
+	void ResolveInherit(ObjectData* object, std::vector<ObjectData>& source);
 	void ResolveSort(ObjectData* object);
 }
