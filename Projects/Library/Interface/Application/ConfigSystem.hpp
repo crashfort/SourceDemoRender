@@ -6,18 +6,6 @@
 
 namespace SDR::ConfigSystem
 {
-	template <typename NodeType, typename FuncType>
-	void MemberLoop(NodeType& node, FuncType callback)
-	{
-		auto& begin = node.MemberBegin();
-		auto& end = node.MemberEnd();
-
-		for (auto it = begin; it != end; ++it)
-		{
-			callback(it);
-		}
-	}
-
 	struct PropertyData
 	{
 		std::string Name;

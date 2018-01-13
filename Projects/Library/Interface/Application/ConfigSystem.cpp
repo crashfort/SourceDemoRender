@@ -1,6 +1,21 @@
 #include "PrecompiledHeader.hpp"
 #include "ConfigSystem.hpp"
 
+namespace
+{
+	template <typename NodeType, typename FuncType>
+	void MemberLoop(NodeType& node, FuncType callback)
+	{
+		auto& begin = node.MemberBegin();
+		auto& end = node.MemberEnd();
+
+		for (auto it = begin; it != end; ++it)
+		{
+			callback(it);
+		}
+	}
+}
+
 SDR::ConfigSystem::ObjectData* SDR::ConfigSystem::FindAndPopulateObject(rapidjson::Document& document, const char* searcher, std::vector<ObjectData>& dest)
 {
 	MemberLoop(document, [&](rapidjson::Document::MemberIterator it)
