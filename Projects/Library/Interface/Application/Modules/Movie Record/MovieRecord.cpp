@@ -127,7 +127,8 @@ namespace
 
 		int OldMatQueueModeValue;
 		int OldEngineSleepTime;
-		
+		int OldMaxFPSValue;
+
 		float OldAudioMixAhead;
 
 		/*
@@ -932,6 +933,11 @@ namespace
 				*/
 				CurrentMovie.OldEngineSleepTime = SDR::Console::Variable::SetValueGetOld<int>("engine_no_focus_sleep", 0);
 
+				/*
+					Remove speed restriction that happens with the default value of 300.
+				*/
+				CurrentMovie.OldMaxFPSValue = SDR::Console::Variable::SetValueGetOld<int>("fps_max", 0);
+
 				CurrentMovie.SamplingData.Enabled = MovieData::UseSampling();
 
 				CurrentMovie.SamplingData.Exposure = exposure;
@@ -1153,6 +1159,7 @@ namespace
 						CurrentMovie.ThreadHandle.join();
 					}
 
+					SDR::Console::Variable::SetValue("fps_max", CurrentMovie.OldMaxFPSValue);
 					SDR::Console::Variable::SetValue("mat_queue_mode", CurrentMovie.OldMatQueueModeValue);
 
 					/*
