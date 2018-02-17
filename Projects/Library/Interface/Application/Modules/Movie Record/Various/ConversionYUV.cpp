@@ -18,31 +18,18 @@ namespace
 void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, const AVFrame* reference, bool staging)
 {
 	auto format = (AVPixelFormat)reference->format;
-	auto desc = av_pix_fmt_desc_get(format);
-
-	auto components = 0;
-
-	for (size_t i = 0; i < desc->nb_components; i++)
-	{
-		auto width = av_image_get_linesize(format, reference->width, i);
-
-		if (width == 0)
-		{
-			break;
-		}
-
-		components++;
-	}
+	auto planes = av_pix_fmt_count_planes(format);
 
 	int planesizes[3];
 
-	for (size_t i = 0; i < components; i++)
+	for (size_t i = 0; i < planes; i++)
 	{
 		auto width = av_image_get_linesize(format, reference->width, i);
 		auto height = reference->height;
 
 		if (i > 0)
 		{
+			auto desc = av_pix_fmt_desc_get(format);
 			height = FF_CEIL_RSHIFT(height, desc->log2_chroma_h);
 		}
 
