@@ -8,7 +8,6 @@ namespace SDR
 	void PreEngineSetup();
 
 	void Setup();
-	void Close();
 
 	struct StartupFuncData
 	{
@@ -29,17 +28,6 @@ namespace SDR
 			data.Function = function;
 
 			AddStartupFunction(data);
-		}
-	};
-
-	using ShutdownFuncType = void(*)();
-	void AddShutdownFunction(ShutdownFuncType function);
-
-	struct ShutdownFunctionAdder
-	{
-		ShutdownFunctionAdder(ShutdownFuncType function)
-		{
-			AddShutdownFunction(function);
 		}
 	};
 

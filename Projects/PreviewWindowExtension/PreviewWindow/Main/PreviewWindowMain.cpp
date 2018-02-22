@@ -309,7 +309,7 @@ namespace
 				rect.right = data.Width;
 				rect.bottom = data.Height;
 
-				const auto style = WS_OVERLAPPEDWINDOW ^ WS_MAXIMIZEBOX | WS_CLIPCHILDREN;
+				const auto style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN;
 
 				AdjustWindowRect(&rect, style, false);
 
@@ -427,7 +427,7 @@ extern "C"
 		query.Author = "crashfort";
 		query.Contact = "https://github.com/crashfort/";
 
-		query.Version = 3;
+		query.Version = 4;
 	}
 
 	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::Extension::InitializeData& data)

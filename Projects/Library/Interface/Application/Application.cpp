@@ -10,16 +10,7 @@
 
 namespace
 {
-	struct Application
-	{
-		std::vector<SDR::ModuleHandlerData> ModuleHandlers;
-		std::vector<SDR::StartupFuncData> StartupFunctions;
-		std::vector<SDR::ShutdownFuncType> ShutdownFunctions;
-	};
-
-	Application MainApplication;
-
-	namespace Config
+	struct ApplicationData
 	{
 		void PrintModuleState(bool value, const char* name)
 		{
@@ -27,48 +18,39 @@ namespace
 			{
 				SDR::Log::Warning("SDR: No handler found for \"%s\"\n", name);
 			}
-
-			else
-			{
-				SDR::Log::Message("{dark}SDR: {white}Enabled module {string}\"%s\"\n", name);
-			}
 		}
 
-		std::vector<SDR::ConfigSystem::ObjectData> GameConfigs;
-		std::vector<SDR::ConfigSystem::ObjectData> ExtensionConfigs;
-
-		void CallGameHandlers(SDR::ConfigSystem::ObjectData* game)
+		void CallGameHandlers()
 		{
-			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", MainApplication.ModuleHandlers.size());
+			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", ModuleHandlers.size());
 
-			for (auto& prop : game->Properties)
+			for (auto& prop : GameObject.Properties)
 			{
 				/*
 					Ignore these, they are only used by the launcher.
 				*/
-				if (prop.first == "DisplayName")
+				if (prop.Name == "DisplayName")
 				{
 					continue;
 				}
 
-				else if (prop.first == "ExecutableName")
+				else if (prop.Name == "ExecutableName")
 				{
 					continue;
 				}
 
 				bool found = false;
 
-				for (auto& handler : MainApplication.ModuleHandlers)
+				for (auto& handler : ModuleHandlers)
 				{
-					if (prop.first == handler.Name)
+					if (prop.Name == handler.Name)
 					{
 						found = true;
 
 						try
 						{
 							SDR::Error::ScopedContext e1(handler.Name);
-
-							handler.Function(prop.second);
+							handler.Function(prop.Value);
 						}
 
 						catch (const SDR::Error::Exception& error)
@@ -81,24 +63,22 @@ namespace
 					}
 				}
 
-				PrintModuleState(found, prop.first.c_str());
+				PrintModuleState(found, prop.Name.c_str());
 			}
-
-			MainApplication.ModuleHandlers.clear();
 		}
 
-		void CallExtensionHandlers(SDR::ConfigSystem::ObjectData* object)
+		void CallExtensionHandlers()
 		{
-			if (object->Properties.empty())
+			if (ExtensionObject.Properties.empty())
 			{
 				return;
 			}
 
-			std::vector<std::pair<std::string, rapidjson::Value>*> temp;
+			std::vector<SDR::ConfigSystem::PropertyData*> temp;
 
-			for (auto& prop : object->Properties)
+			for (auto& prop : ExtensionObject.Properties)
 			{
-				if (SDR::ExtensionManager::IsNamespaceLoaded(prop.first.c_str()))
+				if (SDR::ExtensionManager::IsNamespaceLoaded(prop.Name.c_str()))
 				{
 					temp.emplace_back(&prop);
 				}
@@ -113,18 +93,18 @@ namespace
 
 			for (auto& prop : temp)
 			{
-				auto found = SDR::ExtensionManager::Events::CallHandlers(prop->first.c_str(), prop->second);
-				PrintModuleState(found, prop->first.c_str());
+				auto found = SDR::ExtensionManager::Events::CallHandlers(prop->Name.c_str(), prop->Value);
+				PrintModuleState(found, prop->Name.c_str());
 			}
 		}
 
 		void SetupGame()
 		{
-			rapidjson::Document document;
+			std::vector<SDR::ConfigSystem::ObjectData> gameobjs;
 
 			try
 			{
-				document = SDR::Json::FromFile(SDR::Library::BuildResourcePath("GameConfig.json"));
+				GameConfigDocument = SDR::Json::FromFile(SDR::Library::BuildResourcePath("GameConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
@@ -133,27 +113,37 @@ namespace
 			}
 
 			auto searcher = SDR::Library::GetGamePath();
-			auto object = SDR::ConfigSystem::FindAndPopulateObject(document, searcher, GameConfigs);
+			auto object = SDR::ConfigSystem::FindAndPopulateObject(GameConfigDocument, searcher, gameobjs);
 
 			if (!object)
 			{
 				SDR::Error::Make("Could not find current game in game config"s);
 			}
 
-			SDR::ConfigSystem::ResolveInherit(object, GameConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveInherit(object, gameobjs);
 			SDR::ConfigSystem::ResolveSort(object);
-			
-			CallGameHandlers(object);
-			GameConfigs.clear();
+
+			GameObject = std::move(*object);
+
+			for (auto& prop : GameObject.Properties)
+			{
+				if (prop.Value.IsObject())
+				{
+					if (prop.Value.HasMember("Module"))
+					{
+						RemainingModules.emplace_back(prop.Value["Module"].GetString());
+					}
+				}
+			}
 		}
 
 		void SetupExtensions()
 		{
-			rapidjson::Document document;
+			std::vector<SDR::ConfigSystem::ObjectData> extobjs;
 
 			try
 			{
-				document = SDR::Json::FromFile(SDR::Library::BuildResourcePath("ExtensionConfig.json"));
+				ExtensionConfigDocument = SDR::Json::FromFile(SDR::Library::BuildResourcePath("ExtensionConfig.json"));
 			}
 
 			catch (SDR::File::ScopedFile::ExceptionType status)
@@ -162,65 +152,87 @@ namespace
 			}
 
 			auto searcher = SDR::Library::GetGamePath();
-			auto object = FindAndPopulateObject(document, searcher, ExtensionConfigs);
+			auto object = FindAndPopulateObject(ExtensionConfigDocument, searcher, extobjs);
 
 			if (!object)
 			{
 				SDR::Error::Make("Could not find current game in extension config"s);
 			}
 
-			SDR::ConfigSystem::ResolveInherit(object, ExtensionConfigs, document.GetAllocator());
+			SDR::ConfigSystem::ResolveInherit(object, extobjs);
 			SDR::ConfigSystem::ResolveSort(object);
-			
-			CallExtensionHandlers(object);
-			ExtensionConfigs.clear();
-		}
-	}
 
+			ExtensionObject = std::move(*object);
+
+			for (auto& prop : ExtensionObject.Properties)
+			{
+				if (prop.Value.IsObject())
+				{
+					if (prop.Value.HasMember("Module"))
+					{
+						RemainingModules.emplace_back(prop.Value["Module"].GetString());
+					}
+				}
+			}
+		}
+
+		void CallStartupFunctions()
+		{
+			SDR::Log::Message("{dark}SDR: {white}Calling {number}%d {white}startup procedures\n", StartupFunctions.size());
+
+			for (auto entry : StartupFunctions)
+			{
+				try
+				{
+					SDR::Error::ScopedContext e1(entry.Name);
+					entry.Function();
+				}
+
+				catch (const SDR::Error::Exception& error)
+				{
+					SDR::Error::Make("Could not pass startup procedure \"%s\"", entry.Name);
+					throw;
+				}
+			}
+		}
+
+		std::vector<SDR::ModuleHandlerData> ModuleHandlers;
+		std::vector<SDR::StartupFuncData> StartupFunctions;
+
+		rapidjson::Document GameConfigDocument;
+		rapidjson::Document ExtensionConfigDocument;
+
+		SDR::ConfigSystem::ObjectData GameObject;
+		SDR::ConfigSystem::ObjectData ExtensionObject;
+
+		std::list<std::string> RemainingModules;
+	};
+
+	ApplicationData ThisApplication;
+}
+
+namespace
+{
 	namespace LoadLibraryIntercept
 	{
 		namespace Common
 		{
-			template <typename T>
-			using TableType = std::initializer_list<std::pair<const T*, std::function<void()>>>;
-
-			template <typename T>
-			void CheckTable(const TableType<T>& table, const T* name)
-			{
-				for (auto& entry : table)
-				{
-					if (SDR::String::EndsWith(name, entry.first))
-					{
-						entry.second();
-						break;
-					}
-				}
-			}
-
 			void Load(HMODULE module, const char* name)
 			{
-				TableType<char> table =
+				ThisApplication.RemainingModules.remove_if([=](const std::string& other)
 				{
-					std::make_pair("server.dll", []()
+					if (SDR::String::EndsWith(name, other.c_str()))
 					{
-						/*
-							This should be changed in the future.
-						*/
-						SDR::Library::Load();
-					})
-				};
+						return true;
+					}
 
-				CheckTable(table, name);
-			}
+					return false;
+				});
 
-			void Load(HMODULE module, const wchar_t* name)
-			{
-				TableType<wchar_t> table =
+				if (ThisApplication.RemainingModules.empty())
 				{
-					
-				};
-
-				CheckTable(table, name);
+					SDR::Library::Load();
+				}
 			}
 		}
 
@@ -258,148 +270,67 @@ namespace
 			}
 		}
 
-		namespace W
-		{
-			SDR::Hooking::HookModule<decltype(LoadLibraryW)*> ThisHook;
-
-			HMODULE WINAPI Override(LPCWSTR name)
-			{
-				auto ret = ThisHook.GetOriginal()(name);
-
-				if (ret)
-				{
-					Common::Load(ret, name);
-				}
-
-				return ret;
-			}
-		}
-
-		namespace ExW
-		{
-			SDR::Hooking::HookModule<decltype(LoadLibraryExW)*> ThisHook;
-
-			HMODULE WINAPI Override(LPCWSTR name, HANDLE file, DWORD flags)
-			{
-				auto ret = ThisHook.GetOriginal()(name, file, flags);
-
-				if (ret)
-				{
-					Common::Load(ret, name);
-				}
-
-				return ret;
-			}
-		}
-
 		void Start()
 		{
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryA", A::ThisHook, A::Override);
 			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryExA", ExA::ThisHook, ExA::Override);
-			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryW", W::ThisHook, W::Override);
-			SDR::Hooking::CreateHookAPI(L"kernel32.dll", "LoadLibraryExW", ExW::ThisHook, ExW::Override);
 
-			SDR::Error::MH::ThrowIfFailed
-			(
-				MH_EnableHook(A::ThisHook.TargetFunction),
-				"Could not enable library intercept A"
-			);
-
-			SDR::Error::MH::ThrowIfFailed
-			(
-				MH_EnableHook(ExA::ThisHook.TargetFunction),
-				"Could not enable library intercept ExA"			
-			);
-
-			SDR::Error::MH::ThrowIfFailed
-			(
-				MH_EnableHook(W::ThisHook.TargetFunction),
-				"Could not enable library intercept W"
-			);
-			
-			SDR::Error::MH::ThrowIfFailed
-			(
-				MH_EnableHook(ExW::ThisHook.TargetFunction),
-				"Could not enable library intercept ExW"
-			);
+			SDR::Error::MH::ThrowIfFailed(A::ThisHook.Enable(), "Could not enable library intercept A");
+			SDR::Error::MH::ThrowIfFailed(ExA::ThisHook.Enable(), "Could not enable library intercept ExA");
 		}
 
 		void End()
 		{
-			MH_DisableHook(A::ThisHook.TargetFunction);
-			MH_DisableHook(ExA::ThisHook.TargetFunction);
-			MH_DisableHook(W::ThisHook.TargetFunction);
-			MH_DisableHook(ExW::ThisHook.TargetFunction);
+			A::ThisHook.Disable();
+			ExA::ThisHook.Disable();
 		}
 	}
 }
 
 void SDR::PreEngineSetup()
 {
-	SDR::Error::MH::ThrowIfFailed
-	(
-		SDR::Hooking::Initialize(),
-		"Could not initialize hooks"
-	);
+	SDR::Error::MH::ThrowIfFailed(SDR::Hooking::Initialize(), "Could not initialize hooks");
 
 	LoadLibraryIntercept::Start();
+
+	ThisApplication.SetupGame();
+	ThisApplication.SetupExtensions();
+
+	{
+		auto copy = ThisApplication.RemainingModules;
+
+		copy.sort();
+		copy.unique();
+
+		SDR::Log::Message("{dark}SDR: {white}Waiting for {number}%d {white}game modules to load\n", copy.size());
+	}
 }
 
 void SDR::Setup()
 {
 	LoadLibraryIntercept::End();
-	
-	Config::SetupGame();
 
-	for (auto entry : MainApplication.StartupFunctions)
-	{
-		try
-		{
-			SDR::Error::ScopedContext e1(entry.Name);
-			entry.Function();
-		}
-
-		catch (const SDR::Error::Exception& error)
-		{
-			SDR::Error::Make("Could not pass startup procedure \"%s\"", entry.Name);
-			throw;
-		}
-
-		SDR::Log::Message("{dark}SDR: {white}Passed startup procedure: {string}\"%s\"\n", entry.Name);
-	}
-
-	MainApplication.StartupFunctions.clear();
+	ThisApplication.CallGameHandlers();
+	ThisApplication.CallStartupFunctions();
 
 	ExtensionManager::LoadExtensions();
 
 	if (SDR::ExtensionManager::HasExtensions())
 	{
-		Config::SetupExtensions();
+		ThisApplication.CallExtensionHandlers();
+
 		ExtensionManager::Events::Ready();
 	}
-}
 
-void SDR::Close()
-{
-	for (auto func : MainApplication.ShutdownFunctions)
-	{
-		func();
-	}
-
-	SDR::Hooking::Shutdown();
+	ThisApplication = {};
 }
 
 void SDR::AddStartupFunction(const StartupFuncData& data)
 {
-	MainApplication.StartupFunctions.emplace_back(data);
-}
-
-void SDR::AddShutdownFunction(ShutdownFuncType function)
-{
-	MainApplication.ShutdownFunctions.emplace_back(function);
+	ThisApplication.StartupFunctions.emplace_back(data);
 }
 
 void SDR::AddModuleHandler(const ModuleHandlerData& data)
 {
-	MainApplication.ModuleHandlers.emplace_back(data);
+	ThisApplication.ModuleHandlers.emplace_back(data);
 }

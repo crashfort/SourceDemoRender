@@ -198,6 +198,7 @@
 		"WaveCreateTmpFile":
 		{
 			"Comment": "0x1007C634 static CSS IDA address Janaury 5 2018",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "A1 ?? ?? ?? ?? C1 E8 02 A8 01 74 16 6A 02 6A 10 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 10 C3",
 			"IsRelativeJump": true,
@@ -206,6 +207,7 @@
 		"WaveAppendTmpFile":
 		{
 			"Comment": "0x1007C84B static CSS IDA address January 5 2018",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "56 6A 10 57 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 83 C4 10",
 			"IsRelativeJump": true,
@@ -214,6 +216,7 @@
 		"WaveFixupTmpFile":
 		{
 			"Comment": "0x1007C5D9 static CSS IDA address January 5 2018",
+			"SortGroup": "Function",
 			"Module": "engine.dll",
 			"Pattern": "A1 ?? ?? ?? ?? C1 E8 02 A8 01 74 0B 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 59",
 			"IsRelativeJump": true,

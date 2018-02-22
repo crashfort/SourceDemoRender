@@ -4,7 +4,6 @@
 namespace SDR::Library
 {
 	void Load();
-	void Unload();
 
 	const char* GetResourcePath();
 	const char* GetGamePath();

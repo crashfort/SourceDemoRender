@@ -1,6 +1,21 @@
 #include "PrecompiledHeader.hpp"
 #include "ConfigSystem.hpp"
 
+namespace
+{
+	template <typename NodeType, typename FuncType>
+	void MemberLoop(NodeType& node, FuncType callback)
+	{
+		auto& begin = node.MemberBegin();
+		auto& end = node.MemberEnd();
+
+		for (auto it = begin; it != end; ++it)
+		{
+			callback(it);
+		}
+	}
+}
+
 SDR::ConfigSystem::ObjectData* SDR::ConfigSystem::FindAndPopulateObject(rapidjson::Document& document, const char* searcher, std::vector<ObjectData>& dest)
 {
 	MemberLoop(document, [&](rapidjson::Document::MemberIterator it)
@@ -12,7 +27,11 @@ SDR::ConfigSystem::ObjectData* SDR::ConfigSystem::FindAndPopulateObject(rapidjso
 
 		MemberLoop(it->value, [&](rapidjson::Document::MemberIterator data)
 		{
-			curobj.Properties.emplace_back(data->name.GetString(), std::move(data->value));
+			PropertyData newprop;
+			newprop.Name = data->name.GetString();
+			newprop.Value = std::move(data->value);
+
+			curobj.Properties.emplace_back(std::move(newprop));
 		});
 	});
 
@@ -27,28 +46,28 @@ SDR::ConfigSystem::ObjectData* SDR::ConfigSystem::FindAndPopulateObject(rapidjso
 	return nullptr;
 }
 
-void SDR::ConfigSystem::ResolveInherit(ObjectData* object, const std::vector<ObjectData>& source, rapidjson::Document::AllocatorType& alloc)
+void SDR::ConfigSystem::ResolveInherit(ObjectData* object, std::vector<ObjectData>& source)
 {
 	auto foundinherit = false;
 
-	std::vector<std::pair<std::string, rapidjson::Value>> temp;
+	ObjectData::PropertiesType temp;
 
 	for (auto it = object->Properties.begin(); it != object->Properties.end(); ++it)
 	{
-		if (it->first == "Inherit")
+		if (it->Name == "Inherit")
 		{
 			foundinherit = true;
 
-			if (!it->second.IsString())
+			if (!it->Value.IsString())
 			{
 				Error::Make("SDR: \"%s\" inherit field not a string\n", object->ObjectName.c_str());
 			}
 
-			std::string from = it->second.GetString();
+			std::string from = it->Value.GetString();
 
 			object->Properties.erase(it);
 
-			for (const auto& sourceobj : source)
+			for (auto&& sourceobj : source)
 			{
 				bool foundparent = false;
 
@@ -56,13 +75,13 @@ void SDR::ConfigSystem::ResolveInherit(ObjectData* object, const std::vector<Obj
 				{
 					foundparent = true;
 
-					for (const auto& sourceprop : sourceobj.Properties)
+					for (auto&& sourceprop : sourceobj.Properties)
 					{
 						bool shouldadd = true;
 
 						for (const auto& destprop : object->Properties)
 						{
-							if (sourceprop.first == destprop.first)
+							if (sourceprop.Name == destprop.Name)
 							{
 								shouldadd = false;
 								break;
@@ -71,7 +90,7 @@ void SDR::ConfigSystem::ResolveInherit(ObjectData* object, const std::vector<Obj
 
 						if (shouldadd)
 						{
-							temp.emplace_back(std::make_pair(sourceprop.first, rapidjson::Value(sourceprop.second, alloc)));
+							temp.emplace_back(std::move(sourceprop));
 						}
 					}
 
@@ -97,7 +116,7 @@ void SDR::ConfigSystem::ResolveInherit(ObjectData* object, const std::vector<Obj
 
 	if (foundinherit)
 	{
-		ResolveInherit(object, source, alloc);
+		ResolveInherit(object, source);
 	}
 }
 
@@ -109,16 +128,16 @@ void SDR::ConfigSystem::ResolveSort(ObjectData* object)
 	{
 		for (auto&& prop : temp)
 		{
-			if (prop.first.empty())
+			if (prop.Name.empty())
 			{
 				continue;
 			}
 
-			if (prop.second.IsObject())
+			if (prop.Value.IsObject())
 			{
-				if (prop.second.HasMember("SortGroup"))
+				if (prop.Value.HasMember("SortGroup"))
 				{
-					std::string group = prop.second["SortGroup"].GetString();
+					std::string group = prop.Value["SortGroup"].GetString();
 
 					if (group == name)
 					{
@@ -139,7 +158,7 @@ void SDR::ConfigSystem::ResolveSort(ObjectData* object)
 
 	for (auto&& rem : temp)
 	{
-		if (rem.first.empty())
+		if (rem.Name.empty())
 		{
 			continue;
 		}

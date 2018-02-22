@@ -26,7 +26,7 @@ namespace
 {
 	enum
 	{
-		LibraryVersion = 30,
+		LibraryVersion = 31,
 	};
 }
 
@@ -134,11 +134,6 @@ void SDR::Library::Load()
 	{
 		return;
 	}
-}
-
-void SDR::Library::Unload()
-{
-	SDR::Close();
 }
 
 const char* SDR::Library::GetGamePath()

@@ -11,7 +11,7 @@
 			<TextBlock TextWrapping="Wrap" Text="Add a new game for future use." FontSize="15"/>
 			<StackPanel VerticalAlignment="Stretch" Orientation="Vertical">
 				<StackPanel x:Name="GameDirectoryGrid">
-					<Label Content="Game Directory" Margin="0,10,0,0" FontSize="15"/>
+					<Label Content="Game Directory" Margin="0,10,0,0" FontSize="15" Padding="0,5,5,5"/>
 					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*"/>
@@ -22,7 +22,7 @@
 					</Grid>
 				</StackPanel>
 				<StackPanel x:Name="GameExeGrid" IsEnabled="False">
-					<Label Content="Game Executable" Margin="0,10,0,0" FontSize="15"/>
+					<Label Content="Game Executable" Margin="0,10,0,0" FontSize="15" Padding="0,5,5,5"/>
 					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*"/>

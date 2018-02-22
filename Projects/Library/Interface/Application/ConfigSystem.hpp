@@ -6,26 +6,22 @@
 
 namespace SDR::ConfigSystem
 {
-	template <typename NodeType, typename FuncType>
-	void MemberLoop(NodeType& node, FuncType callback)
+	struct PropertyData
 	{
-		auto& begin = node.MemberBegin();
-		auto& end = node.MemberEnd();
-
-		for (auto it = begin; it != end; ++it)
-		{
-			callback(it);
-		}
-	}
+		std::string Name;
+		rapidjson::Value Value;
+	};
 
 	struct ObjectData
 	{
+		using PropertiesType = std::vector<PropertyData>;
+
 		std::string ObjectName;
-		std::vector<std::pair<std::string, rapidjson::Value>> Properties;
+		PropertiesType Properties;
 	};
 
 	ObjectData* FindAndPopulateObject(rapidjson::Document& document, const char* searcher, std::vector<ObjectData>& dest);
 
-	void ResolveInherit(ObjectData* object, const std::vector<ObjectData>& source, rapidjson::Document::AllocatorType& alloc);
+	void ResolveInherit(ObjectData* object, std::vector<ObjectData>& source);
 	void ResolveSort(ObjectData* object);
 }

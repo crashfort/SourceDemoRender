@@ -121,7 +121,7 @@ namespace
 			format.dwMask |= CFM_COLOR | CFM_FACE | CFM_SIZE;
 			strcpy_s(format.szFaceName, "Consolas");
 			format.crTextColor = SDR::LauncherCLI::Colors::White;
-			
+
 			/*
 				10px
 			*/
@@ -378,7 +378,7 @@ namespace
 					}
 
 					DestroyMenu(menu);
-					
+
 					return 1;
 				}
 
@@ -603,15 +603,10 @@ namespace
 		{
 			VirtualFreeEx(Process, Address, 0, MEM_RELEASE);
 		}
-			
+
 		void* Address = nullptr;
 		HANDLE Process;
 	};
-
-	using ScopedHandle = Microsoft::WRL::Wrappers::HandleT
-	<
-		Microsoft::WRL::Wrappers::HandleTraits::HANDLENullTraits
-	>;
 }
 
 namespace
@@ -662,7 +657,7 @@ namespace
 	{
 		decltype(LoadLibraryA)* LoadLibraryAddr;
 		decltype(GetProcAddress)* GetProcAddressAddr;
-		
+
 		const char* LibraryNameAddr;
 		const char* ExportNameAddr;
 		const char* ResourcePathAddr;
@@ -698,7 +693,7 @@ namespace
 		/*
 			Produced from ProcessAPC above in Release with machine code listing output.
 			Any change to ProcessAPC or InterProcessData will need a simulation rebuild in Release.
-		*/		
+		*/
 		uint8_t function[] =
 		{
 			0x55,
@@ -735,7 +730,7 @@ namespace
 		auto funcaddr = writer.PushMemory(function);
 
 		InterProcessData data;
-		
+
 		/*
 			These kernel32.dll functions will always be in the same place between processes.
 		*/
@@ -804,8 +799,6 @@ namespace
 
 	std::string GetDisplayName(const char* gamepath)
 	{
-		Local::Print("Searching game config for matching name\n");
-
 		rapidjson::Document document;
 
 		try
@@ -821,14 +814,10 @@ namespace
 		for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it)
 		{
 			auto gamename = it->name.GetString();
-			
+
 			if (SDR::String::EndsWith(gamepath, gamename))
 			{
-				gamename = SDR::Json::GetString(it->value, "DisplayName");
-
-				Local::Print("Found {string}\"%s\" {white}in game config\n", gamename);
-				
-				return gamename;
+				return SDR::Json::GetString(it->value, "DisplayName");
 			}
 		}
 
@@ -880,6 +869,9 @@ namespace
 		Local::Print("Starting: {string}\"%s\"\n", displayname.c_str());
 
 		auto info = StartProcess(gamefolder, exepath, params);
+
+		using HandleTraits = Microsoft::WRL::Wrappers::HandleTraits::HANDLENullTraits;
+		using ScopedHandle = Microsoft::WRL::Wrappers::HandleT<HandleTraits>;
 
 		ScopedHandle process(info.hProcess);
 		ScopedHandle thread(info.hThread);
@@ -954,6 +946,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 
 	try
 	{
+		EnsureFileIsPresent(Local::LibraryName);
+		EnsureFileIsPresent(Local::GameConfigName);
+
 		Synchro::Create();
 
 		Window::Create(instance);
@@ -998,7 +993,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 			{
 				params += ' ';
 				params += argv[++i];
-				
+
 				continue;
 			}
 		}
@@ -1013,15 +1008,12 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmdline, int show
 			SDR::Error::Make("Required switch \"/PATH\" not found"s);
 		}
 
-		EnsureFileIsPresent(Local::LibraryName);
-		EnsureFileIsPresent(Local::GameConfigName);
-
 		MainProcedure(exepath, gamepath, params);
 	}
 
 	catch (const SDR::Error::Exception& error)
 	{
-		
+
 	}
 
 	Local::Print("{blue}You can close this window now\n");

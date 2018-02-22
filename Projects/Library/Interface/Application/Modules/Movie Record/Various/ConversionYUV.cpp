@@ -17,9 +17,29 @@ namespace
 
 void SDR::D3D11::ConversionYUV::Create(ID3D11Device* device, const AVFrame* reference, bool staging)
 {
-	auto sizey = reference->linesize[0] * reference->height;
-	auto sizeu = reference->linesize[1] * reference->height;
-	auto sizev = reference->linesize[2] * reference->height;
+	auto format = (AVPixelFormat)reference->format;
+	auto planes = av_pix_fmt_count_planes(format);
+
+	int planesizes[3];
+
+	for (size_t i = 0; i < planes; i++)
+	{
+		auto width = av_image_get_linesize(format, reference->width, i);
+		auto height = reference->height;
+
+		if (i > 0)
+		{
+			auto desc = av_pix_fmt_desc_get(format);
+			height = FF_CEIL_RSHIFT(height, desc->log2_chroma_h);
+		}
+
+		auto size = width * height;
+		planesizes[i] = size;
+	}
+
+	auto sizey = planesizes[0];
+	auto sizeu = planesizes[1];
+	auto sizev = planesizes[2];
 
 	Y.Create(device, DXGI_FORMAT_R8_UINT, sizey, sizey, staging);
 	U.Create(device, DXGI_FORMAT_R8_UINT, sizeu, sizeu, staging);
