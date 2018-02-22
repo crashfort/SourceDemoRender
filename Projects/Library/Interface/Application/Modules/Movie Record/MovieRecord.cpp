@@ -615,7 +615,7 @@ namespace
 
 			void WarnAboutExtension(const char* filename)
 			{
-				auto wstr = SDR::String::FromUTF8(filename);				
+				auto wstr = SDR::String::FromUTF8(filename);
 				auto ext = PathFindExtensionW(wstr.c_str());
 
 				auto containers = { ".avi", ".mp4", ".mov", ".mkv" };
