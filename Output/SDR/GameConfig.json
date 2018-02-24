@@ -263,6 +263,12 @@
 		"DisplayName": "Momentum",
 		"ExecutableName": "Source SDK Base 2013 Multiplayer\\hl2.exe"
 	},
+	"Momentum Mod\\momentum":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike",
+		"DisplayName": "Momentum Steam",
+		"ExecutableName": "Momentum Mod\\hl2.exe"
+	},
 	"Day of Defeat Source\\dod":
 	{
 		"Inherit": "Counter-Strike Source\\cstrike",

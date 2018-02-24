@@ -60,6 +60,10 @@
 	{
 		"Inherit": "Counter-Strike Source\\cstrike"
 	},
+	"Momentum Mod\\momentum":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
 	"Day of Defeat Source\\dod":
 	{
 		"Inherit": "Counter-Strike Source\\cstrike"
