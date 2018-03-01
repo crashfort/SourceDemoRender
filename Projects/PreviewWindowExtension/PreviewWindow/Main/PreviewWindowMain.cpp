@@ -192,7 +192,7 @@ namespace
 
 			void Present()
 			{
-				auto hr = SwapChain->Present(1, 0);
+				auto hr = SwapChain->Present(0, 0);
 			}
 
 			int GameWidth;
