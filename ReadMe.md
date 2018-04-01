@@ -63,9 +63,6 @@ If you just use YUV420 you have to use the `709` color space. If you also want t
 ### Adobe Premiere
 Some versions can open `libx264rgb` videos which is the recommended way as there are no possibilities of color loss. Some versions can not open either RGB or YUV444 videos.
 
-### Kdenlive
-This video editor can open everything SDR outputs.
-
 ## Extensions
 External modules can extend SDR with other functions. The public interface that your module should implement is available at [Extension.hpp](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/Extension/SDR%20Extension/Extension.hpp). Example projects are at [Sample Extension](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/SampleExtension/Sample/Main/SampleExtensionMain.cpp), [Preview Window](https://github.com/crashfort/SourceDemoRender/tree/master/Projects/PreviewWindowExtension/PreviewWindow/Main), [Direct2D Context](https://github.com/crashfort/SourceDemoRender/tree/master/Projects/Direct2DContextExtension).
 
