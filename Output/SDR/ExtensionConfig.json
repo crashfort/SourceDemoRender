@@ -52,6 +52,10 @@
 	{
 		"Inherit": "Counter-Strike Source\\cstrike"
 	},
+	"Half-Life 2 Update\\hl2":{
+	
+		"Inherit": "Counter-Strike Source\\cstrike"
+	},
 	"Team Fortress 2\\tf":
 	{
 		"Inherit": "Counter-Strike Source\\cstrike"
