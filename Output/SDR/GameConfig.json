@@ -241,6 +241,12 @@
 		"DisplayName": "Half-Life 2: Episode Two",
 		"ExecutableName": "Half-Life 2\\hl2.exe"
 	},
+	"Half-Life 2 Update\\hl2":{
+		"Inherit": "Counter-Strike Source\\cstrike",
+		"DisplayName": "Half-Life 2: Update",
+		"ExecutableName": "Half-Life 2 Update\\hl2.exe"
+	
+	},
 	"Team Fortress 2\\tf":
 	{
 		"Inherit": "Counter-Strike Source\\cstrike",
