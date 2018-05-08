@@ -340,5 +340,11 @@
 			"VTIndex_SetValueFloat": 14,
 			"VTIndex_SetValueInt": 15
 		}
+	},
+	"Half-Life 2 Update\\hl2":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike",
+		"DisplayName": "Half-Life 2: Update",
+		"ExecutableName": "Half-Life 2 Update\\hl2.exe"
 	}
 }

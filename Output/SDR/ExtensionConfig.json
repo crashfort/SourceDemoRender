@@ -75,5 +75,9 @@
 	"Black Mesa\\bms":
 	{
 		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Half-Life 2 Update\\hl2":
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
 	}
 }

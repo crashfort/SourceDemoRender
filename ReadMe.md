@@ -16,6 +16,7 @@ Games that are added:
 * Day of Defeat: Source
 * Garry's Mod
 * Black Mesa
+* Half-Life 2 Update
 
 Known games that don't work:
 * Counter-Strike: Global Offensive - *Uses stoneage D3D9 that doesn't support texture sharing*
