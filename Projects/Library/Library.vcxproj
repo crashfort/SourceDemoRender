@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -14,20 +14,20 @@
     <ProjectGuid>{4B8E5130-D408-4AD9-A9C4-009CA22E8C5E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>SourceDemoRender</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
     <ProjectName>Library</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -71,7 +71,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_FFMPEG_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_MINHOOK_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_FFMPEG_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -79,8 +79,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_FFMPEG_LIBRARY);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;Shlwapi.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDR_MINHOOK_LIBRARY);$(SDR_FFMPEG_LIBRARY);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>D3D11.lib;Shlwapi.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;libMinHook.x86.lib;Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
@@ -96,7 +96,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_WINDOWS;_USRDLL;_NO_ASYNCRTIMP;_NO_PPLXIMP;SDR_SINGLEPLAYER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_FFMPEG_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Main\Precompiled Header\;$(SDR_MINHOOK_INCLUDE);$(SDR_RAPIDJSON_INCLUDE);$(SDR_RWQUEUE_INCLUDE);$(SDR_FFMPEG_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -106,8 +106,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SDR_FFMPEG_LIBRARY);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>D3D11.lib;Shlwapi.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDR_MINHOOK_LIBRARY);$(SDR_FFMPEG_LIBRARY);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>D3D11.lib;Shlwapi.lib;libx264.lib;libavutil.a;libavcodec.a;libavformat.a;libMinHook.x86.lib;Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
@@ -289,17 +289,7 @@
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\Packages\minhook.1.3.3\build\native\minhook.targets" Condition="Exists('..\..\Packages\minhook.1.3.3\build\native\minhook.targets')" />
-  </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\..\Packages\minhook.1.3.3\build\native\minhook.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Packages\minhook.1.3.3\build\native\minhook.targets'))" />
-    <Error Condition="!Exists('..\..\Packages\minhook.1.3.3\build\native\minhook.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Packages\minhook.1.3.3\build\native\minhook.targets'))" />
-  </Target>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

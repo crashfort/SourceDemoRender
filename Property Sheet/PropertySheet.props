@@ -2,10 +2,12 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <SDR_FFMPEG_INCLUDE>C:\msys64\home\CF\ffmpegbuild\include\</SDR_FFMPEG_INCLUDE>
-    <SDR_FFMPEG_LIBRARY>C:\msys64\home\CF\ffmpegbuild\lib\</SDR_FFMPEG_LIBRARY>
-    <SDR_RAPIDJSON_INCLUDE>C:\VS\3rd Party Libs\rapidjson\include\</SDR_RAPIDJSON_INCLUDE>
-    <SDR_RWQUEUE_INCLUDE>C:\VS\3rd Party Libs\readerwriterqueue\include\</SDR_RWQUEUE_INCLUDE>
+    <SDR_FFMPEG_INCLUDE>B:\msys32\home\CF\ffmpegbuild\include\</SDR_FFMPEG_INCLUDE>
+    <SDR_FFMPEG_LIBRARY>B:\msys32\home\CF\ffmpegbuild\lib\</SDR_FFMPEG_LIBRARY>
+    <SDR_RAPIDJSON_INCLUDE>B:\VS\3rd Party Libraries\rapidjson-master\include\</SDR_RAPIDJSON_INCLUDE>
+    <SDR_RWQUEUE_INCLUDE>B:\VS\3rd Party Libraries\readerwriterqueue-master\</SDR_RWQUEUE_INCLUDE>
+    <SDR_MINHOOK_INCLUDE>B:\VS\3rd Party Libraries\minhook-master\include\</SDR_MINHOOK_INCLUDE>
+    <SDR_MINHOOK_LIBRARY>B:\VS\3rd Party Libraries\minhook-master\build\VC15\lib\Release\</SDR_MINHOOK_LIBRARY>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
@@ -27,6 +29,12 @@
     </BuildMacro>
     <BuildMacro Include="SDR_RWQUEUE_INCLUDE">
       <Value>$(SDR_RWQUEUE_INCLUDE)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SDR_MINHOOK_INCLUDE">
+      <Value>$(SDR_MINHOOK_INCLUDE)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SDR_MINHOOK_LIBRARY">
+      <Value>$(SDR_MINHOOK_LIBRARY)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

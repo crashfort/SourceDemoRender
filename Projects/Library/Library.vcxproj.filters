@@ -139,6 +139,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Interface\Application\Modules\Movie Record\Shaders\YUVShared.hlsl" />
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>
