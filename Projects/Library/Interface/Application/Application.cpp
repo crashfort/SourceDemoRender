@@ -24,6 +24,8 @@ namespace
 		{
 			SDR::Log::Message("{dark}SDR: {white}Creating {number}%d {white}game modules\n", ModuleHandlers.size());
 
+			int disabledmodules = 0;
+
 			for (auto& prop : GameObject.Properties)
 			{
 				/*
@@ -49,6 +51,12 @@ namespace
 
 						try
 						{
+							if (prop.Value.HasMember("Disable"))
+							{
+								disabledmodules++;
+								continue;
+							}
+
 							SDR::Error::ScopedContext e1(handler.Name);
 							handler.Function(prop.Value);
 						}
@@ -64,6 +72,11 @@ namespace
 				}
 
 				PrintModuleState(found, prop.Name.c_str());
+			}
+
+			if (disabledmodules > 0)
+			{
+				SDR::Log::Message("{dark}SDR: {number}%d {white}modules were disabled\n", disabledmodules);
 			}
 		}
 
