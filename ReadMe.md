@@ -1,7 +1,7 @@
 # Source Demo Render
-The program can be downloaded [here](https://github.com/crashfort/SourceDemoRender/releases). Visit [here](https://twitch.streamlabs.com/crashfort/) if you wish to support the development.
+The program can be downloaded [here](https://github.com/crashfort/SourceDemoRender/releases). Visit [here](https://streamlabs.com/crashfort) if you wish to support the development.
 
-SDR offers the highest possible performance for recording movies by utilizing the GPU and all available threads. As opposed to other Source recording methods, SDR integrates itself into the engine and runs from the inside. Frames are kept on the GPU for processing which allows maximum performance. Many frames can be sampled together to form a good motion blur effect.
+SDR offers the highest possible performance for recording movies by utilizing the GPU and all available threads along with removing speed restrictions within the engine. As opposed to other Source recording methods, SDR integrates itself into the engine and runs from the inside. Frames are kept on the GPU for fast processing. Many frames can be sampled together to form a good motion blur effect.
 
 ## Is my game supported?
 Since games might need special setup, they have to be added manually. You can request your game [here](https://github.com/crashfort/SourceDemoRender/issues) or in [Discord](https://discord.gg/5t8D68c) for it to be added.
@@ -16,6 +16,7 @@ Games that are added:
 * Day of Defeat: Source
 * Garry's Mod
 * Black Mesa
+* Half-Life 2 Update
 
 Known games that don't work:
 * Counter-Strike: Global Offensive - *Uses stoneage D3D9 that doesn't support texture sharing*
@@ -62,9 +63,6 @@ If you just use YUV420 you have to use the `709` color space. If you also want t
 
 ### Adobe Premiere
 Some versions can open `libx264rgb` videos which is the recommended way as there are no possibilities of color loss. Some versions can not open either RGB or YUV444 videos.
-
-### Kdenlive
-This video editor can open everything SDR outputs.
 
 ## Extensions
 External modules can extend SDR with other functions. The public interface that your module should implement is available at [Extension.hpp](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/Extension/SDR%20Extension/Extension.hpp). Example projects are at [Sample Extension](https://github.com/crashfort/SourceDemoRender/blob/master/Projects/SampleExtension/Sample/Main/SampleExtensionMain.cpp), [Preview Window](https://github.com/crashfort/SourceDemoRender/tree/master/Projects/PreviewWindowExtension/PreviewWindow/Main), [Direct2D Context](https://github.com/crashfort/SourceDemoRender/tree/master/Projects/Direct2DContextExtension).
