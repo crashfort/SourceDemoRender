@@ -1294,7 +1294,6 @@ namespace
 				{
 					if (CurrentMovie.FirstFrame)
 					{
-						CurrentMovie.FirstFrame = false;
 						return;
 					}
 
