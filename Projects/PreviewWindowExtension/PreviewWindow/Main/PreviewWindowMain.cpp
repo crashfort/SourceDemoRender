@@ -427,7 +427,7 @@ extern "C"
 		query.Author = "crashfort";
 		query.Contact = "https://github.com/crashfort/";
 
-		query.Version = 4;
+		query.Version = 5;
 	}
 
 	__declspec(dllexport) void __cdecl SDR_Initialize(const SDR::Extension::InitializeData& data)

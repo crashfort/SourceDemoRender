@@ -3,18 +3,18 @@
 
 	"PreviewWindow":
 	{
-		"Version": 4
+		"Version": 5
 	},
 	"VelocityText":
 	{
-		"Version": 4
+		"Version": 5
 	},
 	"Direct2DContext":
 	{
-		"Version": 1
+		"Version": 2
 	},
 	"MultiProcess":
 	{
-		"Version": 1
+		"Version": 2
 	}
 }
