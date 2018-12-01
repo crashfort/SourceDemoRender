@@ -108,6 +108,8 @@ namespace LauncherUI
 			{
 				AddLogText("Library update is available from version {0} to {1}. Press Upgrade to view release.", librarylocal, libraryweb);
 				UpgradeButton.IsEnabled = true;
+
+				ret.HasMessage = true;
 			}
 
 			return ret;
