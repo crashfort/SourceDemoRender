@@ -72,25 +72,17 @@ The launcher has a feature to manage all your extensions. In this window you can
 ![Launcher uI Extensions Window 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Launcher%20UI/ExtensionsWindow.png)
 
 ### Preview Window
-**Availability:** Free, included
-
 This extension will open up a new window which will display how everything looks like at its load order in the video file but in realtime. The window can be resized and the content will remain at its aspect ratio.
 
 ### Velocity Text
-**Availability:** Contact me
-
 This extension will gather the current player velocity and display it in a highly customizable format.
 
 ![Velocity Text Image 1](https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/Media/Extensions/VelocityText1.png)
 
 ### Direct2D Context
-**Availability:** Free, included
-
 This extension creates a rendering context that all other extensions can use without having to recreate it all the time.
 
 ### Multi Process
-**Availability:** Contact me
-
 This extension will allow you to render with multiple instances of SDR for parallel video creation.
 
 ## General commands
