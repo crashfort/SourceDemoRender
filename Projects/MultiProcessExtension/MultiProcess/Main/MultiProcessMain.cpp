@@ -1,6 +1,5 @@
 #include <SDR Extension\Extension.hpp>
 #include <SDR Shared\Error.hpp>
-#include <SDR Shared\Hooking.hpp>
 
 extern "C"
 {
@@ -18,7 +17,6 @@ extern "C"
 	{
 		SDR::Error::SetPrintFormat("MultiProcess: %s\n");
 		SDR::Extension::RedirectLogOutputs(data);
-
 
 		auto mutex = OpenMutexA(MUTEX_ALL_ACCESS, false, "hl2_singleton_mutex");
 
