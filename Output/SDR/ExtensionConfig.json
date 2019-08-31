@@ -80,7 +80,7 @@
 	{
 		"Inherit": "Counter-Strike Source\\cstrike"
 	},
-	"Half-Life 2 Deathmatch\\hl2mp
+	"Half-Life 2 Deathmatch\\hl2mp":
 	{
 		"Inherit": "Counter-Strike Source\\cstrike"
 	}
