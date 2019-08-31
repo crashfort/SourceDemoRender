@@ -79,5 +79,9 @@
 	"Half-Life 2 Update\\hl2":
 	{
 		"Inherit": "Counter-Strike Source\\cstrike"
+	},
+	"Half-Life 2 Deathmatch\\hl2mp
+	{
+		"Inherit": "Counter-Strike Source\\cstrike"
 	}
 }
