@@ -62,7 +62,23 @@
 	},
 	"Momentum Mod\\momentum":
 	{
-		"Inherit": "Counter-Strike Source\\cstrike"
+		"Inherit": "Counter-Strike Source\\cstrike",
+		"VelocityText_ClientEntityLocalVelocity":
+		{
+			"Comment": "0x100AE79C Momentum IDA address December 7 2019",
+			"SortGroup": "Function",
+			"Module": "client.dll",
+			"Pattern": "F3 0F 7E 81 ?? ?? ?? ?? F3 0F 10 48 ?? 8B 81 ?? ?? ?? ?? 66 0F D6 45 ?? F3 0F 10 45 ?? 0F 2E C1 89 45 FC 9F F6 C4 44 7B 0E 8D 45 F4",
+			"Offset": 4
+		},
+		"VelocityText_ClientEntityAbsoluteVelocity":
+		{
+			"Comment": "0x100A29BF Momentum IDA address December 7 2019",
+			"SortGroup": "Function",
+			"Module": "client.dll",
+			"Pattern": "89 87 ?? ?? ?? ?? 8B 46 08 89 87 ?? ?? ?? ?? 8B 87 ?? ?? ?? ?? 83 F8 FF 74 1F 8B 0D ?? ?? ?? ?? 8B D8 81 E3 ?? ?? ?? ?? C1 E8 0C 03 DB",
+			"Offset": 2
+		}
 	},
 	"Day of Defeat Source\\dod":
 	{
