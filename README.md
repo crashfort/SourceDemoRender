@@ -28,10 +28,10 @@ Known games that don't work:
 Any DirectX 11 (Direct3D 11.0) compatible graphics adapter with minimum of Windows 10 1909 is required.
 
 ## Launching
-Before launching for the first time you must edit the file `data/launcher-config.json` which specifies all the games that you have. This file says where the games are located on your computer. All supported games are located in this but empty, and all you have to do is edit it. Once you have some games, start *svr_game_launcher.exe* and follow the instructions.
+Before launching for the first time you must edit `data/launcher-config.json` which specifies which games you have. Once you have added some games, start *svr_game_launcher.exe* and follow the instructions.
 
 ## Producing
-Once in game, you can use `startmovie` to start producing a movie. The *startmovie* command takes 1 or 2 parameters in this format: `startmovie <name> (profile)`. The *name* is the filename of the movie which will be located in `data/movies`. The *profile* is an optional parameter that decides which settings this movie will use. If not specified, the default profile is used (see below about profiles).
+Once in game, you can use `startmovie` to start producing a movie. The *startmovie* command takes 1 or 2 parameters in this format: `startmovie <name> (<profile>)`. The *name* is the filename of the movie which will be located in `data/movies`. The *profile* is an optional parameter that decides which settings this movie will use. If not specified, the default profile is used (see below about profiles).
 
 ## Interoperability with other programs
 Due to the nature of reverse engineering games, it cannot be trusted that direct interoperability will work straight away because at the risk of collision. For other programs that want to make use of SVR for rendering purposes, it can be used as a library.
