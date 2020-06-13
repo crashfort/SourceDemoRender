@@ -1,0 +1,35 @@
+{
+    "movie": {
+        "encoding-threads": 0,
+        "video-fps": 60,
+        "video-encoder": "libx264",
+        "video-pixel-format": "yuv420",
+        "video-color-space": "601",
+        "video-x264-crf": 23,
+        "video-x264-preset": "veryfast",
+        "video-x264-intra": false
+    },
+    "motion-blur": {
+        "enabled": true,
+        "fps-mult": 60,
+        "frame-exposure": 0.5
+    },
+    "preview-window": {
+        "enabled": false
+    },
+    "velocity-overlay": {
+        "enabled": true,
+        "font-family": "Arial",
+        "font-size": 72,
+        "color-r": 255,
+        "color-g": 255,
+        "color-b": 255,
+        "color-a": 255,
+        "font-style": "normal",
+        "font-weight": "bold",
+        "font-stretch": "normal",
+        "text-align": "leading",
+        "paragraph-align": "far",
+        "padding": 100
+    }
+}
