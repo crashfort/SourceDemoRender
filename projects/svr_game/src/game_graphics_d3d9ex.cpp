@@ -28,8 +28,18 @@ static bool create_standalone_game_texture(IDirect3DDevice9Ex* dev, uint32_t wid
     return true;
 }
 
-bool game_d3d9ex_create(game_graphics_d3d9ex* ptr, IDirect3DDevice9Ex* device, IDirect3DSurface9* surface)
+bool game_d3d9ex_create(game_graphics_d3d9ex* ptr, IDirect3DDevice9Ex* device)
 {
+    // The game render target is the first index.
+    IDirect3DSurface9* surface;
+    auto hr = device->GetRenderTarget(0, &surface);
+
+    if (FAILED(hr))
+    {
+        svr::log("Could not get d3d9ex backbuffer render target\n (0x{:x})", hr);
+        return false;
+    }
+
     ptr->device = device;
     ptr->game_content = surface;
 

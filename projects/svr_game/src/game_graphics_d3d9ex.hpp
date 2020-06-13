@@ -24,6 +24,6 @@ struct game_graphics_d3d9ex
     game_texture shared_texture;
 };
 
-bool game_d3d9ex_create(game_graphics_d3d9ex* ptr, IDirect3DDevice9Ex* device, IDirect3DSurface9* surface);
+bool game_d3d9ex_create(game_graphics_d3d9ex* ptr, IDirect3DDevice9Ex* device);
 void game_d3d9ex_release(game_graphics_d3d9ex* ptr);
 void game_d3d9ex_copy(game_graphics_d3d9ex* ptr);

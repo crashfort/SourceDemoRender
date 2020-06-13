@@ -10,8 +10,6 @@
 #include <svr/swap.hpp>
 #include <svr/game_config.hpp>
 
-#include <d3d9.h>
-
 // Architecture for most Source 1 games on Windows.
 // Hooks startmovie, view render and endmovie.
 // Uses d3d9ex game graphics and d3d11 graphics backend.
@@ -64,21 +62,9 @@ static void process_velocity_overlay()
 
 static bool open_game_texture()
 {
-    using namespace svr;
-
-    // The game render target is the first index.
-    IDirect3DSurface9* surface;
-    auto hr = d3d9ex_device_ptr->GetRenderTarget(0, &surface);
-
-    if (FAILED(hr))
+    if (!game_d3d9ex_create(&d3d9ex_graphics, d3d9ex_device_ptr))
     {
-        log("Could not get d3d9ex backbuffer render target\n (0x{:x})", hr);
-        return false;
-    }
-
-    if (!game_d3d9ex_create(&d3d9ex_graphics, d3d9ex_device_ptr, surface))
-    {
-        log("Could not create d3d9ex resources\n");
+        svr::log("Could not create d3d9ex resources\n");
         return false;
     }
 
