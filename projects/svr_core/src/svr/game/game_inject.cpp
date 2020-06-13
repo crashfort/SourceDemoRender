@@ -48,7 +48,7 @@ static bool verify_installation(const char* resource_path)
 {
     using namespace svr;
 
-    auto required_files = {
+    const char* required_files[] = {
         "svr_game.dll",
         "ffmpeg.exe",
         "data/game-config.json",
