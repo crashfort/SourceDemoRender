@@ -153,7 +153,6 @@ static svr::game_config_comp* find_comp(svr::game_config* cfg, const char* id)
         if (strcmp(comp.config_id, id) == 0)
         {
             return &comp;
-            break;
         }
     }
 
