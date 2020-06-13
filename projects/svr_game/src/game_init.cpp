@@ -8,24 +8,8 @@
 
 #include "game_external.hpp"
 
+#include <chrono>
 #include <thread>
-
-// Allow multiple games to be started at once.
-static bool enable_multi_proc(const char* mutex_name)
-{
-    using namespace svr;
-
-    auto ptr = os_open_mutex(mutex_name);
-
-    if (ptr)
-    {
-        os_release_mutex(ptr);
-        os_close_handle(ptr);
-        return true;
-    }
-
-    return false;
-}
 
 static bool wait_for_game_libs(const char** libs, size_t size)
 {

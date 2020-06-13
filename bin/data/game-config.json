@@ -314,7 +314,6 @@
         {
             "id": "css-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -344,7 +343,6 @@
         {
             "id": "hl2-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -374,7 +372,6 @@
         {
             "id": "hl2-ep1-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -404,7 +401,6 @@
         {
             "id": "hl2-ep2-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -434,7 +430,6 @@
         {
             "id": "tf2-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -464,7 +459,6 @@
         {
             "id": "mom-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -494,7 +488,6 @@
         {
             "id": "dod-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -524,7 +517,6 @@
         {
             "id": "gmod-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -554,7 +546,6 @@
         {
             "id": "bm-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "bms.exe",
@@ -584,7 +575,6 @@
         {
             "id": "hl2-update-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -614,7 +604,6 @@
         {
             "id": "hl2-mp-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -644,7 +633,6 @@
         {
             "id": "portal-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "hl2.exe",
@@ -674,7 +662,6 @@
         {
             "id": "csgo-win",
             "arch": "code-000-source-1-win",
-            "mutex": "hl2_singleton_mutex",
             "last-review-date": "",
             "required-libraries": [
                 "csgo.exe",

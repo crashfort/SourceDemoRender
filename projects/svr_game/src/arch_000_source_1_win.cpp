@@ -9,6 +9,7 @@
 #include <svr/defer.hpp>
 #include <svr/swap.hpp>
 #include <svr/game_config.hpp>
+#include <svr/os.hpp>
 
 // Architecture for most Source 1 games on Windows.
 // Hooks startmovie, view render and endmovie.
@@ -16,6 +17,21 @@
 
 static game_graphics_d3d9ex d3d9ex_graphics;
 static game_system* sys;
+
+// Allow multiple games to be started at once.
+static void enable_multi_proc()
+{
+    using namespace svr;
+
+    auto ptr = os_open_mutex("hl2_singleton_mutex");
+
+    if (ptr)
+    {
+        os_release_mutex(ptr);
+        os_close_handle(ptr);
+        log("Enabled multiprocess rendering\n");
+    }
+}
 
 static bool is_velocity_overlay_allowed(svr::game_config_game* game)
 {
@@ -168,6 +184,10 @@ static void __cdecl start_movie_override_000(const void* args)
     fmt::memory_buffer buf;
     format_with_null(buf, "host_framerate {}\n", sys_get_game_rate(sys));
     client_command(buf.data());
+
+    // This is the first location where we have access to the main thread while the game is running.
+    // Here we have access to the launcher mutex. Disable it so we can launch more games for rendering.
+    enable_multi_proc();
 }
 
 static void __cdecl end_movie_override_000(const void* args)
