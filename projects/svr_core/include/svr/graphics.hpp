@@ -309,8 +309,6 @@ namespace svr
         // Returns the unordered access view of a texture, if it has one.
         virtual graphics_uav* get_texture_uav(graphics_texture* ptr) = 0;
 
-        virtual void copy_texture(graphics_texture* source, graphics_texture* dest) = 0;
-
         // Clears a render target view with normalized color values.
         virtual void clear_rtv(graphics_rtv* value, float color[4]) = 0;
 

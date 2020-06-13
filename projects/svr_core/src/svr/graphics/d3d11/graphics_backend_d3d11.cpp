@@ -858,11 +858,6 @@ struct graphics_backend_d3d11
         return &ptr->unordered_access;
     }
 
-    void copy_texture(svr::graphics_texture* source, svr::graphics_texture* dest) override
-    {
-        context->CopyResource(dest->texture, source->texture);
-    }
-
     void clear_rtv(svr::graphics_rtv* value, float color[4]) override
     {
         context->ClearRenderTargetView(value->rtv, color);

@@ -154,7 +154,6 @@
     <ClInclude Include="include\svr\prof.hpp" />
     <ClInclude Include="include\svr\game_config.hpp" />
     <ClInclude Include="include\svr\graphics_preview.hpp" />
-    <ClInclude Include="include\svr\graphics_velocity_element.hpp" />
     <ClInclude Include="include\svr\defer.hpp" />
     <ClInclude Include="include\svr\format.hpp" />
     <ClInclude Include="include\svr\game.hpp" />
