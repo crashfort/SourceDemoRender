@@ -30,7 +30,7 @@ namespace svr
     table(First, Rest...)->table<First, 1 + sizeof...(Rest)>;
 
     template <class TableT, class T>
-    inline T table_map_key_or(TableT tab, const char* key, T def)
+    inline auto table_map_key_or(TableT tab, const char* key, T def) -> decltype(tab.elements[0].second)
     {
         for (size_t i = 0; i < TableT::SIZE; i++)
         {
