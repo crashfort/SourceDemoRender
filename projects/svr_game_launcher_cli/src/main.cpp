@@ -11,6 +11,8 @@
 
 #include <restclient-cpp/restclient.h>
 
+static const char* autostart_game_id;
+
 struct launcher_game
 {
     const char* id;
@@ -317,6 +319,23 @@ static bool start_game(launcher_state& state, int index)
     return svr::game_launch_inject(game.exe_path, game.dir_path, game.id, game.args, buf);
 }
 
+static int find_game_by_id(launcher_state& state, const char* id)
+{
+    auto index = 0;
+
+    for (auto game : state.game_list)
+    {
+        if (strcmp(game.id, id) == 0)
+        {
+            return index;
+        }
+
+        index++;
+    }
+
+    return -1;
+}
+
 static bool proc()
 {
     using namespace svr;
@@ -344,6 +363,21 @@ static bool proc()
     show_workarounds();
     log("\n");
 
+    if (autostart_game_id)
+    {
+        log("Trying to autostart game '{}'\n", autostart_game_id);
+
+        auto index = find_game_by_id(state, autostart_game_id);
+
+        if (index == -1)
+        {
+            log("Could not find any game with id '{}'\n", autostart_game_id);
+            return false;
+        }
+
+        return start_game(state, index);
+    }
+
     list_games(state);
     log("\n");
 
@@ -369,6 +403,11 @@ int main(int argc, char* argv[])
     {
         printf(text);
     }, nullptr);
+
+    if (argc > 1)
+    {
+        autostart_game_id = argv[1];
+    }
 
     // Return 0 on success.
     auto ret = !proc();
