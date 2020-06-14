@@ -50,11 +50,6 @@ namespace svr
     {
         auto t = std::thread([=]()
         {
-            defer {
-                // Tell the launcher that we are now completely done!
-                launcher_signal_completion_event();
-            };
-
             // Open up the communication pipe to the launcher.
             auto pipe = launcher_open_com_pipe();
 
@@ -100,6 +95,8 @@ namespace svr
             if (!wait_for_game_libs(game_config_game_libs(game), game_config_game_libs_size(game)))
             {
                 log("Could not wait for required libraries\n");
+
+                launcher_signal_fail_event();
                 return;
             }
 
@@ -108,8 +105,12 @@ namespace svr
             if (!game_external_init(game, data.resource_path))
             {
                 log("Could not initialize game. Terminating\n");
+                launcher_signal_fail_event();
+
                 os_terminate_proc_self();
             }
+
+            launcher_signal_success_event();
         });
 
         t.detach();

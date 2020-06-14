@@ -1,20 +1,33 @@
 #include <svr/launcher.hpp>
 #include <svr/os.hpp>
 
-static const auto COMPLETION_EVENT_NAME = "crashfort-svr-completion-event";
+static const auto SUCCESS_EVENT_NAME = "crashfort-svr-success-event";
+static const auto FAIL_EVENT_NAME = "crashfort-svr-fail-event";
 static const auto COM_EVENT_NAME = "crashfort-svr-com-event";
 static const auto COM_PIPE_NAME = "crashfort-svr-com-pipe";
 
 namespace svr
 {
-    os_handle* launcher_create_completion_event()
+    os_handle* launcher_create_success_event()
     {
-        return os_create_event(COMPLETION_EVENT_NAME);
+        return os_create_event(SUCCESS_EVENT_NAME);
     }
 
-    void launcher_signal_completion_event()
+    os_handle* launcher_create_fail_event()
     {
-        auto event = os_open_event(COMPLETION_EVENT_NAME);
+        return os_create_event(FAIL_EVENT_NAME);
+    }
+
+    void launcher_signal_success_event()
+    {
+        auto event = os_open_event(SUCCESS_EVENT_NAME);
+        os_set_event(event);
+        os_close_handle(event);
+    }
+
+    void launcher_signal_fail_event()
+    {
+        auto event = os_open_event(FAIL_EVENT_NAME);
         os_set_event(event);
         os_close_handle(event);
     }

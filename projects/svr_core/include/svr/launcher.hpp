@@ -20,12 +20,21 @@ namespace svr
 
     // Creates a process shared synchronization event.
     // This is intended to be run in the launcher.
-    SVR_API os_handle* launcher_create_completion_event();
+    SVR_API os_handle* launcher_create_success_event();
+    
+    // Creates a process shared synchronization event.
+    // This is intended to be run in the launcher.
+    SVR_API os_handle* launcher_create_fail_event();
 
-    // Signals the process shared completion event that the initialization within
+    // Signals the process shared success event that the initialization within
     // the game has completed.
     // This is intended to be run in the game process.
-    SVR_API void launcher_signal_completion_event();
+    SVR_API void launcher_signal_success_event();
+
+    // Signals the process shared success event that the initialization within
+    // the game has failed.
+    // This is intended to be run in the game process.
+    SVR_API void launcher_signal_fail_event();
 
     // Creates a pipe endpoint that is to receive log messages from the game.
     // This is intended to be run in the launcher.

@@ -150,16 +150,24 @@ namespace svr
         log("Created process with id {} and thread id {}\n", os_get_proc_id(proc_handle), os_get_thread_id(thread_handle));
 
         // The game process will open and set this when it is done with everything.
-        auto completion_event = launcher_create_completion_event();
+        auto success_event = launcher_create_success_event();
+        auto fail_event = launcher_create_fail_event();
 
-        if (completion_event == nullptr)
+        if (success_event == nullptr)
         {
-            log("Could not create completion event\n");
+            log("Could not create success notification event\n");
+            return false;
+        }
+
+        if (fail_event == nullptr)
+        {
+            log("Could not create failure notification event\n");
             return false;
         }
 
         defer {
-            os_close_handle(completion_event);
+            os_close_handle(success_event);
+            os_close_handle(fail_event);
         };
 
         if (!inject_process(proc_handle, thread_handle, resource_path, game_id))
@@ -175,10 +183,11 @@ namespace svr
 
         os_handle* waitables[] = {
             proc_handle,
-            completion_event,
+            success_event,
+            fail_event,
         };
 
-        auto waited = os_handle_wait_either(proc_handle, completion_event);
+        auto waited = os_handle_wait_any(waitables, 3);
 
         // Require that the game has opened the pipe.
         if (os_handle_wait(com_link_event))
@@ -198,6 +207,12 @@ namespace svr
         if (waited == proc_handle)
         {
             log("Process exited before initialization finished\n");
+            return false;
+        }
+
+        else if (waited == fail_event)
+        {
+            log("Initialization failure\n");
             return false;
         }
 
