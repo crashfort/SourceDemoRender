@@ -564,6 +564,8 @@ bool sys_start_movie(game_system* sys, const char* name, const char* profile, ui
     sys->movie_runing = true;
     sys->frame_num = 0;
 
+    memset(sys->velocity, 0, sizeof(sys->velocity));
+
     return true;
 }
 
