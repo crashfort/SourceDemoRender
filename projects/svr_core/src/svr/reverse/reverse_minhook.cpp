@@ -10,28 +10,13 @@ static svr::reverse_status convert_status(MH_STATUS value)
 
     switch (value)
     {
-        case MH_ERROR_ALREADY_CREATED:
-        {
-            return REVERSE_STATUS_ALREADY_CREATED;
-        }
-
-        case MH_ERROR_NOT_CREATED:
-        {
-            return REVERSE_STATUS_NOT_CREATED;
-        }
-
-        case MH_ERROR_NOT_EXECUTABLE:
-        {
-            return REVERSE_STATUS_NOT_EXECUTABLE;
-        }
-
-        case MH_ERROR_UNSUPPORTED_FUNCTION:
-        {
-            return REVERSE_STATUS_FUNCTION_NOT_SUPPORTED;
-        }
+        case MH_ERROR_ALREADY_CREATED: return REVERSE_STATUS_ALREADY_CREATED;
+        case MH_ERROR_NOT_CREATED: return REVERSE_STATUS_NOT_CREATED;
+        case MH_ERROR_NOT_EXECUTABLE: return REVERSE_STATUS_NOT_EXECUTABLE;
+        case MH_ERROR_UNSUPPORTED_FUNCTION: return REVERSE_STATUS_FUNCTION_NOT_SUPPORTED;
     }
 
-    return svr::REVERSE_STATUS_OK;
+    return REVERSE_STATUS_OK;
 }
 
 namespace svr

@@ -29,45 +29,14 @@ static DXGI_FORMAT convert_format(svr::graphics_format value)
 
     switch (value)
     {
-        case GRAPHICS_FORMAT_B8G8R8A8_UNORM:
-        {
-            return DXGI_FORMAT_B8G8R8A8_UNORM;
-        }
-
-        case GRAPHICS_FORMAT_R8G8B8A8_UINT:
-        {
-            return DXGI_FORMAT_R8G8B8A8_UINT;
-        }
-
-        case GRAPHICS_FORMAT_R8G8B8A8_UNORM:
-        {
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
-        }
-
-        case GRAPHICS_FORMAT_R32G32B32A32_FLOAT:
-        {
-            return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        }
-
-        case GRAPHICS_FORMAT_R8_UNORM:
-        {
-            return DXGI_FORMAT_R8_UNORM;
-        }
-
-        case GRAPHICS_FORMAT_R8_UINT:
-        {
-            return DXGI_FORMAT_R8_UINT;
-        }
-
-        case GRAPHICS_FORMAT_R8G8_UINT:
-        {
-            return DXGI_FORMAT_R8G8_UINT;
-        }
-
-        case GRAPHICS_FORMAT_R32_UINT:
-        {
-            return DXGI_FORMAT_R32_UINT;
-        }
+        case GRAPHICS_FORMAT_B8G8R8A8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case GRAPHICS_FORMAT_R8G8B8A8_UINT: return DXGI_FORMAT_R8G8B8A8_UINT;
+        case GRAPHICS_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
+        case GRAPHICS_FORMAT_R32G32B32A32_FLOAT: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        case GRAPHICS_FORMAT_R8_UNORM: return DXGI_FORMAT_R8_UNORM;
+        case GRAPHICS_FORMAT_R8_UINT: return DXGI_FORMAT_R8_UINT;
+        case GRAPHICS_FORMAT_R8G8_UINT: return DXGI_FORMAT_R8G8_UINT;
+        case GRAPHICS_FORMAT_R32_UINT: return DXGI_FORMAT_R32_UINT;
     }
 
     assert(false);
@@ -80,25 +49,10 @@ static D3D11_USAGE convert_usage(svr::graphics_resource_usage value)
 
     switch (value)
     {
-        case GRAPHICS_USAGE_DEFAULT:
-        {
-            return D3D11_USAGE_DEFAULT;
-        }
-
-        case GRAPHICS_USAGE_IMMUTABLE:
-        {
-            return D3D11_USAGE_IMMUTABLE;
-        }
-
-        case GRAPHICS_USAGE_DYNAMIC:
-        {
-            return D3D11_USAGE_DYNAMIC;
-        }
-
-        case GRAPHICS_USAGE_STAGING:
-        {
-            return D3D11_USAGE_STAGING;
-        }
+        case GRAPHICS_USAGE_DEFAULT: return D3D11_USAGE_DEFAULT;
+        case GRAPHICS_USAGE_IMMUTABLE: return D3D11_USAGE_IMMUTABLE;
+        case GRAPHICS_USAGE_DYNAMIC: return D3D11_USAGE_DYNAMIC;
+        case GRAPHICS_USAGE_STAGING: return D3D11_USAGE_STAGING;
     }
 
     return D3D11_USAGE_DEFAULT;
@@ -110,20 +64,9 @@ static UINT convert_buffer_type(svr::graphics_buffer_type value)
 
     switch (value)
     {
-        case GRAPHICS_BUFFER_VERTEX:
-        {
-            return D3D11_BIND_VERTEX_BUFFER;
-        }
-
-        case GRAPHICS_BUFFER_INDEX:
-        {
-            return D3D11_BIND_INDEX_BUFFER;
-        }
-
-        case GRAPHICS_BUFFER_CONSTANT:
-        {
-            return D3D11_BIND_CONSTANT_BUFFER;
-        }
+        case GRAPHICS_BUFFER_VERTEX: return D3D11_BIND_VERTEX_BUFFER;
+        case GRAPHICS_BUFFER_INDEX: return D3D11_BIND_INDEX_BUFFER;
+        case GRAPHICS_BUFFER_CONSTANT: return D3D11_BIND_CONSTANT_BUFFER;
     }
 
     return 0;
@@ -135,20 +78,9 @@ static UINT convert_view_access(svr::graphics_view_access_t value)
 
     UINT ret = 0;
 
-    if (value & GRAPHICS_VIEW_SRV)
-    {
-        ret |= D3D11_BIND_SHADER_RESOURCE;
-    }
-
-    if (value & GRAPHICS_VIEW_UAV)
-    {
-        ret |= D3D11_BIND_UNORDERED_ACCESS;
-    }
-
-    if (value & GRAPHICS_VIEW_RTV)
-    {
-        ret |= D3D11_BIND_RENDER_TARGET;
-    }
+    if (value & GRAPHICS_VIEW_SRV) ret |= D3D11_BIND_SHADER_RESOURCE;
+    if (value & GRAPHICS_VIEW_UAV) ret |= D3D11_BIND_UNORDERED_ACCESS;
+    if (value & GRAPHICS_VIEW_RTV) ret |= D3D11_BIND_RENDER_TARGET;
 
     return ret;
 }
@@ -159,15 +91,8 @@ static UINT convert_cpu_access(svr::graphics_cpu_access_t value)
 
     UINT ret = 0;
 
-    if (value & GRAPHICS_CPU_ACCESS_READ)
-    {
-        ret |= D3D11_CPU_ACCESS_READ;
-    }
-
-    if (value & GRAPHICS_CPU_ACCESS_WRITE)
-    {
-        ret |= D3D11_CPU_ACCESS_WRITE;
-    }
+    if (value & GRAPHICS_CPU_ACCESS_READ) ret |= D3D11_CPU_ACCESS_READ;
+    if (value & GRAPHICS_CPU_ACCESS_WRITE) ret |= D3D11_CPU_ACCESS_WRITE;
 
     return ret;
 }
@@ -183,27 +108,19 @@ static UINT calc_bytes_pitch(DXGI_FORMAT format)
     switch (format)
     {
         case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        {
-            return 16;
-        }
+        return 16;
 
         case DXGI_FORMAT_B8G8R8A8_UNORM:
         case DXGI_FORMAT_R8G8B8A8_UINT:
         case DXGI_FORMAT_R8G8B8A8_UNORM:
-        {
-            return 4;
-        }
+        return 4;
 
         case DXGI_FORMAT_R8_UNORM:
         case DXGI_FORMAT_R8_UINT:
-        {
-            return 1;
-        }
+        return 1;
 
         case DXGI_FORMAT_R8G8_UINT:
-        {
-            return 2;
-        }
+        return 2;
     }
 
     assert(false);
@@ -1283,56 +1200,18 @@ struct graphics_backend_d3d11
 
         switch (desc.dest_format)
         {
-            case MEDIA_PIX_FORMAT_BGR0:
-            {
-                ret->cs_shader = bgr0_conversion_cs;
-                break;
-            }
-
-            case MEDIA_PIX_FORMAT_YUV420:
-            {
-                ret->cs_shader = yuv420_conversion_cs;
-                break;
-            }
-
-            case MEDIA_PIX_FORMAT_NV12:
-            {
-                ret->cs_shader = nv12_conversion_cs;
-                break;
-            }
-
-            case MEDIA_PIX_FORMAT_NV21:
-            {
-                ret->cs_shader = nv21_conversion_cs;
-                break;
-            }
-
-            case MEDIA_PIX_FORMAT_YUV444:
-            {
-                ret->cs_shader = yuv444_conversion_cs;
-                break;
-            }
+            case MEDIA_PIX_FORMAT_BGR0: ret->cs_shader = bgr0_conversion_cs; break;
+            case MEDIA_PIX_FORMAT_YUV420: ret->cs_shader = yuv420_conversion_cs; break;
+            case MEDIA_PIX_FORMAT_NV12: ret->cs_shader = nv12_conversion_cs; break;
+            case MEDIA_PIX_FORMAT_NV21: ret->cs_shader = nv21_conversion_cs; break;
+            case MEDIA_PIX_FORMAT_YUV444: ret->cs_shader = yuv444_conversion_cs; break;
         }
 
         switch (ret->desc.dest_color_space)
         {
-            case MEDIA_COLOR_SPACE_RGB:
-            {
-                ret->yuv_color_space_mat = nullptr;
-                break;
-            }
-
-            case MEDIA_COLOR_SPACE_YUV601:
-            {
-                ret->yuv_color_space_mat = yuv_601_color_mat;
-                break;
-            }
-
-            case MEDIA_COLOR_SPACE_YUV709:
-            {
-                ret->yuv_color_space_mat = yuv_709_color_mat;
-                break;
-            }
+            case MEDIA_COLOR_SPACE_RGB: ret->yuv_color_space_mat = nullptr; break;
+            case MEDIA_COLOR_SPACE_YUV601: ret->yuv_color_space_mat = yuv_601_color_mat; break;
+            case MEDIA_COLOR_SPACE_YUV709: ret->yuv_color_space_mat = yuv_709_color_mat; break;
         }
 
         return ret;
@@ -1878,25 +1757,10 @@ struct graphics_backend_d3d11
 
         switch (value)
         {
-            case GRAPHICS_BLEND_OPAQUE:
-            {
-                return opaque_bs;
-            }
-
-            case GRAPHICS_BLEND_ALPHA_BLEND:
-            {
-                return alpha_blend_bs;
-            }
-
-            case GRAPHICS_BLEND_ADDITIVE:
-            {
-                return additive_bs;
-            }
-
-            case GRAPHICS_BLEND_NONPREMULTIPLIED:
-            {
-                return nonpremultiplied_bs;
-            }
+            case GRAPHICS_BLEND_OPAQUE: return opaque_bs;
+            case GRAPHICS_BLEND_ALPHA_BLEND: return alpha_blend_bs;
+            case GRAPHICS_BLEND_ADDITIVE: return additive_bs;
+            case GRAPHICS_BLEND_NONPREMULTIPLIED: return nonpremultiplied_bs;
         }
 
         assert(false);
@@ -1909,15 +1773,8 @@ struct graphics_backend_d3d11
 
         switch (value)
         {
-            case GRAPHICS_SAMPLER_POINT:
-            {
-                return point_ss;
-            }
-
-            case GRAPHICS_SAMPLER_LINEAR:
-            {
-                return linear_ss;
-            }
+            case GRAPHICS_SAMPLER_POINT: return point_ss;
+            case GRAPHICS_SAMPLER_LINEAR: return linear_ss;
         }
 
         assert(false);

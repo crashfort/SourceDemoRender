@@ -47,32 +47,15 @@ static svr::table COLOR_SPACES = {
 
 static AVPixelFormat convert_pixel_format(svr::media_pixel_format value)
 {
+    using namespace svr;
+
     switch (value)
     {
-        case svr::MEDIA_PIX_FORMAT_BGR0:
-        {
-            return AV_PIX_FMT_BGR0;
-        }
-
-        case svr::MEDIA_PIX_FORMAT_YUV420:
-        {
-            return AV_PIX_FMT_YUV420P;
-        }
-
-        case svr::MEDIA_PIX_FORMAT_NV12:
-        {
-            return AV_PIX_FMT_NV12;
-        }
-
-        case svr::MEDIA_PIX_FORMAT_NV21:
-        {
-            return AV_PIX_FMT_NV21;
-        }
-
-        case svr::MEDIA_PIX_FORMAT_YUV444:
-        {
-            return AV_PIX_FMT_YUV444P;
-        }
+        case MEDIA_PIX_FORMAT_BGR0: return AV_PIX_FMT_BGR0;
+        case MEDIA_PIX_FORMAT_YUV420: return AV_PIX_FMT_YUV420P;
+        case MEDIA_PIX_FORMAT_NV12: return AV_PIX_FMT_NV12;
+        case MEDIA_PIX_FORMAT_NV21: return AV_PIX_FMT_NV21;
+        case MEDIA_PIX_FORMAT_YUV444: return AV_PIX_FMT_YUV444P;
     }
 
     assert(false);
@@ -106,15 +89,8 @@ namespace svr
     {
         switch (space)
         {
-            case MEDIA_COLOR_SPACE_YUV601:
-            {
-                return &YUV_601_COLOR_SPACE_MATRIX;
-            }
-
-            case MEDIA_COLOR_SPACE_YUV709:
-            {
-                return &YUV_709_COLOR_SPACE_MATRIX;
-            }
+            case MEDIA_COLOR_SPACE_YUV601: return &YUV_601_COLOR_SPACE_MATRIX;
+            case MEDIA_COLOR_SPACE_YUV709: return &YUV_709_COLOR_SPACE_MATRIX;
         }
 
         return nullptr;
