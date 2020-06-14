@@ -30,7 +30,9 @@ Any DirectX 11 (Direct3D 11.0) compatible graphics adapter with minimum of Windo
 ## Launching
 Before launching for the first time you must edit `data/launcher-config.json` which specifies which games you have. It is recommended that you use forward slashes for everything in this file. Once you have added some games, start *svr_game_launcher.exe* and follow the instructions. On every start, the launcher will look for application updates and automatically download the latest game config. You can disable updates by creating an empty file called `no_update` in the bin directory.
 
-Games can automatically be started without prompting by insertign the game id as an argument. Like this: `svr_game_launcher.exe mom-win`.
+Games can automatically be started without prompting by inserting the game id as an argument. Like this: `svr_game_launcher.exe mom-win`.
+
+The launcher will return 0 on complete success, and 1 if any failure has occured either in the launching or within the game.
 
 ## Producing
 Once in game, you can use `startmovie` to start producing a movie. The *startmovie* command takes 1 or 2 parameters in this format: `startmovie <name> (<profile>)`. The *name* is the filename of the movie which will be located in `data/movies`. The *profile* is an optional parameter that decides which settings this movie will use. If not specified, the default profile is used (see below about profiles).
