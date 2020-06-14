@@ -28,7 +28,7 @@ Known games that don't work:
 Any DirectX 11 (Direct3D 11.0) compatible graphics adapter with minimum of Windows 10 1909 is required.
 
 ## Launching
-Before launching for the first time you must edit `data/launcher-config.json` which specifies which games you have. Once you have added some games, start *svr_game_launcher.exe* and follow the instructions.
+Before launching for the first time you must edit `data/launcher-config.json` which specifies which games you have. It is recommended that you use forward slashes for everything in this file. Once you have added some games, start *svr_game_launcher.exe* and follow the instructions.
 
 ## Producing
 Once in game, you can use `startmovie` to start producing a movie. The *startmovie* command takes 1 or 2 parameters in this format: `startmovie <name> (<profile>)`. The *name* is the filename of the movie which will be located in `data/movies`. The *profile* is an optional parameter that decides which settings this movie will use. If not specified, the default profile is used (see below about profiles).
