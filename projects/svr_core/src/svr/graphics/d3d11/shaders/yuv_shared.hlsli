@@ -8,13 +8,7 @@ cbuffer yuv_buffer_0 : register(b0)
     float4 coeff_v;
 };
 
-uint yuv_calc_y_444(float3 pix)
-{
-    pix *= 255.0;
-    return 0 + (pix.x * coeff_y[0]) + (pix.y * coeff_y[1]) + (pix.z * coeff_y[2]);
-}
-
-uint yuv_calc_y_420(float3 pix)
+uint yuv_calc_y(float3 pix)
 {
     pix *= 255.0;
     return 16 + (pix.x * coeff_y[0]) + (pix.y * coeff_y[1]) + (pix.z * coeff_y[2]);

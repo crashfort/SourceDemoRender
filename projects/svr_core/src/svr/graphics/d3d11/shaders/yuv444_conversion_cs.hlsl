@@ -15,7 +15,7 @@ void main(uint3 dtid : SV_DispatchThreadID)
     float4 pix = input_texture.Load(dtid);
 
     // Input texture is in BGRA format.
-    uint y = yuv_calc_y_444(pix.xyz);
+    uint y = yuv_calc_y(pix.xyz);
     uint u = yuv_calc_u(pix.xyz);
     uint v = yuv_calc_v(pix.xyz);
 

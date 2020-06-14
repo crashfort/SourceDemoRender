@@ -17,7 +17,7 @@ void main(uint3 dtid : SV_DispatchThreadID)
     float4 nearby = yuv_average_nearby(dtid, pix, input_texture);
 
     // Input texture is in BGRA format.
-    uint y = yuv_calc_y_420(pix.xyz);
+    uint y = yuv_calc_y(pix.xyz);
     uint u = yuv_calc_u(nearby.xyz);
     uint v = yuv_calc_v(nearby.xyz);
 
