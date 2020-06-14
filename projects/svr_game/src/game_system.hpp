@@ -1,4 +1,6 @@
 #pragma once
+#include <svr/vec.hpp>
+
 #include <stdint.h>
 
 namespace svr
@@ -29,7 +31,7 @@ bool sys_movie_running(game_system* sys);
 
 void sys_set_velocity_overlay_support(game_system* sys, bool value);
 bool sys_use_velocity_overlay(game_system* sys);
-void sys_provide_velocity_overlay(game_system* sys, float x, float y, float z);
+void sys_provide_velocity_overlay(game_system* sys, svr::vec3 v);
 
 // Starts a movie.
 bool sys_start_movie(game_system* sys, const char* name, const char* profile, uint32_t width, uint32_t height);

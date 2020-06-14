@@ -72,8 +72,8 @@ static void process_velocity_overlay()
         player = get_player_by_index(spec);
     }
 
-    auto vel = (float*)player + player_abs_velocity_offset;
-    sys_provide_velocity_overlay(sys, vel[0], vel[1], vel[2]);
+    auto vel = (svr::vec3*)player + player_abs_velocity_offset;
+    sys_provide_velocity_overlay(sys, *vel);
 }
 
 static bool open_game_texture()

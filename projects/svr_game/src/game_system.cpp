@@ -12,6 +12,7 @@
 #include <svr/str.hpp>
 #include <svr/ui.hpp>
 #include <svr/swap.hpp>
+#include <svr/vec.hpp>
 
 // Common implementation for all architectures.
 
@@ -57,7 +58,7 @@ struct game_system
     size_t movie_plane_count;
 
     int velocity_overlay_padding;
-    float velocity[3];
+    svr::vec3 velocity;
 };
 
 static svr::graphics_texture* create_work_texture(game_system* sys, uint32_t width, uint32_t height)
@@ -284,7 +285,7 @@ static void process_overlays(game_system* sys)
 
     if (sys->use_velocity_overlay)
     {
-        auto vel = sqrt(sys->velocity[0] * sys->velocity[0] + sys->velocity[1] * sys->velocity[1]);
+        auto vel = sqrt(sys->velocity.x * sys->velocity.x + sys->velocity.y * sys->velocity.y);
 
         fmt::memory_buffer buf;
         format_with_null(buf, "{:.0f}", vel);
@@ -506,11 +507,9 @@ bool sys_use_velocity_overlay(game_system* sys)
     return sys->use_velocity_overlay;
 }
 
-void sys_provide_velocity_overlay(game_system* sys, float x, float y, float z)
+void sys_provide_velocity_overlay(game_system* sys, svr::vec3 v)
 {
-    sys->velocity[0] = x;
-    sys->velocity[1] = y;
-    sys->velocity[2] = z;
+    sys->velocity = v;
 }
 
 bool sys_start_movie(game_system* sys, const char* name, const char* profile, uint32_t width, uint32_t height)
@@ -564,7 +563,7 @@ bool sys_start_movie(game_system* sys, const char* name, const char* profile, ui
     sys->movie_runing = true;
     sys->frame_num = 0;
 
-    memset(sys->velocity, 0, sizeof(sys->velocity));
+    sys->velocity = {};
 
     return true;
 }
