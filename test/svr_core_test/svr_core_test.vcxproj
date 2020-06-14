@@ -154,6 +154,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\test_reverse.cpp" />
     <ClCompile Include="src\test_token.cpp" />
+    <ClCompile Include="src\test_version.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

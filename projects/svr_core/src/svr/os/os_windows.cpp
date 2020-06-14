@@ -171,6 +171,32 @@ namespace svr
         return true;
     }
 
+    bool os_write_file(const char* path, const void* data, size_t size)
+    {
+        auto file = CreateFileA(path, GENERIC_WRITE, 0, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            log("windows: Could not open file '{}' ({})\n", path, GetLastError());
+            return false;
+        }
+
+        defer {
+            CloseHandle(file);
+        };
+
+        DWORD written;
+        auto res = WriteFile(file, data, size, &written, nullptr);
+
+        if (res == 0)
+        {
+            log("windows: Could not write {} bytes to '{}'\n ({})\n", size, path);
+            return false;
+        }
+
+        return true;
+    }
+
     os_handle* os_create_pipe_read(const char* name)
     {
         auto BUFFER_SIZE = 1024 * 1024;

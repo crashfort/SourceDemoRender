@@ -13,16 +13,23 @@ namespace svr
 
     struct version_data
     {
-        version_pair core;
-        version_pair game;
-        version_pair game_launcher_cli;
-        version_pair game_config;
+        version_pair app;
     };
 
     SVR_API version_data version_parse(config_node* n);
 
     inline bool version_greater_than(version_pair v, int major, int minor)
     {
-        return v.major > major && v.minor > minor;
+        if (v.major > major)
+        {
+            return true;
+        }
+
+        return v.minor > minor;
+    }
+
+    inline bool version_greater_than(version_pair a, version_pair b)
+    {
+        return version_greater_than(a, b.major, b.minor);
     }
 }

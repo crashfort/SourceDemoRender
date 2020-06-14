@@ -1,6 +1,3 @@
 {
-    "svr-core": [ 0, 1 ],
-    "game-config": [ 1, 0 ],
-    "svr-game-launcher-cli": [ 0, 3 ],
-    "svr-game": [ 0, 1 ]
+    "app": [ 0, 1 ]
 }

@@ -4,9 +4,12 @@
 #include <svr/os.hpp>
 #include <svr/version.hpp>
 #include <svr/defer.hpp>
+#include <svr/str.hpp>
 
 #include <stdio.h>
 #include <vector>
+
+#include <restclient-cpp/restclient.h>
 
 struct launcher_game
 {
@@ -23,6 +26,8 @@ struct launcher_state
 
     // Elements are views to data in launcher_config.
     std::vector<launcher_game> game_list;
+
+    svr::version_data version;
 };
 
 static void show_info()
@@ -33,7 +38,7 @@ static void show_info()
     log("For more information see https://github.com/crashfort/SourceDemoRender\n");
 }
 
-static void show_version()
+static void get_local_version(launcher_state& state)
 {
     using namespace svr;
 
@@ -49,17 +54,148 @@ static void show_version()
         config_destroy(cfg);
     };
 
-    auto version_data = version_parse(config_root(cfg));
+    state.version = version_parse(config_root(cfg));
 
     auto print_version = [](const char* caption, const version_pair& v)
     {
         log("{}: {}.{}\n", caption, v.major, v.minor);
     };
 
-    print_version("Core version", version_data.core);
-    print_version("Game config version", version_data.game_config);
-    print_version("Game version", version_data.game);
-    print_version("Launcher version", version_data.game_launcher_cli);
+    print_version("Application version", state.version.app);
+}
+
+struct manual_updatable
+{
+    const char* name;
+    svr::version_pair local;
+    svr::version_pair remote;
+};
+
+struct auto_updatable
+{
+    const char* file;
+    const char* url;
+};
+
+static void check_updates(launcher_state& state)
+{
+    using namespace svr;
+
+    log("\n");
+
+    if (os_does_file_exist("no_update"))
+    {
+        log("Skipping update\n");
+        return;
+    }
+
+    const auto BASE_URL = "https://raw.githubusercontent.com/crashfort/SourceDemoRender/svr/";
+
+    str_builder url_builder;
+
+    auto build_url = [&](const char* part)
+    {
+        url_builder.reset();
+        url_builder.append(BASE_URL);
+        url_builder.append(part);
+
+        return url_builder.buf;
+    };
+
+    log("Looking for updates\n");
+
+    auto ver_req = RestClient::get(build_url("bin/data/version.json"));
+
+    if (ver_req.code != 200)
+    {
+        log("Could not query remote application version\n");
+        return;
+    }
+
+    auto cfg = config_parse_json(ver_req.body.data(), ver_req.body.size());
+
+    if (cfg == nullptr)
+    {
+        log("Could not parse remote version json\n");
+        return;
+    }
+
+    defer {
+        config_destroy(cfg);
+    };
+
+    auto local_v = state.version;
+    auto remote_v = version_parse(config_root(cfg));
+
+    manual_updatable manuals[] = {
+        manual_updatable{"svr", local_v.app, remote_v.app},
+    };
+
+    // The game config is kept separate to allow for hotfixing of broken games, which may not require any application changes.
+
+    auto_updatable autos[] = {
+        auto_updatable{"data/game-config.json", "bin/data/game-config.json"},
+    };
+
+    auto print_comparison = [](const char* name, version_pair old, version_pair newer)
+    {
+        log("* {} ({}.{} -> {}.{})\n", name, old.major, old.minor, newer.major, newer.minor);
+    };
+
+    auto has_app_updates = false;
+
+    for (auto& e : manuals)
+    {
+        if (version_greater_than(e.remote, e.local))
+        {
+            has_app_updates = true;
+            break;
+        }
+    }
+
+    if (has_app_updates)
+    {
+        log("There are updates available. Please visit https://github.com/crashfort/SourceDemoRender/releases to update!\n");
+
+        for (auto e : manuals)
+        {
+            print_comparison(e.name, e.local, e.remote);
+        }
+
+        log("\n");
+    }
+
+    log("The following files can be automatically updated:\n");
+
+    for (auto e : autos)
+    {
+        log("* {}\n", e.file);
+    }
+
+    log("\n");
+
+    for (auto e : autos)
+    {
+        auto url = build_url(e.url);
+
+        log("Downloading from '{}': ", url);
+
+        auto req = RestClient::get(url);
+
+        log("{}\n", req.code);
+
+        if (req.code == 200)
+        {
+            log("Writing {} bytes to '{}'\n", req.body.size(), e.file);
+        }
+
+        else
+        {
+            log("Could not download from '{}'\n", url);
+        }
+
+        os_write_file(e.file, req.body.data(), req.body.size());
+    }
 }
 
 static bool init(launcher_state& state)
@@ -185,12 +321,13 @@ static bool proc()
 {
     using namespace svr;
 
+    launcher_state state;
+
     show_info();
     log("\n");
-    show_version();
-    log("\n");
 
-    launcher_state state;
+    get_local_version(state);
+    check_updates(state);
 
     if (!init(state))
     {
@@ -203,6 +340,7 @@ static bool proc()
         return false;
     }
 
+    log("\n");
     show_workarounds();
     log("\n");
 

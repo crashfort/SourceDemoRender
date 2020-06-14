@@ -83,6 +83,10 @@ namespace svr
     // On failure, the resulting memory buffer is unchanged.
     SVR_API bool os_read_file(const char* path, mem_buffer& buffer);
 
+    // Attempts to write data to a file.
+    // The data is written all in one go.
+    SVR_API bool os_write_file(const char* path, const void* data, size_t size);
+
     // Creates a new pipe endpoint for reading.
     SVR_API os_handle* os_create_pipe_read(const char* name);
 

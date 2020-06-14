@@ -17,10 +17,7 @@ namespace svr
     version_data version_parse(config_node* n)
     {
         version_data ret;
-        ret.core = extract_version(config_find(n, "svr-core"));
-        ret.game = extract_version(config_find(n, "svr-game"));
-        ret.game_launcher_cli = extract_version(config_find(n, "svr-game-launcher-cli"));
-        ret.game_config = extract_version(config_find(n, "game-config"));
+        ret.app = extract_version(config_find(n, "app"));
 
         return ret;
     }
