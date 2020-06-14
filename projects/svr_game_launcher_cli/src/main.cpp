@@ -189,14 +189,13 @@ static void check_updates(launcher_state& state)
         if (req.code == 200)
         {
             log("Writing {} bytes to '{}'\n", req.body.size(), e.file);
+            os_write_file(e.file, req.body.data(), req.body.size());
         }
 
         else
         {
             log("Could not download from '{}'\n", url);
         }
-
-        os_write_file(e.file, req.body.data(), req.body.size());
     }
 }
 
