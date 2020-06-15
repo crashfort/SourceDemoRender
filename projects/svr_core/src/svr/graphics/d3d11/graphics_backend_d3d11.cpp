@@ -1072,20 +1072,13 @@ struct graphics_backend_d3d11
             "conversion texture 3",
         };
 
-        graphics_texture* textures[3] = {
-            nullptr,
-            nullptr,
-            nullptr
-        };
+        graphics_texture* textures[3];
+        memset(textures, 0, sizeof(textures));
 
         defer {
-            for (size_t i = 0; i < used_textures; i++)
-            {
-                if (textures[i])
-                {
-                    destroy_texture(textures[i]);
-                }
-            }
+            if (textures[0]) destroy_texture(textures[0]);
+            if (textures[1]) destroy_texture(textures[1]);
+            if (textures[2]) destroy_texture(textures[2]);
         };
 
         auto make_tex_desc = [](graphics_format format, uint32_t width, uint32_t height)
