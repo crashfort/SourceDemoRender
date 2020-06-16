@@ -193,6 +193,7 @@
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AssemblyAndMachineCode</AssemblerOutput>
     </ClCompile>
     <ClCompile Include="src\svr\graphics\graphics.cpp" />
+    <ClCompile Include="src\svr\graphics\graphics_preview.cpp" />
     <ClCompile Include="src\svr\graphics\graphics_preview_winapi.cpp" />
     <ClCompile Include="src\svr\game_config.cpp" />
     <ClCompile Include="src\svr\launcher\launcher.cpp" />

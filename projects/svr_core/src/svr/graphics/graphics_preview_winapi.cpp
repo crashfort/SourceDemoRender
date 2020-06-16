@@ -247,11 +247,6 @@ namespace svr
 
         return prev;
     }
-
-    void graphics_preview_destroy_winapi(graphics_preview* prev)
-    {
-        delete prev;
-    }
 }
 
 static graphics_preview_winapi* transform_ptr(HWND hwnd)

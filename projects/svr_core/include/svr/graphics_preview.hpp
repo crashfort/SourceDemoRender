@@ -25,5 +25,5 @@ namespace svr
     // Destroys a preview window.
     // Should be called in the same thread that created the preview window and also ran the message loop.
     // A preview window should be destroyed when the message loop exits.
-    SVR_API void graphics_preview_destroy_winapi(graphics_preview* prev);
+    SVR_API void graphics_preview_destroy(graphics_preview* prev);
 }

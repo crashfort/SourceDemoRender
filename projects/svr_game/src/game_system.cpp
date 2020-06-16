@@ -556,7 +556,7 @@ bool sys_start_movie(game_system* sys, const char* name, const char* profile, ui
         {
             sys->ui_preview = graphics_preview_create_winapi(sys->graphics, width, height);
             ui_enter_message_loop();
-            graphics_preview_destroy_winapi(sys->ui_preview);
+            graphics_preview_destroy(sys->ui_preview);
             sys->ui_preview = nullptr;
         });
     }
