@@ -148,6 +148,7 @@
     <ClCompile Include="src\game_graphics_d3d9ex.cpp" />
     <ClCompile Include="src\game_init.cpp" />
     <ClCompile Include="src\game_system.cpp" />
+    <ClCompile Include="src\game_system_windows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\svr_core\svr_core.vcxproj">
