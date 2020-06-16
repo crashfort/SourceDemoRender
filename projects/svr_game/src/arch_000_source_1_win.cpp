@@ -18,9 +18,17 @@
 static game_graphics_d3d9ex d3d9ex_graphics;
 static game_system* sys;
 
+static bool has_enabled_multi_proc;
+
 // Allow multiple games to be started at once.
 static void enable_multi_proc()
 {
+    // One instance can only remove its own mutex.
+    if (has_enabled_multi_proc)
+    {
+        return;
+    }
+
     using namespace svr;
 
     auto ptr = os_open_mutex("hl2_singleton_mutex");
@@ -30,6 +38,8 @@ static void enable_multi_proc()
         os_release_mutex(ptr);
         os_close_handle(ptr);
         log("Enabled multiprocess rendering\n");
+
+        has_enabled_multi_proc = true;
     }
 }
 
