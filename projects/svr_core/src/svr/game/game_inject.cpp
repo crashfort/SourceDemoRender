@@ -187,10 +187,10 @@ namespace svr
             fail_event,
         };
 
-        auto waited = os_handle_wait_any(waitables, 3);
+        auto waited = os_handle_wait_any(waitables, 3, -1);
 
         // Require that the game has opened the pipe.
-        if (os_handle_wait(com_link_event))
+        if (os_handle_wait(com_link_event, -1))
         {
             // Read back what has been written to us.
 

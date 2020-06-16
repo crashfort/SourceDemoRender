@@ -6,11 +6,6 @@
 
 namespace svr
 {
-    enum : uint32_t
-    {
-        OS_WAIT_INFINITE = 0xFFFFFFFF
-    };
-
     struct mem_buffer;
 
     struct os_handle;
@@ -48,14 +43,14 @@ namespace svr
 
     // Waits for any handle to become signalled.
     // Returns the handle which got signalled.
-    // Timeout is in milliseconds, use OS_WAIT_INFINITE for infinite.
-    SVR_API os_handle* os_handle_wait_any(os_handle** handles, size_t size, uint32_t timeout = OS_WAIT_INFINITE);
+    // Timeout is in milliseconds, use -1 for infinite.
+    SVR_API os_handle* os_handle_wait_any(os_handle** handles, size_t size, uint32_t timeout);
 
     // Waits for all handles to become signalled.
-    // Timeout is in milliseconds, use OS_WAIT_INFINITE for infinite.
-    SVR_API void os_handle_wait_all(os_handle** handles, size_t size, uint32_t timeout = OS_WAIT_INFINITE);
+    // Timeout is in milliseconds, use -1 for infinite.
+    SVR_API void os_handle_wait_all(os_handle** handles, size_t size, uint32_t timeout);
 
-    inline bool os_handle_wait(os_handle* value, uint32_t timeout = OS_WAIT_INFINITE)
+    inline bool os_handle_wait(os_handle* value, uint32_t timeout)
     {
         os_handle* waitables[] = {
             value
@@ -64,7 +59,7 @@ namespace svr
         return os_handle_wait_any(waitables, 1, timeout) == value;
     }
 
-    inline os_handle* os_handle_wait_either(os_handle* first, os_handle* second, uint32_t timeout = OS_WAIT_INFINITE)
+    inline os_handle* os_handle_wait_either(os_handle* first, os_handle* second, uint32_t timeout)
     {
         os_handle* waitables[] = {
             first,

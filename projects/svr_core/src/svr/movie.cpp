@@ -158,7 +158,7 @@ struct movie_ffmpeg_pipe
         if (ff_proc)
         {
             // We have marked the stream as finished, but still have to wait for the process to finish.
-            os_handle_wait(ff_proc);
+            os_handle_wait(ff_proc, -1);
 
             os_close_handle(ff_proc);
             ff_proc = nullptr;
