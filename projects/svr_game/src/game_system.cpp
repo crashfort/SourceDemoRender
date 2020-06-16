@@ -14,6 +14,8 @@
 #include <svr/swap.hpp>
 #include <svr/vec.hpp>
 
+#include <charconv>
+
 // Common implementation for all architectures.
 
 struct game_system
@@ -287,12 +289,13 @@ static void process_overlays(game_system* sys)
     {
         auto vel = sqrt(sys->velocity.x * sys->velocity.x + sys->velocity.y * sys->velocity.y);
 
-        fmt::memory_buffer buf;
-        format_with_null(buf, "{:.0f}", vel);
+        char buf[128];
+        auto res = std::to_chars(buf, buf + sizeof(buf), (int)(vel + 0.5f));
+        *res.ptr = 0;
 
         auto p = sys->velocity_overlay_padding;
 
-        sys->graphics->draw_text(sys->velocity_text_format, buf.data(), 0 + p, 0 + p, sys->width - p, sys->height - p);
+        sys->graphics->draw_text(sys->velocity_text_format, buf, 0 + p, 0 + p, sys->width - p, sys->height - p);
     }
 }
 
