@@ -33,7 +33,7 @@ namespace svr
             pos = 0;
         }
 
-        char buf[512];
+        char buf[512 - sizeof(size_t)];
         size_t pos = 0;
     };
 
