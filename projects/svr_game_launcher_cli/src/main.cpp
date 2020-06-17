@@ -257,8 +257,10 @@ static bool has_games(launcher_state& state)
 
 static void show_workarounds()
 {
-    svr::log("For the time being, fps_max 0 and mat_queue mode 0 must be inserted manually at appropriate locations. "
-             "Unlimited framerate increases the performance a lot, and nonqueued material rendering ensures there is no flickering\n");
+    svr::log("For the time being, the following commands should be submitted before starting a movie for the best experience:\n"
+             "fps_max 0\n"
+             "mat_queue_mode 0\n"
+             "engine_no_focus_sleep 0\n");
 }
 
 static void show_instructions()
