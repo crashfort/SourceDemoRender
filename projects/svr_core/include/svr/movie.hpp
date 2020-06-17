@@ -13,7 +13,7 @@ namespace svr
         virtual ~movie() = default;
 
         // Enables or disables verbose logging.
-        virtual void enable_log(bool value) = 0;
+        virtual void set_log_enabled(bool value) = 0;
 
         // Attempts to open the movie with the current state.
         // Accesses the file system if everything works correctly and

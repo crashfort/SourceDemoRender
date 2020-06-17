@@ -106,7 +106,7 @@ static bool load_movie_settings(game_system* sys, svr::config_node* n, const cha
     auto px_format = media_pixel_format_from_string(config_view_string_or(config_find(n, "video-pixel-format"), "bgr0"));
     auto color_space = media_color_space_from_string(config_view_string_or(config_find(n, "video-color-space"), "rgb"));
 
-    sys->movie->enable_log(false);
+    sys->movie->set_log_enabled(config_view_bool_or(config_find(n, "debug"), false));
     sys->movie->set_threads(config_view_int64_or(config_find(n, "encoding-threads"), 0));
     sys->movie->set_video_fps(sys->game_rate);
     sys->movie->set_video_encoder(config_view_string_or(config_find(n, "video-encoder"), "libx264rgb"));

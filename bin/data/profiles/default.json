@@ -1,6 +1,7 @@
 {
     "movie": {
         "encoding-threads": 0,
+        "debug": false,
         "video-fps": 60,
         "video-encoder": "libx264",
         "video-pixel-format": "yuv420",

@@ -76,7 +76,7 @@ struct movie_ffmpeg_pipe
         close_movie();
     }
 
-    void enable_log(bool value) override
+    void set_log_enabled(bool value) override
     {
         log_enabled = value;
     }
@@ -123,7 +123,7 @@ struct movie_ffmpeg_pipe
         }
 
         os_start_proc_desc desc = {};
-        desc.hide_window = true;
+        desc.hide_window = !log_enabled;
         desc.input_pipe = pipe_read;
 
         if (!os_start_proc(exe.buf, resource_path, args.buf, &desc, &ff_proc, nullptr))
