@@ -54,7 +54,7 @@ namespace svr
     SVR_API reverse_status reverse_hook_api_function(os_module* module, const char* name, void* hook, reverse_hook* ptr);
 
     // Enables all hooks.
-    SVR_API void reverse_enable_all_hooks();
+    SVR_API bool reverse_enable_all_hooks();
 
     // Finds a memory address from a pattern in a range.
     // Format should be like '8B 0D ?? ?? ?? ?? 56'.

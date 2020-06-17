@@ -262,29 +262,17 @@ bool arch_code_000_source_1_win(svr::game_config_game* game, const char* resourc
         if (!find_resolve_component(game, "player-abs-velocity-offset")) return false;
     }
 
-    else
-    {
-        log("Velocity overlay not supported\n");
-    }
-
     reverse_init();
 
-    if (view_render_addr_000)
-    {
-        reverse_hook_function(view_render_addr_000, view_render_override_000, &view_render_hook_000);
-    }
+    if (view_render_addr_000) reverse_hook_function(view_render_addr_000, view_render_override_000, &view_render_hook_000);
+    if (start_movie_addr_000) reverse_hook_function(start_movie_addr_000, start_movie_override_000, &start_movie_hook_000);
+    if (end_movie_addr_000) reverse_hook_function(end_movie_addr_000, end_movie_override_000, &end_movie_hook_000);
 
-    if (start_movie_addr_000)
+    if (!reverse_enable_all_hooks())
     {
-        reverse_hook_function(start_movie_addr_000, start_movie_override_000, &start_movie_hook_000);
+        log("Could not enable hooks\n");
+        return false;
     }
-
-    if (end_movie_addr_000)
-    {
-        reverse_hook_function(end_movie_addr_000, end_movie_override_000, &end_movie_hook_000);
-    }
-
-    reverse_enable_all_hooks();
 
     log("Redirecting output to game console\n");
 

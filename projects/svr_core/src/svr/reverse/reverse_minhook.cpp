@@ -23,7 +23,7 @@ namespace svr
 {
     reverse_status reverse_hook_function(void* target, void* hook, reverse_hook* ptr)
     {
-        log("reverse: Trying to hook {} with {}\n", target, hook);
+        log("reverse: Trying to hook function {} with {}\n", target, hook);
 
         void* orig;
         auto status = MH_CreateHook(target, hook, &orig);
@@ -55,11 +55,18 @@ namespace svr
         return reverse_hook_function(target, hook, ptr);
     }
 
-    void reverse_enable_all_hooks()
+    bool reverse_enable_all_hooks()
     {
         log("reverse: Enabling all hooks\n");
 
-        MH_EnableHook(MH_ALL_HOOKS);
+        auto res = MH_EnableHook(MH_ALL_HOOKS);
+
+        if (res != MH_OK)
+        {
+            log("Could not enable all hooks ('{}')\n", MH_StatusToString(res));
+        }
+
+        return res == MH_OK;
     }
 
     void reverse_init()
