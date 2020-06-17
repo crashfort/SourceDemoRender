@@ -149,6 +149,7 @@
     <ClCompile Include="src\game_init.cpp" />
     <ClCompile Include="src\game_system.cpp" />
     <ClCompile Include="src\game_system_windows.cpp" />
+    <ClCompile Include="src\game_version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\svr_core\svr_core.vcxproj">
@@ -160,6 +161,7 @@
     <ClInclude Include="src\game_external.hpp" />
     <ClInclude Include="src\game_graphics_d3d9ex.hpp" />
     <ClInclude Include="src\game_system.hpp" />
+    <ClInclude Include="src\game_version.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

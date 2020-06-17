@@ -7,6 +7,7 @@
 #include <svr/config.hpp>
 
 #include "game_external.hpp"
+#include "game_version.hpp"
 
 #include <chrono>
 #include <thread>
@@ -109,6 +110,8 @@ namespace svr
 
                 os_terminate_proc_self();
             }
+
+            game_version_init(data.resource_path);
 
             launcher_signal_success_event();
         });
