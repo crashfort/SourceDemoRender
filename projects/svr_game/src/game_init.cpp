@@ -105,7 +105,7 @@ namespace svr
 
             if (!game_version_init(data.resource_path))
             {
-                log("Could not read application version\n");
+                log("Could not read application version. Terminating\n");
                 launcher_signal_fail_event();
 
                 os_terminate_proc_self();
