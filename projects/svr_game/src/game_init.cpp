@@ -109,6 +109,7 @@ namespace svr
                 launcher_signal_fail_event();
 
                 os_terminate_proc_self();
+                return;
             }
 
             game_version_init(data.resource_path);
