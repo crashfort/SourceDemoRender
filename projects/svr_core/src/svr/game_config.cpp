@@ -14,7 +14,6 @@ namespace svr
     struct game_config_game
     {
         const char* id;
-        const char* mutex;
         const char* arch;
 
         std::vector<const char*> libraries;
@@ -227,7 +226,6 @@ static bool parse_config(svr::game_config* cfg, svr::config_node* node)
     {
         game_config_game new_game;
         new_game.id = config_view_string_or(config_find(game_entry, "id"), nullptr);
-        new_game.mutex = config_view_string_or(config_find(game_entry, "mutex"), nullptr);
         new_game.arch = config_view_string_or(config_find(game_entry, "arch"), nullptr);
 
         if (new_game.id == nullptr)
@@ -347,11 +345,6 @@ namespace svr
     const char* game_config_game_arch(game_config_game* ptr)
     {
         return ptr->arch;
-    }
-
-    const char* game_config_game_mutex(game_config_game* ptr)
-    {
-        return ptr->mutex;
     }
 
     const char** game_config_game_libs(game_config_game* ptr)

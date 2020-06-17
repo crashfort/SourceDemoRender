@@ -74,7 +74,6 @@ namespace svr
 
     SVR_API const char* game_config_game_id(game_config_game* ptr);
     SVR_API const char* game_config_game_arch(game_config_game* ptr);
-    SVR_API const char* game_config_game_mutex(game_config_game* ptr);
     SVR_API const char** game_config_game_libs(game_config_game* ptr);
     SVR_API size_t game_config_game_libs_size(game_config_game* ptr);
     SVR_API game_config_comp* game_config_game_find_comp(game_config_game* ptr, const char* type);
