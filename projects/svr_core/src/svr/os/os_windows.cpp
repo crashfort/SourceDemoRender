@@ -173,7 +173,7 @@ namespace svr
 
     bool os_write_file(const char* path, const void* data, size_t size)
     {
-        auto file = CreateFileA(path, GENERIC_WRITE, 0, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        auto file = CreateFileA(path, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 
         if (file == INVALID_HANDLE_VALUE)
         {
