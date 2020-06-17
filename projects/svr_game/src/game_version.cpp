@@ -7,7 +7,7 @@
 
 svr::version_data game_version;
 
-void game_version_init(const char* resource_path)
+bool game_version_init(const char* resource_path)
 {
     using namespace svr;
 
@@ -20,7 +20,7 @@ void game_version_init(const char* resource_path)
     if (cfg == nullptr)
     {
         log("Could not open version file\n");
-        return;
+        return false;
     }
 
     defer {
@@ -28,4 +28,5 @@ void game_version_init(const char* resource_path)
     };
 
     game_version = version_parse(config_root(cfg));
+    return true;
 }

@@ -103,6 +103,15 @@ namespace svr
 
             log("Libraries loaded, initializing\n");
 
+            if (!game_version_init(data.resource_path))
+            {
+                log("Could not read application version\n");
+                launcher_signal_fail_event();
+
+                os_terminate_proc_self();
+                return;
+            }
+
             if (!game_external_init(game, data.resource_path))
             {
                 log("Could not initialize game. Terminating\n");
@@ -111,8 +120,6 @@ namespace svr
                 os_terminate_proc_self();
                 return;
             }
-
-            game_version_init(data.resource_path);
 
             launcher_signal_success_event();
         });
