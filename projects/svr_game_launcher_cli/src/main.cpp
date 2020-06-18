@@ -257,10 +257,8 @@ static bool has_games(launcher_state& state)
 
 static void show_workarounds()
 {
-    svr::log("For the time being, the following commands should be submitted before starting a movie for the best experience:\n"
-             "fps_max 0\n"
-             "mat_queue_mode 0\n"
-             "engine_no_focus_sleep 0\n");
+    svr::log("Note: Some games do not allow changing fps_max when playing. Safest bet is to change this in the main menu:\n"
+             "fps_max 0\n");
 }
 
 static void show_instructions()
