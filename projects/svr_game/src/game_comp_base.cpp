@@ -151,7 +151,7 @@ void* get_player_by_index(int value)
 {
     if (get_player_by_index_000)
     {
-        return get_player_by_index(value);
+        return get_player_by_index_000(value);
     }
 
     return nullptr;
