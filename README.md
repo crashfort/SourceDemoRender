@@ -117,31 +117,31 @@ The X axis is the samples per second and the Y axis is the exposure.
 	<tbody>
 		<tr>
 			<th>0.25</th>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/960_025.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/1920_025.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/3840_025.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/7680_025.png"/></td>
+			<td><img src="media/sample/960_025.png"/></td>
+			<td><img src="media/sample/1920_025.png"/></td>
+			<td><img src="media/sample/3840_025.png"/></td>
+			<td><img src="media/sample/7680_025.png"/></td>
 		</tr>
 		<tr>
 			<th>0.50</th>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/960_050.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/1920_050.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/3840_050.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/7680_050.png"/></td>
+			<td><img src="media/sample/960_050.png"/></td>
+			<td><img src="media/sample/1920_050.png"/></td>
+			<td><img src="media/sample/3840_050.png"/></td>
+			<td><img src="media/sample/7680_050.png"/></td>
 		</tr>
 		<tr>
 			<th>0.75</th>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/960_075.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/1920_075.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/3840_075.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/7680_075.png"/></td>
+			<td><img src="media/sample/960_075.png"/></td>
+			<td><img src="media/sample/1920_075.png"/></td>
+			<td><img src="media/sample/3840_075.png"/></td>
+			<td><img src="media/sample/7680_075.png"/></td>
 		</tr>
 		<tr>
 			<th>1.00</th>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/960_100.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/1920_100.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/3840_100.png"/></td>
-			<td><img src="https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/media/sample/7680_100.png"/></td>
+			<td><img src="media/sample/960_100.png"/></td>
+			<td><img src="media/sample/1920_100.png"/></td>
+			<td><img src="media/sample/3840_100.png"/></td>
+			<td><img src="media/sample/7680_100.png"/></td>
 		</tr>
 	</tbody>
 </table>
