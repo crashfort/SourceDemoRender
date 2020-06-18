@@ -18,7 +18,7 @@ extern IDirect3DDevice9Ex* d3d9ex_device_ptr;
 extern void* materials_ptr;
 extern void(__fastcall* materials_get_bbuf_size_addr_000)(void* p, void* edx, int& width, int& height);
 extern void* engine_client_ptr;
-extern void(__fastcall* client_cmd_addr_000)(void* p, void* edx, const char* str);
+extern void(__fastcall* client_exec_cmd_addr_000)(void* p, void* edx, const char* str);
 extern void(__cdecl* console_msg_addr_000)(const char* format, ...);
 extern void(__fastcall* view_render_addr_000)(void* p, void* edx, void* rect);
 extern void(__cdecl* start_movie_addr_000)(const void* args);
@@ -34,7 +34,8 @@ extern svr::reverse_hook_template<decltype(start_movie_addr_000)> start_movie_ho
 extern svr::reverse_hook_template<decltype(end_movie_addr_000)> end_movie_hook_000;
 
 void materials_get_backbuffer_size(int& width, int& height);
-void client_command(const char* value);
+void exec_client_command(const char* value);
+void cvar_set_value(const char* name, int value);
 void console_message(const char* value);
 int get_spec_target();
 void* get_player_by_index(int value);

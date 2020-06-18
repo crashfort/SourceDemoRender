@@ -98,7 +98,7 @@ IDirect3DDevice9Ex* d3d9ex_device_ptr;
 void* materials_ptr;
 void(__fastcall* materials_get_bbuf_size_addr_000)(void* p, void* edx, int& width, int& height);
 void* engine_client_ptr;
-void(__fastcall* client_cmd_addr_000)(void* p, void* edx, const char* str);
+void(__fastcall* client_exec_cmd_addr_000)(void* p, void* edx, const char* str);
 void(__cdecl* console_msg_addr_000)(const char* format, ...);
 void(__fastcall* view_render_addr_000)(void* p, void* edx, void* rect);
 void(__cdecl* start_movie_addr_000)(const void* args);
@@ -121,12 +121,20 @@ void materials_get_backbuffer_size(int& width, int& height)
     }
 }
 
-void client_command(const char* value)
+void exec_client_command(const char* value)
 {
-    if (client_cmd_addr_000)
+    if (client_exec_cmd_addr_000)
     {
-        client_cmd_addr_000(engine_client_ptr, nullptr, value);
+        client_exec_cmd_addr_000(engine_client_ptr, nullptr, value);
     }
+}
+
+void cvar_set_value(const char* name, int value)
+{
+    fmt::memory_buffer buf;
+    svr::format_with_null(buf, "{} {}\n", name, value);
+
+    exec_client_command(buf.data());
 }
 
 void console_message(const char* value)
@@ -252,7 +260,7 @@ static comp_resolve_status engine_client_func_000(svr::game_config_comp* comp)
     return COMP_STATUS_UNRESOLVED;
 }
 
-static comp_resolve_status client_cmd_func_000(svr::game_config_comp* comp)
+static comp_resolve_status client_exec_cmd_func_000(svr::game_config_comp* comp)
 {
     using namespace svr;
 
@@ -260,8 +268,8 @@ static comp_resolve_status client_cmd_func_000(svr::game_config_comp* comp)
     {
         case GAME_COMP_VIRTUAL:
         {
-            client_cmd_addr_000 = (decltype(client_cmd_addr_000))address_from_virtual(engine_client_ptr, comp);
-            return validate_ptr(client_cmd_addr_000);
+            client_exec_cmd_addr_000 = (decltype(client_exec_cmd_addr_000))address_from_virtual(engine_client_ptr, comp);
+            return validate_ptr(client_exec_cmd_addr_000);
         }
     }
 
@@ -418,7 +426,7 @@ static code_comp code_comps[] = {
     code_comp { "materials-ptr", "void*", materials_func_000 },
     code_comp { "materials-get-bbuf-size", "void(__fastcall*)(void* p, void* edx, int& width, int& height)", get_bbuf_size_func_000 },
     code_comp { "engine-client-ptr", "void*", engine_client_func_000 },
-    code_comp { "engine-client-client-cmd", "void(__fastcall*)(void* p, void* edx, const char* str)", client_cmd_func_000 },
+    code_comp { "engine-client-exec-cmd", "void(__fastcall*)(void* p, void* edx, const char* str)", client_exec_cmd_func_000 },
     code_comp { "console-print-message", "void(__cdecl*)(const char* format, ...)", console_message_func_000 },
     code_comp { "view-render", "void(__fastcall*)(void* p, void* edx, void* rect)", view_render_func_000 },
     code_comp { "start-movie-cmd", "void(__cdecl*)(const void* args)", start_movie_func_000 },

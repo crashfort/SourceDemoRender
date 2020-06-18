@@ -192,10 +192,10 @@ static void __cdecl start_movie_override_000(const void* args)
     // Ensure the game runs at a fixed rate.
 
     log("Setting host_framerate to {}\n", sys_get_game_rate(sys));
+    cvar_set_value("host_framerate", (int)sys_get_game_rate(sys));
 
-    fmt::memory_buffer buf;
-    format_with_null(buf, "host_framerate {}\n", sys_get_game_rate(sys));
-    client_command(buf.data());
+    // Run all user supplied commands.
+    exec_client_command("exec svr_movie_start.cfg\n");
 
     // This is the first location where we have access to the main thread while the game is running.
     // Here we have access to the launcher mutex. Disable it so we can launch more games for rendering.
@@ -214,6 +214,9 @@ static void __cdecl end_movie_override_000(const void* args)
 
     sys_end_movie(sys);
     close_game_texture();
+
+    // Run all user supplied commands.
+    exec_client_command("exec svr_movie_end.cfg\n");
 }
 
 bool arch_code_000_source_1_win(svr::game_config_game* game, const char* resource_path)
@@ -244,7 +247,7 @@ bool arch_code_000_source_1_win(svr::game_config_game* game, const char* resourc
     if (!find_resolve_component(game, "materials-ptr")) return false;
     if (!find_resolve_component(game, "materials-get-bbuf-size")) return false;
     if (!find_resolve_component(game, "engine-client-ptr")) return false;
-    if (!find_resolve_component(game, "engine-client-client-cmd")) return false;
+    if (!find_resolve_component(game, "engine-client-exec-cmd")) return false;
     if (!find_resolve_component(game, "console-print-message")) return false;
     if (!find_resolve_component(game, "view-render")) return false;
     if (!find_resolve_component(game, "start-movie-cmd")) return false;
