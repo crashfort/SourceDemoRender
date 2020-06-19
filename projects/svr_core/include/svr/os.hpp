@@ -175,12 +175,6 @@ namespace svr
     // Returns how many modules that are loaded in the list.
     SVR_API size_t os_check_proc_modules(os_handle* ptr, const char** list, size_t size);
 
-    // Returns how many bytes the current process has used.
-    SVR_API size_t os_get_proc_mem_usage();
-
-    // Returns whether or not a particular allocation would overflow the allowed working set.
-    SVR_API bool os_would_alloc_overflow();
-
     struct os_file_list;
 
     // Lists files in a directory.

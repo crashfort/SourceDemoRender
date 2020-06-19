@@ -686,27 +686,6 @@ namespace svr
         return hits;
     }
 
-    size_t os_get_proc_mem_usage()
-    {
-        PROCESS_MEMORY_COUNTERS desc = {};
-
-        auto res = K32GetProcessMemoryInfo(GetCurrentProcess(), &desc, sizeof(desc));
-
-        if (res == 0)
-        {
-            log("windows: Could not retrieve process memory info ({})\n", GetLastError());
-            return 0;
-        }
-
-        return desc.WorkingSetSize;
-    }
-
-    bool os_would_alloc_overflow()
-    {
-        // Soft limit for 32 bit applications.
-        return os_get_proc_mem_usage() > INT32_MAX;
-    }
-
     bool os_get_current_dir(char* buf, size_t size)
     {
         auto res = GetCurrentDirectoryA(size, buf);
