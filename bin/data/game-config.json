@@ -603,7 +603,7 @@
                 "config-001-materials-ptr",
                 "config-002-materials-get-bbuf-size",
                 "config-001-engine-client-ptr",
-                "config-000-engine-client-exec-cmd",
+                "config-001-engine-client-exec-cmd",
                 "config-000-console-print-message",
                 "config-000-view-render",
                 "config-000-start-movie-cmd",
