@@ -10,6 +10,7 @@
 #include <svr/swap.hpp>
 #include <svr/game_config.hpp>
 #include <svr/os.hpp>
+#include <svr/mem.hpp>
 
 // Architecture for most Source 1 games on Windows.
 // Hooks startmovie, view render and endmovie.
@@ -19,6 +20,9 @@ static game_graphics_d3d9ex d3d9ex_graphics;
 static game_system* sys;
 
 static bool has_enabled_multi_proc;
+
+// This points to the region of memory that the launcher allocated. It is not freed.
+static const char* svr_resource_path;
 
 // Allow multiple games to be started at once.
 static void enable_multi_proc()
@@ -59,6 +63,52 @@ static bool is_velocity_overlay_allowed(svr::game_config_game* game)
     }
 
     return false;
+}
+
+static void run_cfg(const char* name)
+{
+    using namespace svr;
+
+    str_builder builder;
+    builder.append(svr_resource_path);
+    builder.append("data/cfg/");
+    builder.append(name);
+
+    mem_buffer buf;
+
+    if (!os_read_file(builder.buf, buf))
+    {
+        log("Could not open cfg '{}'\n", builder.buf);
+        return;
+    }
+
+    defer {
+        mem_destroy_buffer(buf);
+    };
+
+    // New buffer used to add null terminator.
+    mem_buffer buf2;
+
+    if (!mem_create_buffer(buf2, buf.size + 1))
+    {
+        log("Could not create extra cfg buffer\n");
+        return;
+    }
+
+    defer {
+        mem_destroy_buffer(buf2);
+    };
+
+    memcpy(buf2.data, buf.data, buf.size);
+
+    auto text = (char*)buf2.data;
+    text[buf2.size - 1] = 0;
+
+    log("Running cfg '{}'\n", name);
+
+    // The file can be executed as is. The game takes care of splitting by newline.
+    exec_client_command(text);
+    exec_client_command("\n");
 }
 
 static void process_velocity_overlay()
@@ -195,7 +245,7 @@ static void __cdecl start_movie_override_000(const void* args)
     cvar_set_value("host_framerate", (int)sys_get_game_rate(sys));
 
     // Run all user supplied commands.
-    exec_client_command("exec svr_movie_start.cfg\n");
+    run_cfg("svr_movie_start.cfg");
 
     // This is the first location where we have access to the main thread while the game is running.
     // Here we have access to the launcher mutex. Disable it so we can launch more games for rendering.
@@ -216,7 +266,7 @@ static void __cdecl end_movie_override_000(const void* args)
     close_game_texture();
 
     // Run all user supplied commands.
-    exec_client_command("exec svr_movie_end.cfg\n");
+    run_cfg("svr_movie_end.cfg");
 }
 
 bool arch_code_000_source_1_win(svr::game_config_game* game, const char* resource_path)
@@ -287,5 +337,6 @@ bool arch_code_000_source_1_win(svr::game_config_game* game, const char* resourc
     swap_ptr(sys, temp_sys);
 
     sys_set_velocity_overlay_support(sys, can_have_veloc_overlay);
+    svr_resource_path = resource_path;
     return true;
 }
