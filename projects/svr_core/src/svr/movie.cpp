@@ -178,7 +178,6 @@ struct movie_ffmpeg_pipe
     void set_video_encoder(const char* value) override
     {
         video_codec = value;
-        avcodec_find_encoder_by_name(value);
     }
 
     void set_video_pixel_format(svr::media_pixel_format value) override
