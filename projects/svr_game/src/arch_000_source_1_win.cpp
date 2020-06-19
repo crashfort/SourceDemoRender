@@ -275,7 +275,7 @@ bool arch_code_000_source_1_win(svr::game_config_game* game, const char* resourc
     // This is only needed for games that do not allow changing fps_max when playing.
     if (has_cvar_restrict(game))
     {
-        find_resolve_component(game, "cvar-remove-restrict");
+        if (!find_resolve_component(game, "cvar-remove-restrict")) return false;
     }
 
     // Skip these on some games.
