@@ -254,6 +254,10 @@ bool arch_code_000_source_1_win(svr::game_config_game* game, const char* resourc
     if (!find_resolve_component(game, "end-movie-cmd")) return false;
     if (!find_resolve_component(game, "console-cmd-args-offset")) return false;
 
+    // This is only needed for games that do not allow changing fps_max when playing.
+    // Some games like gmod and csgo allow it.
+    find_resolve_component(game, "cvar-remove-restrict");
+
     // Skip these on some games.
     if (can_have_veloc_overlay)
     {

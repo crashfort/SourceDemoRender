@@ -15,6 +15,7 @@ namespace svr
         GAME_COMP_VIRTUAL,
         GAME_COMP_EXPORT,
         GAME_COMP_OFFSET,
+        GAME_COMP_PATCH,
     };
 
     struct game_config_comp_pattern
@@ -47,6 +48,14 @@ namespace svr
         ptrdiff_t value;
     };
 
+    struct game_config_comp_patch
+    {
+        const char* library;
+        const char* pattern;
+        ptrdiff_t offset;
+        const char* replace;
+    };
+
     struct game_config_comp
     {
         game_config_comp_type code_type;
@@ -61,6 +70,7 @@ namespace svr
             game_config_comp_virtual virtual_value;
             game_config_comp_export export_value;
             game_config_comp_offset offset_value;
+            game_config_comp_patch patch_value;
         };
     };
 

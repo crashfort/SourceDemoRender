@@ -212,6 +212,9 @@ namespace svr
     // Returns whether or not a file exists on the filesystem.
     SVR_API bool os_does_file_exist(const char* path);
 
+    // Makes a memory region writable and executable.
+    SVR_API bool os_make_mem_writable(void* address, size_t length);
+
     // Structure which keeps track of sequential writing
     // to keep memory writings in order.
     class os_remote_proc_mem_writer

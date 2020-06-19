@@ -108,6 +108,30 @@
             }
         },
         {
+            "code-type": "patch",
+            "code-id": "cvar-remove-restrict",
+            "config-id": "config-000-cvar-remove-restrict",
+            "signature": "0x00400000",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 58 83 3D ?? ?? ?? ?? ??",
+                "offset": 1,
+                "replace": "00 00 00 00"
+            }
+        },,
+        {
+            "code-type": "patch",
+            "code-id": "cvar-remove-restrict",
+            "config-id": "config-001-cvar-remove-restrict",
+            "signature": "0x00400000",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 52 83 3D ?? ?? ?? ?? ?? 7C 49 8B 06",
+                "offset": 1,
+                "replace": "00 00 00 00"
+            }
+        },
+        {
             "code-type": "export",
             "code-id": "console-print-message",
             "config-id": "config-000-console-print-message",
@@ -336,7 +360,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -365,7 +390,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -394,7 +420,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -423,7 +450,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -452,7 +480,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -481,7 +510,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -510,7 +540,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -539,7 +570,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -568,7 +600,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-001-cvar-remove-restrict"
             ]
         },
         {
@@ -597,7 +630,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -626,7 +660,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -655,7 +690,8 @@
                 "config-000-local-player-ptr",
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
-                "config-000-player-abs-velocity-offset"
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         },
         {
@@ -684,7 +720,8 @@
                 "config-001-local-player-ptr",
                 "config-001-get-spec-target",
                 "config-001-get-player-by-index",
-                "config-001-player-abs-velocity-offset"
+                "config-001-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
             ]
         }
     ]
