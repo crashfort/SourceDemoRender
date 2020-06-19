@@ -132,6 +132,18 @@
             }
         },
         {
+            "code-type": "patch",
+            "code-id": "cvar-remove-restrict",
+            "config-id": "config-002-cvar-remove-restrict",
+            "signature": "0x00400000",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "68 ?? ?? ?? ?? 8B CE FF D0 84 C0 74 59 39 3D ?? ?? ?? ?? 7C 51",
+                "offset": 1,
+                "replace": "00 00 00 00"
+            }
+        },
+        {
             "code-type": "export",
             "code-id": "console-print-message",
             "config-id": "config-000-console-print-message",
@@ -691,7 +703,7 @@
                 "config-000-get-spec-target",
                 "config-000-get-player-by-index",
                 "config-000-player-abs-velocity-offset",
-                "config-000-cvar-remove-restrict"
+                "config-002-cvar-remove-restrict"
             ]
         },
         {
