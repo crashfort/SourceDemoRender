@@ -61,6 +61,24 @@ static bool is_velocity_overlay_allowed(svr::game_config_game* game)
     return false;
 }
 
+static bool has_cvar_restrict(svr::game_config_game* game)
+{
+    const char* non_restricted[] = {
+        "csgo-win",
+        "gmod-win",
+    };
+
+    for (auto i : non_restricted)
+    {
+        if (strcmp(i, game_config_game_id(game)) == 0)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 static void process_velocity_overlay()
 {
     using namespace svr;
@@ -255,8 +273,10 @@ bool arch_code_000_source_1_win(svr::game_config_game* game, const char* resourc
     if (!find_resolve_component(game, "console-cmd-args-offset")) return false;
 
     // This is only needed for games that do not allow changing fps_max when playing.
-    // Some games like gmod and csgo allow it.
-    find_resolve_component(game, "cvar-remove-restrict");
+    if (has_cvar_restrict(game))
+    {
+        find_resolve_component(game, "cvar-remove-restrict");
+    }
 
     // Skip these on some games.
     if (can_have_veloc_overlay)
