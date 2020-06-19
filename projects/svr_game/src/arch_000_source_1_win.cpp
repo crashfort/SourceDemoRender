@@ -65,6 +65,24 @@ static bool is_velocity_overlay_allowed(svr::game_config_game* game)
     return false;
 }
 
+static bool has_cvar_restrict(svr::game_config_game* game)
+{
+    const char* non_restricted[] = {
+        "csgo-win",
+        "gmod-win",
+    };
+
+    for (auto i : non_restricted)
+    {
+        if (strcmp(i, game_config_game_id(game)) == 0)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 static void run_cfg(const char* name)
 {
     using namespace svr;
@@ -241,7 +259,10 @@ static void __cdecl start_movie_override_000(const void* args)
 
     // Ensure the game runs at a fixed rate.
 
+    log("Setting sv_cheats to 1\n");
     log("Setting host_framerate to {}\n", sys_get_game_rate(sys));
+
+    cvar_set_value("sv_cheats", 1);
     cvar_set_value("host_framerate", (int)sys_get_game_rate(sys));
 
     // Run all user supplied commands.
@@ -303,6 +324,12 @@ bool arch_code_000_source_1_win(svr::game_config_game* game, const char* resourc
     if (!find_resolve_component(game, "start-movie-cmd")) return false;
     if (!find_resolve_component(game, "end-movie-cmd")) return false;
     if (!find_resolve_component(game, "console-cmd-args-offset")) return false;
+
+    // This is only needed for games that do not allow changing fps_max when playing.
+    if (has_cvar_restrict(game))
+    {
+        if (!find_resolve_component(game, "cvar-remove-restrict")) return false;
+    }
 
     // Skip these on some games.
     if (can_have_veloc_overlay)

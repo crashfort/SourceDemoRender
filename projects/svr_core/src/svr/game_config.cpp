@@ -37,6 +37,7 @@ static svr::game_config_comp_type map_comp_type(const char* value)
         table_pair{"virtual", GAME_COMP_VIRTUAL},
         table_pair{"export", GAME_COMP_EXPORT},
         table_pair{"offset", GAME_COMP_OFFSET},
+        table_pair{"patch", GAME_COMP_PATCH},
     };
 
     return table_map_key_or(types, value, GAME_COMP_NONE);
@@ -136,6 +137,35 @@ static bool setup_comp_value(svr::game_config_comp* ptr, svr::config_node* n)
         if (v.value == INT64_MAX)
         {
             log("Component '{}' missing an offset node\n", ptr->config_id);
+            return false;
+        }
+    }
+
+    else if (ptr->code_type == GAME_COMP_PATCH)
+    {
+        auto& v = ptr->patch_value;
+        v.library = config_view_string_or(config_find(value, "library"), nullptr);
+        v.pattern = config_view_string_or(config_find(value, "pattern"), nullptr);
+        v.offset = config_view_int64_or(config_find(value, "offset"), 0);
+        v.replace = config_view_string_or(config_find(value, "replace"), nullptr);
+
+        // Offset is an optional field.
+
+        if (v.library == nullptr)
+        {
+            log("Component '{}' missing a library node\n", ptr->config_id);
+            return false;
+        }
+
+        if (v.pattern == nullptr)
+        {
+            log("Component '{}' missing a pattern node\n", ptr->config_id);
+            return false;
+        }
+
+        if (v.replace == nullptr)
+        {
+            log("Component '{}' missing a replace node\n", ptr->config_id);
             return false;
         }
     }

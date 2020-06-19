@@ -6,6 +6,8 @@
 #include <svr/str.hpp>
 #include <svr/log_format.hpp>
 
+#include <charconv>
+
 // Scans a region of memory for a particular pattern.
 static void* address_from_pattern(svr::game_config_comp* comp)
 {
@@ -36,6 +38,30 @@ static void* address_from_pattern(svr::game_config_comp* comp)
     }
 
     return address;
+}
+
+static void* address_from_patch(svr::game_config_comp* comp)
+{
+    using namespace svr;
+
+    auto& value = comp->patch_value;
+
+    os_module_info info;
+
+    if (!os_get_module_info(value.library, &info))
+    {
+        log("Could not get module information from '{}'\n", value.library);
+        return nullptr;
+    }
+
+    auto address = reverse_find_pattern(info.base, info.size, value.pattern);
+
+    if (address == nullptr)
+    {
+        return nullptr;
+    }
+
+    return reverse_add_offset(address, value.offset);
 }
 
 // Retrieves a pointer to a particular interface in a Valve module.
@@ -90,8 +116,50 @@ static void* address_from_export(svr::game_config_comp* comp)
 
 static ptrdiff_t offset_from_config(svr::game_config_comp* comp)
 {
-    auto& value = comp->offset_value;
-    return value.value;
+    return comp->offset_value.value;
+}
+
+static bool apply_patch(void* address, svr::game_config_comp* comp)
+{
+    using namespace svr;
+
+    auto& value = comp->patch_value;
+
+    uint8_t bytes[64];
+    memset(bytes, 0, sizeof(bytes));
+
+    auto it = value.replace;
+
+    size_t length = 0;
+
+    while (*it)
+    {
+        it = str_trim_left(it);
+
+        if (*it == 0)
+        {
+            break;
+        }
+
+        std::from_chars(it, it + 2, bytes[length], 16);
+        length++;
+        it += 2;
+    }
+
+    if (length == 0)
+    {
+        log("Tried to apply an empty patch with '{}'\n", comp->config_id);
+        return false;
+    }
+
+    if (!os_make_mem_writable(address, length))
+    {
+        log("Could not make memory range writable with '{}'\n", comp->config_id);
+        return false;
+    }
+
+    memcpy(address, bytes, length);
+    return true;
 }
 
 IDirect3DDevice9Ex* d3d9ex_device_ptr;
@@ -420,6 +488,33 @@ static comp_resolve_status player_abs_vel_offset_func_000(svr::game_config_comp*
     return COMP_STATUS_UNRESOLVED;
 }
 
+static comp_resolve_status cvar_remove_restrict_func_000(svr::game_config_comp* comp)
+{
+    using namespace svr;
+
+    switch (comp->code_type)
+    {
+        case GAME_COMP_PATCH:
+        {
+            auto addr = address_from_patch(comp);
+
+            if (addr == nullptr)
+            {
+                return COMP_STATUS_ERROR;
+            }
+
+            if (!apply_patch(addr, comp))
+            {
+                return COMP_STATUS_ERROR;
+            }
+
+            return COMP_STATUS_RESOLVED;
+        }
+    }
+
+    return COMP_STATUS_UNRESOLVED;
+}
+
 // Signatures in the game config are matched up with a function here.
 static code_comp code_comps[] = {
     code_comp { "d3d9ex-device", "**(IDirect3DDevice9Ex***)", d3d9ex_device_func_000 },
@@ -436,6 +531,7 @@ static code_comp code_comps[] = {
     code_comp { "get-spec-target", "int(__cdecl*)()", get_spec_target_func_000 },
     code_comp { "get-player-by-index", "void*(__cdecl*)(int index)", get_player_by_index_func_000 },
     code_comp { "player-abs-velocity-offset", "ptrdiff_t", player_abs_vel_offset_func_000 },
+    code_comp { "cvar-remove-restrict", "0x00400000", cvar_remove_restrict_func_000 },
 };
 
 static code_comp* find_code_comp(const char* name, const char* signature)

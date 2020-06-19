@@ -726,4 +726,19 @@ namespace svr
 
         return true;
     }
+
+    bool os_make_mem_writable(void* address, size_t length)
+    {
+        DWORD old_protect;
+
+        auto res = VirtualProtect(address, length, PAGE_EXECUTE_READWRITE, &old_protect);
+
+        if (res == 0)
+        {
+            log("windows: Could not make range {} + 0, {} + {} writable ({})\n", address, address, length, GetLastError());
+            return false;
+        }
+
+        return true;
+    }
 }

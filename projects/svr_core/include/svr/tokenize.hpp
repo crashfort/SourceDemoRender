@@ -12,7 +12,7 @@ namespace svr
     {
         std::vector<std::string> ret;
 
-        auto view = str_trim_left(input);
+        auto view = input;
 
         while (*view != 0)
         {

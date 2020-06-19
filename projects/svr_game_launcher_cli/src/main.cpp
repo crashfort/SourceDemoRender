@@ -255,12 +255,6 @@ static bool has_games(launcher_state& state)
     return state.game_list.size() > 0;
 }
 
-static void show_workarounds()
-{
-    svr::log("Note: Some games do not allow changing fps_max when playing. Safest bet is to change this in the main menu:\n"
-             "fps_max 0\n");
-}
-
 static void show_instructions()
 {
     svr::log("Select which number to start: ");
@@ -357,10 +351,6 @@ static bool proc()
         log("No games to launch\n");
         return false;
     }
-
-    log("\n");
-    show_workarounds();
-    log("\n");
 
     if (autostart_game_id)
     {
