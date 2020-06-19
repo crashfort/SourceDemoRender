@@ -340,6 +340,7 @@ static bool proc()
 
     get_local_version(state);
     check_updates(state);
+    log("\n");
 
     if (!init(state))
     {
@@ -355,6 +356,7 @@ static bool proc()
     if (autostart_game_id)
     {
         log("Trying to autostart game '{}'\n", autostart_game_id);
+        log("\n");
 
         auto index = find_game_by_id(state, autostart_game_id);
 
