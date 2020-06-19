@@ -53,6 +53,7 @@ static bool verify_installation(const char* resource_path)
         "ffmpeg.exe",
         "data/game-config.json",
         "data/profiles/default.json",
+        "data/movies"
     };
 
     for (auto file : required_files)
@@ -63,7 +64,7 @@ static bool verify_installation(const char* resource_path)
 
         if (!os_does_file_exist(builder.buf))
         {
-            log("Missing required file '{}'\n", builder.buf);
+            log("Missing required file or directory '{}'\n", builder.buf);
             return false;
         }
     }
