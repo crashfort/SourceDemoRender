@@ -16,32 +16,15 @@ extern "C"
 
 static const char* map_ffmpeg_pixel_format(svr::media_pixel_format value)
 {
+    using namespace svr;
+
     switch (value)
     {
-        case svr::MEDIA_PIX_FORMAT_BGR0:
-        {
-            return "bgr0";
-        }
-
-        case svr::MEDIA_PIX_FORMAT_YUV420:
-        {
-            return "yuv420p";
-        }
-
-        case svr::MEDIA_PIX_FORMAT_NV12:
-        {
-            return "nv12";
-        }
-
-        case svr::MEDIA_PIX_FORMAT_NV21:
-        {
-            return "nv21";
-        }
-
-        case svr::MEDIA_PIX_FORMAT_YUV444:
-        {
-            return "yuv444p";
-        }
+        case MEDIA_PIX_FORMAT_BGR0: return "bgr0";
+        case MEDIA_PIX_FORMAT_YUV420: return "yuv420p";
+        case MEDIA_PIX_FORMAT_NV12: return "nv12";
+        case MEDIA_PIX_FORMAT_NV21: return "nv21";
+        case MEDIA_PIX_FORMAT_YUV444: return "yuv444p";
     }
 
     assert(false);
@@ -51,17 +34,12 @@ static const char* map_ffmpeg_pixel_format(svr::media_pixel_format value)
 // https://ffmpeg.org/ffmpeg-all.html#toc-colorspace
 static const char* map_ffmpeg_color_space(svr::media_color_space value)
 {
+    using namespace svr;
+
     switch (value)
     {
-        case svr::MEDIA_COLOR_SPACE_YUV601:
-        {
-            return "bt470bg";
-        }
-
-        case svr::MEDIA_COLOR_SPACE_YUV709:
-        {
-            return "bt709";
-        }
+        case MEDIA_COLOR_SPACE_YUV601: return "bt470bg";
+        case MEDIA_COLOR_SPACE_YUV709: return "bt709";
     }
 
     assert(false);
