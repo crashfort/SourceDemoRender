@@ -149,7 +149,7 @@ struct movie_ffmpeg_pipe
     {
         using namespace svr;
 
-        auto len = strlen(path);
+        auto len = std::min(strlen(path), sizeof(output_path) - 1);
         memcpy(output_path, path, len);
         output_path[len] = 0;
 
@@ -202,7 +202,7 @@ struct movie_ffmpeg_pipe
 
     void set_video_x264_preset(const char* value) override
     {
-        auto len = strlen(value);
+        auto len = std::min(strlen(value), sizeof(video_x264_preset) - 1);
         memcpy(video_x264_preset, value, len);
         video_x264_preset[len] = 0;
     }
