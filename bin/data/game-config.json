@@ -118,7 +118,7 @@
                 "offset": 1,
                 "replace": "00 00 00 00"
             }
-        },,
+        },
         {
             "code-type": "patch",
             "code-id": "cvar-remove-restrict",
