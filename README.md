@@ -66,7 +66,7 @@ All settings are saved in profiles which are located in `data/profiles`. Each fi
 ``video-x264-intra`` - This decides whether or not the resulting video stream will consist only of intra frames. This essentially disables any compression by making every frame a full frame. This will greatly increasae the file size, but makes video editing very fast. This should be *true* or *false*.
 
 ### Motion blur
-``enabled`` - Whether or not motion blur should be enabled or not. There are some internal optimizations that can happen if this is disabled. This should be *true* or *false*.
+``enabled`` - Whether or not motion blur should be enabled or not. There are some internal optimizations that can happen if this is disabled. This should be *true* or *false*. If this is false, the game will run faster than realtime and may overflow the memory usage and crash due to limits in 32 bit applications.
 
 ``fps-mult`` - How much to multiply the movie framerate with. The result is how many samples per second will be processed. For example, a 60 fps movie with 60 multiplication becomes 3600 samples per second. This should be greater than 0.
 
