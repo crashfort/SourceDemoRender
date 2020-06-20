@@ -73,12 +73,21 @@ namespace svr
 
     SVR_API void os_release_mutex(os_handle* ptr);
 
-    // Attempts to read a filesystem file into memory.
+    // Retrieve file size from path.
+    // Returns UINT64_MAX on failure.
+    SVR_API uint64_t os_get_file_size(const char* path);
+
+    // Reads a filesystem file into memory.
     // The file is read all in one go.
     // On failure, the resulting memory buffer is unchanged.
     SVR_API bool os_read_file(const char* path, mem_buffer& buffer);
 
-    // Attempts to write data to a file.
+    // Reads a filesystem file into memory.
+    // The file is read all in one go and will be truncated to the provided size.
+    // On failure, no memory is written.
+    SVR_API bool os_read_file(const char* path, void* dest, size_t size);
+
+    // Writes data to a file.
     // The data is written all in one go.
     SVR_API bool os_write_file(const char* path, const void* data, size_t size);
 

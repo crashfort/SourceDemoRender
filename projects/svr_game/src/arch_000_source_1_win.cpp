@@ -92,11 +92,21 @@ static void run_cfg(const char* name)
     builder.append("data/cfg/");
     builder.append(name);
 
+    auto file_size = os_get_file_size(builder.buf);
+
+    if (file_size == UINT64_MAX)
+    {
+        log("Could not get file size of cfg '{}'\n", name);
+        return;
+    }
+
+    // Extra byte for null terminator.
+
     mem_buffer buf;
 
-    if (!os_read_file(builder.buf, buf))
+    if (!mem_create_buffer(buf, file_size + 1))
     {
-        log("Could not open cfg '{}'\n", builder.buf);
+        log("Could not allocate cfg memory buffer\n");
         return;
     }
 
@@ -104,23 +114,14 @@ static void run_cfg(const char* name)
         mem_destroy_buffer(buf);
     };
 
-    // New buffer used to add null terminator.
-    mem_buffer buf2;
-
-    if (!mem_create_buffer(buf2, buf.size + 1))
+    if (!os_read_file(builder.buf, buf.data, buf.size - 1))
     {
-        log("Could not create extra cfg buffer\n");
+        log("Could not read cfg '{}'\n", name);
         return;
     }
 
-    defer {
-        mem_destroy_buffer(buf2);
-    };
-
-    memcpy(buf2.data, buf.data, buf.size);
-
-    auto text = (char*)buf2.data;
-    text[buf2.size - 1] = 0;
+    auto text = (char*)buf.data;
+    text[buf.size - 1] = 0;
 
     log("Running cfg '{}'\n", name);
 

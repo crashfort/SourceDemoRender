@@ -123,6 +123,25 @@ namespace svr
         }
     }
 
+    uint64_t os_get_file_size(const char* path)
+    {
+        WIN32_FILE_ATTRIBUTE_DATA attr;
+
+        auto res = GetFileAttributesExA(path, GetFileExInfoStandard, &attr);
+
+        if (res == 0)
+        {
+            log("windows: Could not get file attributes for '{}' ({})\n", path, GetLastError());
+            return UINT64_MAX;
+        }
+
+        LARGE_INTEGER large;
+        large.LowPart = attr.nFileSizeLow;
+        large.HighPart = attr.nFileSizeHigh;
+
+        return large.QuadPart;
+    }
+
     bool os_read_file(const char* path, mem_buffer& buffer)
     {
         auto file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -168,6 +187,32 @@ namespace svr
         }
 
         buf = nullptr;
+        return true;
+    }
+
+    bool os_read_file(const char* path, void* dest, size_t size)
+    {
+        auto file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            log("windows: Could not open file '{}' ({})\n", path, GetLastError());
+            return false;
+        }
+
+        defer {
+            CloseHandle(file);
+        };
+
+        DWORD read = 0;
+        auto res = ReadFile(file, dest, size, &read, nullptr);
+
+        if (res == 0)
+        {
+            log("windows: Could not read from file '{}'. Got {} bytes expected {} bytes ({})\n", path, read, size, GetLastError());
+            return false;
+        }
+
         return true;
     }
 
