@@ -6,9 +6,4 @@ namespace svr
     {
         return PLATFORM_WINDOWS;
     }
-
-    const char* platform_exe()
-    {
-        return ".exe";
-    }
 }

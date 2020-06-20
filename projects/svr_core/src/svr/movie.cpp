@@ -77,10 +77,8 @@ struct movie_ffmpeg_pipe
             return false;
         }
 
-        str_builder exe;
-        exe.append(resource_path);
-        exe.append("ffmpeg");
-        exe.append(platform_exe());
+        svr::str_builder build_ffmpeg_path(const char* resource_path);
+        auto exe = build_ffmpeg_path(resource_path);
 
         auto args = build_ffmpeg_args(resource_path);
 

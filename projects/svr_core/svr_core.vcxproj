@@ -184,6 +184,7 @@
     <ClInclude Include="include\svr\swap.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\svr\ffmpeg_windows.cpp" />
     <ClCompile Include="src\svr\game\game_inject.cpp" />
     <ClCompile Include="src\svr\game\injector_windows.cpp">
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AssemblyAndMachineCode</AssemblerOutput>
@@ -191,6 +192,7 @@
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AssemblyAndMachineCode</AssemblerOutput>
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AssemblyAndMachineCode</AssemblerOutput>
     </ClCompile>
+    <ClCompile Include="src\svr\game\install_windows.cpp" />
     <ClCompile Include="src\svr\graphics\graphics.cpp" />
     <ClCompile Include="src\svr\graphics\graphics_preview.cpp" />
     <ClCompile Include="src\svr\graphics\graphics_preview_winapi.cpp" />

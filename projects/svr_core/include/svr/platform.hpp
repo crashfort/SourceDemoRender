@@ -14,8 +14,4 @@ namespace svr
 
     // Returns a platform type from string.
     SVR_API platform_type platform_from_name(const char* name);
-
-    // Returns the extension that executables use on the current platform.
-    // Should be used when referencing executables in paths.
-    SVR_API const char* platform_exe();
 }

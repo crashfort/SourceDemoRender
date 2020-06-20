@@ -7,8 +7,6 @@
 #include <svr/str.hpp>
 #include <svr/config.hpp>
 
-bool inject_process(svr::os_handle* proc, svr::os_handle* thread, const char* resource_path, const char* game_id);
-
 static bool does_game_exist(const char* resource_path, const char* game_id)
 {
     using namespace svr;
@@ -44,39 +42,13 @@ static bool does_game_exist(const char* resource_path, const char* game_id)
     return game_config_find_game(cfg, game_id) != nullptr;
 }
 
-static bool verify_installation(const char* resource_path)
-{
-    using namespace svr;
-
-    const char* required_files[] = {
-        "svr_game.dll",
-        "ffmpeg.exe",
-        "data/game-config.json",
-        "data/profiles/default.json",
-        "data/movies"
-    };
-
-    for (auto file : required_files)
-    {
-        str_builder builder;
-        builder.append(resource_path);
-        builder.append(file);
-
-        if (!os_does_file_exist(builder.buf))
-        {
-            log("Missing required file or directory '{}'\n", builder.buf);
-            return false;
-        }
-    }
-
-    return true;
-}
-
 namespace svr
 {
     bool game_launch_inject(const char* exe, const char* game_path, const char* game_id, const char* args, const char* resource_path)
     {
         log("This is a standalone version of SVR. Interoperability with other applications may not work\n");
+
+        bool verify_installation(const char* resource_path);
 
         if (!verify_installation(resource_path))
         {
@@ -171,16 +143,18 @@ namespace svr
             os_close_handle(fail_event);
         };
 
+        bool inject_process(svr::os_handle* proc, svr::os_handle* thread, const char* resource_path, const char* game_id);
+
         if (!inject_process(proc_handle, thread_handle, resource_path, game_id))
         {
             log("Could not inject into game\n");
             return false;
         }
 
-        svr::log("Resuming process\n");
+        log("Resuming process\n");
 
         // Let the process actually start now.
-        svr::os_resume_thread(thread_handle);
+        os_resume_thread(thread_handle);
 
         os_handle* waitables[] = {
             proc_handle,

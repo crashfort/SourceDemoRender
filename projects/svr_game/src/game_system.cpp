@@ -18,8 +18,6 @@
 
 // Common implementation for all architectures.
 
-svr::graphics_preview* create_system_preview(svr::graphics_backend* graphics, uint32_t width, uint32_t height);
-
 struct game_system
 {
     const char* resource_path;
@@ -556,6 +554,8 @@ bool sys_start_movie(game_system* sys, const char* name, const char* profile, ui
     {
         sys->ui_thread.run_task([=]()
         {
+            svr::graphics_preview* create_system_preview(svr::graphics_backend* graphics, uint32_t width, uint32_t height);
+
             sys->ui_preview = create_system_preview(sys->graphics, width, height);
             ui_enter_message_loop();
             graphics_preview_destroy(sys->ui_preview);

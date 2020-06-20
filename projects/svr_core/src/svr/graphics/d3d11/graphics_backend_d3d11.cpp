@@ -107,20 +107,13 @@ static UINT calc_bytes_pitch(DXGI_FORMAT format)
 {
     switch (format)
     {
-        case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        return 16;
-
-        case DXGI_FORMAT_B8G8R8A8_UNORM:
-        case DXGI_FORMAT_R8G8B8A8_UINT:
-        case DXGI_FORMAT_R8G8B8A8_UNORM:
-        return 4;
-
-        case DXGI_FORMAT_R8_UNORM:
-        case DXGI_FORMAT_R8_UINT:
-        return 1;
-
-        case DXGI_FORMAT_R8G8_UINT:
-        return 2;
+        case DXGI_FORMAT_R32G32B32A32_FLOAT: return 16;
+        case DXGI_FORMAT_B8G8R8A8_UNORM: return 4;
+        case DXGI_FORMAT_R8G8B8A8_UINT: return 4;
+        case DXGI_FORMAT_R8G8B8A8_UNORM: return 4;
+        case DXGI_FORMAT_R8_UNORM: return 1;
+        case DXGI_FORMAT_R8_UINT: return 1;
+        case DXGI_FORMAT_R8G8_UINT: return 2;
     }
 
     assert(false);

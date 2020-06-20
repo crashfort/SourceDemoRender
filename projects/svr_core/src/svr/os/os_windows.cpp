@@ -405,8 +405,6 @@ namespace svr
         if (desc)
         {
             start_info.hStdInput = desc->input_pipe;
-            start_info.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-            start_info.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 
             if (desc->input_pipe)
             {
