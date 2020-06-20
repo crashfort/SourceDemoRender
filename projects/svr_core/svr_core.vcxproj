@@ -155,7 +155,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\svr\api.hpp" />
-    <ClInclude Include="include\svr\prof.hpp" />
     <ClInclude Include="include\svr\game_config.hpp" />
     <ClInclude Include="include\svr\graphics_preview.hpp" />
     <ClInclude Include="include\svr\defer.hpp" />

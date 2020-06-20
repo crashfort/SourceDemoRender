@@ -50,9 +50,6 @@ namespace svr
     // Hooks must be enabled before anything is commited.
     SVR_API reverse_status reverse_hook_function(void* target, void* hook, reverse_hook* ptr);
 
-    // Hooks an exported function by name inside a loaded module.
-    SVR_API reverse_status reverse_hook_api_function(os_module* module, const char* name, void* hook, reverse_hook* ptr);
-
     // Enables all hooks.
     SVR_API bool reverse_enable_all_hooks();
 

@@ -119,9 +119,6 @@ namespace svr
     // The main thread in the created process is halted.
     SVR_API bool os_start_proc(const char* exe, const char* dir, const char* args, const os_start_proc_desc* desc, os_handle** proc_handle, os_handle** thread_handle);
 
-    // Attempts to open a process from a given identifier.
-    SVR_API bool os_open_proc(uint64_t id, os_handle** proc_handle);
-
     // Returns the process id.
     SVR_API uint64_t os_get_proc_id(os_handle* ptr);
 
@@ -137,15 +134,9 @@ namespace svr
     // Returns the active process handle.
     SVR_API os_handle* os_get_proc_handle_self();
 
-    // Returns a process identifier from a thread handle.
-    SVR_API uint64_t os_get_proc_id_from_thread(os_handle* ptr);
-
     // Resumes the execution of a thread.
     // Only does anything if it was suspended in the first place.
     SVR_API void os_resume_thread(os_handle* ptr);
-
-    // Terminates and forcefully closes the specified process.
-    SVR_API void os_terminate_proc(os_handle* ptr);
 
     // Terminates the active process.
     SVR_API void os_terminate_proc_self();
@@ -174,27 +165,6 @@ namespace svr
     // Input should be a list of module names with no paths.
     // Returns how many modules that are loaded in the list.
     SVR_API size_t os_check_proc_modules(os_handle* ptr, const char** list, size_t size);
-
-    struct os_file_list;
-
-    // Lists files in a directory.
-    // The returned file list must be destroyed.
-    SVR_API os_file_list* os_list_files(const char* path);
-
-    // Destroys a file system listing.
-    SVR_API void os_destroy_file_list(os_file_list* ptr);
-
-    // Returns how many files there are in a file listing.
-    SVR_API size_t os_file_list_size(os_file_list* ptr);
-
-    // Returns the full path to a file in a file listing.
-    SVR_API const char* os_file_list_path(os_file_list* ptr, size_t index);
-
-    // Returns the filename of a file in a file listing.
-    SVR_API const char* os_file_list_name(os_file_list* ptr, size_t index);
-
-    // Returns the extension of a file in a file listing.
-    SVR_API const char* os_file_list_ext(os_file_list* ptr, size_t index);
 
     // Returns the current working directory.
     // Ends with a backslash.

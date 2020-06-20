@@ -457,21 +457,6 @@ namespace svr
         return true;
     }
 
-    bool os_open_proc(uint64_t id, os_handle** proc_handle)
-    {
-        auto res = OpenProcess(PROCESS_ALL_ACCESS, false, id);
-
-        if (res == nullptr)
-        {
-            log("windows: Could not open process {} ({})\n", id, GetLastError());
-            return false;
-        }
-
-        *proc_handle = (os_handle*)res;
-
-        return true;
-    }
-
     uint64_t os_get_proc_id(os_handle* ptr)
     {
         return GetProcessId(ptr);
@@ -497,11 +482,6 @@ namespace svr
         return (os_handle*)GetCurrentProcess();
     }
 
-    uint64_t os_get_proc_id_from_thread(os_handle* ptr)
-    {
-        return GetProcessIdOfThread(ptr);
-    }
-
     void os_resume_thread(os_handle* ptr)
     {
         auto res = ResumeThread(ptr);
@@ -509,20 +489,8 @@ namespace svr
         if (res == (DWORD)-1)
         {
             auto thread_id = os_get_thread_id(ptr);
-            auto proc_id = os_get_proc_id_from_thread(ptr);
 
-            log("windows: Could not resume thread {} in process {} ({})\n", thread_id, proc_id, GetLastError());
-        }
-    }
-
-    void os_terminate_proc(os_handle* ptr)
-    {
-        auto res = TerminateProcess(ptr, 1);
-
-        if (res == 0)
-        {
-            auto proc_id = os_get_proc_id(ptr);
-            log("windows: Could not terminate process {} ({})\n", proc_id, GetLastError());
+            log("windows: Could not resume thread {} ({})\n", thread_id, GetLastError());
         }
     }
 

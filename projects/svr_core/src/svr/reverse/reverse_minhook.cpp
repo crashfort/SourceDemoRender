@@ -43,18 +43,6 @@ namespace svr
         return convert_status(status);
     }
 
-    reverse_status reverse_hook_api_function(os_module* module, const char* name, void* hook, reverse_hook* ptr)
-    {
-        auto target = os_get_module_function(module, name);
-
-        if (target == nullptr)
-        {
-            return REVERSE_STATUS_FUNCTION_NOT_FOUND;
-        }
-
-        return reverse_hook_function(target, hook, ptr);
-    }
-
     bool reverse_enable_all_hooks()
     {
         log("reverse: Enabling all hooks\n");
