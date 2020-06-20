@@ -260,9 +260,6 @@ static void __cdecl start_movie_override_000(const void* args)
 
     // Ensure the game runs at a fixed rate.
 
-    log("Setting sv_cheats to 1\n");
-    log("Setting host_framerate to {}\n", sys_get_game_rate(sys));
-
     cvar_set_value("sv_cheats", 1);
     cvar_set_value("host_framerate", (int)sys_get_game_rate(sys));
 

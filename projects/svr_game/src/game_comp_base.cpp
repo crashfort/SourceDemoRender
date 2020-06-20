@@ -202,6 +202,7 @@ void cvar_set_value(const char* name, int value)
     fmt::memory_buffer buf;
     svr::format_with_null(buf, "{} {}\n", name, value);
 
+    svr::log("Setting {} to {}\n", name, value);
     exec_client_command(buf.data());
 }
 
