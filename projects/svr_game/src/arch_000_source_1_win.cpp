@@ -245,16 +245,16 @@ static void __cdecl start_movie_override_000(const void* args)
     int height;
     materials_get_backbuffer_size(width, height);
 
+    if (!sys_start_movie(sys, name.c_str(), profile, width, height))
+    {
+        log("Could not start movie\n");
+        return;
+    }
+
     // Open the render target in here because some games recreate their backbuffer after creation.
     if (!open_game_texture())
     {
         log("Could not open game texture\n");
-        return;
-    }
-
-    if (!sys_start_movie(sys, name.c_str(), profile, width, height))
-    {
-        log("Could not start movie\n");
         return;
     }
 

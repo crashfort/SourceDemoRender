@@ -6,18 +6,15 @@
 
 #include <nlohmann/json.hpp>
 
-static nlohmann::json* convert_to_json(void* ptr)
+static nlohmann::json* convert_to_json(svr::config_node* ptr)
 {
-    return static_cast<nlohmann::json*>(ptr);
+    return (nlohmann::json*)ptr;
 }
 
 // Embeds the contents of a json ptr into a config view.
-static svr::config_node* convert_from_json(const nlohmann::json* ptr)
+static svr::config_node* convert_from_json(nlohmann::json* ptr)
 {
-    svr::config_node* dest;
-    memcpy(&dest, &ptr, sizeof(dest));
-
-    return dest;
+    return (svr::config_node*)ptr;
 }
 
 static nlohmann::json* find_json(nlohmann::json* ptr, const char* name)
