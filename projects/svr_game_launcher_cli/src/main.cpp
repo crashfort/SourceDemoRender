@@ -309,7 +309,7 @@ static bool start_game(launcher_state& state, int index)
 
     svr::log("Starting '{}'\n", game.display_name);
 
-    return svr::game_launch_inject(game.exe_path, game.dir_path, game.id, game.args, buf);
+    return svr::game_launch_inject(game.exe_path, game.dir_path, game.id, game.args, buf, nullptr);
 }
 
 static int find_game_by_id(launcher_state& state, const char* id)

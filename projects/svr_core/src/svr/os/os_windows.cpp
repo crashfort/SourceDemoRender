@@ -537,6 +537,16 @@ namespace svr
         }
     }
 
+    void os_terminate_proc(os_handle* ptr)
+    {
+        auto res = TerminateProcess(ptr, 1);
+
+        if (res == 0)
+        {
+            log("windows: Could not terminate process {} ({})\n", (void*)ptr, GetLastError());
+        }
+    }
+
     void os_terminate_proc_self()
     {
         auto res = TerminateProcess(GetCurrentProcess(), 1);

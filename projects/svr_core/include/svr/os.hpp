@@ -147,6 +147,9 @@ namespace svr
     // Only does anything if it was suspended in the first place.
     SVR_API void os_resume_thread(os_handle* ptr);
 
+    // Terminates a process.
+    SVR_API void os_terminate_proc(os_handle* ptr);
+
     // Terminates the active process.
     SVR_API void os_terminate_proc_self();
 

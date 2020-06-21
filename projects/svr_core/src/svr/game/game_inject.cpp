@@ -44,7 +44,7 @@ static bool does_game_exist(const char* resource_path, const char* game_id)
 
 namespace svr
 {
-    bool game_launch_inject(const char* exe, const char* game_path, const char* game_id, const char* args, const char* resource_path)
+    bool game_launch_inject(const char* exe, const char* game_path, const char* game_id, const char* args, const char* resource_path, os_handle** proc)
     {
         log("This is a standalone version of SVR. Interoperability with other applications may not work\n");
 
@@ -116,7 +116,7 @@ namespace svr
         }
 
         defer {
-            os_close_handle(proc_handle);
+            if (proc_handle) os_close_handle(proc_handle);
             os_close_handle(thread_handle);
         };
 
@@ -189,6 +189,12 @@ namespace svr
         {
             log("Initialization failure\n");
             return false;
+        }
+
+        if (proc)
+        {
+            *proc = proc_handle;
+            proc_handle = nullptr;
         }
 
         log("Done\n");
