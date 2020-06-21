@@ -140,7 +140,7 @@ struct graphics_preview_winapi
         graphics->present_swapchain(swapchain);
     }
 
-    void prepare_window(uint32_t width, uint32_t height)
+    void prepare_window(uint32_t width, uint32_t height, bool minimized)
     {
         SetWindowLongPtrA(hwnd, GWLP_USERDATA, reinterpret_cast<LONG>(this));
 
@@ -153,8 +153,15 @@ struct graphics_preview_winapi
         viewport.x = width;
         viewport.y = height;
 
-        // Make the window visible in the task bar but don't show it. Leave it minimized.
-        ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
+        if (minimized)
+        {
+            ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
+        }
+
+        else
+        {
+            ShowWindow(hwnd, SW_SHOWNORMAL);
+        }
     }
 
     svr::graphics_rect calc_aspect_ratio_rect(int w, int h, int source_w, int source_h)
@@ -206,7 +213,7 @@ struct graphics_preview_winapi
 
 namespace svr
 {
-    graphics_preview* graphics_preview_create_winapi(graphics_backend* graphics, uint32_t width, uint32_t height)
+    graphics_preview* graphics_preview_create_winapi(graphics_backend* graphics, uint32_t width, uint32_t height, bool minimized)
     {
         if (!register_window_class())
         {
@@ -245,7 +252,7 @@ namespace svr
 
         prev->graphics = graphics;
 
-        prev->prepare_window(width, height);
+        prev->prepare_window(width, height, minimized);
 
         return prev;
     }

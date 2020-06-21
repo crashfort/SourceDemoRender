@@ -65,7 +65,7 @@ TEST_CASE("preview")
 
     ui_thread.run_task([&]()
     {
-        prev = graphics_preview_create_winapi(graphics, WIDTH, HEIGHT);
+        prev = graphics_preview_create_winapi(graphics, WIDTH, HEIGHT, false);
         start_barrier.open();
         ui_enter_message_loop();
         graphics_preview_destroy(prev);
@@ -140,7 +140,7 @@ TEST_CASE("motion sample")
 
     ui_thread.run_task([&]()
     {
-        prev = graphics_preview_create_winapi(graphics, WIDTH, HEIGHT);
+        prev = graphics_preview_create_winapi(graphics, WIDTH, HEIGHT, false);
         start_barrier.open();
         ui_enter_message_loop();
         graphics_preview_destroy(prev);
@@ -211,7 +211,7 @@ TEST_CASE("text")
 
     ui_thread.run_task([&]()
     {
-        prev = graphics_preview_create_winapi(graphics, WIDTH, HEIGHT);
+        prev = graphics_preview_create_winapi(graphics, WIDTH, HEIGHT, false);
         start_barrier.open();
         ui_enter_message_loop();
         graphics_preview_destroy(prev);
@@ -289,7 +289,7 @@ TEST_CASE("overlay")
 
     ui_thread.run_task([&]()
     {
-        prev = graphics_preview_create_winapi(graphics, WIDTH, HEIGHT);
+        prev = graphics_preview_create_winapi(graphics, WIDTH, HEIGHT, false);
         start_barrier.open();
         ui_enter_message_loop();
         graphics_preview_destroy(prev);

@@ -20,7 +20,7 @@ namespace svr
     // Creates a preview window.
     // Input sizes are the dimensions of the source material.
     // A message loop must be created in the same thread afterwards.
-    SVR_API graphics_preview* graphics_preview_create_winapi(graphics_backend* graphics, uint32_t width, uint32_t height);
+    SVR_API graphics_preview* graphics_preview_create_winapi(graphics_backend* graphics, uint32_t width, uint32_t height, bool minimized);
 
     // Destroys a preview window.
     // Should be called in the same thread that created the preview window and also ran the message loop.
