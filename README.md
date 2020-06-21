@@ -5,6 +5,8 @@
 
 Source Video Render (SVR, formely SDR) can be used to produce movies for the Source engine with extreme performance.
 
+SVR operates on the H264 family of codecs for video with *libx264* for YUV and *libx264rgb* for RGB. Other codecs such as *vp8, vp9, av1* can be supported but are not directly accessible. It is recommended that the *avi* container is not used, prefer *mp4* or *mkv*.
+
 ## Game support
 | Game          | Windows
 | ------------- | -----------------------
@@ -62,10 +64,10 @@ All settings are saved in profiles which are located in `data/profiles`. Each fi
 | encoding-threads | How many threads to use for encoding. If this value is 0, the value is automatically calculated to use every core on the system. In case of multiprocess rendering, this may be wanted to turn down so proper affinity can be selected across each process.
 | video-fps | The constant framerate to use for the movie. Complete numbers only.
 | video-encoder | The video encoder to use for the movie. Available options are *libx264* or *libx264rgb*. For YUV video, *libx264* is used. For RGB video, *libx264rgb* is used. There may be compatibility issues with *libx264rgb* but it produces the highest quality. Other settings will become invalid if this is changed alone. If this value is changed, *video-pixel-format* and *video-color-space* must be changed too.
-| video-pixel-format | The pixel format to use for the movie. This option depends on which video encoder is being used. For RGB video, this must be *bgr0*. For YUV video, it can be one of *yuv420*, *yuv444*, *nv12*, *nv21*. It must be noted that there is a significant difference in the perception of color between RGB and YUV video. There are colors in RGB which are not representable in *yuv420*, *nv12* and *nv21*. Gradients are also not possible to represent for these limited pixel formats.
+| video-pixel-format | The pixel format to use for the movie. This option depends on which video encoder is being used. For RGB video, this must be *bgr0*. For YUV video, it can be one of *yuv420, yuv444, nv12, nv21*. It must be noted that there is a significant difference in the perception of color between RGB and YUV video. There are colors in RGB which are not representable in *yuv420, nv12 and nv21*. Gradients are also not possible to represent for these limited pixel formats.
 | video-color-space | The color space to use for the movie. This option depends on which video encoder is being used. For RGB video, this should be *none*. For YUV video, it can be either *601* or *709*. For maximum compatibility, *601* is the one to use.
 | video-x264-crf | The constant rate factor to use for the movie. This is the direct link between quality and file size. Using 0 here produces lossless video, but may cause the video stream to use a high requirement profile which some media players may not support. This should be between 0 and 52.
-| video-x264-preset | The quality vs speed to use for the movie. This can be one of *ultrafast*, *superfast*, *veryfast*, *faster*, *fast*, *medium*, *slow*, *slower*, *veryslow*, *placebo*.
+| video-x264-preset | The quality vs speed to use for the movie. This can be one of *ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo*.
 | video-x264-intra | This decides whether or not the resulting video stream will consist only of intra frames. This essentially disables any compression by making every frame a full frame. This will greatly increasae the file size, but makes video editing very fast. This should be *true* or *false*.
 
 ### Motion blur
@@ -90,11 +92,11 @@ All settings are saved in profiles which are located in `data/profiles`. Each fi
 | color-g | The green color component between 0 and 255.
 | color-b | The blue color component between 0 and 255.
 | color-a | The alpha color component between 0 and 255.
-| font-style | The style of the font. This can be one of *normal*, *oblique*, *italic*.
-| font-weight | The weight of the font. This is how bold or thin the font should be. It can be one of *thin*, *extralight*, *light*, *semilight*, *normal*, *medium*, *semibold*, *bold*, *extrabold*, *black*, *extrablack*.
-| font-stretch | How far apart the characters should be from each other. This can be one of *undefined*, *ultracondensed*, *extracondensed*, *condensed*, *semicondensed*, *normal*, *semiexpanded*, *expanded*, *extraexpanded*, *ultraexpanded*.
-| text-align | The horizontal text alignment. Can be one of *leading*, *trailing*, *center*.
-| paragraph-align | The vertical text alignment. Can be one of *near*, *far*, *center*.
+| font-style | The style of the font. This can be one of *normal, oblique, italic*.
+| font-weight | The weight of the font. This is how bold or thin the font should be. It can be one of *thin, extralight, light, semilight, normal, medium, semibold, bold, extrabold, black, extrablack*.
+| font-stretch | How far apart the characters should be from each other. This can be one of *undefined, ultracondensed, extracondensed, condensed, semicondensed, normal, semiexpanded, expanded, extraexpanded, ultraexpanded*.
+| text-align | The horizontal text alignment. Can be one of *leading, trailing, center*.
+| paragraph-align | The vertical text alignment. Can be one of *near, far, center*.
 | padding | How much padding to apply to all sides of the text content box.
 
 ## Motion blur demo
