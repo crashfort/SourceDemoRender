@@ -6,21 +6,21 @@
 Source Video Render (SVR, formely SDR) can be used to produce movies for the Source engine with extreme performance.
 
 ## Game support
-| Game          | Windows                |
+| Game          | Windows
 | ------------- | -----------------------
-| Counter-Strike: Source           | ✔   |
-| Half-Life 2                      | ✔   |
-| Half-Life 2: Deathmatch          | ✔   |
-| Half-Life 2: Episode One         | ✔   |
-| Half-Life 2: Episode Two         | ✔   |
-| Team Fortress 2                  | ✔   |
-| Momentum                         | ✔   |
-| Day of Defeat: Source            | ✔   |
-| Garry's Mod                      | ✔   |
-| Black Mesa                       | ✔   |
-| Portal 1                         | ✔   |
-| Counter-Strike: Global Offensive | ✔   |
-| Portal 2                         | ❌¹ |
+| Counter-Strike: Source           | ✔
+| Half-Life 2                      | ✔
+| Half-Life 2: Deathmatch          | ✔
+| Half-Life 2: Episode One         | ✔
+| Half-Life 2: Episode Two         | ✔
+| Team Fortress 2                  | ✔
+| Momentum                         | ✔
+| Day of Defeat: Source            | ✔
+| Garry's Mod                      | ✔
+| Black Mesa                       | ✔
+| Portal 1                         | ✔
+| Counter-Strike: Global Offensive | ✔
+| Portal 2                         | ❌¹
 
 ¹ Uses a version of d3d9 that is too old to support texture sharing.
 
@@ -101,9 +101,9 @@ All settings are saved in profiles which are located in `data/profiles`. Each fi
 In this demo an object is rotating 6 times per second. This is a fast moving object, so higher samples per second will remove banding at cost of slower recording times. For slower scenes you may get away with a lower sampling rate. Exposure is dependant on the type of content being made.
 
 The X axis is the samples per second and the Y axis is the exposure.
-|      | 960                           | 1920                           | 3840                           | 7680                           |
-| ---- | ----------------------------- | ------------------------------ | ------------------------------ | ------------------------------ |
-| 0.25 | ![](media/sample/960_025.png) | ![](media/sample/1920_025.png) | ![](media/sample/3840_025.png) | ![](media/sample/7680_025.png) |
-| 0.50 | ![](media/sample/960_050.png) | ![](media/sample/1920_050.png) | ![](media/sample/3840_050.png) | ![](media/sample/7680_050.png) |
-| 0.75 | ![](media/sample/960_075.png) | ![](media/sample/1920_075.png) | ![](media/sample/3840_075.png) | ![](media/sample/7680_075.png) |
-| 1.00 | ![](media/sample/960_100.png) | ![](media/sample/1920_100.png) | ![](media/sample/3840_100.png) | ![](media/sample/7680_100.png) |
+|      | 960                           | 1920                           | 3840                           | 7680
+| ---- | ----------------------------- | ------------------------------ | ------------------------------ | ------------------------------
+| 0.25 | ![](media/sample/960_025.png) | ![](media/sample/1920_025.png) | ![](media/sample/3840_025.png) | ![](media/sample/7680_025.png)
+| 0.50 | ![](media/sample/960_050.png) | ![](media/sample/1920_050.png) | ![](media/sample/3840_050.png) | ![](media/sample/7680_050.png)
+| 0.75 | ![](media/sample/960_075.png) | ![](media/sample/1920_075.png) | ![](media/sample/3840_075.png) | ![](media/sample/7680_075.png)
+| 1.00 | ![](media/sample/960_100.png) | ![](media/sample/1920_100.png) | ![](media/sample/3840_100.png) | ![](media/sample/7680_100.png)
