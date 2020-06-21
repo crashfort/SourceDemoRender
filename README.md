@@ -47,6 +47,8 @@ When starting and ending a movie, the files *svr_movie_start.cfg* and *svr_movie
 
 When producing with motion blur, greater performance can be achieved by minimizing the game window, either with the minimize button in the window title or by forcing to desktop with `Win + D`. This blocks out the window from being updated with thousands and thousands of frames per second.
 
+Additional performance can be achieved by disabling the drawing of VGUI with `r_drawvgui 0`. **Note that this will also hide the console**. It can be useful to have a bind for `endmovie`, and then inside `svr_movie_end.cfg` to set `r_drawvgui` back to 1.
+
 ## Interoperability with other programs
 Due to the nature of reverse engineering games, it cannot be trusted that direct interoperability will work straight away because at the risk of collision. For other programs that want to make use of SVR for rendering purposes, it can be used as a library.
 
