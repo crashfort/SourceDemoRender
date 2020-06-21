@@ -33,7 +33,7 @@ color CLEAR_COLORS[] = {
     color {0, 1, 1, 1},
 };
 
-static void create_movie(const char* ext, svr::media_pixel_format px, svr::media_color_space space)
+static void create_movie(const char* ext, const char* codec, svr::media_pixel_format px, svr::media_color_space space)
 {
     using namespace svr;
 
@@ -50,7 +50,7 @@ static void create_movie(const char* ext, svr::media_pixel_format px, svr::media
     mov->set_log_enabled(false);
     mov->set_threads(0);
     mov->set_video_fps(6);
-    mov->set_video_encoder("libx264");
+    mov->set_video_encoder(codec);
     mov->set_video_pixel_format(px);
     mov->set_video_color_space(space);
     mov->set_video_x264_crf(23);
@@ -162,18 +162,18 @@ TEST_CASE("create movies")
 
     for (auto c : CONTAINERS)
     {
-        create_movie(c, MEDIA_PIX_FORMAT_BGR0, MEDIA_COLOR_SPACE_RGB);
+        create_movie(c, "libx264rgb", MEDIA_PIX_FORMAT_BGR0, MEDIA_COLOR_SPACE_RGB);
 
-        create_movie(c, MEDIA_PIX_FORMAT_YUV420, MEDIA_COLOR_SPACE_YUV601);
-        create_movie(c, MEDIA_PIX_FORMAT_YUV420, MEDIA_COLOR_SPACE_YUV709);
+        create_movie(c, "libx264", MEDIA_PIX_FORMAT_YUV420, MEDIA_COLOR_SPACE_YUV601);
+        create_movie(c, "libx264", MEDIA_PIX_FORMAT_YUV420, MEDIA_COLOR_SPACE_YUV709);
 
-        create_movie(c, MEDIA_PIX_FORMAT_NV12, MEDIA_COLOR_SPACE_YUV601);
-        create_movie(c, MEDIA_PIX_FORMAT_NV12, MEDIA_COLOR_SPACE_YUV709);
+        create_movie(c, "libx264", MEDIA_PIX_FORMAT_NV12, MEDIA_COLOR_SPACE_YUV601);
+        create_movie(c, "libx264", MEDIA_PIX_FORMAT_NV12, MEDIA_COLOR_SPACE_YUV709);
 
-        create_movie(c, MEDIA_PIX_FORMAT_NV21, MEDIA_COLOR_SPACE_YUV601);
-        create_movie(c, MEDIA_PIX_FORMAT_NV21, MEDIA_COLOR_SPACE_YUV709);
+        create_movie(c, "libx264", MEDIA_PIX_FORMAT_NV21, MEDIA_COLOR_SPACE_YUV601);
+        create_movie(c, "libx264", MEDIA_PIX_FORMAT_NV21, MEDIA_COLOR_SPACE_YUV709);
 
-        create_movie(c, MEDIA_PIX_FORMAT_YUV444, MEDIA_COLOR_SPACE_YUV601);
-        create_movie(c, MEDIA_PIX_FORMAT_YUV444, MEDIA_COLOR_SPACE_YUV709);
+        create_movie(c, "libx264", MEDIA_PIX_FORMAT_YUV444, MEDIA_COLOR_SPACE_YUV601);
+        create_movie(c, "libx264", MEDIA_PIX_FORMAT_YUV444, MEDIA_COLOR_SPACE_YUV709);
     }
 }
