@@ -8,10 +8,10 @@
 #include <svr/media.hpp>
 #include <svr/mem.hpp>
 
-const auto WIDTH = 1024;
-const auto HEIGHT = 1024;
+static const auto WIDTH = 1024;
+static const auto HEIGHT = 1024;
 
-const char* CONTAINERS[] = {
+static const char* CONTAINERS[] = {
     ".mp4",
     ".mkv",
 };
@@ -24,7 +24,7 @@ struct color
     float a;
 };
 
-color CLEAR_COLORS[] = {
+static color CLEAR_COLORS[] = {
     color {1, 0, 0, 1},
     color {0, 1, 0, 1},
     color {0, 0, 1, 1},
