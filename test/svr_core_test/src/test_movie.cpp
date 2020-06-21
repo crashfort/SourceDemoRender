@@ -13,7 +13,6 @@ const auto HEIGHT = 1024;
 
 const char* CONTAINERS[] = {
     ".mp4",
-    ".avi",
     ".mkv",
 };
 
