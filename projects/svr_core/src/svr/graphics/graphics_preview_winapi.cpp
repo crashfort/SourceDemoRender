@@ -91,6 +91,8 @@ struct graphics_preview_winapi
         {
             DestroyWindow(hwnd);
         }
+
+        if (swapchain) graphics->destroy_swapchain(swapchain);
     }
 
     void render(svr::graphics_srv* srv) override
