@@ -22,9 +22,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    auto root = config_root(cfg);
-
-    auto games_node = config_find(root, "games");
+    auto games_node = config_find(config_root(cfg), "games");
 
     if (games_node == nullptr)
     {
