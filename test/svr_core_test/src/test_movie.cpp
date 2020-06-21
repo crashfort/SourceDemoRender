@@ -156,7 +156,7 @@ static void create_movie(const char* ext, const char* codec, svr::media_pixel_fo
     mov->close_movie();
 }
 
-TEST_CASE("create movies")
+TEST_CASE("movie")
 {
     using namespace svr;
 
