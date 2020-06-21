@@ -60,7 +60,7 @@ It is possible to launch multiple games and render different movies at once. To 
 It may also be required to open a map beforehand so the required stuff is loaded properly.
 
 ## Profiles
-All settings are saved in profiles which are located in `data/profiles`. Each file here is a profile. The default profile is called `default.json` and is the profile that will be used in case none is specified when starting a movie. These profiles are all shared across all games. The settings of a profile is described below.
+All settings are loaded from profiles which are located in `data/profiles`. The default profile is called `default.json` and is the profile that will be used in case none is specified when starting a movie. These profiles are all shared across all games. The settings of a profile is described below.
 
 ### Movie
 | Key | Value
