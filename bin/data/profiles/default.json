@@ -19,7 +19,7 @@
         "enabled": false
     },
     "velocity-overlay": {
-        "enabled": true,
+        "enabled": false,
         "font-family": "Arial",
         "font-size": 72,
         "color-r": 255,
