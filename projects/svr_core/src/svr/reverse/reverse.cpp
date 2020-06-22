@@ -140,7 +140,7 @@ namespace svr
 
         if (*mod != 0xE8)
         {
-            log("reverse: Could not follow relative jump. Got 0x{:x} expected 0xE8 at {}\n", *mod, address);
+            log("reverse: Could not follow relative jump. Got {:x} expected 0xE8 at {}\n", *mod, address);
             return nullptr;
         }
 

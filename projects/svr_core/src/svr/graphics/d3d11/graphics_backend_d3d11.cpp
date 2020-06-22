@@ -287,7 +287,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: could not create d3d11 device as a dxgi device (0x{:x})\n", hr);
+            log("d3d11: could not create d3d11 device as a dxgi device ({:x})\n", hr);
             return nullptr;
         }
 
@@ -295,7 +295,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not get dxgi device adapter (0x{:x})\n", hr);
+            log("d3d11: Could not get dxgi device adapter ({:x})\n", hr);
             return nullptr;
         }
 
@@ -303,7 +303,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not get parent of dxgi device adapter 0x{:x}\n", hr);
+            log("d3d11: Could not get parent of dxgi device adapter {:x}\n", hr);
             return nullptr;
         }
 
@@ -324,7 +324,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create swapchain for hwnd (0x{:x})\n", hr);
+            log("d3d11: Could not create swapchain for hwnd ({:x})\n", hr);
             return nullptr;
         }
 
@@ -332,7 +332,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not remove window alt enter association (0x{:x})\n", hr);
+            log("d3d11: Could not remove window alt enter association ({:x})\n", hr);
             return nullptr;
         }
 
@@ -340,7 +340,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not get the back buffer from the swapchain (0x{:x})\n", hr);
+            log("d3d11: Could not get the back buffer from the swapchain ({:x})\n", hr);
             return nullptr;
         }
 
@@ -348,7 +348,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create a rtv from swapchain back buffer (0x{:x})\n", hr);
+            log("d3d11: Could not create a rtv from swapchain back buffer ({:x})\n", hr);
             return nullptr;
         }
 
@@ -356,7 +356,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not query initial swapchain as a newer swapchain (0x{:x})\n", hr);
+            log("d3d11: Could not query initial swapchain as a newer swapchain ({:x})\n", hr);
             return nullptr;
         }
 
@@ -396,7 +396,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not resize swapchain '{}' (0x{:x})\n", ptr->name, hr);
+            log("d3d11: Could not resize swapchain '{}' ({:x})\n", ptr->name, hr);
             return;
         }
 
@@ -406,7 +406,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not get the back buffer from the swapchain '{}' after resize (0x{:x})\n", ptr->name, hr);
+            log("d3d11: Could not get the back buffer from the swapchain '{}' after resize ({:x})\n", ptr->name, hr);
             return;
         }
 
@@ -414,7 +414,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create a rtv from swapchain '{}' back buffer after resize (0x{:x})\n", ptr->name, hr);
+            log("d3d11: Could not create a rtv from swapchain '{}' back buffer after resize ({:x})\n", ptr->name, hr);
         }
     }
 
@@ -474,7 +474,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create texture '{}' (0x{:x})\n", name, hr);
+            log("d3d11: Could not create texture '{}' ({:x})\n", name, hr);
             return nullptr;
         }
 
@@ -484,7 +484,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create srv for texture '{}' (0x{:x})\n", name, hr);
+                log("d3d11: Could not create srv for texture '{}' ({:x})\n", name, hr);
                 return nullptr;
             }
         }
@@ -495,7 +495,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create uav for texture '{}' (0x{:x})\n", name, hr);
+                log("d3d11: Could not create uav for texture '{}' ({:x})\n", name, hr);
                 return nullptr;
             }
         }
@@ -506,7 +506,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create rtv for texture '{}' (0x{:x})\n", name, hr);
+                log("d3d11: Could not create rtv for texture '{}' ({:x})\n", name, hr);
                 return nullptr;
             }
         }
@@ -529,7 +529,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create downloadable texture for '{}' (0x{:x})\n", name, hr);
+                log("d3d11: Could not create downloadable texture for '{}' ({:x})\n", name, hr);
             }
         }
 
@@ -548,7 +548,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not query texture '{}' as a dxgi surface (0x{:x})\n", name, hr);
+                log("d3d11: Could not query texture '{}' as a dxgi surface ({:x})\n", name, hr);
                 return nullptr;
             }
 
@@ -563,7 +563,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create dxgi surface render target (0x{:x})\n", hr);
+                log("d3d11: Could not create dxgi surface render target ({:x})\n", hr);
                 return nullptr;
             }
 
@@ -654,7 +654,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not open shared resource (0x{:x})\n", hr);
+            log("d3d11: Could not open shared resource ({:x})\n", hr);
             return nullptr;
         }
 
@@ -662,7 +662,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not query shared resource as a 2D texture (0x{:x})\n", hr);
+            log("d3d11: Could not query shared resource as a 2D texture ({:x})\n", hr);
             return nullptr;
         }
 
@@ -675,7 +675,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create srv for shared texture (0x{:x})\n", hr);
+                log("d3d11: Could not create srv for shared texture ({:x})\n", hr);
                 return nullptr;
             }
         }
@@ -686,7 +686,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create uav for shared texture (0x{:x})\n", hr);
+                log("d3d11: Could not create uav for shared texture ({:x})\n", hr);
                 return nullptr;
             }
         }
@@ -697,7 +697,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create rtv for shared texture (0x{:x})\n", hr);
+                log("d3d11: Could not create rtv for shared texture ({:x})\n", hr);
                 return nullptr;
             }
         }
@@ -720,7 +720,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create downloadable texture from shared resource (0x{:x})\n", hr);
+                log("d3d11: Could not create downloadable texture from shared resource ({:x})\n", hr);
                 return nullptr;
             }
         }
@@ -827,7 +827,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create buffer '{}' (0x{:x})\n", name, hr);
+            log("d3d11: Could not create buffer '{}' ({:x})\n", name, hr);
             return nullptr;
         }
 
@@ -842,7 +842,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: could not create srv for buffer '{}' (0x{:x})\n", name, hr);
+                log("d3d11: could not create srv for buffer '{}' ({:x})\n", name, hr);
                 return nullptr;
             }
         }
@@ -858,7 +858,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create uav for buffer '{}' (0x{:x})\n", name, hr);
+                log("d3d11: Could not create uav for buffer '{}' ({:x})\n", name, hr);
                 return nullptr;
             }
         }
@@ -881,7 +881,7 @@ struct graphics_backend_d3d11
 
             if (FAILED(hr))
             {
-                log("d3d11: Could not create downloadable buffer for '{}' (0x{:x})\n", name, hr);
+                log("d3d11: Could not create downloadable buffer for '{}' ({:x})\n", name, hr);
                 return nullptr;
             }
         }
@@ -1351,7 +1351,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not map texture '{}' to system memory (0x{:x})\n", source->name, hr);
+            log("d3d11: Could not map texture '{}' to system memory ({:x})\n", source->name, hr);
 
             // Don't need to unmap if the mapping failed.
             return;
@@ -1391,7 +1391,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not map buffer '{}' to system memory (0x{:x})\n", source->name, hr);
+            log("d3d11: Could not map buffer '{}' to system memory ({:x})\n", source->name, hr);
 
             // Don't need to unmap if the mapping failed.
             return;
@@ -1483,7 +1483,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create text brush (0x{:x})\n", hr);
+            log("d3d11: Could not create text brush ({:x})\n", hr);
             return nullptr;
         }
 
@@ -1494,7 +1494,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create text format (0x{:x})\n", hr);
+            log("d3d11: Could not create text format ({:x})\n", hr);
             return nullptr;
         }
 
@@ -1502,7 +1502,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not query text format as newer (0x{:x})\n", hr);
+            log("d3d11: Could not query text format as newer ({:x})\n", hr);
             return nullptr;
         }
 
@@ -1578,7 +1578,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create shader '{}' (0x{:x})\n", name, hr);
+            log("d3d11: Could not create shader '{}' ({:x})\n", name, hr);
             return nullptr;
         }
 
@@ -1631,7 +1631,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: could not create blend state '{}' (0x{:x})\n", name, hr);
+            log("d3d11: could not create blend state '{}' ({:x})\n", name, hr);
             return nullptr;
         }
 
@@ -1657,7 +1657,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create sampler state '{}' (0x{:x})\n", name, hr);
+            log("d3d11: Could not create sampler state '{}' ({:x})\n", name, hr);
             return false;
         }
 
@@ -1724,7 +1724,7 @@ struct graphics_backend_d3d11
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not map constant buffer '{}' (0x{:x})\n", ptr->name, hr);
+            log("d3d11: Could not map constant buffer '{}' ({:x})\n", ptr->name, hr);
 
             // Don't need to unmap if the mapping failed.
             return false;
@@ -1849,7 +1849,7 @@ namespace svr
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create d3d11 device (0x{:x})\n", hr);
+            log("d3d11: Could not create d3d11 device ({:x})\n", hr);
             return false;
         }
 
@@ -1857,7 +1857,7 @@ namespace svr
 
         if (created_level < MINIMUM_VERSION)
         {
-            log("d3d11: Created device with feature level 0x{:x} but minimum is 0x{:x}\n", created_level, MINIMUM_VERSION);
+            log("d3d11: Created device with feature level {:x} but minimum is {:x}\n", created_level, MINIMUM_VERSION);
             return false;
         }
 
@@ -1867,7 +1867,7 @@ namespace svr
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create d2d1 factory (0x{:x})\n", hr);
+            log("d3d11: Could not create d2d1 factory ({:x})\n", hr);
             return false;
         }
 
@@ -1875,7 +1875,7 @@ namespace svr
 
         if (FAILED(hr))
         {
-            log("d3d11: Could not create dwrite factory (0x{:x})\n", hr);
+            log("d3d11: Could not create dwrite factory ({:x})\n", hr);
             return false;
         }
 
