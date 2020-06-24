@@ -191,6 +191,9 @@ namespace svr
     // Makes a memory region writable and executable.
     SVR_API bool os_make_mem_writable(void* address, size_t length);
 
+    // Runs a command to be used to start the default program associated with a protocol.
+    SVR_API bool os_run_protocol(const char* url);
+
     // Structure which keeps track of sequential writing
     // to keep memory writings in order.
     class os_remote_proc_mem_writer

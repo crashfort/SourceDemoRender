@@ -762,4 +762,17 @@ namespace svr
 
         return true;
     }
+
+    bool os_run_protocol(const char* url)
+    {
+        auto res = (int)ShellExecuteA(nullptr, "open", url, nullptr, nullptr, SW_SHOW);
+
+        if (res > 32)
+        {
+            return true;
+        }
+
+        log("windows: Could not run protocol '{}' ({}, {})\n", url, res, GetLastError());
+        return false;
+    }
 }

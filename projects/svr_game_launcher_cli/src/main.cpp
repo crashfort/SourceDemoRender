@@ -157,7 +157,8 @@ static void check_updates(launcher_state& state)
 
     if (has_app_updates)
     {
-        log("There are updates available. Please visit https://github.com/crashfort/SourceDemoRender/releases to update!\n");
+        log("\n");
+        log("There are updates available\n");
 
         for (auto e : manuals)
         {
@@ -165,6 +166,18 @@ static void check_updates(launcher_state& state)
         }
 
         log("\n");
+
+        log("You can get redirected to the download page at https://github.com/crashfort/SourceDemoRender/releases\n");
+        log("Would you like to visit the download page? (Y/n): ");
+
+        char buf[32];
+        auto res = fgets(buf, sizeof(buf), stdin);
+
+        if (res && (*res == 'y' || *res == 'Y' || *res == '\n'))
+        {
+            os_run_protocol("https://github.com/crashfort/SourceDemoRender/releases");
+            exit(0);
+        }
     }
 
     log("The following files can be automatically updated:\n");
