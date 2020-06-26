@@ -20,12 +20,10 @@ namespace svr
 
     inline bool version_greater_than(version_pair v, int major, int minor)
     {
-        if (v.major > major)
-        {
-            return true;
-        }
+        auto a = v.major * 1000 + v.minor;
+        auto b = major * 1000 + minor;
 
-        return v.minor > minor;
+        return a > b;
     }
 
     inline bool version_greater_than(version_pair a, version_pair b)
