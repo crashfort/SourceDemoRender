@@ -260,17 +260,13 @@ static bool init(launcher_state& state)
         state.game_list.push_back(game);
     }
 
+    if (state.game_list.empty())
+    {
+        log("No games to launch\n");
+        return false;
+    }
+
     return true;
-}
-
-static bool has_games(launcher_state& state)
-{
-    return state.game_list.size() > 0;
-}
-
-static void show_instructions()
-{
-    svr::log("Select which number to start: ");
 }
 
 static void list_games(launcher_state& state)
@@ -360,12 +356,6 @@ static bool proc()
         return false;
     }
 
-    if (!has_games(state))
-    {
-        log("No games to launch\n");
-        return false;
-    }
-
     if (autostart_game_id)
     {
         log("Trying to autostart game '{}'\n", autostart_game_id);
@@ -385,7 +375,7 @@ static bool proc()
     list_games(state);
     log("\n");
 
-    show_instructions();
+    log("Select which number to start: ");
 
     auto selection = get_selection();
 
