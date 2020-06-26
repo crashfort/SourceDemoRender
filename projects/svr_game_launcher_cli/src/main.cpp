@@ -91,14 +91,12 @@ static void check_updates(launcher_state& state)
         return;
     }
 
-    const auto BASE_URL = "https://raw.githubusercontent.com/crashfort/SourceDemoRender/svr/";
-
     str_builder url_builder;
 
-    auto build_url = [&](const char* part)
+    auto build_raw_url = [&](const char* part)
     {
         url_builder.reset();
-        url_builder.append(BASE_URL);
+        url_builder.append("https://raw.githubusercontent.com/crashfort/SourceDemoRender/master/");
         url_builder.append(part);
 
         return url_builder.buf;
@@ -106,7 +104,7 @@ static void check_updates(launcher_state& state)
 
     log("Looking for updates\n");
 
-    auto ver_req = RestClient::get(build_url("bin/data/version.json"));
+    auto ver_req = RestClient::get(build_raw_url("bin/data/version.json"));
 
     if (ver_req.code != 200)
     {
@@ -191,7 +189,7 @@ static void check_updates(launcher_state& state)
 
     for (auto e : autos)
     {
-        auto url = build_url(e.url);
+        auto url = build_raw_url(e.url);
 
         log("Downloading from '{}': ", url);
 
