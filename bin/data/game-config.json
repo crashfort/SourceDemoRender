@@ -1,0 +1,740 @@
+{
+    "components": [
+        {
+            "code-type": "pattern",
+            "code-id": "d3d9ex-device",
+            "config-id": "config-000-d3d9ex-device",
+            "signature": "**(IDirect3DDevice9Ex***)",
+            "value": {
+                "library": "shaderapidx9.dll",
+                "pattern": "A1 ?? ?? ?? ?? 6A 00 56 6A 00 8B 08 6A 15 68 ?? ?? ?? ?? 6A 00 6A 01 6A 01 50 FF 51 5C 85 C0 79 06 C7 06 ?? ?? ?? ??",
+                "offset": 1
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "d3d9ex-device",
+            "config-id": "config-001-d3d9ex-device",
+            "signature": "**(IDirect3DDevice9Ex***)",
+            "value": {
+                "library": "shaderapidx9.dll",
+                "pattern": "A1 ?? ?? ?? ?? 8B 08 8B 51 5C 6A 00 56 6A 00 6A 15 68 ?? ?? ?? ?? 6A 00 6A 01 6A 01",
+                "offset": 1
+            }
+        },
+        {
+            "code-type": "create-interface",
+            "code-id": "materials-ptr",
+            "config-id": "config-000-materials-ptr",
+            "signature": "void*",
+            "value": {
+                "library": "materialsystem.dll",
+                "interface-name": "VMaterialSystem080"
+            }
+        },
+        {
+            "code-type": "create-interface",
+            "code-id": "materials-ptr",
+            "config-id": "config-001-materials-ptr",
+            "signature": "void*",
+            "value": {
+                "library": "materialsystem.dll",
+                "interface-name": "VMaterialSystem081"
+            }
+        },
+        {
+            "code-type": "virtual",
+            "code-id": "materials-get-bbuf-size",
+            "config-id": "config-000-materials-get-bbuf-size",
+            "signature": "void(__fastcall*)(void* p, void* edx, int& width, int& height)",
+            "value": {
+                "vtable-index": 31
+            }
+        },
+        {
+            "code-type": "virtual",
+            "code-id": "materials-get-bbuf-size",
+            "config-id": "config-001-materials-get-bbuf-size",
+            "signature": "void(__fastcall*)(void* p, void* edx, int& width, int& height)",
+            "value": {
+                "vtable-index": 35
+            }
+        },
+        {
+            "code-type": "virtual",
+            "code-id": "materials-get-bbuf-size",
+            "config-id": "config-002-materials-get-bbuf-size",
+            "signature": "void(__fastcall*)(void* p, void* edx, int& width, int& height)",
+            "value": {
+                "vtable-index": 34
+            }
+        },
+        {
+            "code-type": "create-interface",
+            "code-id": "engine-client-ptr",
+            "config-id": "config-000-engine-client-ptr",
+            "signature": "void*",
+            "value": {
+                "library": "engine.dll",
+                "interface-name": "VEngineClient014"
+            }
+        },
+        {
+            "code-type": "create-interface",
+            "code-id": "engine-client-ptr",
+            "config-id": "config-001-engine-client-ptr",
+            "signature": "void*",
+            "value": {
+                "library": "engine.dll",
+                "interface-name": "VEngineClient015"
+            }
+        },
+        {
+            "code-type": "virtual",
+            "code-id": "engine-client-exec-cmd",
+            "config-id": "config-000-engine-client-exec-cmd",
+            "signature": "void(__fastcall*)(void* p, void* edx, const char* str)",
+            "value": {
+                "vtable-index": 102
+            }
+        },
+        {
+            "code-type": "virtual",
+            "code-id": "engine-client-exec-cmd",
+            "config-id": "config-001-engine-client-exec-cmd",
+            "signature": "void(__fastcall*)(void* p, void* edx, const char* str)",
+            "value": {
+                "vtable-index": 108
+            }
+        },
+        {
+            "code-type": "patch",
+            "code-id": "cvar-remove-restrict",
+            "config-id": "config-000-cvar-remove-restrict",
+            "signature": "0x00400000",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 58 83 3D ?? ?? ?? ?? ??",
+                "offset": 1,
+                "replace": "00 00 00 00"
+            }
+        },
+        {
+            "code-type": "patch",
+            "code-id": "cvar-remove-restrict",
+            "config-id": "config-001-cvar-remove-restrict",
+            "signature": "0x00400000",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 52 83 3D ?? ?? ?? ?? ?? 7C 49 8B 06",
+                "offset": 1,
+                "replace": "00 00 00 00"
+            }
+        },
+        {
+            "code-type": "patch",
+            "code-id": "cvar-remove-restrict",
+            "config-id": "config-002-cvar-remove-restrict",
+            "signature": "0x00400000",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "68 ?? ?? ?? ?? 8B CE FF D0 84 C0 74 59 39 3D ?? ?? ?? ?? 7C 51",
+                "offset": 1,
+                "replace": "00 00 00 00"
+            }
+        },
+        {
+            "code-type": "export",
+            "code-id": "console-print-message",
+            "config-id": "config-000-console-print-message",
+            "signature": "void(__cdecl*)(const char* format, ...)",
+            "value": {
+                "library": "tier0.dll",
+                "export-name": "Msg"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "view-render",
+            "config-id": "config-000-view-render",
+            "signature": "void(__fastcall*)(void* p, void* edx, void* rect)",
+            "value": {
+                "library": "client.dll",
+                "pattern": "55 8B EC 8B 55 08 83 7A 08 00 74 17 83 7A 0C 00 74 11 8B 0D ?? ?? ?? ?? 52 8B 01 FF 50 14 E8 ?? ?? ?? ?? 5D C2 04 00"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "view-render",
+            "config-id": "config-001-view-render",
+            "signature": "void(__fastcall*)(void* p, void* edx, void* rect)",
+            "value": {
+                "library": "client.dll",
+                "pattern": "55 8B EC 83 E4 F0 81 EC ?? ?? ?? ?? 56 57 8B F9 8B 0D ?? ?? ?? ?? 89 7C 24 18"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "view-render",
+            "config-id": "config-002-view-render",
+            "signature": "void(__fastcall*)(void* p, void* edx, void* rect)",
+            "value": {
+                "library": "client.dll",
+                "pattern": "55 8B EC 81 EC ?? ?? ?? ?? 53 56 57 8B F9 8B 0D ?? ?? ?? ?? 89 7D D8 8B 81 ?? ?? ?? ?? 89 45 C8"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "view-render",
+            "config-id": "config-003-view-render",
+            "signature": "void(__fastcall*)(void* p, void* edx, void* rect)",
+            "value": {
+                "library": "client.dll",
+                "pattern": "55 8B EC 8B 45 08 83 78 08 00 74 19 83 78 0C 00 74 13 8B 0D ?? ?? ?? ?? 8B 11 50 8B 42 14 FF D0 E8 ?? ?? ?? ?? 5D C2 04 00"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "start-movie-cmd",
+            "config-id": "config-000-start-movie-cmd",
+            "signature": "void(__cdecl*)(const void* args)",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "55 8B EC 83 EC 08 83 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ??"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "start-movie-cmd",
+            "config-id": "config-001-start-movie-cmd",
+            "signature": "void(__cdecl*)(const void* args)",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "55 8B EC 83 EC 08 53 56 57 8B 7D 08 8B 1F 83 FB 02 7D 5F"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "start-movie-cmd",
+            "config-id": "config-002-start-movie-cmd",
+            "signature": "void(__cdecl*)(const void* args)",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "55 8B EC 83 EC 0C 83 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 53 8B 5D 08 8B 03 56 83 F8 02"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "end-movie-cmd",
+            "config-id": "config-000-end-movie-cmd",
+            "signature": "void(__cdecl*)(const void* args)",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "80 3D ?? ?? ?? ?? ?? 75 0F 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 04 C3 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 C3"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "end-movie-cmd",
+            "config-id": "config-001-end-movie-cmd",
+            "signature": "void(__cdecl*)(const void* args)",
+            "value": {
+                "library": "engine.dll",
+                "pattern": "80 3D ?? ?? ?? ?? ?? 75 0F 68 ?? ?? ?? ??"
+            }
+        },
+        {
+            "code-type": "offset",
+            "code-id": "console-cmd-args-offset",
+            "config-id": "config-000-console-cmd-args-offset",
+            "signature": "ptrdiff_t",
+            "value": {
+                "offset": 8
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "local-player-ptr",
+            "config-id": "config-000-local-player-ptr",
+            "signature": "void*",
+            "value": {
+                "library": "client.dll",
+                "pattern": "A3 ?? ?? ?? ?? 68 ?? ?? ?? ?? 8B 01 FF 50 34 8B C8 E8 ?? ?? ?? ?? ",
+                "offset": 1
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "local-player-ptr",
+            "config-id": "config-001-local-player-ptr",
+            "signature": "void*",
+            "value": {
+                "library": "client.dll",
+                "pattern": "8B 35 ?? ?? ?? ?? 85 F6 74 2E 8B 06 8B CE FF 50 28",
+                "offset": 2
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "local-player-ptr",
+            "config-id": "config-002-local-player-ptr",
+            "signature": "void*",
+            "value": {
+                "library": "client.dll",
+                "pattern": "A3 ?? ?? ?? ?? 8B 01 8B 50 34 68 ?? ?? ?? ?? FF D2 8B C8 E8 ?? ?? ?? ??",
+                "offset": 2
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "get-spec-target",
+            "config-id": "config-000-get-spec-target",
+            "signature": "int(__cdecl*)()",
+            "value": {
+                "library": "client.dll",
+                "pattern": "E8 ?? ?? ?? ?? 85 C0 74 16 8B 10 8B C8 FF 92 ?? ?? ?? ?? 85 C0 74 08 8D 48 08 8B 01 FF 60 24 33 C0 C3"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "get-spec-target",
+            "config-id": "config-001-get-spec-target",
+            "signature": "int(__cdecl*)()",
+            "value": {
+                "library": "client.dll",
+                "pattern": "E8 ?? ?? ?? ?? 85 C0 74 17 E8 ?? ?? ?? ??",
+                "relative-jump": true
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "get-player-by-index",
+            "config-id": "config-000-get-player-by-index",
+            "signature": "void*(__cdecl*)(int index)",
+            "value": {
+                "library": "client.dll",
+                "pattern": "55 8B EC 8B 0D ?? ?? ?? ?? 56 FF 75 08 E8 ?? ?? ?? ?? 8B F0 85 F6 74 15 8B 16 8B CE 8B 92 ?? ?? ?? ?? FF D2 84 C0 74 05 8B C6 5E 5D C3 33 C0 5E 5D C3"
+            }
+        },
+        {
+            "code-type": "pattern",
+            "code-id": "get-player-by-index",
+            "config-id": "config-001-get-player-by-index",
+            "signature": "void*(__cdecl*)(int index)",
+            "value": {
+                "library": "client.dll",
+                "pattern": "83 F9 01 7C 39 A1 ?? ?? ?? ?? 3B 48 18 7F 2F C1 E1 04 56 8B 89 ?? ?? ?? ?? 85 C9 74 1B 8B 01 FF 50 1C 8B F0 85 F6 74 10 8B 06 8B CE 8B 80 ?? ?? ?? ?? FF D0 84 C0"
+            }
+        },
+        {
+            "code-type": "offset",
+            "code-id": "player-abs-velocity-offset",
+            "config-id": "config-000-player-abs-velocity-offset",
+            "signature": "ptrdiff_t",
+            "value": {
+                "offset": 61
+            }
+        },
+        {
+            "code-type": "offset",
+            "code-id": "player-abs-velocity-offset",
+            "config-id": "config-001-player-abs-velocity-offset",
+            "signature": "ptrdiff_t",
+            "value": {
+                "offset": 37
+            }
+        }
+    ],
+    "games": [
+        {
+            "id": "css-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "hl2-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "hl2-ep1-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "hl2-ep2-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "tf2-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-001-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "mom-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "dod-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "gmod-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-001-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-002-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "bm-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "bms.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-001-materials-ptr",
+                "config-002-materials-get-bbuf-size",
+                "config-001-engine-client-ptr",
+                "config-001-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-001-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "hl2-update-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "hl2-mp-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-000-view-render",
+                "config-000-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "portal-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "hl2.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-001-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-000-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-000-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-003-view-render",
+                "config-002-start-movie-cmd",
+                "config-000-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-000-local-player-ptr",
+                "config-000-get-spec-target",
+                "config-000-get-player-by-index",
+                "config-000-player-abs-velocity-offset",
+                "config-002-cvar-remove-restrict"
+            ]
+        },
+        {
+            "id": "csgo-win",
+            "arch": "code-000-source-1-win",
+            "last-review-date": "",
+            "required-libraries": [
+                "csgo.exe",
+                "shaderapidx9.dll",
+                "materialsystem.dll",
+                "engine.dll",
+                "tier0.dll",
+                "client.dll"
+            ],
+            "components": [
+                "config-000-d3d9ex-device",
+                "config-000-materials-ptr",
+                "config-001-materials-get-bbuf-size",
+                "config-000-engine-client-ptr",
+                "config-001-engine-client-exec-cmd",
+                "config-000-console-print-message",
+                "config-001-view-render",
+                "config-001-start-movie-cmd",
+                "config-001-end-movie-cmd",
+                "config-000-console-cmd-args-offset",
+                "config-001-local-player-ptr",
+                "config-001-get-spec-target",
+                "config-001-get-player-by-index",
+                "config-001-player-abs-velocity-offset",
+                "config-000-cvar-remove-restrict"
+            ]
+        }
+    ]
+}
