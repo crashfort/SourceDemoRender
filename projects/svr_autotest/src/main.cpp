@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
 
     log_set_function([](void* context, const char* text)
     {
-        printf(text);
+        fwrite(text, 1, strlen(text), stdout);
     }, nullptr);
 
     auto cfg = config_open_json("data/launcher-config.json");
