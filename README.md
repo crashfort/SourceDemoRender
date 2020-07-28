@@ -88,7 +88,7 @@ All settings are loaded from profiles which are located in `data/profiles`. The 
 ### Motion blur
 | Key | Value
 | --- | -----
-| enabled | Whether or not motion blur should be enabled or not. There are some internal optimizations that can happen if this is disabled. This should be *true* or *false*. If this is false, the game will run faster than realtime and may overflow the memory usage and crash due to limits in 32-bit applications.
+| enabled | Whether or not motion blur should be enabled or not.
 | fps-mult | How much to multiply the movie framerate with. The result is how many samples per second will be processed. For example, a 60 fps movie with 60 multiplication becomes 3600 samples per second. This should be greater than 0.
 | frame-exposure | Fraction of how much time per movie frame should be exposed for sampling. This should be between 0 and 1.
 
