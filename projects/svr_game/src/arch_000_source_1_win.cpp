@@ -230,7 +230,7 @@ static void __cdecl start_movie_override_000(const void* args)
     else if (argc == 2)
     {
         log("Using default profile\n");
-        profile = nullptr;
+        profile = "default";
     }
 
     else if (argc == 3)

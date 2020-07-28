@@ -248,12 +248,6 @@ static svr::config* load_profile(const char* resource_path, const char* profile)
 {
     using namespace svr;
 
-    // Hope for the best that the default profile exists.
-    if (profile == nullptr)
-    {
-        profile = "default";
-    }
-
     str_builder builder;
     builder.append(resource_path);
     builder.append("data/profiles/");
