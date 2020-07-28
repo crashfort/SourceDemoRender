@@ -31,7 +31,7 @@ SVR operates on the H264 family of codecs for video with *libx264* for YUV and *
 - Velocity overlay: The velocity overlay is currently limited to *Counter-Strike: Source* and *Momentum*.
 
 ## Prerequisites
-Any DirectX 11 (Direct3D 11.0) compatible graphics adapter with minimum of Windows 10 1909 is required.
+Any DirectX 11 (Direct3D 11.3) compatible graphics adapter with minimum of Windows 10 1909 is required.
 
 ## Launching
 Before launching for the first time you must edit `data/launcher-config.json` which specifies which games you have. It is recommended that you use forward slashes for everything in this file. Once you have added some games, start `svr_game_launcher.exe` and follow the instructions. On every start, the launcher will look for application updates and automatically download the latest game config. You can disable updates by creating an empty file called `no_update` in the bin directory.
