@@ -31,12 +31,23 @@ SVR operates on the H264 family of codecs for video with *libx264* for YUV and *
 - Velocity overlay: The velocity overlay is currently limited to *Counter-Strike: Source* and *Momentum*.
 
 ## Prerequisites
-Any DirectX 11 (Direct3D 11.3) compatible graphics adapter with minimum of Windows 10 1909 is required.
+Any DirectX 11 (Direct3D 11.3) compatible graphics adapter with minimum of Windows 10 1909 is required. A feature support verification will occur when starting the launcher.
 
 ## Launching
-Before launching for the first time you must edit `data/launcher-config.json` which specifies which games you have. It is recommended that you use forward slashes for everything in this file. Once you have added some games, start `svr_game_launcher.exe` and follow the instructions. On every start, the launcher will look for application updates and automatically download the latest game config. You can disable updates by creating an empty file called `no_update` in the bin directory.
+Before launching for the first time you must edit `data/launcher-config.json` which specifies which games you have. It is recommended that you use forward slashes for everything in this file. Once you have added some games, start `svr_game_launcher_cli.exe` and follow the instructions. On every start, the launcher will look for application updates and automatically download the latest game config. You can disable updates by creating an empty file called `no_update` in the bin directory.
 
-Games can automatically be started without prompting by inserting the game id as an argument. Like this: `svr_game_launcher.exe mom-win`.
+### How to edit the launcher config
+The fields *exe-path*, *dir-path* and *args* must be filled in for each game that wants to be added. If any of these fields are empty, the game will not visible to the launcher.
+
+SVR has to know the location of your games. The fields which need a filepath must be absolute. You can get a full absolute path by  holding `SHIFT` while right clicking a file and selecting *Copy as path*. **You must convert all backslashes to forward slashes** - this is because Windows treats backslashes as separators and backslashes are interpreted as control codes in the json files, which are not valid characters
+
+| Key | Value
+| --- | -----
+| exe-path | The full absolute path to the executable for the game. Navigate to the installation of the game and get the full path to this file as noted above. <br>This is usually `hl2.exe`, `csgo.exe` or similar.
+| dir-path | The full absolute path of the game directory. Navigate to the installation of the game and get the full path to the short name as noted above. <br> This is usually `cstrike`, `csgo`, `tf`, `momentum` or similar.
+| args | Extra arguments to provide the start with, this is the same as the Steam launch parameters with one difference: a `-game` parameter must be specified here which contains the short name of the game. <br> This is usually `cstrike`, `csgo`, `tf`, `momentum` or similar.
+
+Games can automatically be started without prompting by inserting the game id as an argument. Like this: `svr_game_launcher_cli.exe mom-win`.
 
 The launcher will return 0 on complete success, and 1 if any failure has occured either in the launching or within the game.
 
@@ -66,7 +77,7 @@ All settings are loaded from profiles which are located in `data/profiles`. The 
 | Key | Value
 | --- | -----
 | encoding-threads | How many threads to use for encoding. If this value is 0, the value is automatically calculated to use every core on the system. In case of multiprocess rendering, this may be wanted to turn down so proper affinity can be selected across each process.
-| video-fps | The constant framerate to use for the movie. Complete numbers only.
+| video-fps | The constant framerate to use for the movie. Whole numbers only.
 | video-encoder | The video encoder to use for the movie. Available options are *libx264* or *libx264rgb*. For YUV video, *libx264* is used. For RGB video, *libx264rgb* is used. There may be compatibility issues with *libx264rgb* but it produces the highest quality. Other settings will become invalid if this is changed alone. If this value is changed, *video-pixel-format* and *video-color-space* must be changed too.
 | video-pixel-format | The pixel format to use for the movie. This option depends on which video encoder is being used. For RGB video, this must be *bgr0*. For YUV video, it can be one of *yuv420, yuv444, nv12, nv21*. It must be noted that there is a significant difference in the perception of color between RGB and YUV video. There are colors in RGB which are not representable in *yuv420, nv12 and nv21*. Gradients are also not possible to represent for these limited pixel formats.
 | video-color-space | The color space to use for the movie. This option depends on which video encoder is being used. For RGB video, this should be *none*. For YUV video, it can be either *601* or *709*. For maximum compatibility, *601* is the one to use.
