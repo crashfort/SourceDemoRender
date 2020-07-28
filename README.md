@@ -39,7 +39,7 @@ Before launching for the first time you must edit `data/launcher-config.json` wh
 ### How to edit the launcher config
 The fields *exe-path*, *dir-path* and *args* must be filled in for each game that wants to be added. If any of these fields are empty, the game will not visible to the launcher.
 
-SVR has to know the location of your games. The fields which need a filepath must be absolute. You can get a full absolute path by  holding `SHIFT` while right clicking a file and selecting *Copy as path*. **You must convert all backslashes to forward slashes** - this is because Windows treats backslashes as separators and backslashes are interpreted as control codes in the json files, which are not valid characters
+SVR has to know the location of your games. The fields which need a filepath must be absolute. You can get a full absolute path by  holding `SHIFT` while right clicking a file and selecting *Copy as path*. **You must convert all backslashes to forward slashes** - this is because Windows treats backslashes as separators and backslashes are interpreted as control codes in the json files, which are not what you want.
 
 | Key | Value
 | --- | -----
