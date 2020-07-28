@@ -13,7 +13,7 @@ static bool create_standalone_game_texture(IDirect3DDevice9Ex* dev, uint32_t wid
 
     if (FAILED(hr))
     {
-        svr::log("d3d9ex: Could not create shared d3d9ex texture ({:x})\n", hr);
+        svr::log("d3d9ex: Could not create shared d3d9ex texture ({:#x})\n", (uint32_t)hr);
         return false;
     }
 
@@ -21,7 +21,7 @@ static bool create_standalone_game_texture(IDirect3DDevice9Ex* dev, uint32_t wid
 
     if (FAILED(hr))
     {
-        svr::log("d3d9ex: Could not get d3d9ex shared texture surface ({:x})\n", hr);
+        svr::log("d3d9ex: Could not get d3d9ex shared texture surface ({:#x})\n", (uint32_t)hr);
         return false;
     }
 
@@ -36,7 +36,7 @@ bool game_d3d9ex_create(game_graphics_d3d9ex* ptr, IDirect3DDevice9Ex* device)
 
     if (FAILED(hr))
     {
-        svr::log("Could not get d3d9ex backbuffer render target\n ({:x})", hr);
+        svr::log("Could not get d3d9ex backbuffer render target\n ({:#x})", (uint32_t)hr);
         return false;
     }
 
