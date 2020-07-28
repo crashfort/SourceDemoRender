@@ -62,4 +62,19 @@ namespace svr
 
         return true;
     }
+
+    inline bool str_ends_with(const char* str, const char* suffix)
+    {
+        auto str_len = strlen(str);
+        auto suffix_len = strlen(suffix);
+
+        if (suffix_len >= str_len)
+        {
+            return false;
+        }
+
+        str += str_len - suffix_len;
+
+        return strcmp(str, suffix) == 0;
+    }
 }

@@ -249,9 +249,17 @@ static bool init(launcher_state& state)
         if (*game.id == 0 ||
             *game.display_name == 0 ||
             *game.exe_path == 0 ||
-            *game.dir_path == 0 ||
-            *game.args == 0)
+            *game.dir_path == 0)
         {
+            continue;
+        }
+
+        // System specific verification.
+        bool verify_executable_name(const char* name);
+
+        if (!verify_executable_name(game.exe_path))
+        {
+            log("Not adding game '{}' because it doesn't have a proper executable name\n", game.display_name);
             continue;
         }
 
@@ -395,6 +403,14 @@ int main(int argc, char* argv[])
     {
         fwrite(text, 1, strlen(text), stdout);
     }, nullptr);
+
+    bool verify_system_features();
+
+    if (!verify_system_features())
+    {
+        log("Your system is incompatible with SVR\n");
+        return 1;
+    }
 
     if (argc > 1)
     {
