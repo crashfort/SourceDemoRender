@@ -32,7 +32,6 @@ struct game_system
     svr::graphics_texture* work_texture = nullptr;
     svr::graphics_conversion_context* px_converter = nullptr;
     svr::graphics_text_format* velocity_text_format = nullptr;
-    svr::thread_context_event encode_thread;
 
     svr::graphics_preview* ui_preview = nullptr;
     svr::thread_context_event ui_thread;
@@ -52,9 +51,8 @@ struct game_system
     float sample_remainder_step;
     float sample_exposure;
 
-    // Buffer used in the encoding thread.
-    // This buffer contains the data that is sent for encoding.
-    // Multiple planes are combined into a single buffer.
+    // This buffer contains the size of all planes.
+    // The layout of each plane is preserved through offsets.
     svr::mem_buffer movie_buf;
     size_t movie_plane_sizes[3];
     size_t movie_plane_count;
@@ -306,36 +304,16 @@ static void encode_video_frame(game_system* sys, svr::graphics_texture* tex)
     graphics_texture* textures[3];
     sys->graphics->convert_pixel_formats(srv, sys->px_converter, textures, 3);
 
-    mem_buffer buffers[3];
+    // Combine every plane into a single buffer and send it to the ffmpeg process.
+    size_t offset = 0;
 
     for (size_t i = 0; i < sys->movie_plane_count; i++)
     {
-        auto& b = buffers[i];
-        mem_create_buffer(b, sys->movie_plane_sizes[i]);
-        sys->graphics->download_texture(textures[i], b.data, b.size);
+        sys->graphics->download_texture(textures[i], (uint8_t*)sys->movie_buf.data + offset, sys->movie_plane_sizes[i]);
+        offset += sys->movie_plane_sizes[i];
     }
 
-    // Combine every plane into a single buffer and send it to the ffmpeg process.
-    // If recording faster than realtime, this can crash the application due to 32 bit limitations.
-
-    sys->encode_thread.run_task([=]() mutable
-    {
-        size_t offset = 0;
-
-        for (size_t i = 0; i < sys->movie_plane_count; i++)
-        {
-            auto& b = buffers[i];
-            memcpy((uint8_t*)sys->movie_buf.data + offset, b.data, sys->movie_plane_sizes[i]);
-            offset += sys->movie_plane_sizes[i];
-        }
-
-        sys->movie->push_raw_video_data(sys->movie_buf.data, sys->movie_buf.size);
-
-        for (size_t i = 0; i < sys->movie_plane_count; i++)
-        {
-            mem_destroy_buffer(buffers[i]);
-        }
-    });
+    sys->movie->push_raw_video_data(sys->movie_buf.data, sys->movie_buf.size);
 
     if (sys->use_preview_window)
     {
@@ -578,12 +556,7 @@ void sys_end_movie(game_system* sys)
 
     log("Ending movie, waiting for encoder\n");
 
-    // Keep things synchronous for simplicity.
-
-    sys->encode_thread.run_task_wait([=]()
-    {
-        sys->movie->close_movie();
-    });
+    sys->movie->close_movie();
 
     if (sys->use_preview_window)
     {
