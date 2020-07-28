@@ -247,24 +247,24 @@ struct movie_ffmpeg_pipe
     {
         using namespace svr;
 
-        // TODO
-        // Remove this when vcpkg works.
-        return true;
-
-        auto codec = avcodec_find_encoder_by_name(video_codec);
         auto format = av_guess_format(nullptr, output_path, nullptr);
 
         if (format == nullptr || (format && format->video_codec == AV_CODEC_ID_NONE))
         {
-            log("No supported container format\n");
+            log("No supported container format. Prefer to use the mp4 or mkv containers\n");
             return false;
         }
+
+        // Remove this when vcpkg works.
+        #if 0
+        auto codec = avcodec_find_encoder_by_name(video_codec);
 
         if (codec == nullptr)
         {
             log("Could not find any encoder with name '{}'\n", video_codec);
             return false;
         }
+        #endif
 
         if (video_pixel_format == MEDIA_PIX_FORMAT_NONE)
         {
@@ -279,7 +279,10 @@ struct movie_ffmpeg_pipe
         }
 
         log("Using container '{}'\n", format->long_name);
+
+        #if 0
         log("Using codec '{}'\n", codec->long_name);
+        #endif
 
         return true;
     }
