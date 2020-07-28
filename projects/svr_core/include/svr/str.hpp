@@ -68,7 +68,7 @@ namespace svr
         auto str_len = strlen(str);
         auto suffix_len = strlen(suffix);
 
-        if (suffix_len >= str_len)
+        if (suffix_len > str_len)
         {
             return false;
         }
