@@ -404,6 +404,11 @@ int main(int argc, char* argv[])
     // Return 0 on success.
     auto ret = !proc();
 
+    if (autostart_game_id)
+    {
+        return ret;
+    }
+
     log("You can close this window now\n");
 
     // Keep the console window open. In 99% cases the executable will be started directly from Explorer.
