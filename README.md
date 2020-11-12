@@ -24,7 +24,7 @@ SVR operates on the H264 family of codecs for video with *libx264* for YUV and *
 | Counter-Strike: Global Offensive | ✔
 | Portal 2                         | ❌¹
 
-¹ Uses a version of d3d9 that is too old to support texture sharing.
+¹ Uses a version of d3d9 that is too old to support texture sharing (must be d3d9ex).
 
 ## Limitations
 - Audio: There currently is no audio support due to no demand.
@@ -34,25 +34,31 @@ SVR operates on the H264 family of codecs for video with *libx264* for YUV and *
 Any DirectX 11 (Direct3D 11.3) compatible graphics adapter with minimum of Windows 10 1909 is required. A feature support verification will occur when starting the launcher.
 
 ## Launching
-Before launching for the first time you must edit `data/launcher-config.json` which specifies which games you have. It is recommended that you use forward slashes for everything in this file. Once you have added some games, start `svr_game_launcher_cli.exe` and follow the instructions. On every start, the launcher will look for application updates and automatically download the latest game config. You can disable updates by creating an empty file called `no_update` in the bin directory.
+Before launching for the first time you must edit `data/launcher-config.json` which specifies which games you have. It is recommended that you use forward slashes for all paths in this file. Once you have added some games, start `svr_game_launcher_cli.exe` and follow the instructions. On every start, the launcher will look for application updates and automatically download the latest game config. You can disable updates by creating an empty file called `no_update` in the bin directory.
 
 Games can automatically be started without prompting by inserting the game id as an argument. Like this: `svr_game_launcher_cli.exe mom-win`.
 
 The launcher will return 0 on complete success, and 1 if any failure has occured either in the launching or within the game.
 
 ### How to edit the launcher config
-The fields *exe-path*, *dir-path* and *args* must be filled in for each game that wants to be added. If any of these fields are empty, the game will not visible to the launcher.
+SVR has to know the location of your games. The fields *exe-path*, *dir-path* and *args* must be filled in for each game that wants to be added. If any of these fields are empty, the game will not visible to the launcher.
 
-SVR has to know the location of your games. The fields which need a filepath must be absolute. You can get a full absolute path by  holding `SHIFT` while right clicking a file and selecting *Copy as path*. **You must convert all backslashes to forward slashes** - this is because Windows treats backslashes as separators and backslashes are interpreted as control codes in the json files, which are not what you want.
+You can get all information you need to fill in by going to the properties of a game in your Steam library and selecting *BROWSE LOCAL FILES…* in the *LOCAL FILES* tab.  
+
+![](media/steam_browse_local_files.png).
+
+This will open Explorer to where the game is located on your system. You can fill in *exe-path* now by holding `SHIFT` while right clicking the executable (`hl2.exe`, `csgo.exe` or similar) and selecting *Copy as path*. Depending on the game, you may be able to fill in *dir-path* now too by navigating to the game directory (`cstrike`, `csgo`, `tf`, `momentum` or similar) and pressing `CTRL + L` to get the absolute address of this directory, which you can copy and paste into *dir-path*.
+
+**Due to how Windows works, the backslashes must be converted to forward slashes - this is because Windows treats backslashes as separators and backslashes are interpreted as control codes in the json files, which are not what you want.**
 
 | Key | Value
 | --- | -----
 | exe-path | The full absolute path to the executable for the game. Navigate to the installation of the game and get the full path to this file as noted above. <br>This is usually `hl2.exe`, `csgo.exe` or similar.
-| dir-path | The full absolute path of the game directory. Navigate to the installation of the game and get the full path to the short name as noted above. <br> This is usually `cstrike`, `csgo`, `tf`, `momentum` or similar.
+| dir-path | The full absolute path of the game directory. Navigate to the installation of the game and get the full path to the short name as noted above. <br> This is usually `cstrike`, `csgo`, `tf`, `momentum` or similar. It is not guaranteed that the path to this location is in the same location as the executable. If the game is a mod which does not have a store page, then this will be in `sourcemods`.
 | args | Extra arguments to provide the start with, this is the same as the Steam launch parameters with one difference: a `-game` parameter must be specified here which contains the short name of the game. <br> This is usually `cstrike`, `csgo`, `tf`, `momentum` or similar.
 
 ## Producing
-Once in game, you can use `startmovie` to start producing a movie. The `startmovie` command takes 1 or 2 parameters in this format: `startmovie <name> (<profile>)`. The *name* is the filename of the movie which will be located in `data/movies`. The *profile* is an optional parameter that decides which settings this movie will use. If not specified, the default profile is used (see below about profiles).
+Once in game, you can use `startmovie` to start producing a movie and `endmovie` to finish. The `startmovie` command takes 1 or 2 parameters in this format: `startmovie <name> (<profile>)`. The *name* is the filename of the movie which will be located in `data/movies`. **This name must include the container as an extension**. The *profile* is an optional parameter that decides which settings this movie will use. If not specified, the default profile is used (see below about profiles).
 
 When starting and ending a movie, the files `svr_movie_start.cfg` and `svr_movie_end.cfg` in `data/cfg` will be executed. This can be used to insert commands that should be active only during the movie period. Note that these files are **not** in the game directory.
 
@@ -82,10 +88,11 @@ All settings are loaded from profiles which are located in `data/profiles`. The 
 | video-pixel-format | The pixel format to use for the movie. This option depends on which video encoder is being used. For RGB video, this must be *bgr0*. For YUV video, it can be one of *yuv420, yuv444, nv12, nv21*. It must be noted that there is a significant difference in the perception of color between RGB and YUV video. There are colors in RGB which are not representable in *yuv420, nv12 and nv21*. Gradients are also not possible to represent for these limited pixel formats.
 | video-color-space | The color space to use for the movie. This option depends on which video encoder is being used. For RGB video, this should be *none*. For YUV video, it can be either *601* or *709*. For maximum compatibility, *601* is the one to use.
 | video-x264-crf | The constant rate factor to use for the movie. This is the direct link between quality and file size. Using 0 here produces lossless video, but may cause the video stream to use a high requirement profile which some media players may not support. This should be between 0 and 52. Lower is better.
-| video-x264-preset | The quality vs speed to use for the movie. This can be one of *ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo*.
+| video-x264-preset | The quality vs speed to use for encoding the movie. This can be one of *ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo*. This will not affect the recording speed.
 | video-x264-intra | This decides whether or not the resulting video stream will consist only of intra frames. This essentially disables any compression by making every frame a full frame. This will greatly increasae the file size, but makes video editing very fast. This should be *true* or *false*.
 
 ### Motion blur
+See the [motion blur demo](#motion-blur-demo) for what these values correspond to.
 | Key | Value
 | --- | -----
 | enabled | Whether or not motion blur should be enabled or not.
@@ -117,7 +124,7 @@ All settings are loaded from profiles which are located in `data/profiles`. The 
 ## Motion blur demo
 In this demo an object is rotating 6 times per second. This is a fast moving object, so higher samples per second will remove banding at cost of slower recording times. For slower scenes you may get away with a lower sampling rate. Exposure is dependant on the type of content being made.
 
-The X axis is the samples per second and the Y axis is the exposure.
+The X axis is the samples per second and the Y axis is the exposure (click on the images to see them larger).
 |      | 960                           | 1920                           | 3840                           | 7680
 | ---- | ----------------------------- | ------------------------------ | ------------------------------ | ------------------------------
 | 0.25 | ![](media/sample/960_025.png) | ![](media/sample/1920_025.png) | ![](media/sample/3840_025.png) | ![](media/sample/7680_025.png)
