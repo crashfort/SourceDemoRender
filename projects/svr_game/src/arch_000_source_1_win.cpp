@@ -52,6 +52,7 @@ static bool is_velocity_overlay_allowed(svr::game_config_game* game)
     const char* allowed_ids[] = {
         "css-win",
         "mom-win",
+        "csgo-win",
     };
 
     for (auto i : allowed_ids)
@@ -142,13 +143,10 @@ static void process_velocity_overlay()
 
     auto spec = get_spec_target();
 
-    // TODO
-    // This is always 0 for csgo, so this procedure doesn't work for that game.
-    // Through cheat engine, the variable which contains the spectate played id has been found, but it's
-    // in another location and not in the local player.
     if (spec > 0)
     {
-        player = get_player_by_index(spec);
+        auto target = get_player_by_index(spec);
+        player = (target != 0) ? target : player;
     }
 
     vec3 vel;

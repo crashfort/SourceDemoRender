@@ -302,8 +302,7 @@
             "signature": "int(__cdecl*)()",
             "value": {
                 "library": "client.dll",
-                "pattern": "E8 ?? ?? ?? ?? 85 C0 74 17 E8 ?? ?? ?? ??",
-                "relative-jump": true
+                "pattern": "8B 0D ?? ?? ?? ?? 85 C9 74 ?? 8B 01 FF A0 ?? ?? ?? ?? 33 C0 C3"
             }
         },
         {
@@ -323,7 +322,7 @@
             "signature": "void*(__cdecl*)(int index)",
             "value": {
                 "library": "client.dll",
-                "pattern": "83 F9 01 7C 39 A1 ?? ?? ?? ?? 3B 48 18 7F 2F C1 E1 04 56 8B 89 ?? ?? ?? ?? 85 C9 74 1B 8B 01 FF 50 1C 8B F0 85 F6 74 10 8B 06 8B CE 8B 80 ?? ?? ?? ?? FF D0 84 C0"
+                "pattern": "83 F9 01 7C ?? A1 ?? ?? ?? ?? 3B 48 ?? 7F ?? 56"
             }
         },
         {
@@ -341,7 +340,7 @@
             "config-id": "config-001-player-abs-velocity-offset",
             "signature": "ptrdiff_t",
             "value": {
-                "offset": 37
+                "offset": 69
             }
         }
     ],
