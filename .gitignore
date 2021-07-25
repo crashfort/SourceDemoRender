@@ -1,0 +1,16 @@
+.vs
+build/
+*.dll
+*.exe
+*.sqlite
+*.ilk
+*.pdb
+*.ipdb
+*.iobj
+*.vcxproj.user
+bin/data/shaders
+bin/data/SVR_LOG.TXT
+*.mp4
+*.pro.user
+*.exp
+*.lib

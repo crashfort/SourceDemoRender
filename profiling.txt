@@ -1,0 +1,16 @@
+# Single threaded
+Total work time: 5010353
+Download: 1235
+Mosample: 95
+
+# Write thread
+Total work time: 4352741
+Download: 1173
+Write: 244
+Mosample: 87
+
+# Write thread, less updating of mosample constant buffer
+Total work time: 4181972
+Download: 1168
+Write: 237
+Mosample: 82
