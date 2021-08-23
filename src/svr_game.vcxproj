@@ -11,18 +11,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="game_proc_nvenc.cpp" />
+    <ClCompile Include="stb_sprintf.cpp" />
     <ClCompile Include="svr_atom.cpp" />
     <ClCompile Include="svr_logging.cpp" />
     <ClCompile Include="game_proc.cpp" />
-    <ClCompile Include="game_setup.cpp" />
-    <ClCompile Include="game_main.cpp" />
+    <ClCompile Include="game_standalone.cpp" />
     <ClCompile Include="game_shared.cpp" />
     <ClCompile Include="svr_ini.cpp" />
     <ClCompile Include="svr_mem_range.cpp" />
+    <ClCompile Include="svr_api.cpp" />
     <ClCompile Include="svr_prof.cpp" />
     <ClCompile Include="svr_sem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="game_proc_nvenc.h" />
     <ClInclude Include="stb_sprintf.h" />
     <ClInclude Include="svr_atom.h" />
     <ClInclude Include="svr_common.h" />
@@ -31,6 +34,7 @@
     <ClInclude Include="game_shared.h" />
     <ClInclude Include="svr_ini.h" />
     <ClInclude Include="svr_mem_range.h" />
+    <ClInclude Include="svr_api.h" />
     <ClInclude Include="svr_prof.h" />
     <ClInclude Include="svr_sem.h" />
     <ClInclude Include="svr_stream.h" />
@@ -92,7 +96,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;_DEBUG;_CRT_SECURE_NO_WARNINGS;SVR_DEBUG;SVR_32BIT;SVR_GAME_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_DEBUG;SVR_32BIT;SVR_GAME_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -105,13 +109,14 @@
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <SupportJustMyCode>false</SupportJustMyCode>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StackReserveSize>4194304</StackReserveSize>
       <StackCommitSize>4096</StackCommitSize>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;B:\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d3dcompiler.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;B:\Video_Codec_SDK_11.0.10\Lib\Win32\nvcuvid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;B:\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;B:\Video_Codec_SDK_11.0.10\Lib\Win32\nvencodeapi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -120,7 +125,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;NDEBUG;_CRT_SECURE_NO_WARNINGS;SVR_RELEASE;SVR_32BIT;SVR_GAME_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_RELEASE;SVR_32BIT;SVR_GAME_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -133,6 +138,7 @@
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>B:\minhook\include;B:\Video_Codec_SDK_11.0.10\Interface</AdditionalIncludeDirectories>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -141,7 +147,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <StackReserveSize>4194304</StackReserveSize>
       <StackCommitSize>4096</StackCommitSize>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;B:\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d3dcompiler.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;B:\Video_Codec_SDK_11.0.10\Lib\Win32\nvcuvid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;B:\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;B:\Video_Codec_SDK_11.0.10\Lib\Win32\nvencodeapi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

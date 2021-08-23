@@ -11,17 +11,16 @@ struct SvrProf
     s64 total;
 };
 
-#if SVR_PROF
-
 void svr_init_prof();
+s64 svr_prof_get_real_time();
+
+#if SVR_PROF
 
 void svr_start_prof(SvrProf& prof);
 void svr_end_prof(SvrProf& prof);
 void svr_reset_prof(SvrProf& prof);
 
 #else
-
-#define svr_init_prof()
 
 #define svr_start_prof()
 #define svr_end_prof()

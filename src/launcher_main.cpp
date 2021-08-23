@@ -6,6 +6,7 @@
 #include <conio.h>
 #include "svr_vdf.h"
 #include <VersionHelpers.h>
+#include "stb_sprintf.h"
 
 // Will put both to console and to file.
 // Use printf for other messages that should not be shown in file.
@@ -25,12 +26,12 @@ __declspec(noreturn) void launcher_error(const char* format, ...)
 
     va_list va;
     va_start(va, format);
-    StringCchVPrintfA(message, 1024, format, va);
+    stbsp_vsnprintf(message, 1024, format, va);
     va_end(va);
 
     svr_log("!!! LAUNCHER ERROR: %s\n", message);
 
-    MessageBoxA(GetConsoleWindow(), message, "SVR", MB_ICONERROR | MB_OK);
+    MessageBoxA(NULL, message, "SVR", MB_TASKMODAL | MB_ICONERROR | MB_OK);
 
     ExitProcess(1);
 }
@@ -74,6 +75,7 @@ const s32 MAX_STEAM_LIBRARIES = 256;
 
 // Whether or not the games we support are installed.
 bool steam_install_states[NUM_SUPPORTED_GAMES];
+s32 num_installed_games;
 
 // A Steam library can be installed anywhere, we have to iterate over all of them to see where a game is located.
 
@@ -142,7 +144,7 @@ VOID CALLBACK remote_func(ULONG_PTR param)
     init_data.svr_path = data->svr_path;
     init_data.app_id = data->app_id;
 
-    // This will call svr_init in svr_game.dll.
+    // This will call svr_init_standalone in svr_game.dll.
     init_func(&init_data);
 
     // Restore the default search order.
@@ -203,12 +205,12 @@ void append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
 
     if (!svr_open_vdf_read(full_vdf_path, &mem))
     {
-        launcher_log("Steam game launch parameters could not be appended\n");
+        launcher_log("Steam launch parameters for %s could not be found\n", GAME_NAMES[game_index]);
         return;
     }
 
     SvrVdfLine vdf_line = svr_alloc_vdf_line();
-    /* SvrVdfTokenType */ s32 vdf_token_type;
+    SvrVdfTokenType vdf_token_type;
 
     s32 depth = 0;
 
@@ -271,7 +273,7 @@ void find_installed_game_path(s32 game_index, char* out_path, s32 out_path_cch)
     }
 
     // Cannot happen unless Steam is installed wrong in which case it wouldn't work anyway.
-    launcher_error("Game not found in any steam library.");
+    launcher_error("Game %s not found in any steam library.", GAME_NAMES[game_index]);
 }
 
 s32 start_game(s32 game_index)
@@ -303,7 +305,7 @@ s32 start_game(s32 game_index)
     launcher_log("Starting %s (%u) with arguments %s\n", GAME_NAMES[game_index], GAME_APP_IDS[game_index], full_args);
 
     STARTUPINFOA start_info = {};
-    start_info.cb = sizeof(start_info);
+    start_info.cb = sizeof(STARTUPINFOA);
 
     PROCESS_INFORMATION info;
 
@@ -344,7 +346,7 @@ s32 start_game(s32 game_index)
     structure.library_name = (char*)remote_mem + remote_write_pos;
     remote_write_pos += remote_written;
 
-    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, "svr_init", 9, &remote_written);
+    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, "svr_init_standalone", 20, &remote_written);
     structure.export_name = (char*)remote_mem + remote_write_pos;
     remote_write_pos += remote_written;
 
@@ -368,7 +370,8 @@ s32 start_game(s32 game_index)
     svr_log("Launcher finished, rest of the log is from the game\n");
     svr_log("---------------------------------------------------\n");
 
-    svr_launcher_shutdown_log();
+    // Need to close the file so the game can open it.
+    svr_shutdown_log();
 
     // Let the process actually start now.
     // You want to place a breakpoint on this line when debugging the game!
@@ -608,7 +611,7 @@ void find_steam_libraries()
     }
 
     SvrVdfLine vdf_line = svr_alloc_vdf_line();
-    /* SvrVdfTokenType */ s32 vdf_token_type;
+    SvrVdfTokenType vdf_token_type;
 
     s32 depth = 0;
 
@@ -625,24 +628,30 @@ void find_steam_libraries()
             {
                 // Value will be like "1" "B:\\SteamLibrary" with an increasing number for each library.
 
-                char buf[64];
-                StringCchPrintfA(buf, 64, "%d", num_steam_libraries);
-
-                if (depth == 1 && strcmp(vdf_line.title, buf) == 0)
+                if (depth == 1)
                 {
-                    // Paths in vdf will be escaped, we need to unescape.
+                    char buf[64];
+                    StringCchPrintfA(buf, 64, "%d", num_steam_libraries);
 
-                    char new_path[MAX_PATH];
-                    unescape_path(vdf_line.value, new_path);
-                    StringCchCatA(new_path, MAX_PATH, "\\steamapps\\");
-
-                    StringCchCopyA(steam_library_paths[num_steam_libraries].path, MAX_PATH, new_path);
-                    num_steam_libraries++;
-
-                    if (num_steam_libraries == MAX_STEAM_LIBRARIES)
+                    if (strcmp(vdf_line.title, buf) == 0)
                     {
-                        launcher_log("Too many Steam libraries installed, using first %d\n", MAX_STEAM_LIBRARIES);
-                        return;
+                        // Paths in vdf will be escaped, we need to unescape.
+
+                        char new_path[MAX_PATH];
+                        new_path[0] = 0;
+
+                        unescape_path(vdf_line.value, new_path);
+
+                        StringCchCatA(new_path, MAX_PATH, "\\steamapps\\");
+
+                        StringCchCopyA(steam_library_paths[num_steam_libraries].path, MAX_PATH, new_path);
+                        num_steam_libraries++;
+
+                        if (num_steam_libraries == MAX_STEAM_LIBRARIES)
+                        {
+                            launcher_log("Too many Steam libraries installed, using first %d\n", MAX_STEAM_LIBRARIES);
+                            return;
+                        }
                     }
                 }
 
@@ -659,7 +668,7 @@ void find_installed_supported_games()
     HKEY steam_apps_hkey;
     RegOpenKeyExA(steam_hkey, "Apps", 0, KEY_READ, &steam_apps_hkey);
 
-    s32 j = 0;
+    num_installed_games = 0;
 
     for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
     {
@@ -690,11 +699,11 @@ void find_installed_supported_games()
         // Remap indexes for the available games.
 
         steam_install_states[i] = true;
-        steam_index_remaps[j] = i;
-        j++;
+        steam_index_remaps[num_installed_games] = i;
+        num_installed_games++;
     }
 
-    if (j == 0)
+    if (num_installed_games == 0)
     {
         launcher_error("No supported games installed on Steam.");
     }
@@ -729,13 +738,15 @@ int main(int argc, char** argv)
 
     GetCurrentDirectoryA(MAX_PATH, working_dir);
 
-    svr_launcher_init_log();
+    // For standalone mode, the launcher creates the log file that the game then appends to.
+    svr_init_log("data\\SVR_LOG.TXT", false);
 
     SYSTEMTIME lt;
     GetLocalTime(&lt);
 
     launcher_log("SVR version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
     launcher_log("This is a standalone version of SVR. Interoperability with other applications may not work\n");
+    launcher_log("To use SVR in Momentum, start Momentum\n");
     launcher_log("For more information see https://github.com/crashfort/SourceDemoRender\n");
 
     show_windows_version();
@@ -746,7 +757,9 @@ int main(int argc, char** argv)
     find_installed_supported_games();
     find_steam_libraries();
 
-    // We delay finding which library a game is in until a game has been chosen.
+    svr_log("Found %d games in %d Steam libraries\n", num_installed_games, num_steam_libraries);
+
+    // We delay finding which Steam library a game is in until a game has been chosen.
 
     // Autostarting a game works by giving the app id.
     if (argc == 2)

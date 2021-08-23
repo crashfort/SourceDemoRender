@@ -1,7 +1,8 @@
 #pragma once
 #include "svr_common.h"
 
-// User level semaphore, based on "Creating a semaphore from WaitOnAddress" by Raymond https://devblogs.microsoft.com/oldnewthing/20170612-00/?p=96375
+// User level semaphore.
+// Based on "Creating a semaphore from WaitOnAddress" https://devblogs.microsoft.com/oldnewthing/20170612-00/?p=96375
 
 struct SvrSemaphore
 {

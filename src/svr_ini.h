@@ -24,16 +24,16 @@ struct SvrIniLine
     char* value;
 };
 
-// SvrIniTokenType.
-const s32 SVR_INI_OTHER = 0;
-const s32 SVR_INI_KV = 1;
+using SvrIniTokenType = s32;
+const SvrIniTokenType SVR_INI_OTHER = 0;
+const SvrIniTokenType SVR_INI_KV = 1;
 
 SvrIniLine svr_alloc_ini_line();
 void svr_free_ini_line(SvrIniLine& line);
 
 bool svr_open_ini_read(const char* path, SvrIniMem* mem);
 
-// Call this until it returns false.
-bool svr_read_ini(SvrIniMem& mem, SvrIniLine* line, /* SvrIniTokenType */ s32* token_type);
+// Call this until it returns false (or break the loop when needed).
+bool svr_read_ini(SvrIniMem& mem, SvrIniLine* line, SvrIniTokenType* token_type);
 
 void svr_close_ini(SvrIniMem mem);

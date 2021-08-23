@@ -1,6 +1,5 @@
-#include "svr_logging.h"
+#include "svr_logging.h"  
 #include "svr_common.h"
-#define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
 #include <assert.h>
 #include <Windows.h>
@@ -12,21 +11,14 @@ HANDLE log_file_handle;
 
 void log_function(const char* text, s32 length)
 {
-    if (log_file_handle)
-    {
-        WriteFile(log_file_handle, text, length, NULL, NULL);
-    }
+    assert(log_file_handle);
+    WriteFile(log_file_handle, text, length, NULL, NULL);
 }
 
-void svr_game_init_log(const char* resource_path)
+void svr_init_log(const char* log_file_path, bool append)
 {
-    char full_log_path[MAX_PATH];
-    full_log_path[0] = 0;
-    StringCchCatA(full_log_path, MAX_PATH, resource_path);
-    StringCchCatA(full_log_path, MAX_PATH, "\\data\\SVR_LOG.TXT");
-
-    // We are the game, we want to append to the log file that the launcher has created.
-    log_file_handle = CreateFileA(full_log_path, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    DWORD open_flags = append ? OPEN_EXISTING : CREATE_ALWAYS;
+    log_file_handle = CreateFileA(log_file_path, GENERIC_WRITE, FILE_SHARE_READ, NULL, open_flags, FILE_ATTRIBUTE_NORMAL, NULL);
 
     // The file might be set to read only or something. Don't bother then.
     if (log_file_handle == INVALID_HANDLE_VALUE)
@@ -35,25 +27,16 @@ void svr_game_init_log(const char* resource_path)
         return;
     }
 
-    // We need to move the file pointer to append new text to the end.
-
-    LARGE_INTEGER dist_to_move = {};
-    SetFilePointerEx(log_file_handle, dist_to_move, NULL, FILE_END);
-}
-
-void svr_launcher_init_log()
-{
-    // We are the launcher, we will create the log file and truncate it to start fresh.
-    log_file_handle = CreateFileA("data\\SVR_LOG.TXT", GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    // The file might be set to read only or something. Don't bother then.
-    if (log_file_handle == INVALID_HANDLE_VALUE)
+    if (append)
     {
-        log_file_handle = NULL;
+        // We need to move the file pointer to append new text.
+
+        LARGE_INTEGER dist_to_move = {};
+        SetFilePointerEx(log_file_handle, dist_to_move, NULL, FILE_END);
     }
 }
 
-void svr_launcher_shutdown_log()
+void svr_shutdown_log()
 {
     if (log_file_handle)
     {
@@ -61,8 +44,15 @@ void svr_launcher_shutdown_log()
     }
 }
 
+// Below log functions not used for integrated SVR, but we may get here still from game_log.
+
 void svr_log(const char* format, ...)
 {
+    if (log_file_handle == NULL)
+    {
+        return;
+    }
+
     va_list va;
     va_start(va, format);
     svr_log_v(format, va);
@@ -71,12 +61,14 @@ void svr_log(const char* format, ...)
 
 void svr_log_v(const char* format, va_list va)
 {
-    if (log_file_handle == NULL) return;
+    if (log_file_handle == NULL)
+    {
+        return;
+    }
 
-    // We don't deal with huge messages.
-    // The message is truncated accordingly to the buffer size.
+    // We don't deal with huge messages and truncate as needed.
 
     char buf[1024];
-    s32 count = stbsp_vsnprintf(buf, 1023, format, va);
+    s32 count = stbsp_vsnprintf(buf, 1024, format, va);
     log_function(buf, count);
 }

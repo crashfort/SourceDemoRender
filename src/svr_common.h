@@ -25,7 +25,7 @@ using wchar = wchar_t;
 
 const s32 SVR_VERSION = 33;
 
-// Used by launcher and injector as parameter for svr_init in svr_game.dll.
+// Used by launcher and injector as parameter for svr_init_standalone in svr_game.dll.
 struct SvrGameInitData
 {
     const char* svr_path;
@@ -35,9 +35,9 @@ struct SvrGameInitData
 // Steam app ids of the games we support.
 const u32 SVR_GAME_CSS = 240;
 // const u32 SVR_GAME_CSGO = 730;
-// const u32 SVR_GAME_MOMENTUM = 669270;
 
 inline void svr_clamp(s32& v, s32 min, s32 max) { if (v < min) v = min; if (v > max) v = max; }
 inline void svr_clamp(float& v, float min, float max) { if (v < min) v = min; if (v > max) v = max; }
 
 inline float svr_max(float a, float b) { return a > b ? a : b; }
+inline float svr_max(s32 a, s32 b) { return a > b ? a : b; }

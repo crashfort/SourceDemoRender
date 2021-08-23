@@ -1,7 +1,8 @@
-#include "game_shared.h"
 #include "game_proc.h"
-#include <dxgi.h>
-#include <d3d11.h>
+#include "game_shared.h"
+#include "game_proc_nvenc.h"
+#include <dxgi1_6.h>
+#include <d3d11_4.h>
 #include "svr_ini.h"
 #include <strsafe.h>
 #include <dwrite.h>
@@ -23,19 +24,40 @@ struct PxConvText
 
 enum PxConv
 {
-    PXCONV_YUV420_601,
-    PXCONV_YUV444_601,
-    PXCONV_NV12_601,
-    PXCONV_NV21_601,
+    PXCONV_YUV420_601 = 0,
+    PXCONV_YUV444_601 = 1,
+    PXCONV_NV12_601 = 2,
+    PXCONV_NV21_601 = 3,
 
-    PXCONV_YUV420_709,
-    PXCONV_YUV444_709,
-    PXCONV_NV12_709,
-    PXCONV_NV21_709,
+    PXCONV_YUV420_709 = 4,
+    PXCONV_YUV444_709 = 5,
+    PXCONV_NV12_709 = 6,
+    PXCONV_NV21_709 = 7,
 
-    PXCONV_BGR0,
+    PXCONV_BGR0 = 8,
 
-    NUM_PXCONVS
+    NUM_PXCONVS = 9,
+};
+
+// Must be a power of 2.
+const s32 NUM_BUFFERED_DL_TEXS = 2;
+
+// Rotation of CPU textures to download to.
+struct PxConvTexDl
+{
+    // Keep the textures rotating for downloads.
+    ID3D11Texture2D* texs[NUM_BUFFERED_DL_TEXS];
+    s32 i;
+
+    ID3D11Texture2D* get_current()
+    {
+        return texs[i];
+    }
+
+    void advance()
+    {
+        i = (i + 1) & (NUM_BUFFERED_DL_TEXS - 1);
+    }
 };
 
 // All the pxconv arrays are synchronized!
@@ -259,155 +281,154 @@ void calc_plane_dims(PxConv pxconv, s32 width, s32 height, s32 plane, s32* out_w
     }
 }
 
-ID3D11Device* proc_d3d11_device;
-ID3D11DeviceContext* proc_d3d11_context;
+// -------------------------------------------------
 
-// These texture are created when the movie starts, and destroyed when the movie ends.
-// This contains the game texture, not updated here. Read only!
-ID3D11Texture2D* proc_game_content_tex;
-ID3D11ShaderResourceView* proc_game_content_srv;
+char svr_resource_path[MAX_PATH];
 
-float proc_mosample_remainder;
-float proc_mosample_remainder_step;
+// -------------------------------------------------
+// Graphics state.
 
-ID3D11PixelShader* proc_texture_ps;
-ID3D11VertexShader* proc_overlay_vs;
+ID3D11PixelShader* texture_ps;
+ID3D11VertexShader* overlay_vs;
 
-ID3D11Texture2D* proc_work_tex;
-ID3D11RenderTargetView* proc_work_tex_rtv;
-ID3D11ShaderResourceView* proc_work_tex_srv;
-ID3D11UnorderedAccessView* proc_work_tex_uav;
+ID3D11Texture2D* work_tex;
+ID3D11RenderTargetView* work_tex_rtv;
+ID3D11ShaderResourceView* work_tex_srv;
+ID3D11UnorderedAccessView* work_tex_uav;
 
 // For when we don't have typed UAV loads and stores we have to use buffers
 // instead of textures. So this buffer contains the equivalent 32 bit floats for R32G32B32A32.
 // Because it is not a texture, it needs an additional constant buffer that tells the width so we can calculate the index.
-ID3D11Buffer* proc_work_buf_legacy_sb;
-ID3D11ShaderResourceView* proc_work_buf_legacy_sb_srv;
-ID3D11UnorderedAccessView* proc_work_buf_legacy_sb_uav;
+ID3D11Buffer* work_buf_legacy_sb;
+ID3D11ShaderResourceView* work_buf_legacy_sb_srv;
+ID3D11UnorderedAccessView* work_buf_legacy_sb_uav;
 
-ID3D11ComputeShader* proc_mosample_cs;
-ID3D11ComputeShader* proc_mosample_legacy_cs;
+// -------------------------------------------------
+// Mosample state.
+
+ID3D11ComputeShader* mosample_cs;
+ID3D11ComputeShader* mosample_legacy_cs;
 
 // Both these constant buffers should be merged into one instead and the shader preprocessor selects what data to have.
-ID3D11Buffer* proc_mosample_cb;
-ID3D11Buffer* proc_mosample_legacy_cb;
+ID3D11Buffer* mosample_cb;
+ID3D11Buffer* mosample_legacy_cb;
 
 // To not upload data all the time.
-float proc_mosample_weight_cache;
+float mosample_weight_cache;
+float mosample_remainder;
+float mosample_remainder_step;
 
-ID3D11ComputeShader* proc_pxconv_cs[NUM_PXCONVS];
-
-const s32 NUM_BUFFERED_DL_TEXS = 2;
-
-// Rotation of CPU textures to download to.
-struct PxConvTexDl
-{
-    // Keep 3 textures rotating for downloads.
-    ID3D11Texture2D* texs[NUM_BUFFERED_DL_TEXS];
-    s32 i;
-
-    ID3D11Texture2D* get_current()
-    {
-        return texs[i];
-    }
-
-    void advance()
-    {
-        i++;
-        i &= (NUM_BUFFERED_DL_TEXS - 1);
-    }
-};
+// -------------------------------------------------
+// Pixel format conversion.
 
 // Up to 3 planes used for YUV video.
-ID3D11Texture2D* proc_pxconv_texs[3];
-ID3D11UnorderedAccessView* proc_pxconv_uavs[3];
+ID3D11Texture2D* pxconv_texs[3];
+ID3D11UnorderedAccessView* pxconv_uavs[3];
+ID3D11ComputeShader* pxconv_cs[NUM_PXCONVS];
 
-PxConvTexDl proc_pxconv_dls[3];
+PxConvTexDl pxconv_dls[3];
 
-UINT proc_pxconv_pitches[3];
-UINT proc_pxconv_widths[3];
-UINT proc_pxconv_heights[3];
+UINT pxconv_pitches[3];
+UINT pxconv_widths[3];
+UINT pxconv_heights[3];
 
-s32 proc_used_pxconv_planes;
-s32 proc_pxconv_plane_sizes[3];
-s32 proc_pxconv_total_plane_sizes;
+s32 used_pxconv_planes;
+s32 pxconv_plane_sizes[3];
+s32 pxconv_total_plane_sizes;
 
-s32 proc_frame_num;
-s32 proc_movie_width;
-s32 proc_movie_height;
+// -------------------------------------------------
+// Movie state.
+
+s32 frame_num;
+s32 movie_width;
+s32 movie_height;
+
+PxConv movie_pxconv;
+char movie_path[MAX_PATH];
+
+// -------------------------------------------------
+// Time profiling.
 
 SvrProf frame_prof;
 SvrProf dl_prof;
 SvrProf write_prof;
 SvrProf mosample_prof;
 
-s32 proc_movie_encode_threads;
-s32 proc_movie_fps;
-const char* proc_movie_encoder;
-const char* proc_movie_pxformat;
-const char* proc_movie_colorspace;
-s32 proc_movie_crf;
-const char* proc_movie_x264_preset;
-s32 proc_movie_x264_intra;
+// -------------------------------------------------
+// Movie profile.
 
-s32 proc_mosample_enabled;
-s32 proc_mosample_mult;
-float proc_mosample_exposure;
+s32 movie_fps;
+const char* movie_encoder;
+const char* movie_pxformat;
+const char* movie_colorspace;
+s32 movie_crf;
+const char* movie_x264_preset;
+s32 movie_x264_intra;
+
+s32 mosample_enabled;
+s32 mosample_mult;
+float mosample_exposure;
 
 const s32 MAX_VELOC_FONT_NAME = 128;
 
-s32 proc_veloc_enabled;
-char proc_veloc_font[MAX_VELOC_FONT_NAME];
-s32 proc_veloc_font_size;
-s32 proc_veloc_font_color[4];
-DWRITE_FONT_STYLE proc_veloc_font_style;
-DWRITE_FONT_WEIGHT proc_veloc_font_weight;
-DWRITE_FONT_STRETCH proc_veloc_font_stretch;
-DWRITE_TEXT_ALIGNMENT proc_veloc_text_align;
-DWRITE_PARAGRAPH_ALIGNMENT proc_veloc_para_align;
-s32 proc_veloc_padding;
+s32 veloc_enabled;
+char veloc_font[MAX_VELOC_FONT_NAME];
+s32 veloc_font_size;
+s32 veloc_font_color[4];
+DWRITE_FONT_STYLE veloc_font_style;
+DWRITE_FONT_WEIGHT veloc_font_weight;
+DWRITE_FONT_STRETCH veloc_font_stretch;
+DWRITE_TEXT_ALIGNMENT veloc_text_align;
+DWRITE_PARAGRAPH_ALIGNMENT veloc_para_align;
+s32 veloc_padding;
 
-PxConv proc_movie_pxconv;
-char proc_movie_path[MAX_PATH];
-
-// HW caps:
+// -------------------------------------------------
+// HW caps.
 
 bool hw_has_typed_uav_support;
 bool hw_has_nvenc_support;
 
+// -------------------------------------------------
+// FFmpeg process communication.
+
 // We write data to the ffmpeg process through this pipe.
 // It is redirected to their stdin.
-HANDLE proc_ffmpeg_write_pipe;
-HANDLE proc_ffmpeg_proc;
+HANDLE ffmpeg_write_pipe;
+
+HANDLE ffmpeg_proc;
 
 // How many completed (uncompressed) frames we keep in memory waiting to be sent to ffmpeg.
 const s32 MAX_BUFFERED_SEND_FRAMES = 8;
 
-// The buffer that is sent to the ffmpeg process.
-// Each entry is large enough to contain every pxconv plane.
-u8* proc_ffmpeg_send_bufs[MAX_BUFFERED_SEND_FRAMES];
+// The buffers that are sent to the ffmpeg process.
+// Size of each buffer depends on the type of stream being sent, such as uncompressed frames or encoded H264 stream (from NVENC).
+u8* ffmpeg_send_bufs[MAX_BUFFERED_SEND_FRAMES];
 
-SvrAsyncStream<u8*> proc_ffmpeg_write_queue;
-SvrAsyncStream<u8*> proc_ffmpeg_read_queue;
+HANDLE ffmpeg_thread;
 
-HANDLE proc_ffmpeg_thread;
+// Queues and semaphores for communicating between the threads.
 
-// Semaphore that is signalled when there are frames to send to ffmpeg (pulls from proc_ffmpeg_write_queue).
+SvrAsyncStream<u8*> ffmpeg_write_queue;
+SvrAsyncStream<u8*> ffmpeg_read_queue;
+
+// Semaphore that is signalled when there are frames to send to ffmpeg (pulls from ffmpeg_write_queue).
 // This is incremented by the game thread when it has added a downloaded frame to the write queue.
-SvrSemaphore proc_ffmpeg_write_sem;
+SvrSemaphore ffmpeg_write_sem;
 
-// Semaphore that is signalled when there are frames available to download into (pulls from proc_ffmpeg_read_queue).
+// Semaphore that is signalled when there are frames available to download into (pulls from ffmpeg_read_queue).
 // This is incremented by the ffmpeg thread when it has sent a frame to the ffmpeg process.
-SvrSemaphore proc_ffmpeg_read_sem;
+SvrSemaphore ffmpeg_read_sem;
 
-void update_constant_buffer(ID3D11Buffer* buffer, const void* data, UINT size)
+// -------------------------------------------------
+
+void update_constant_buffer(ID3D11DeviceContext* d3d11_context, ID3D11Buffer* buffer, void* data, UINT size)
 {
     D3D11_MAPPED_SUBRESOURCE mapped;
-    proc_d3d11_context->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+    d3d11_context->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
 
     memcpy(mapped.pData, data, size);
 
-    proc_d3d11_context->Unmap(buffer, 0);
+    d3d11_context->Unmap(buffer, 0);
 }
 
 UINT calc_bytes_pitch(DXGI_FORMAT format)
@@ -433,19 +454,19 @@ s32 calc_cs_thread_groups(s32 input)
     return ((float)input / 8.0f) + 0.5f;
 }
 
-void convert_pixel_formats(ID3D11ShaderResourceView* source_srv)
+void convert_pixel_formats(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* source_srv)
 {
-    proc_d3d11_context->CSSetShader(proc_pxconv_cs[proc_movie_pxconv], NULL, 0);
-    proc_d3d11_context->CSSetShaderResources(0, 1, &source_srv);
-    proc_d3d11_context->CSSetUnorderedAccessViews(0, proc_used_pxconv_planes, proc_pxconv_uavs, NULL);
+    d3d11_context->CSSetShader(pxconv_cs[movie_pxconv], NULL, 0);
+    d3d11_context->CSSetShaderResources(0, 1, &source_srv);
+    d3d11_context->CSSetUnorderedAccessViews(0, used_pxconv_planes, pxconv_uavs, NULL);
 
-    proc_d3d11_context->Dispatch(calc_cs_thread_groups(proc_movie_width), calc_cs_thread_groups(proc_movie_height), 1);
+    d3d11_context->Dispatch(calc_cs_thread_groups(movie_width), calc_cs_thread_groups(movie_height), 1);
 
     ID3D11ShaderResourceView* null_srvs[] = { NULL };
     ID3D11UnorderedAccessView* null_uavs[] = { NULL };
 
-    proc_d3d11_context->CSSetShaderResources(0, 1, null_srvs);
-    proc_d3d11_context->CSSetUnorderedAccessViews(0, 1, null_uavs, NULL);
+    d3d11_context->CSSetShaderResources(0, 1, null_srvs);
+    d3d11_context->CSSetUnorderedAccessViews(0, 1, null_uavs, NULL);
 }
 
 // This thread will write data to the ffmpeg process.
@@ -454,10 +475,10 @@ DWORD WINAPI ffmpeg_thread_proc(LPVOID lpParameter)
 {
     while (true)
     {
-        svr_sem_wait(&proc_ffmpeg_write_sem);
+        svr_sem_wait(&ffmpeg_write_sem);
 
         u8* mem;
-        bool res1 = proc_ffmpeg_write_queue.pull(&mem);
+        bool res1 = ffmpeg_write_queue.pull(&mem);
         assert(res1);
 
         // This will not return until the data has been read by the remote process.
@@ -466,22 +487,22 @@ DWORD WINAPI ffmpeg_thread_proc(LPVOID lpParameter)
         // This will take about 300 - 6000 us, and if it starts off slow, then it will forever be slow until the computer restarts.
 
         svr_start_prof(write_prof);
-        WriteFile(proc_ffmpeg_write_pipe, mem, proc_pxconv_total_plane_sizes, NULL, NULL);
+        WriteFile(ffmpeg_write_pipe, mem, pxconv_total_plane_sizes, NULL, NULL);
         svr_end_prof(write_prof);
 
-        proc_ffmpeg_read_queue.push(mem);
+        ffmpeg_read_queue.push(mem);
 
-        svr_sem_release(&proc_ffmpeg_read_sem);
+        svr_sem_release(&ffmpeg_read_sem);
     }
 }
 
-void download_textures(ID3D11Texture2D** gpu_texes, PxConvTexDl* cpu_texes, s32 num_texes, void* dest, s32 size)
+void download_textures(ID3D11DeviceContext* d3d11_context, ID3D11Texture2D** gpu_texes, PxConvTexDl* cpu_texes, s32 num_texes, void* dest, s32 size)
 {
     // Need to copy the textures into readable memory.
 
     for (s32 i = 0; i < num_texes; i++)
     {
-        proc_d3d11_context->CopyResource(cpu_texes[i].get_current(), gpu_texes[i]);
+        d3d11_context->CopyResource(cpu_texes[i].get_current(), gpu_texes[i]);
     }
 
     D3D11_MAPPED_SUBRESOURCE* maps = (D3D11_MAPPED_SUBRESOURCE*)_alloca(sizeof(D3D11_MAPPED_SUBRESOURCE) * num_texes);
@@ -494,7 +515,7 @@ void download_textures(ID3D11Texture2D** gpu_texes, PxConvTexDl* cpu_texes, s32 
 
     for (s32 i = 0; i < num_texes; i++)
     {
-        proc_d3d11_context->Map(cpu_texes[i].get_current(), 0, D3D11_MAP_READ, 0, &maps[i]);
+        d3d11_context->Map(cpu_texes[i].get_current(), 0, D3D11_MAP_READ, 0, &maps[i]);
     }
 
     for (s32 i = 0; i < num_texes; i++)
@@ -509,6 +530,8 @@ void download_textures(ID3D11Texture2D** gpu_texes, PxConvTexDl* cpu_texes, s32 
 
     // Mapped data will be aligned to 16 bytes.
 
+    // This will take around 300 us for 1920x1080 YUV420.
+
     s32 offset = 0;
 
     for (s32 i = 0; i < num_texes; i++)
@@ -516,20 +539,20 @@ void download_textures(ID3D11Texture2D** gpu_texes, PxConvTexDl* cpu_texes, s32 
         u8* source_ptr = (u8*)map_datas[i];
         u8* dest_ptr = (u8*)dest + offset;
 
-        for (UINT j = 0; j < proc_pxconv_heights[i]; j++)
+        for (UINT j = 0; j < pxconv_heights[i]; j++)
         {
-            memcpy(dest_ptr, source_ptr, proc_pxconv_pitches[i]);
+            memcpy(dest_ptr, source_ptr, pxconv_pitches[i]);
 
             source_ptr += row_pitches[i];
-            dest_ptr += proc_pxconv_pitches[i];
+            dest_ptr += pxconv_pitches[i];
         }
 
-        offset += proc_pxconv_pitches[i] * proc_pxconv_heights[i];
+        offset += pxconv_pitches[i] * pxconv_heights[i];
     }
 
     for (s32 i = 0; i < num_texes; i++)
     {
-        proc_d3d11_context->Unmap(cpu_texes[i].get_current(), 0);
+        d3d11_context->Unmap(cpu_texes[i].get_current(), 0);
     }
 
     for (s32 i = 0; i < num_texes; i++)
@@ -553,7 +576,7 @@ void load_one_shader(const char* name, void* buf, s32 buf_size, DWORD* shader_si
     CloseHandle(h);
 }
 
-void create_shaders()
+void create_shaders(ID3D11Device* d3d11_device)
 {
     const s32 SHADER_BUF_SIZE = 8192;
 
@@ -564,38 +587,21 @@ void create_shaders()
     for (s32 i = 0; i < NUM_PXCONVS; i++)
     {
         load_one_shader(PXCONV_SHADER_NAMES[i], file_mem, SHADER_BUF_SIZE, &shader_size);
-        proc_d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &proc_pxconv_cs[i]);
+        d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &pxconv_cs[i]);
     }
 
     load_one_shader("c52620855f15b2c47b8ca24b890850a90fdc7017", file_mem, SHADER_BUF_SIZE, &shader_size);
-    proc_d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &proc_mosample_cs);
+    d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &mosample_cs);
 
     load_one_shader("cf3aa43b232f4624ef5e002a716b67045f45b044", file_mem, SHADER_BUF_SIZE, &shader_size);
-    proc_d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &proc_mosample_legacy_cs);
+    d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &mosample_legacy_cs);
 
     free(file_mem);
 }
 
-void proc_init()
+bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 {
-    // BGRA support needed for Direct2D interoperability.
-    // It is also only intended to be used from a single thread.
-    UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-
-    #if SVR_DEBUG
-    flags |= D3D11_CREATE_DEVICE_DEBUG;
-    #endif
-
-    // Should be good enough for all the features that we make use of.
-    const D3D_FEATURE_LEVEL MINIMUM_VERSION = D3D_FEATURE_LEVEL_11_0;
-
-    D3D_FEATURE_LEVEL levels[] = {
-        MINIMUM_VERSION
-    };
-
-    D3D_FEATURE_LEVEL created_level;
-
-    D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, flags, levels, 1, D3D11_SDK_VERSION, &proc_d3d11_device, &created_level, &proc_d3d11_context);
+    StringCchCopyA(svr_resource_path, MAX_PATH, svr_path);
 
     // See if typed UAV loads and stores are supported so we can decide what code path to use.
     // It becomes more complicated without this, but still doable. More reports than expected have come out regarding the absence
@@ -603,15 +609,34 @@ void proc_init()
 
     // If we have hardware support for this, we can add the game content directly to the work texture and be on our way.
     // If we don't we have to create a structured buffer that we can motion sample on instead.
-    // Both ways will be identical in memory but hardware support differs.
+    // Both ways will be identical in memory but hardware support differs on how efficiently it can be worked on.
 
     D3D11_FEATURE_DATA_FORMAT_SUPPORT2 fmt_support2;
     fmt_support2.InFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
-    proc_d3d11_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &fmt_support2, sizeof(fmt_support2));
+    d3d11_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &fmt_support2, sizeof(fmt_support2));
 
     hw_has_typed_uav_support = (fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD) && (fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE);
 
+    hw_has_nvenc_support = proc_is_nvenc_supported();
+
+    IDXGIDevice* dxgi_device;
+    d3d11_device->QueryInterface(IID_PPV_ARGS(&dxgi_device));
+
+    IDXGIAdapter* dxgi_adapter;
+    dxgi_device->GetAdapter(&dxgi_adapter);
+
+    DXGI_ADAPTER_DESC dxgi_adapter_desc;
+    dxgi_adapter->GetDesc(&dxgi_adapter_desc);
+
+    dxgi_adapter->Release();
+    dxgi_device->Release();
+
+    // Useful for future troubleshooting.
+    // Use https://www.pcilookup.com/ to see more information about device and vendor ids.
+    svr_log("Using graphics device %x\n", dxgi_adapter_desc.DeviceId);
+
     svr_log("Typed UAV support: %d\n", (s32)hw_has_typed_uav_support);
+    svr_log("NVENC support: %d\n", (s32)hw_has_nvenc_support);
 
     // Minimum size of a constant buffer is 16 bytes.
 
@@ -623,7 +648,7 @@ void proc_init()
     buf0_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     buf0_desc.MiscFlags = 0;
 
-    proc_d3d11_device->CreateBuffer(&buf0_desc, NULL, &proc_mosample_cb);
+    d3d11_device->CreateBuffer(&buf0_desc, NULL, &mosample_cb);
 
     if (!hw_has_typed_uav_support)
     {
@@ -635,13 +660,13 @@ void proc_init()
         buf1_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         buf1_desc.MiscFlags = 0;
 
-        proc_d3d11_device->CreateBuffer(&buf1_desc, NULL, &proc_mosample_legacy_cb);
+        d3d11_device->CreateBuffer(&buf1_desc, NULL, &mosample_legacy_cb);
     }
 
-    create_shaders();
+    create_shaders(d3d11_device);
 
-    svr_sem_init(&proc_ffmpeg_write_sem, 0, MAX_BUFFERED_SEND_FRAMES);
-    svr_sem_init(&proc_ffmpeg_read_sem, MAX_BUFFERED_SEND_FRAMES, MAX_BUFFERED_SEND_FRAMES);
+    svr_sem_init(&ffmpeg_write_sem, 0, MAX_BUFFERED_SEND_FRAMES);
+    svr_sem_init(&ffmpeg_read_sem, MAX_BUFFERED_SEND_FRAMES, MAX_BUFFERED_SEND_FRAMES);
 
     const s32 QUEUE_RANGE_SIZE = 4 * 1024;
 
@@ -650,10 +675,12 @@ void proc_init()
     queue_range.used = 0;
     queue_range.size = QUEUE_RANGE_SIZE;
 
-    proc_ffmpeg_write_queue.init_with_range(queue_range, MAX_BUFFERED_SEND_FRAMES);
-    proc_ffmpeg_read_queue.init_with_range(queue_range, MAX_BUFFERED_SEND_FRAMES);
+    ffmpeg_write_queue.init_with_range(queue_range, MAX_BUFFERED_SEND_FRAMES);
+    ffmpeg_read_queue.init_with_range(queue_range, MAX_BUFFERED_SEND_FRAMES);
 
-    proc_ffmpeg_thread = CreateThread(NULL, 0, ffmpeg_thread_proc, NULL, 0, NULL);
+    ffmpeg_thread = CreateThread(NULL, 0, ffmpeg_thread_proc, NULL, 0, NULL);
+
+    return true;
 }
 
 s32 atoi_in_range(SvrIniLine& line, s32 min, s32 max)
@@ -771,8 +798,6 @@ s32 map_str_in_list_or(SvrIniLine& line, StrIntMapping* mappings, s32 num, s32 d
 
 bool read_profile(const char* profile)
 {
-    extern const char* svr_resource_path;
-
     char full_profile_path[MAX_PATH];
     full_profile_path[0] = 0;
     StringCchCatA(full_profile_path, MAX_PATH, svr_resource_path);
@@ -788,7 +813,7 @@ bool read_profile(const char* profile)
     }
 
     SvrIniLine ini_line = svr_alloc_ini_line();
-    /* SvrIniTokenType */ s32 ini_token_type;
+    SvrIniTokenType ini_token_type;
 
     #define OPT_S32(NAME, VAR, MIN, MAX) (strcmp(ini_line.title, NAME) == 0) { VAR = atoi_in_range(ini_line, MIN, MAX); }
     #define OPT_FLOAT(NAME, VAR, MIN, MAX) (strcmp(ini_line.title, NAME) == 0) { VAR = atof_in_range(ini_line, MIN, MAX); }
@@ -798,30 +823,29 @@ bool read_profile(const char* profile)
 
     while (svr_read_ini(ini_mem, &ini_line, &ini_token_type))
     {
-        if OPT_S32("encoding_threads", proc_movie_encode_threads, 0, GetActiveProcessorCount(ALL_PROCESSOR_GROUPS))
-        else if OPT_S32("video_fps", proc_movie_fps, 1, 1000)
-        else if OPT_STR_LIST("video_encoder", proc_movie_encoder, ENCODER_TABLE, "libx264")
-        else if OPT_STR_LIST("video_pixel_format", proc_movie_pxformat, PXFORMAT_TABLE, "yuv420")
-        else if OPT_STR_LIST("video_colorspace", proc_movie_colorspace, COLORSPACE_TABLE, "601")
-        else if OPT_S32("video_x264_crf", proc_movie_crf, 0, 52)
-        else if OPT_STR_LIST("video_x264_preset", proc_movie_x264_preset, ENCODER_PRESET_TABLE, "veryfast")
-        else if OPT_S32("video_x264_intra", proc_movie_x264_intra, 0, 1)
-        else if OPT_S32("motion_blur_enabled", proc_mosample_enabled, 0, 1)
-        else if OPT_S32("motion_blur_fps_mult", proc_mosample_mult, 1, INT32_MAX)
-        else if OPT_FLOAT("motion_blur_frame_exposure", proc_mosample_exposure, 0.0f, 1.0f)
-        else if OPT_S32("velocity_overlay_enabled", proc_veloc_enabled, 0, 1)
-        else if OPT_STR("velocity_overlay_font_family", proc_veloc_font, MAX_VELOC_FONT_NAME)
-        else if OPT_S32("velocity_overlay_font_size", proc_veloc_font_size, 0, INT32_MAX)
-        else if OPT_S32("velocity_overlay_color_r", proc_veloc_font_color[0], 0, 255)
-        else if OPT_S32("velocity_overlay_color_g", proc_veloc_font_color[1], 0, 255)
-        else if OPT_S32("velocity_overlay_color_b", proc_veloc_font_color[2], 0, 255)
-        else if OPT_S32("velocity_overlay_color_a", proc_veloc_font_color[3], 0, 255)
-        else if OPT_STR_MAP("velocity_overlay_font_style", proc_veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
-        else if OPT_STR_MAP("velocity_overlay_font_weight", proc_veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
-        else if OPT_STR_MAP("velocity_overlay_font_stretch", proc_veloc_font_stretch, FONT_STRETCH_TABLE, DWRITE_FONT_STRETCH_NORMAL)
-        else if OPT_STR_MAP("velocity_overlay_text_align", proc_veloc_text_align, TEXT_ALIGN_TABLE, DWRITE_TEXT_ALIGNMENT_CENTER)
-        else if OPT_STR_MAP("velocity_overlay_paragraph_align", proc_veloc_para_align, PARAGRAPH_ALIGN_TABLE, DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
-        else if OPT_S32("velocity_overlay_padding", proc_veloc_padding, 0, INT32_MAX)
+        if OPT_S32("video_fps", movie_fps, 1, 1000)
+        else if OPT_STR_LIST("video_encoder", movie_encoder, ENCODER_TABLE, "libx264")
+        else if OPT_STR_LIST("video_pixel_format", movie_pxformat, PXFORMAT_TABLE, "yuv420")
+        else if OPT_STR_LIST("video_colorspace", movie_colorspace, COLORSPACE_TABLE, "601")
+        else if OPT_S32("video_x264_crf", movie_crf, 0, 52)
+        else if OPT_STR_LIST("video_x264_preset", movie_x264_preset, ENCODER_PRESET_TABLE, "veryfast")
+        else if OPT_S32("video_x264_intra", movie_x264_intra, 0, 1)
+        else if OPT_S32("motion_blur_enabled", mosample_enabled, 0, 1)
+        else if OPT_S32("motion_blur_fps_mult", mosample_mult, 1, INT32_MAX)
+        else if OPT_FLOAT("motion_blur_frame_exposure", mosample_exposure, 0.0f, 1.0f)
+        else if OPT_S32("velocity_overlay_enabled", veloc_enabled, 0, 1)
+        else if OPT_STR("velocity_overlay_font_family", veloc_font, MAX_VELOC_FONT_NAME)
+        else if OPT_S32("velocity_overlay_font_size", veloc_font_size, 0, INT32_MAX)
+        else if OPT_S32("velocity_overlay_color_r", veloc_font_color[0], 0, 255)
+        else if OPT_S32("velocity_overlay_color_g", veloc_font_color[1], 0, 255)
+        else if OPT_S32("velocity_overlay_color_b", veloc_font_color[2], 0, 255)
+        else if OPT_S32("velocity_overlay_color_a", veloc_font_color[3], 0, 255)
+        else if OPT_STR_MAP("velocity_overlay_font_style", veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
+        else if OPT_STR_MAP("velocity_overlay_font_weight", veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
+        else if OPT_STR_MAP("velocity_overlay_font_stretch", veloc_font_stretch, FONT_STRETCH_TABLE, DWRITE_FONT_STRETCH_NORMAL)
+        else if OPT_STR_MAP("velocity_overlay_text_align", veloc_text_align, TEXT_ALIGN_TABLE, DWRITE_TEXT_ALIGNMENT_CENTER)
+        else if OPT_STR_MAP("velocity_overlay_paragraph_align", veloc_para_align, PARAGRAPH_ALIGN_TABLE, DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
+        else if OPT_S32("velocity_overlay_padding", veloc_padding, 0, INT32_MAX)
     }
 
     svr_free_ini_line(ini_line);
@@ -841,37 +865,37 @@ bool verify_profile()
     // We discard the movie if these are not right, because we don't want to spend
     // a very long time creating a movie which then would get thrown away since it didn't use the correct settings.
 
-    if (strcmp(proc_movie_encoder, "libx264") == 0)
+    if (strcmp(movie_encoder, "libx264") == 0)
     {
-        if (strcmp(proc_movie_pxformat, "bgr0") == 0)
+        if (strcmp(movie_pxformat, "bgr0") == 0)
         {
             game_log("The libx264 encoder can only use YUV pixel formats\n");
             return false;
         }
 
-        if (strcmp(proc_movie_colorspace, "rgb") == 0)
+        if (strcmp(movie_colorspace, "rgb") == 0)
         {
             game_log("The libx264 encoder can only use YUV color spaces\n");
             return false;
         }
     }
 
-    else if (strcmp(proc_movie_encoder, "libx264rgb") == 0)
+    else if (strcmp(movie_encoder, "libx264rgb") == 0)
     {
-        if (strcmp(proc_movie_pxformat, "bgr0") != 0)
+        if (strcmp(movie_pxformat, "bgr0") != 0)
         {
             game_log("The libx264rgb encoder can only use the rgb pixel format\n");
             return false;
         }
 
-        if (strcmp(proc_movie_colorspace, "rgb") != 0)
+        if (strcmp(movie_colorspace, "rgb") != 0)
         {
             game_log("The libx264rgb encoder can only use the rgb color space\n");
             return false;
         }
     }
 
-    if (proc_mosample_mult == 1)
+    if (mosample_mult == 1)
     {
         game_log("motion_blur_fps_mult is set to 1, which doesn't enable motion blur\n");
         return false;
@@ -882,83 +906,79 @@ bool verify_profile()
 
 void set_default_profile()
 {
-    proc_movie_encode_threads = 0;
-    proc_movie_fps = 60;
-    proc_movie_encoder = "libx264";
-    proc_movie_pxformat = "yuv420";
-    proc_movie_colorspace = "601";
-    proc_movie_crf = 23;
-    proc_movie_x264_preset = "veryfast";
-    proc_movie_x264_intra = 0;
-    proc_mosample_enabled = 1;
-    proc_mosample_mult = 60;
-    proc_mosample_exposure = 0.5f;
-    proc_veloc_enabled = 0;
-    StringCchCopyA(proc_veloc_font, MAX_VELOC_FONT_NAME, "Arial");
-    proc_veloc_font_size = 72;
-    proc_veloc_font_color[0] = 255;
-    proc_veloc_font_color[1] = 255;
-    proc_veloc_font_color[2] = 255;
-    proc_veloc_font_color[3] = 255;
-    proc_veloc_font_style = DWRITE_FONT_STYLE_NORMAL;
-    proc_veloc_font_weight = DWRITE_FONT_WEIGHT_BOLD;
-    proc_veloc_font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-    proc_veloc_text_align = DWRITE_TEXT_ALIGNMENT_CENTER;
-    proc_veloc_para_align = DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
-    proc_veloc_padding = 100;
+    movie_fps = 60;
+    movie_encoder = "libx264";
+    movie_pxformat = "yuv420";
+    movie_colorspace = "601";
+    movie_crf = 23;
+    movie_x264_preset = "veryfast";
+    movie_x264_intra = 0;
+    mosample_enabled = 1;
+    mosample_mult = 60;
+    mosample_exposure = 0.5f;
+    veloc_enabled = 0;
+    StringCchCopyA(veloc_font, MAX_VELOC_FONT_NAME, "Arial");
+    veloc_font_size = 72;
+    veloc_font_color[0] = 255;
+    veloc_font_color[1] = 255;
+    veloc_font_color[2] = 255;
+    veloc_font_color[3] = 255;
+    veloc_font_style = DWRITE_FONT_STYLE_NORMAL;
+    veloc_font_weight = DWRITE_FONT_WEIGHT_BOLD;
+    veloc_font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+    veloc_text_align = DWRITE_TEXT_ALIGNMENT_CENTER;
+    veloc_para_align = DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
+    veloc_padding = 100;
 }
 
 void log_profile()
 {
     game_log("Using profile:\n");
-    game_log("Encoding threads: %d\n", proc_movie_encode_threads);
-    game_log("Movie fps: %d\n", proc_movie_fps);
-    game_log("Video encoder: %s\n", proc_movie_encoder);
-    game_log("Video pixel format: %s\n", proc_movie_pxformat);
-    game_log("Video colorspace: %s\n", proc_movie_colorspace);
-    game_log("Video crf: %d\n", proc_movie_crf);
-    game_log("Video x264 preset: %s\n", proc_movie_x264_preset);
-    game_log("Video x264 intra: %d\n", proc_movie_x264_intra);
-    game_log("Use motion blur: %d\n", proc_mosample_enabled);
+    game_log("Movie fps: %d\n", movie_fps);
+    game_log("Video encoder: %s\n", movie_encoder);
+    game_log("Video pixel format: %s\n", movie_pxformat);
+    game_log("Video colorspace: %s\n", movie_colorspace);
+    game_log("Video crf: %d\n", movie_crf);
+    game_log("Video x264 preset: %s\n", movie_x264_preset);
+    game_log("Video x264 intra: %d\n", movie_x264_intra);
+    game_log("Use motion blur: %d\n", mosample_enabled);
 
-    if (proc_mosample_enabled)
+    if (mosample_enabled)
     {
-        game_log("Motion blur multiplier: %d\n", proc_mosample_mult);
-        game_log("Motion blur exposure: %0.2f\n", proc_mosample_exposure);
+        game_log("Motion blur multiplier: %d\n", mosample_mult);
+        game_log("Motion blur exposure: %0.2f\n", mosample_exposure);
     }
 
-    game_log("Use velocity overlay: %d\n", proc_veloc_enabled);
+    game_log("Use velocity overlay: %d\n", veloc_enabled);
 
-    if (proc_veloc_enabled)
+    if (veloc_enabled)
     {
-        game_log("Velocity font: %s\n", proc_veloc_font);
-        game_log("Velocity font size: %d\n", proc_veloc_font_size);
-        game_log("Velocity font color: %d %d %d %d\n", proc_veloc_font_color[0], proc_veloc_font_color[1], proc_veloc_font_color[2], proc_veloc_font_color[3]);
-        game_log("Velocity font style: %s\n", rl_map_str_in_list(proc_veloc_font_style, FONT_STYLE_TABLE, SVR_ARRAY_SIZE(FONT_STYLE_TABLE)));
-        game_log("Velocity font weight: %s\n", rl_map_str_in_list(proc_veloc_font_weight, FONT_WEIGHT_TABLE, SVR_ARRAY_SIZE(FONT_WEIGHT_TABLE)));
-        game_log("Velocity font stretch: %s\n", rl_map_str_in_list(proc_veloc_font_stretch, FONT_STRETCH_TABLE, SVR_ARRAY_SIZE(FONT_STRETCH_TABLE)));
-        game_log("Velocity text align: %s\n", rl_map_str_in_list(proc_veloc_text_align, TEXT_ALIGN_TABLE, SVR_ARRAY_SIZE(TEXT_ALIGN_TABLE)));
-        game_log("Velocity paragraph align: %s\n", rl_map_str_in_list(proc_veloc_para_align, PARAGRAPH_ALIGN_TABLE, SVR_ARRAY_SIZE(PARAGRAPH_ALIGN_TABLE)));
-        game_log("Velocity text padding: %d\n", proc_veloc_padding);
+        game_log("Velocity font: %s\n", veloc_font);
+        game_log("Velocity font size: %d\n", veloc_font_size);
+        game_log("Velocity font color: %d %d %d %d\n", veloc_font_color[0], veloc_font_color[1], veloc_font_color[2], veloc_font_color[3]);
+        game_log("Velocity font style: %s\n", rl_map_str_in_list(veloc_font_style, FONT_STYLE_TABLE, SVR_ARRAY_SIZE(FONT_STYLE_TABLE)));
+        game_log("Velocity font weight: %s\n", rl_map_str_in_list(veloc_font_weight, FONT_WEIGHT_TABLE, SVR_ARRAY_SIZE(FONT_WEIGHT_TABLE)));
+        game_log("Velocity font stretch: %s\n", rl_map_str_in_list(veloc_font_stretch, FONT_STRETCH_TABLE, SVR_ARRAY_SIZE(FONT_STRETCH_TABLE)));
+        game_log("Velocity text align: %s\n", rl_map_str_in_list(veloc_text_align, TEXT_ALIGN_TABLE, SVR_ARRAY_SIZE(TEXT_ALIGN_TABLE)));
+        game_log("Velocity paragraph align: %s\n", rl_map_str_in_list(veloc_para_align, PARAGRAPH_ALIGN_TABLE, SVR_ARRAY_SIZE(PARAGRAPH_ALIGN_TABLE)));
+        game_log("Velocity text padding: %d\n", veloc_padding);
     }
 }
 
 // We start a separate process for encoding for two reasons:
 // 1) Source is a 32-bit engine, and it was common to run out of memory in games such as CSGO that uses a lot of memory.
-// 2) The ffmpeg api is horrible to work with with an incredible amount of pitfalls that will grant you a media that is slighly not correct
+// 2) The ffmpeg API is horrible to work with with an incredible amount of pitfalls that will grant you a media that is slighly incorrect
 //    and there is no reliable documentation.
 // Data is sent to this process through a pipe that we create.
-void start_ffmpeg_proc()
+bool start_ffmpeg_proc()
 {
-    extern const char* svr_resource_path;
-
     char full_ffmpeg_path[MAX_PATH];
     full_ffmpeg_path[0] = 0;
     StringCchCatA(full_ffmpeg_path, MAX_PATH, svr_resource_path);
     StringCchCatA(full_ffmpeg_path, MAX_PATH, "\\ffmpeg.exe");
 
-    const s32 FULL_ARGS_SIZE = 512;
-    const s32 ARGS_BUF_SIZE = 64;
+    const s32 FULL_ARGS_SIZE = 1024;
+    const s32 ARGS_BUF_SIZE = 128;
 
     char full_args[FULL_ARGS_SIZE];
     full_args[0] = 0;
@@ -973,67 +993,90 @@ void start_ffmpeg_proc()
     StringCchCatA(full_args, FULL_ARGS_SIZE, " -loglevel debug");
     #endif
 
-    PxConvText pxconv_text = PXCONV_FFMPEG_TEXT_TABLE[proc_movie_pxconv];
+    // Parameters below here is regarding the input.
 
-    // We are sending raw uncompressed data.
-    StringCchCatA(full_args, FULL_ARGS_SIZE, " -f rawvideo -vcodec rawvideo");
+    PxConvText pxconv_text = PXCONV_FFMPEG_TEXT_TABLE[movie_pxconv];
+
+    if (hw_has_nvenc_support)
+    {
+        // We are sending an H264 stream.
+        StringCchCatA(full_args, FULL_ARGS_SIZE, " -f rawvideo -vcodec h264");
+    }
+
+    else
+    {
+        // We are sending uncompressed frames.
+        StringCchCatA(full_args, FULL_ARGS_SIZE, " -f rawvideo -vcodec rawvideo");
+
+        // Pixel format that goes through the pipe.
+        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -pix_fmt %s", pxconv_text.format);
+        StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
+    }
 
     // Video size.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -s %dx%d", proc_movie_width, proc_movie_height);
-    StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
-
-    // Pixel format that goes through the pipe.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -pix_fmt %s", pxconv_text.format);
+    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -s %dx%d", movie_width, movie_height);
     StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
 
     // Input frame rate.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -r %d", proc_movie_fps);
+    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -r %d", movie_fps);
     StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
 
     // Overwrite existing, and read from stdin.
     StringCchCatA(full_args, FULL_ARGS_SIZE, " -y -i -");
 
-    // Number of encoding threads, or 0 for auto.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -threads %d", proc_movie_encode_threads);
-    StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
+    // Parameters below here is regarding the output.
 
-    // Output video codec.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -vcodec %s", proc_movie_encoder);
-    StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
-
-    if (pxconv_text.color_space)
+    if (hw_has_nvenc_support)
     {
-        // Output video color space (only for YUV).
-        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -colorspace %s", pxconv_text.color_space);
-        StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
+        // Output video codec.
+        StringCchCatA(full_args, FULL_ARGS_SIZE, " -vcodec h264");
     }
 
-    // Output video framerate.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -framerate %d", proc_movie_fps);
-    StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
-
-    // Output quality factor.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -crf %d", proc_movie_crf);
-    StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
-
-    // Output x264 preset.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -preset %s", proc_movie_x264_preset);
-    StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
-
-    if (proc_movie_x264_intra)
+    else
     {
-        StringCchCatA(full_args, FULL_ARGS_SIZE, " -x264-params keyint=1");
+        // Number of encoding threads, or 0 for auto.
+        // We used to allow this to be configured, its intended purpose was for game multiprocessing (opening multiple games) but
+        // there are too many problems in the Source engine that we cannot control. It leads to many buggy and weird scenarios (like animations not playing or demos jumping).
+        StringCchCatA(full_args, FULL_ARGS_SIZE, " -threads 0");
+
+        // Output video codec.
+        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -vcodec %s", movie_encoder);
+        StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
+
+        if (pxconv_text.color_space)
+        {
+            // Output video color space (only for YUV).
+            StringCchPrintfA(buf, ARGS_BUF_SIZE, " -colorspace %s", pxconv_text.color_space);
+            StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
+        }
+
+        // Output video framerate.
+        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -framerate %d", movie_fps);
+        StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
+
+        // Output quality factor.
+        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -crf %d", movie_crf);
+        StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
+
+        // Output x264 preset.
+        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -preset %s", movie_x264_preset);
+        StringCchCatA(full_args, FULL_ARGS_SIZE, buf);
+
+        if (movie_x264_intra)
+        {
+            StringCchCatA(full_args, FULL_ARGS_SIZE, " -x264-params keyint=1");
+        }
     }
 
     // The path can be specified as relative here because we set the working directory of the ffmpeg process
     // to the SVR directory.
 
     StringCchCatA(full_args, FULL_ARGS_SIZE, " \"");
-    StringCchCatA(full_args, FULL_ARGS_SIZE, proc_movie_path);
+    StringCchCatA(full_args, FULL_ARGS_SIZE, movie_path);
     StringCchCatA(full_args, FULL_ARGS_SIZE, "\"");
 
-    HANDLE read_h;
-    HANDLE write_h;
+    HANDLE read_h = NULL;
+    HANDLE write_h = NULL;
 
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -1051,59 +1094,71 @@ void start_ffmpeg_proc()
     start_info.hStdInput = read_h;
     start_info.dwFlags |= STARTF_USESTDHANDLES;
 
-    DWORD create_proc_flags = 0;
+    DWORD create_flags = 0;
 
     #if SVR_RELEASE
-    create_proc_flags |= CREATE_NO_WINDOW;
+    create_flags |= CREATE_NO_WINDOW;
     #endif
 
+    bool ret = true;
+
+    // Working directory for the FFmpeg process should be in the SVR directory.
+
     PROCESS_INFORMATION info;
-    BOOL res = CreateProcessA(full_ffmpeg_path, full_args, NULL, NULL, TRUE, create_proc_flags, NULL, svr_resource_path, &start_info, &info);
+    BOOL res = CreateProcessA(full_ffmpeg_path, full_args, NULL, NULL, TRUE, create_flags, NULL, svr_resource_path, &start_info, &info);
 
     if (res == 0)
     {
         game_log("Could not create ffmpeg process (%lu)\n", GetLastError());
+        goto cleanup;
     }
 
-    proc_ffmpeg_proc = info.hProcess;
+    ffmpeg_proc = info.hProcess;
     CloseHandle(info.hThread);
 
     CloseHandle(read_h);
 
-    proc_ffmpeg_write_pipe = write_h;
+    ffmpeg_write_pipe = write_h;
+
+    goto rexit;
+
+cleanup:
+    CloseHandle(read_h);
+    CloseHandle(write_h);
+
+rexit:
+    return ret;
 }
 
 void end_ffmpeg_proc()
 {
-    while (proc_ffmpeg_write_queue.read_buffer_health() > 0)
+    while (ffmpeg_write_queue.read_buffer_health() > 0)
     {
         // Stupid but we can't use any other mechanism with the ffmpeg thread loop.
         Sleep(100);
     }
 
     // Both queues should not be updated anymore at this point so they should be the same when observed.
-    assert(proc_ffmpeg_write_queue.read_buffer_health() == 0);
-    assert(proc_ffmpeg_read_queue.read_buffer_health() == MAX_BUFFERED_SEND_FRAMES);
+    assert(ffmpeg_write_queue.read_buffer_health() == 0);
+    assert(ffmpeg_read_queue.read_buffer_health() == MAX_BUFFERED_SEND_FRAMES);
 
     // Close our end of the pipe.
     // This will mark the completion of the stream, and the process will finish its work.
-    CloseHandle(proc_ffmpeg_write_pipe);
-    proc_ffmpeg_write_pipe = NULL;
+    CloseHandle(ffmpeg_write_pipe);
+    ffmpeg_write_pipe = NULL;
 
-    WaitForSingleObject(proc_ffmpeg_proc, INFINITE);
+    WaitForSingleObject(ffmpeg_proc, INFINITE);
 
-    CloseHandle(proc_ffmpeg_proc);
-    proc_ffmpeg_proc = NULL;
+    CloseHandle(ffmpeg_proc);
+    ffmpeg_proc = NULL;
 }
 
-void proc_start(const char* dest, const char* profile, void* game_share_h)
+bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, const char* dest, const char* profile, ID3D11ShaderResourceView* game_content_srv)
 {
     if (*profile == 0)
     {
         profile = "default";
     }
-
-    game_log("Starting movie to %s with profile %s\n", dest, profile);
 
     // If this doesn't work then we use the default profile in code.
     if (!read_profile(profile))
@@ -1123,38 +1178,33 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
 
     assert(verify_profile());
 
-    log_profile();
-
     for (s32 i = 0; i < NUM_PXCONVS; i++)
     {
         PxConvText& text = PXCONV_INI_TEXT_TABLE[i];
 
-        if (strcmp(text.format, proc_movie_pxformat) == 0 && strcmp(text.color_space, proc_movie_colorspace) == 0)
+        if (strcmp(text.format, movie_pxformat) == 0 && strcmp(text.color_space, movie_colorspace) == 0)
         {
-            proc_movie_pxconv = (PxConv)i;
+            movie_pxconv = (PxConv)i;
             break;
         }
     }
 
-    ID3D11Resource* temp_resource = NULL;
-    proc_d3d11_device->OpenSharedResource((HANDLE)game_share_h, IID_PPV_ARGS(&temp_resource));
+    ID3D11Resource* content_tex_res;
+    game_content_srv->GetResource(&content_tex_res);
 
-    temp_resource->QueryInterface(IID_PPV_ARGS(&proc_game_content_tex));
-    temp_resource->Release();
-
-    proc_d3d11_device->CreateShaderResourceView(proc_game_content_tex, NULL, &proc_game_content_srv);
+    ID3D11Texture2D* content_tex;
+    content_tex_res->QueryInterface(IID_PPV_ARGS(&content_tex));
 
     D3D11_TEXTURE2D_DESC tex_desc;
-    proc_game_content_tex->GetDesc(&tex_desc);
+    content_tex->GetDesc(&tex_desc);
 
-    // Make the work texture start blank.
+    content_tex_res->Release();
+    content_tex->Release();
 
-    proc_frame_num = 0;
-    proc_movie_width = tex_desc.Width;
-    proc_movie_height = tex_desc.Height;
-    StringCchCopyA(proc_movie_path, MAX_PATH, dest);
-
-    game_log("Video size: %dx%d\n", proc_movie_width, proc_movie_height);
+    frame_num = 0;
+    movie_width = tex_desc.Width;
+    movie_height = tex_desc.Height;
+    StringCchCopyA(movie_path, MAX_PATH, dest);
 
     if (hw_has_typed_uav_support)
     {
@@ -1169,10 +1219,10 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
         work_tex_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_RENDER_TARGET;
         work_tex_desc.CPUAccessFlags = 0;
 
-        proc_d3d11_device->CreateTexture2D(&work_tex_desc, NULL, &proc_work_tex);
-        proc_d3d11_device->CreateShaderResourceView(proc_work_tex, NULL, &proc_work_tex_srv);
-        proc_d3d11_device->CreateRenderTargetView(proc_work_tex, NULL, &proc_work_tex_rtv);
-        proc_d3d11_device->CreateUnorderedAccessView(proc_work_tex, NULL, &proc_work_tex_uav);
+        d3d11_device->CreateTexture2D(&work_tex_desc, NULL, &work_tex);
+        d3d11_device->CreateShaderResourceView(work_tex, NULL, &work_tex_srv);
+        d3d11_device->CreateRenderTargetView(work_tex, NULL, &work_tex_rtv);
+        d3d11_device->CreateUnorderedAccessView(work_tex, NULL, &work_tex_uav);
     }
 
     else
@@ -1185,17 +1235,17 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
         work_buf_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
         work_buf_desc.StructureByteStride = sizeof(float) * 4;
 
-        proc_d3d11_device->CreateBuffer(&work_buf_desc, NULL, &proc_work_buf_legacy_sb);
-        proc_d3d11_device->CreateShaderResourceView(proc_work_buf_legacy_sb, NULL, &proc_work_buf_legacy_sb_srv);
-        proc_d3d11_device->CreateUnorderedAccessView(proc_work_buf_legacy_sb, NULL, &proc_work_buf_legacy_sb_uav);
+        d3d11_device->CreateBuffer(&work_buf_desc, NULL, &work_buf_legacy_sb);
+        d3d11_device->CreateShaderResourceView(work_buf_legacy_sb, NULL, &work_buf_legacy_sb_srv);
+        d3d11_device->CreateUnorderedAccessView(work_buf_legacy_sb, NULL, &work_buf_legacy_sb_uav);
 
         // For dest_texture_width.
-        update_constant_buffer(proc_mosample_legacy_cb, &tex_desc.Width, sizeof(UINT));
+        update_constant_buffer(d3d11_context, mosample_legacy_cb, &tex_desc.Width, sizeof(UINT));
     }
 
-    proc_used_pxconv_planes = calc_format_planes(proc_movie_pxconv);
+    used_pxconv_planes = calc_format_planes(movie_pxconv);
 
-    switch (proc_movie_pxconv)
+    switch (movie_pxconv)
     {
         case PXCONV_YUV420_601:
         case PXCONV_YUV420_709:
@@ -1205,7 +1255,7 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
             for (s32 i = 0; i < 3; i++)
             {
                 s32 dims[2];
-                calc_plane_dims(proc_movie_pxconv, proc_movie_width, proc_movie_height, i, &dims[0], &dims[1]);
+                calc_plane_dims(movie_pxconv, movie_width, movie_height, i, &dims[0], &dims[1]);
 
                 D3D11_TEXTURE2D_DESC pxconv_tex_desc = {};
                 pxconv_tex_desc.Width = dims[0];
@@ -1218,8 +1268,8 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
                 pxconv_tex_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
                 pxconv_tex_desc.CPUAccessFlags = 0;
 
-                proc_d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &proc_pxconv_texs[i]);
-                proc_d3d11_device->CreateUnorderedAccessView(proc_pxconv_texs[i], NULL, &proc_pxconv_uavs[i]);
+                d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &pxconv_texs[i]);
+                d3d11_device->CreateUnorderedAccessView(pxconv_texs[i], NULL, &pxconv_uavs[i]);
 
                 pxconv_tex_desc.Usage = D3D11_USAGE_STAGING;
                 pxconv_tex_desc.BindFlags = 0;
@@ -1227,7 +1277,7 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
 
                 for (s32 j = 0; j < NUM_BUFFERED_DL_TEXS; j++)
                 {
-                    proc_d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &proc_pxconv_dls[i].texs[j]);
+                    d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &pxconv_dls[i].texs[j]);
                 }
             }
 
@@ -1242,7 +1292,7 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
             for (s32 i = 0; i < 2; i++)
             {
                 s32 dims[2];
-                calc_plane_dims(proc_movie_pxconv, proc_movie_width, proc_movie_height, i, &dims[0], &dims[1]);
+                calc_plane_dims(movie_pxconv, movie_width, movie_height, i, &dims[0], &dims[1]);
 
                 D3D11_TEXTURE2D_DESC pxconv_tex_desc = {};
                 pxconv_tex_desc.Width = dims[0];
@@ -1255,8 +1305,8 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
                 pxconv_tex_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
                 pxconv_tex_desc.CPUAccessFlags = 0;
 
-                proc_d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &proc_pxconv_texs[i]);
-                proc_d3d11_device->CreateUnorderedAccessView(proc_pxconv_texs[i], NULL, &proc_pxconv_uavs[i]);
+                d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &pxconv_texs[i]);
+                d3d11_device->CreateUnorderedAccessView(pxconv_texs[i], NULL, &pxconv_uavs[i]);
 
                 pxconv_tex_desc.Usage = D3D11_USAGE_STAGING;
                 pxconv_tex_desc.BindFlags = 0;
@@ -1264,7 +1314,7 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
 
                 for (s32 j = 0; j < NUM_BUFFERED_DL_TEXS; j++)
                 {
-                    proc_d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &proc_pxconv_dls[i].texs[j]);
+                    d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &pxconv_dls[i].texs[j]);
                 }
             }
 
@@ -1274,8 +1324,8 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
         case PXCONV_BGR0:
         {
             D3D11_TEXTURE2D_DESC pxconv_tex_desc = {};
-            pxconv_tex_desc.Width = proc_movie_width;
-            pxconv_tex_desc.Height = proc_movie_height;
+            pxconv_tex_desc.Width = movie_width;
+            pxconv_tex_desc.Height = movie_height;
             pxconv_tex_desc.MipLevels = 1;
             pxconv_tex_desc.ArraySize = 1;
             pxconv_tex_desc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
@@ -1284,8 +1334,8 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
             pxconv_tex_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
             pxconv_tex_desc.CPUAccessFlags = 0;
 
-            proc_d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &proc_pxconv_texs[0]);
-            proc_d3d11_device->CreateUnorderedAccessView(proc_pxconv_texs[0], NULL, &proc_pxconv_uavs[0]);
+            d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &pxconv_texs[0]);
+            d3d11_device->CreateUnorderedAccessView(pxconv_texs[0], NULL, &pxconv_uavs[0]);
 
             pxconv_tex_desc.Usage = D3D11_USAGE_STAGING;
             pxconv_tex_desc.BindFlags = 0;
@@ -1293,182 +1343,191 @@ void proc_start(const char* dest, const char* profile, void* game_share_h)
 
             for (s32 j = 0; j < NUM_BUFFERED_DL_TEXS; j++)
             {
-                proc_d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &proc_pxconv_dls[0].texs[j]);
+                d3d11_device->CreateTexture2D(&pxconv_tex_desc, NULL, &pxconv_dls[0].texs[j]);
             }
 
             break;
         }
     }
 
-    for (s32 i = 0; i < proc_used_pxconv_planes; i++)
+    for (s32 i = 0; i < used_pxconv_planes; i++)
     {
         D3D11_TEXTURE2D_DESC tex_desc;
-        proc_pxconv_texs[i]->GetDesc(&tex_desc);
+        pxconv_texs[i]->GetDesc(&tex_desc);
 
-        proc_pxconv_plane_sizes[i] = tex_desc.Width * tex_desc.Height * calc_bytes_pitch(tex_desc.Format);
-        proc_pxconv_widths[i] = tex_desc.Width;
-        proc_pxconv_heights[i] = tex_desc.Height;
-        proc_pxconv_pitches[i] = tex_desc.Width * calc_bytes_pitch(tex_desc.Format);
+        pxconv_plane_sizes[i] = tex_desc.Width * tex_desc.Height * calc_bytes_pitch(tex_desc.Format);
+        pxconv_widths[i] = tex_desc.Width;
+        pxconv_heights[i] = tex_desc.Height;
+        pxconv_pitches[i] = tex_desc.Width * calc_bytes_pitch(tex_desc.Format);
     }
 
     // Combined size of all planes.
-    proc_pxconv_total_plane_sizes = 0;
+    pxconv_total_plane_sizes = 0;
 
-    for (s32 i = 0; i < proc_used_pxconv_planes; i++)
+    for (s32 i = 0; i < used_pxconv_planes; i++)
     {
-        proc_pxconv_total_plane_sizes += proc_pxconv_plane_sizes[i];
+        pxconv_total_plane_sizes += pxconv_plane_sizes[i];
     }
 
     for (s32 i = 0; i < MAX_BUFFERED_SEND_FRAMES; i++)
     {
-        proc_ffmpeg_send_bufs[i] = (u8*)malloc(proc_pxconv_total_plane_sizes);
+        ffmpeg_send_bufs[i] = (u8*)malloc(pxconv_total_plane_sizes);
     }
 
     // Need to overwrite with new data.
-    proc_ffmpeg_read_queue.reset();
+    ffmpeg_read_queue.reset();
 
     for (s32 i = 0; i < MAX_BUFFERED_SEND_FRAMES; i++)
     {
-        proc_ffmpeg_read_queue.push(proc_ffmpeg_send_bufs[i]);
+        ffmpeg_read_queue.push(ffmpeg_send_bufs[i]);
     }
 
-    if (proc_mosample_enabled)
+    if (mosample_enabled)
     {
-        proc_mosample_remainder = 0.0f;
+        mosample_remainder = 0.0f;
 
-        s32 sps = proc_movie_fps * proc_mosample_mult;
-        proc_mosample_remainder_step = (1.0f / sps) / (1.0f / proc_movie_fps);
+        s32 sps = movie_fps * mosample_mult;
+        mosample_remainder_step = (1.0f / sps) / (1.0f / movie_fps);
     }
 
-    start_ffmpeg_proc();
+    if (!start_ffmpeg_proc())
+    {
+        return false;
+    }
+
+    game_log("Starting movie to %s (%dx%d)\n", dest, movie_width, movie_height);
+
+    log_profile();
+
+    return true;
 }
 
-void send_converted_video_frame_to_ffmpeg()
+void send_converted_video_frame_to_ffmpeg(ID3D11DeviceContext* d3d11_context)
 {
-    svr_sem_wait(&proc_ffmpeg_read_sem);
+    svr_sem_wait(&ffmpeg_read_sem);
 
     u8* mem;
-    bool res1 = proc_ffmpeg_read_queue.pull(&mem);
+    bool res1 = ffmpeg_read_queue.pull(&mem);
     assert(res1);
 
     svr_start_prof(dl_prof);
-    download_textures(proc_pxconv_texs, proc_pxconv_dls, proc_used_pxconv_planes, mem, proc_pxconv_total_plane_sizes);
+    download_textures(d3d11_context, pxconv_texs, pxconv_dls, used_pxconv_planes, mem, pxconv_total_plane_sizes);
     svr_end_prof(dl_prof);
 
-    proc_ffmpeg_write_queue.push(mem);
+    ffmpeg_write_queue.push(mem);
 
-    svr_sem_release(&proc_ffmpeg_write_sem);
+    svr_sem_release(&ffmpeg_write_sem);
 }
 
-void motion_sample(float weight)
+void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv, float weight)
 {
-    if (weight != proc_mosample_weight_cache)
+    if (weight != mosample_weight_cache)
     {
-        proc_mosample_weight_cache = weight;
-        update_constant_buffer(proc_mosample_cb, &weight, sizeof(float));
+        mosample_weight_cache = weight;
+        update_constant_buffer(d3d11_context, mosample_cb, &weight, sizeof(float));
     }
 
     // if (hw_has_typed_uav_support)
     {
-        proc_d3d11_context->CSSetShader(proc_mosample_cs, NULL, 0);
-        proc_d3d11_context->CSSetConstantBuffers(0, 1, &proc_mosample_cb);
-        proc_d3d11_context->CSSetUnorderedAccessViews(0, 1, &proc_work_tex_uav, NULL);
-        proc_d3d11_context->CSSetShaderResources(0, 1, &proc_game_content_srv);
+        d3d11_context->CSSetShader(mosample_cs, NULL, 0);
+        d3d11_context->CSSetConstantBuffers(0, 1, &mosample_cb);
+        d3d11_context->CSSetUnorderedAccessViews(0, 1, &work_tex_uav, NULL);
+        d3d11_context->CSSetShaderResources(0, 1, &game_content_srv);
     }
 
     // else
     // {
-    //     ID3D11Buffer* legacy_cbs[] = { proc_mosample_cb, proc_mosample_legacy_cb };
-    //     proc_d3d11_context->CSSetShader(proc_mosample_legacy_cs, NULL, 0);
-    //     proc_d3d11_context->CSSetConstantBuffers(0, 2, legacy_cbs);
-    //     proc_d3d11_context->CSSetUnorderedAccessViews(0, 1, &proc_work_buf_legacy_sb_uav, NULL);
-    //     proc_d3d11_context->CSSetShaderResources(0, 1, &proc_game_content_srv);
+    //     ID3D11Buffer* legacy_cbs[] = { mosample_cb, mosample_legacy_cb };
+    //     d3d11_context->CSSetShader(mosample_legacy_cs, NULL, 0);
+    //     d3d11_context->CSSetConstantBuffers(0, 2, legacy_cbs);
+    //     d3d11_context->CSSetUnorderedAccessViews(0, 1, &work_buf_legacy_sb_uav, NULL);
+    //     d3d11_context->CSSetShaderResources(0, 1, &game_content_srv);
     // }
 
-    proc_d3d11_context->Dispatch(calc_cs_thread_groups(proc_movie_width), calc_cs_thread_groups(proc_movie_height), 1);
+    d3d11_context->Dispatch(calc_cs_thread_groups(movie_width), calc_cs_thread_groups(movie_height), 1);
 
     svr_start_prof(mosample_prof);
-    proc_d3d11_context->Flush();
+    d3d11_context->Flush();
     svr_end_prof(mosample_prof);
 
     ID3D11ShaderResourceView* null_srvs[] = { NULL };
     ID3D11UnorderedAccessView* null_uavs[] = { NULL };
 
-    proc_d3d11_context->CSSetShaderResources(0, 1, null_srvs);
-    proc_d3d11_context->CSSetUnorderedAccessViews(0, 1, null_uavs, NULL);
+    d3d11_context->CSSetShaderResources(0, 1, null_srvs);
+    d3d11_context->CSSetUnorderedAccessViews(0, 1, null_uavs, NULL);
 }
 
-void encode_video_frame(ID3D11ShaderResourceView* srv)
+void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv)
 {
-    convert_pixel_formats(srv);
-    send_converted_video_frame_to_ffmpeg();
+    convert_pixel_formats(d3d11_context, srv);
+    send_converted_video_frame_to_ffmpeg(d3d11_context);
 }
 
-void proc_frame()
+void proc_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv)
 {
-    if (proc_frame_num > 0)
+    if (frame_num > 0)
     {
         svr_start_prof(frame_prof);
 
-        if (proc_mosample_enabled)
+        if (mosample_enabled)
         {
-            float old_rem = proc_mosample_remainder;
-            float exposure = proc_mosample_exposure;
+            float old_rem = mosample_remainder;
+            float exposure = mosample_exposure;
 
-            proc_mosample_remainder += proc_mosample_remainder_step;
+            mosample_remainder += mosample_remainder_step;
 
-            if (proc_mosample_remainder <= (1.0f - exposure))
+            if (mosample_remainder <= (1.0f - exposure))
             {
 
             }
 
-            else if (proc_mosample_remainder < 1.0f)
+            else if (mosample_remainder < 1.0f)
             {
-                float weight = (proc_mosample_remainder - svr_max(1.0f - exposure, old_rem)) * (1.0f / exposure);
-                motion_sample(weight);
+                float weight = (mosample_remainder - svr_max(1.0f - exposure, old_rem)) * (1.0f / exposure);
+                motion_sample(d3d11_context, game_content_srv, weight);
             }
 
             else
             {
                 float weight = (1.0f - svr_max(1.0f - exposure, old_rem)) * (1.0f / exposure);
-                motion_sample(weight);
+                motion_sample(d3d11_context, game_content_srv, weight);
 
-                encode_video_frame(proc_work_tex_srv);
+                encode_video_frame(d3d11_context, work_tex_srv);
 
-                proc_mosample_remainder -= 1.0f;
+                mosample_remainder -= 1.0f;
 
-                s32 additional = proc_mosample_remainder;
+                s32 additional = mosample_remainder;
 
                 if (additional > 0)
                 {
                     for (s32 i = 0; i < additional; i++)
                     {
-                        encode_video_frame(proc_work_tex_srv);
+                        encode_video_frame(d3d11_context, work_tex_srv);
                     }
 
-                    proc_mosample_remainder -= additional;
+                    mosample_remainder -= additional;
                 }
 
                 float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-                proc_d3d11_context->ClearRenderTargetView(proc_work_tex_rtv, clear_color);
+                d3d11_context->ClearRenderTargetView(work_tex_rtv, clear_color);
 
-                if (proc_mosample_remainder > FLT_EPSILON && proc_mosample_remainder > (1.0f - exposure))
+                if (mosample_remainder > FLT_EPSILON && mosample_remainder > (1.0f - exposure))
                 {
-                    weight = ((proc_mosample_remainder - (1.0f - exposure)) * (1.0f / exposure));
-                    motion_sample(weight);
+                    weight = ((mosample_remainder - (1.0f - exposure)) * (1.0f / exposure));
+                    motion_sample(d3d11_context, game_content_srv, weight);
                 }
             }
         }
 
         else
         {
-            encode_video_frame(proc_game_content_srv);
+            encode_video_frame(d3d11_context, game_content_srv);
         }
 
         svr_end_prof(frame_prof);
     }
 
-    proc_frame_num++;
+    frame_num++;
 }
 
 void show_total_prof(const char* name, SvrProf& prof)
@@ -1484,46 +1543,68 @@ void show_prof(const char* name, SvrProf& prof)
     }
 }
 
+void free_all_movie_stuff()
+{
+    for (s32 i = 0; i < MAX_BUFFERED_SEND_FRAMES; i++)
+    {
+        if (ffmpeg_send_bufs[i]) free(ffmpeg_send_bufs[i]);
+        ffmpeg_send_bufs[i] = NULL;
+    }
+
+    if (hw_has_typed_uav_support)
+    {
+        if (work_tex) work_tex->Release();
+        if (work_tex_rtv) work_tex_rtv->Release();
+        if (work_tex_srv) work_tex_srv->Release();
+        if (work_tex_uav) work_tex_uav->Release();
+
+        work_tex = NULL;
+        work_tex_rtv = NULL;
+        work_tex_srv = NULL;
+        work_tex_uav = NULL;
+    }
+
+    else
+    {
+        if (work_buf_legacy_sb) work_buf_legacy_sb->Release();
+        if (work_buf_legacy_sb_srv) work_buf_legacy_sb_srv->Release();
+        if (work_buf_legacy_sb_uav) work_buf_legacy_sb_uav->Release();
+
+        work_buf_legacy_sb = NULL;
+        work_buf_legacy_sb_srv = NULL;
+        work_buf_legacy_sb_uav = NULL;
+    }
+
+    for (s32 i = 0; i < used_pxconv_planes; i++)
+    {
+        if (pxconv_texs[i]) pxconv_texs[i]->Release();
+        pxconv_texs[i] = NULL;
+
+        for (s32 j = 0; j < NUM_BUFFERED_DL_TEXS; j++)
+        {
+            if (pxconv_dls[i].texs[j]) pxconv_dls[i].texs[j]->Release();
+            pxconv_dls[i].texs[j] = NULL;
+        }
+
+        if (pxconv_uavs[i]) pxconv_uavs[i]->Release();
+        pxconv_uavs[i] = NULL;
+    }
+}
+
+void proc_give_velocity(float* xyz)
+{
+    float x = xyz[0];
+    float y = xyz[1];
+    float z = xyz[2];
+}
+
 void proc_end()
 {
     game_log("Ending movie\n");
 
     end_ffmpeg_proc();
 
-    for (s32 i = 0; i < MAX_BUFFERED_SEND_FRAMES; i++)
-    {
-        free(proc_ffmpeg_send_bufs[i]);
-    }
-
-    proc_game_content_tex->Release();
-    proc_game_content_srv->Release();
-
-    if (hw_has_typed_uav_support)
-    {
-        proc_work_tex->Release();
-        proc_work_tex_rtv->Release();
-        proc_work_tex_srv->Release();
-        proc_work_tex_uav->Release();
-    }
-
-    else
-    {
-        proc_work_buf_legacy_sb->Release();
-        proc_work_buf_legacy_sb_srv->Release();
-        proc_work_buf_legacy_sb_uav->Release();
-    }
-
-    for (s32 i = 0; i < proc_used_pxconv_planes; i++)
-    {
-        proc_pxconv_texs[i]->Release();
-
-        for (s32 j = 0; j < NUM_BUFFERED_DL_TEXS; j++)
-        {
-            proc_pxconv_dls[i].texs[j]->Release();
-        }
-
-        proc_pxconv_uavs[i]->Release();
-    }
+    free_all_movie_stuff();
 
     #if SVR_PROF
     show_total_prof("Total work time", frame_prof);
@@ -1542,10 +1623,10 @@ void proc_end()
 
 s32 proc_get_game_rate()
 {
-    if (proc_mosample_enabled)
+    if (mosample_enabled)
     {
-        return proc_movie_fps * proc_mosample_mult;
+        return movie_fps * mosample_mult;
     }
 
-    return proc_movie_fps;
+    return movie_fps;
 }

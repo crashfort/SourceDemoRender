@@ -33,7 +33,7 @@ bool ini_is_whitespace(char c)
     return c == ' ' || c == '\t';
 }
 
-void ini_parse_line(char* line_buf, SvrIniLine* ini_line, /* SvrIniTokenType */ s32* type)
+void ini_parse_line(char* line_buf, SvrIniLine* ini_line, SvrIniTokenType* type)
 {
     char* ptr = line_buf;
 
@@ -45,7 +45,8 @@ void ini_parse_line(char* line_buf, SvrIniLine* ini_line, /* SvrIniTokenType */ 
 
     for (; *ptr != 0; ptr++)
     {
-        if (*ptr == '#')
+        // Allowed to use this character on the value side.
+        if (token_index == 1 && *ptr == '#')
         {
             *type = SVR_INI_OTHER;
             return;
@@ -65,6 +66,8 @@ void ini_parse_line(char* line_buf, SvrIniLine* ini_line, /* SvrIniTokenType */ 
 
     ini_line->title[0] = 0;
     ini_line->value[0] = 0;
+
+    // Need to offset by 1 to remove the equal sign.
 
     s32 title_length = tokens[1] - tokens[0];
     s32 value_length = (tokens[2] - tokens[1]) - 1;
@@ -110,10 +113,13 @@ bool svr_open_ini_read(const char* path, SvrIniMem* mem)
     if (large.HighPart == 0 && large.LowPart < MAXDWORD)
     {
         mem->mem = malloc(large.LowPart + 1);
+
         ReadFile(h, mem->mem, large.LowPart, NULL, NULL);
+
         mem->mov_str = (char*)mem->mem;
         mem->mov_str[large.LowPart] = 0;
         mem->line_buf = (char*)malloc(SVR_INI_LINE_BUF_SIZE);
+
         ret = true;
     }
 
@@ -130,7 +136,6 @@ bool svr_read_ini_line(SvrIniMem& mem)
     }
 
     char* line_start = mem.mov_str;
-    bool in_quote = false;
 
     // Skip all blank lines.
 
@@ -164,7 +169,7 @@ bool svr_read_ini_line(SvrIniMem& mem)
     return false;
 }
 
-bool svr_read_ini(SvrIniMem& mem, SvrIniLine* line, /* SvrIniTokenType */ s32* token_type)
+bool svr_read_ini(SvrIniMem& mem, SvrIniLine* line, SvrIniTokenType* token_type)
 {
     while (svr_read_ini_line(mem))
     {

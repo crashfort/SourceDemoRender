@@ -33,7 +33,7 @@ bool vdf_is_whitespace(char c)
     return c == ' ' || c == '\t';
 }
 
-void vdf_parse_line(char* line_buf, SvrVdfLine* vdf_line, /* SvrVdfTokenType */ s32* type)
+void vdf_parse_line(char* line_buf, SvrVdfLine* vdf_line, SvrVdfTokenType* type)
 {
     char* ptr = line_buf;
     bool in_quote = false;
@@ -41,7 +41,7 @@ void vdf_parse_line(char* line_buf, SvrVdfLine* vdf_line, /* SvrVdfTokenType */ 
     char* token_start[2] = { NULL, NULL };
     char* token_end[2] = { NULL, NULL };
     s32 token_index = 0;
-    /* SvrVdfTokenType */ s32 token_type = SVR_VDF_OTHER;
+    SvrVdfTokenType token_type = SVR_VDF_OTHER;
 
     for (; *ptr != 0; ptr++)
     {
@@ -149,10 +149,13 @@ bool svr_open_vdf_read(const char* path, SvrVdfMem* mem)
     if (large.HighPart == 0 && large.LowPart < MAXDWORD)
     {
         mem->mem = malloc(large.LowPart + 1);
+
         ReadFile(h, mem->mem, large.LowPart, NULL, NULL);
+
         mem->mov_str = (char*)mem->mem;
         mem->mov_str[large.LowPart] = 0;
         mem->line_buf = (char*)malloc(SVR_VDF_LINE_BUF_SIZE);
+
         ret = true;
     }
 
@@ -169,27 +172,40 @@ bool svr_read_vdf_line(SvrVdfMem& mem)
     }
 
     char* line_start = mem.mov_str;
-    bool in_quote = false;
 
-    for (; *mem.mov_str != 0; mem.mov_str++)
+    // Skip all blank lines.
+
+    for (; *mem.mov_str != 0;)
     {
         if (s32 nl = vdf_is_newline(mem.mov_str))
         {
             char* line_end = mem.mov_str;
             s32 line_length = line_end - line_start;
 
-            StringCchCopyNA(mem.line_buf, SVR_VDF_LINE_BUF_SIZE, line_start, line_length); 
+            if (line_length > 0)
+            {
+                StringCchCopyNA(mem.line_buf, SVR_VDF_LINE_BUF_SIZE, line_start, line_length); 
+            }
 
             mem.mov_str += nl;
             line_start = mem.mov_str;
-            return true;
+
+            if (line_length > 0)
+            {
+                return true;
+            }
+        }
+
+        else
+        {
+            mem.mov_str++;
         }
     }
 
     return false;
 }
 
-bool svr_read_vdf(SvrVdfMem& mem, SvrVdfLine* line, /* SvrVdfTokenType */ s32* token_type)
+bool svr_read_vdf(SvrVdfMem& mem, SvrVdfLine* line, SvrVdfTokenType* token_type)
 {
     while (svr_read_vdf_line(mem))
     {

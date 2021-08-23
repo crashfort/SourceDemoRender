@@ -15,6 +15,7 @@
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AssemblyAndMachineCode</AssemblerOutput>
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AssemblyAndMachineCode</AssemblerOutput>
     </ClCompile>
+    <ClCompile Include="stb_sprintf.cpp" />
     <ClCompile Include="svr_logging.cpp" />
     <ClCompile Include="svr_vdf.cpp" />
   </ItemGroup>
@@ -84,7 +85,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;_DEBUG;_CRT_SECURE_NO_WARNINGS;SVR_DEBUG;SVR_32BIT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_DEBUG;SVR_32BIT;SVR_LAUNCHER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -98,6 +99,7 @@
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <SupportJustMyCode>false</SupportJustMyCode>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -113,7 +115,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;NDEBUG;_CRT_SECURE_NO_WARNINGS;SVR_RELEASE;SVR_32BIT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_RELEASE;SVR_32BIT;SVR_LAUNCHER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -127,6 +129,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
