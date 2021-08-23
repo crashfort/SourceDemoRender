@@ -43,26 +43,23 @@ bool svr_can_use_nvenc()
 
 bool svr_init(const char* svr_path, IUnknown* game_device)
 {
-    ID3D11Device* game_d3d11_device = NULL;
-    IDirect3DDevice9Ex* game_d3d9ex_device = NULL;
+    game_device->QueryInterface(IID_PPV_ARGS(&svr_d3d11_device));
+    game_device->QueryInterface(IID_PPV_ARGS(&svr_d3d9ex_device));
 
-    game_device->QueryInterface(IID_PPV_ARGS(&game_d3d11_device));
-    game_device->QueryInterface(IID_PPV_ARGS(&game_d3d9ex_device));
-
-    if (game_d3d11_device == NULL && game_d3d9ex_device == NULL)
+    if (svr_d3d11_device == NULL && svr_d3d9ex_device == NULL)
     {
         OutputDebugStringA("SVR (svr_init): The passed game_device is not a D3D11 (ID3D11Device) or a D3D9Ex (IDirect3DDevice9Ex) type\n");
         return false;
     }
 
-    if (game_d3d11_device)
+    if (svr_d3d11_device)
     {
-        UINT device_flags = game_d3d11_device->GetCreationFlags();
-        UINT device_level = game_d3d11_device->GetFeatureLevel();
+        UINT device_flags = svr_d3d11_device->GetCreationFlags();
+        UINT device_level = svr_d3d11_device->GetFeatureLevel();
 
         if (device_level < (UINT)D3D_FEATURE_LEVEL_11_0)
         {
-            game_d3d11_device->Release();
+            svr_d3d11_device->Release();
 
             OutputDebugStringA("SVR (svr_init): The game D3D11 device must be created with D3D_FEATURE_LEVEL_11_0 or higher\n");
             return false;
@@ -70,7 +67,7 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
 
         if (!(device_flags & D3D11_CREATE_DEVICE_BGRA_SUPPORT))
         {
-            game_d3d11_device->Release();
+            svr_d3d11_device->Release();
 
             OutputDebugStringA("SVR (svr_init): The game D3D11 device must be created with the D3D11_CREATE_DEVICE_BGRA_SUPPORT flag\n");
             return false;
@@ -83,11 +80,11 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
         }
         #endif
 
-        game_d3d11_device->GetImmediateContext(&svr_d3d11_context);
+        svr_d3d11_device->GetImmediateContext(&svr_d3d11_context);
     }
 
     // If we are a D3D9Ex game, we have to create a new D3D11 device for game_proc.
-    else if (game_d3d9ex_device)
+    else if (svr_d3d9ex_device)
     {
         // BGRA support needed for Direct2D interoperability.
         // It is also only intended to be used from a single thread.

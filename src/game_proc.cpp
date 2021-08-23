@@ -617,7 +617,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     hw_has_typed_uav_support = (fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD) && (fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE);
 
-    hw_has_nvenc_support = proc_is_nvenc_supported();
+    // hw_has_nvenc_support = proc_is_nvenc_supported();
 
     IDXGIDevice* dxgi_device;
     d3d11_device->QueryInterface(IID_PPV_ARGS(&dxgi_device));

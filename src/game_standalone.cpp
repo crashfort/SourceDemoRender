@@ -295,6 +295,7 @@ void* get_active_player(u32 game_id)
     switch (game_id)
     {
         case SVR_GAME_CSS:
+        case SVR_GAME_CSGO:
         {
             int spec = gm_get_spec_target_fn();
 
@@ -326,6 +327,11 @@ float* get_player_vel(u32 game_id, void* player)
         {
             return (float*)player + 61;
         }
+
+        case SVR_GAME_CSGO:
+        {
+            return (float*)player + 69;
+        }
     }
 
     assert(false);
@@ -337,6 +343,7 @@ bool has_velo_support(u32 game_id)
     switch (game_id)
     {
         case SVR_GAME_CSS:
+        case SVR_GAME_CSGO:
         {
             return true;
         }
@@ -427,11 +434,12 @@ void run_cfg(const char* name)
     free(mem);
 }
 
-const char* get_cmd_args(u32 game_id)
+const char* get_cmd_args(u32 game_id, void* args)
 {
     switch (game_id)
     {
         case SVR_GAME_CSS:
+        case SVR_GAME_CSGO:
         {
             return (const char*)((u8*)args) + 8;
         }
@@ -450,7 +458,7 @@ void __cdecl start_movie_override(void* args)
 
     u32 game_id = launcher_data.app_id;
 
-    const char* value_args = get_cmd_args(game_id);
+    const char* value_args = get_cmd_args(game_id, args);
 
     assert(value_args);
 
@@ -589,6 +597,13 @@ const char* CSS_LIBS[] = {
     "client.dll",
 };
 
+const char* CSGO_LIBS[] = {
+    "shaderapidx9.dll",
+    "engine.dll",
+    "tier0.dll",
+    "client.dll"
+};
+
 bool wait_for_game_libs()
 {
     const char** libs = NULL;
@@ -600,6 +615,13 @@ bool wait_for_game_libs()
         {
             libs = CSS_LIBS;
             num_libs = SVR_ARRAY_SIZE(CSS_LIBS);
+            break;
+        }
+
+        case SVR_GAME_CSGO:
+        {
+            libs = CSGO_LIBS;
+            num_libs = SVR_ARRAY_SIZE(CSGO_LIBS);
             break;
         }
     }
@@ -622,6 +644,7 @@ bool has_cvar_restrict(u32 game_id)
     switch (game_id)
     {
         case SVR_GAME_CSS:
+        case SVR_GAME_CSGO:
         {
             return true;
         }
@@ -635,8 +658,9 @@ void patch_cvar_restrict(u32 game_id)
     switch (game_id)
     {
         case SVR_GAME_CSS:
+        case SVR_GAME_CSGO:
         {
-            // This replaces the flags to compare to, so the comparison will always be false.
+            // This replaces the flags to compare to, so the comparison will always be false (removing cvar restriction).
             u8* addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 58 83 3D ?? ?? ?? ?? ??");;
             addr += 1;
 
@@ -653,6 +677,7 @@ IDirect3DDevice9Ex* get_d3d9ex_device(u32 game_id)
     switch (game_id)
     {
         case SVR_GAME_CSS:
+        case SVR_GAME_CSGO:
         {
             u8* addr = (u8*)pattern_scan("shaderapidx9.dll", "A1 ?? ?? ?? ?? 6A 00 56 6A 00 8B 08 6A 15 68 ?? ?? ?? ?? 6A 00 6A 01 6A 01 50 FF 51 5C 85 C0 79 06 C7 06 ?? ?? ?? ??");
             addr += 1;
@@ -669,6 +694,7 @@ void* get_engine_client_ptr(u32 game_id)
     switch (game_id)
     {
         case SVR_GAME_CSS:
+        case SVR_GAME_CSGO:
         {
             return create_interface("engine.dll", "VEngineClient014");
         }
@@ -688,6 +714,14 @@ void* get_local_player_ptr(u32 game_id)
 
             return addr;
         }
+
+        case SVR_GAME_CSGO:
+        {
+            u8* addr = (u8*)pattern_scan("client.dll", "8B 35 ?? ?? ?? ?? 85 F6 74 2E 8B 06 8B CE FF 50 28");
+            addr += 2;
+
+            return addr;
+        }
     }
 
     return NULL;
@@ -700,6 +734,11 @@ void* get_engine_client_exec_cmd_fn(u32 game_id, void* engine_client_ptr)
         case SVR_GAME_CSS:
         {
             return get_virtual(engine_client_ptr, 102);
+        }
+
+        case SVR_GAME_CSGO:
+        {
+            return get_virtual(engine_client_ptr, 108);
         }
     }
 
@@ -714,6 +753,11 @@ void* get_view_render_fn(u32 game_id)
         {
             return pattern_scan("client.dll", "55 8B EC 8B 55 08 83 7A 08 00 74 17 83 7A 0C 00 74 11 8B 0D ?? ?? ?? ?? 52 8B 01 FF 50 14 E8 ?? ?? ?? ?? 5D C2 04 00");
         }
+
+        case SVR_GAME_CSGO:
+        {
+            return pattern_scan("client.dll", "55 8B EC 83 E4 F0 81 EC ?? ?? ?? ?? 56 57 8B F9 8B 0D ?? ?? ?? ?? 89 7C 24 18");
+        }
     }
 
     return NULL;
@@ -726,6 +770,11 @@ void* get_start_movie_fn(u32 game_id)
         case SVR_GAME_CSS:
         {
             return pattern_scan("engine.dll", "55 8B EC 83 EC 08 83 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ??");
+        }
+
+        case SVR_GAME_CSGO:
+        {
+            return pattern_scan("engine.dll", "55 8B EC 83 EC 08 53 56 57 8B 7D 08 8B 1F 83 FB 02 7D 5F");
         }
     }
 
@@ -740,11 +789,17 @@ void* get_end_movie_fn(u32 game_id)
         {
             return pattern_scan("engine.dll", "80 3D ?? ?? ?? ?? ?? 75 0F 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 04 C3 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 C3");
         }
+
+        case SVR_GAME_CSGO:
+        {
+            return pattern_scan("engine.dll", "80 3D ?? ?? ?? ?? ?? 75 0F 68 ?? ?? ?? ??");
+        }
     }
+
     return NULL;
 }
 
-void* get_spec_target_fn(u32 game_id)
+void* get_get_spec_target_fn(u32 game_id)
 {
     switch (game_id)
     {
@@ -752,12 +807,17 @@ void* get_spec_target_fn(u32 game_id)
         {
             return pattern_scan("client.dll", "E8 ?? ?? ?? ?? 85 C0 74 16 8B 10 8B C8 FF 92 ?? ?? ?? ?? 85 C0 74 08 8D 48 08 8B 01 FF 60 24 33 C0 C3");
         }
+
+        case SVR_GAME_CSGO:
+        {
+            return pattern_scan("client.dll", "8B 0D ?? ?? ?? ?? 85 C9 74 ?? 8B 01 FF A0 ?? ?? ?? ?? 33 C0 C3");
+        }
     }
 
     return NULL;
 }
 
-void* get_player_by_index_fn(u32 game_id)
+void* get_get_player_by_index_fn(u32 game_id)
 {
     switch (game_id)
     {
@@ -765,7 +825,13 @@ void* get_player_by_index_fn(u32 game_id)
         {
             return pattern_scan("client.dll", "55 8B EC 8B 0D ?? ?? ?? ?? 56 FF 75 08 E8 ?? ?? ?? ?? 8B F0 85 F6 74 15 8B 16 8B CE 8B 92 ?? ?? ?? ?? FF D2 84 C0 74 05 8B C6 5E 5D C3 33 C0 5E 5D C3");
         }
+
+        case SVR_GAME_CSGO:
+        {
+            return pattern_scan("client.dll", "83 F9 01 7C ?? A1 ?? ?? ?? ?? 3B 48 ?? 7F ?? 56");
+        }
     }
+
     return NULL;
 }
 
@@ -787,8 +853,8 @@ bool create_game_hooks()
     if (has_velo_support(game_id))
     {
         gm_local_player_ptr = get_local_player_ptr(game_id);
-        gm_get_spec_target_fn = (GmGetSpecTargetFn)get_spec_target_fn(game_id);
-        gm_get_player_by_index_fn = (GmPlayerByIdxFn)get_player_by_index_fn(game_id);
+        gm_get_spec_target_fn = (GmGetSpecTargetFn)get_get_spec_target_fn(game_id);
+        gm_get_player_by_index_fn = (GmPlayerByIdxFn)get_get_player_by_index_fn(game_id);
     }
 
     if (has_cvar_restrict(game_id))

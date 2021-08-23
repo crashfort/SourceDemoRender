@@ -39,26 +39,31 @@ __declspec(noreturn) void launcher_error(const char* format, ...)
 // These are the supported games.
 const u32 GAME_APP_IDS[] = {
     SVR_GAME_CSS,
+    SVR_GAME_CSGO,
 };
 
 // Display names shown on Steam.
 const char* GAME_NAMES[] = {
     "Counter-Strike: Source",
+    "Counter-Strike: Global Offensive",
 };
 
 // Extra stuff to put in the start args.
 const char* EXTRA_GAME_ARGS[] = {
     "-game cstrike", // Counter-Strike: Source
+    "-game csgo", // Counter-Strike: Global Offensive
 };
 
 // Paths to append to each Steam library.
 const char* GAME_ROOT_DIRS[] = {
     "common\\Counter-Strike Source\\", // Counter-Strike: Source
+    "common\\Counter-Strike Global Offensive\\", // Counter-Strike: Global Offensive
 };
 
 // Where to find the executable built up from the Steam library path plus the game root directory (above).
 const char* GAME_EXE_PATHS[] = {
     "hl2.exe", // Counter-Strike: Source
+    "csgo.exe", // Counter-Strike: Global Offensive
 };
 
 const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(GAME_APP_IDS);
@@ -452,7 +457,40 @@ s32 autostart_game(u32 app_id)
 
     if (game_index == -1)
     {
-        launcher_error("Cannot autostart, no supported game that matches app id %u.", app_id);
+        // Show why this game cannot be autostarted.
+
+        s32 flags = 0;
+
+        const s32 SUPPORTED = 1 << 0;
+        const s32 INSTALLED = 1 << 1;
+
+        for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
+        {
+            if (app_id == GAME_APP_IDS[i])
+            {
+                flags |= SUPPORTED;
+
+                if (steam_install_states[i])
+                {
+                    flags |= INSTALLED;
+                }
+
+                break;
+            }
+        }
+
+        if (!(flags & SUPPORTED))
+        {
+            launcher_error("Cannot autostart, app id %u is not supported.", app_id);
+        }
+
+        else
+        {
+            if (!(flags & INSTALLED))
+            {
+                launcher_error("Cannot autostart, app id %u is not installed.", app_id);
+            }
+        }
     }
 
     return start_game(game_index);
@@ -764,7 +802,7 @@ int main(int argc, char** argv)
     // Autostarting a game works by giving the app id.
     if (argc == 2)
     {
-        s32 app_id = strtoul(argv[1], NULL, 10);
+        u32 app_id = strtoul(argv[1], NULL, 10);
 
         if (app_id == 0)
         {

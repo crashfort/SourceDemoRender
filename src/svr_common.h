@@ -34,7 +34,7 @@ struct SvrGameInitData
 
 // Steam app ids of the games we support.
 const u32 SVR_GAME_CSS = 240;
-// const u32 SVR_GAME_CSGO = 730;
+const u32 SVR_GAME_CSGO = 730;
 
 inline void svr_clamp(s32& v, s32 min, s32 max) { if (v < min) v = min; if (v > max) v = max; }
 inline void svr_clamp(float& v, float min, float max) { if (v < min) v = min; if (v > max) v = max; }
