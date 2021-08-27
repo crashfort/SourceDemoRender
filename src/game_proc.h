@@ -1,5 +1,6 @@
 #pragma once
 #include "svr_common.h"
+#include <Windows.h>
 
 // Proc is the layer below the public API. This is where the magic happens.
 
@@ -13,3 +14,5 @@ void proc_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* ga
 void proc_give_velocity(float* xyz);
 void proc_end();
 s32 proc_get_game_rate();
+
+bool proc_is_nvenc_supported();

@@ -16,9 +16,9 @@ s64 svr_prof_get_real_time();
 
 #if SVR_PROF
 
-void svr_start_prof(SvrProf& prof);
-void svr_end_prof(SvrProf& prof);
-void svr_reset_prof(SvrProf& prof);
+void svr_start_prof(SvrProf* prof);
+void svr_end_prof(SvrProf* prof);
+void svr_reset_prof(SvrProf* prof);
 
 #else
 

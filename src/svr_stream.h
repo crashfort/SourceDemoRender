@@ -1,7 +1,7 @@
 #pragma once
 #include "svr_common.h"
 #include "svr_atom.h"
-#include "svr_mem_range.h"
+#include <malloc.h>
 
 // This is based on https://github.com/rigtorp/SPSCQueue by Erik Rigtorp!
 // Safe for 1 thread to push and for 1 thread to pull.
@@ -21,19 +21,20 @@ struct SvrAsyncStream
     T* slots_;
     s32 buffer_capacity;
 
-    inline void init_with_range(SvrMemoryRange& range, s32 capacity)
+    inline void init(s32 capacity)
     {
-        // Multithreaded stuff, so pad both ends.
-
+        // The read and write ends cannot be the same (as then it would be empty).
         capacity += 1;
 
-        range.push(SVR_CPU_CACHE_SIZE);
-        slots_ = (T*)range.push(sizeof(T) * capacity);
-        range.push(SVR_CPU_CACHE_SIZE);
+        // We don't use mem ranges in SVR so just use a dumb allocation instead for simplicity.
+        // Doing it this way removes the pre and post cache region protection but whatever.
+        slots_ = (T*)malloc(sizeof(T) * capacity);
 
         buffer_capacity = capacity;
     }
 
+    // When every item is going to be readded.
+    // The environment must be controlled for this to be called.
     inline void reset()
     {
         svr_atom_set(&head_, 0);
@@ -43,7 +44,7 @@ struct SvrAsyncStream
     // Mem is not copied! Mem is only referenced!
     // Size or extra don't have to be specified, they're just additional info to put in the pack. Just know to pull the pack the same way it was pushed.
     // Returns false if the buffer is full.
-    inline bool push(const T& item)
+    inline bool push(T* item)
     {
         s32 head = svr_atom_read(&head_);
         s32 next_head = head + 1;
@@ -59,7 +60,7 @@ struct SvrAsyncStream
             return false;
         }
 
-        slots_[head] = item;
+        slots_[head] = *item;
 
         svr_atom_store(&head_, next_head);
         return true;

@@ -28,11 +28,11 @@ const SvrVdfTokenType SVR_VDF_GROUP_TITLE = 1;
 const SvrVdfTokenType SVR_VDF_KV = 2;
 
 SvrVdfLine svr_alloc_vdf_line();
-void svr_free_vdf_line(SvrVdfLine& line);
+void svr_free_vdf_line(SvrVdfLine* line);
 
 bool svr_open_vdf_read(const char* path, SvrVdfMem* mem);
 
 // Call this until it returns false (or break the loop when needed).
-bool svr_read_vdf(SvrVdfMem& mem, SvrVdfLine* line, SvrVdfTokenType* token_type);
+bool svr_read_vdf(SvrVdfMem* mem, SvrVdfLine* line, SvrVdfTokenType* token_type);
 
-void svr_close_vdf(SvrVdfMem mem);
+void svr_close_vdf(SvrVdfMem* mem);

@@ -221,23 +221,23 @@ void append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
 
     StringCchPrintfA(buf, 64, "%u", GAME_APP_IDS[game_index]);
 
-    while (svr_read_vdf(mem, &vdf_line, &vdf_token_type))
+    while (svr_read_vdf(&mem, &vdf_line, &vdf_token_type))
     {
         switch (vdf_token_type)
         {
             case SVR_VDF_GROUP_TITLE:
             {
-                if (depth == 0 && strcmp(vdf_line.title, "UserLocalConfigStore") == 0) { depth++; break; }
-                else if (depth == 1 && strcmp(vdf_line.title, "Software") == 0) { depth++; break; }
-                else if (depth == 2 && strcmp(vdf_line.title, "valve") == 0) { depth++; break; }
-                else if (depth == 3 && strcmp(vdf_line.title, "Steam") == 0) { depth++; break; }
-                else if (depth == 4 && strcmp(vdf_line.title, "Apps") == 0) { depth++; break; }
-                else if (depth == 5 && strcmp(vdf_line.title, buf) == 0) { depth++; break; }
+                if (depth == 0 && !strcmp(vdf_line.title, "UserLocalConfigStore")) { depth++; break; }
+                else if (depth == 1 && !strcmp(vdf_line.title, "Software")) { depth++; break; }
+                else if (depth == 2 && !strcmp(vdf_line.title, "valve")) { depth++; break; }
+                else if (depth == 3 && !strcmp(vdf_line.title, "Steam")) { depth++; break; }
+                else if (depth == 4 && !strcmp(vdf_line.title, "Apps")) { depth++; break; }
+                else if (depth == 5 && !strcmp(vdf_line.title, buf)) { depth++; break; }
             }
 
             case SVR_VDF_KV:
             {
-                if (depth == 6 && strcmp(vdf_line.title, "LaunchOptions") == 0)
+                if (depth == 6 && !strcmp(vdf_line.title, "LaunchOptions"))
                 {
                     StringCchCatA(out_buf, out_buf_cch, " ");
                     StringCchCatA(out_buf, out_buf_cch, vdf_line.value);
@@ -278,7 +278,7 @@ void find_installed_game_path(s32 game_index, char* out_path, s32 out_path_cch)
     }
 
     // Cannot happen unless Steam is installed wrong in which case it wouldn't work anyway.
-    launcher_error("Game %s not found in any steam library.", GAME_NAMES[game_index]);
+    launcher_error("Game %s was not found in any Steam library. Steam may be installed wrong.", GAME_NAMES[game_index]);
 }
 
 s32 start_game(s32 game_index)
@@ -314,9 +314,9 @@ s32 start_game(s32 game_index)
 
     PROCESS_INFORMATION info;
 
-    if (CreateProcessA(full_exe_path, full_args, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &start_info, &info) == 0)
+    if (!CreateProcessA(full_exe_path, full_args, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &start_info, &info))
     {
-        launcher_error("Could not create game process (%lu).", GetLastError());
+        launcher_error("Could not start game (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
     }
 
     // Allocate a sufficient enough size in the target process.
@@ -328,7 +328,7 @@ s32 start_game(s32 game_index)
     if (remote_mem == NULL)
     {
         TerminateProcess(info.hProcess, 1);
-        launcher_error("Could not allocate remotely (%lu).", GetLastError());
+        launcher_error("Could not initialize standalone SVR (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
     }
 
     SIZE_T remote_write_pos = 0;
@@ -366,10 +366,10 @@ s32 start_game(s32 game_index)
     remote_write_pos += remote_written;
 
     // Queue up our procedural function to run instantly on the main thread when the process is resumed.
-    if (QueueUserAPC((PAPCFUNC)remote_func_addr, info.hThread, (ULONG_PTR)remote_structure_addr) == 0)
+    if (!QueueUserAPC((PAPCFUNC)remote_func_addr, info.hThread, (ULONG_PTR)remote_structure_addr))
     {
         TerminateProcess(info.hProcess, 1);
-        launcher_error("Could not queue main thread func for injection (%lu).", GetLastError());
+        launcher_error("Could not initialize standalone SVR (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
     }
 
     svr_log("Launcher finished, rest of the log is from the game\n");
@@ -653,13 +653,13 @@ void find_steam_libraries()
 
     s32 depth = 0;
 
-    while (svr_read_vdf(vdf_mem, &vdf_line, &vdf_token_type))
+    while (svr_read_vdf(&vdf_mem, &vdf_line, &vdf_token_type))
     {
         switch (vdf_token_type)
         {
             case SVR_VDF_GROUP_TITLE:
             {
-                if (depth == 0 && strcmp(vdf_line.title, "LibraryFolders") == 0) { depth++; break; }
+                if (depth == 0 && !strcmp(vdf_line.title, "LibraryFolders")) { depth++; break; }
             }
 
             case SVR_VDF_KV:
@@ -671,7 +671,7 @@ void find_steam_libraries()
                     char buf[64];
                     StringCchPrintfA(buf, 64, "%d", num_steam_libraries);
 
-                    if (strcmp(vdf_line.title, buf) == 0)
+                    if (!strcmp(vdf_line.title, buf))
                     {
                         // Paths in vdf will be escaped, we need to unescape.
 
@@ -743,7 +743,21 @@ void find_installed_supported_games()
 
     if (num_installed_games == 0)
     {
-        launcher_error("No supported games installed on Steam.");
+        char message[1024];
+        message[0] = 0;
+        StringCchCatA(message, 1024, "None of the supported games are installed on Steam. These are the supported games:\n\n");
+
+        for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
+        {
+            StringCchCatA(message, 1024, GAME_NAMES[i]);
+
+            if (i != NUM_SUPPORTED_GAMES)
+            {
+                StringCchCatA(message, 1024, "\n");
+            }
+        }
+
+        launcher_error(message);
     }
 }
 
@@ -771,7 +785,7 @@ int main(int argc, char** argv)
 
     if (!IsWindows10OrGreater())
     {
-        launcher_error("Windows 10 or later is needed to use SVR!");
+        launcher_error("Windows 10 or later is needed to use SVR.");
     }
 
     GetCurrentDirectoryA(MAX_PATH, working_dir);

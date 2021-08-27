@@ -1,6 +1,5 @@
 #include "svr_api.h"
 #include "game_proc.h"
-#include "game_proc_nvenc.h"
 #include <d3d11.h>
 #include <d3d9.h>
 #include "game_shared.h"
@@ -43,34 +42,34 @@ bool svr_can_use_nvenc()
 
 bool svr_init(const char* svr_path, IUnknown* game_device)
 {
+    bool ret = false;
+
     game_device->QueryInterface(IID_PPV_ARGS(&svr_d3d11_device));
     game_device->QueryInterface(IID_PPV_ARGS(&svr_d3d9ex_device));
 
     if (svr_d3d11_device == NULL && svr_d3d9ex_device == NULL)
     {
         OutputDebugStringA("SVR (svr_init): The passed game_device is not a D3D11 (ID3D11Device) or a D3D9Ex (IDirect3DDevice9Ex) type\n");
-        return false;
+        goto rfail;
     }
 
     if (svr_d3d11_device)
     {
+        svr_log("Init for a D3D11 game\n");
+
         UINT device_flags = svr_d3d11_device->GetCreationFlags();
         UINT device_level = svr_d3d11_device->GetFeatureLevel();
 
         if (device_level < (UINT)D3D_FEATURE_LEVEL_11_0)
         {
-            svr_d3d11_device->Release();
-
             OutputDebugStringA("SVR (svr_init): The game D3D11 device must be created with D3D_FEATURE_LEVEL_11_0 or higher\n");
-            return false;
+            goto rfail;
         }
 
         if (!(device_flags & D3D11_CREATE_DEVICE_BGRA_SUPPORT))
         {
-            svr_d3d11_device->Release();
-
             OutputDebugStringA("SVR (svr_init): The game D3D11 device must be created with the D3D11_CREATE_DEVICE_BGRA_SUPPORT flag\n");
-            return false;
+            goto rfail;
         }
 
         #if SVR_DEBUG
@@ -86,6 +85,8 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
     // If we are a D3D9Ex game, we have to create a new D3D11 device for game_proc.
     else if (svr_d3d9ex_device)
     {
+        svr_log("Init for a D3D9Ex game\n");
+
         // BGRA support needed for Direct2D interoperability.
         // It is also only intended to be used from a single thread.
         UINT device_create_flags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
@@ -101,19 +102,39 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
             MINIMUM_DEVICE_LEVEL
         };
 
+        HRESULT hr;
+
         D3D_FEATURE_LEVEL created_device_level;
-        D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, DEVICE_LEVELS, 1, D3D11_SDK_VERSION, &svr_d3d11_device, &created_device_level, &svr_d3d11_context);
+
+        hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, DEVICE_LEVELS, 1, D3D11_SDK_VERSION, &svr_d3d11_device, &created_device_level, &svr_d3d11_context);
+
+        if (FAILED(hr))
+        {
+            svr_log("Could not create a new D3D11 device (%#x)\n", hr);
+            goto rfail;
+        }
     }
+
+    // Call this now to make the next call return instantly and not cause unexpected delays.
+    // The value is cached and cannot change.
+    proc_is_nvenc_supported();
 
     game_init();
 
-    bool ret = proc_init(svr_path, svr_d3d11_device);
-
-    if (!ret)
+    if (!proc_init(svr_path, svr_d3d11_device))
     {
-
+        goto rfail;
     }
 
+    ret = true;
+    goto rexit;
+
+rfail:
+    svr_maybe_release(&svr_d3d11_device);
+    svr_maybe_release(&svr_d3d11_context);
+    svr_maybe_release(&svr_d3d9ex_device);
+
+rexit:
     return ret;
 }
 
@@ -124,10 +145,12 @@ bool svr_movie_active()
 
 bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie* movie_data)
 {
+    bool ret = false;
+
     if (svr_movie_running)
     {
         OutputDebugStringA("SVR (svr_start): Movie is already started. It is not allowed to call this now\n");
-        return false;
+        goto rexit;
     }
 
     movie_data->game_tex_view->QueryInterface(IID_PPV_ARGS(&svr_d3d9ex_content_surf));
@@ -136,7 +159,7 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie*
     if (svr_d3d9ex_content_surf == NULL && svr_content_srv == NULL)
     {
         OutputDebugStringA("SVR (svr_start): The passed game texture view is not a D3D11 (ID3D11ShaderResourceView) or a D3D9Ex (IDirect3DSurface9) type\n");
-        return false;
+        goto rexit;
     }
 
     // We are a D3D11 game.
@@ -145,6 +168,7 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie*
         // We can get the texture from the srv, and then get the dimensions of the texture.
 
         ID3D11Resource* game_tex_res;
+
         svr_content_srv->GetResource(&game_tex_res);
 
         game_tex_res->QueryInterface(IID_PPV_ARGS(&svr_content_tex));
@@ -158,33 +182,47 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie*
     // We are a D3D9Ex game.
     else if (svr_d3d9ex_content_surf)
     {
-        // Have to create a new texture that we can open in D3D11. This D3D9Ex texture will be copied to from the
-        // game content texture.
+        // Have to create a new texture that we can open in D3D11. This D3D9Ex texture will be copied to the game content texture.
 
         D3DSURFACE_DESC desc;
         svr_d3d9ex_content_surf->GetDesc(&desc);
 
-        svr_d3d9ex_device->CreateTexture(desc.Width, desc.Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &svr_d3d9ex_share_tex, &svr_d3d9ex_share_h);
+        HRESULT hr;
+
+        hr = svr_d3d9ex_device->CreateTexture(desc.Width, desc.Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &svr_d3d9ex_share_tex, &svr_d3d9ex_share_h);
+        if (FAILED(hr)) goto rfail;
+
         svr_d3d9ex_share_tex->GetSurfaceLevel(0, &svr_d3d9ex_share_surf);
 
-        ID3D11Resource* temp_resource = NULL;
+        ID3D11Resource* temp_resource;
         svr_d3d11_device->OpenSharedResource(svr_d3d9ex_share_h, IID_PPV_ARGS(&temp_resource));
 
         temp_resource->QueryInterface(IID_PPV_ARGS(&svr_content_tex));
         temp_resource->Release();
 
-        svr_d3d11_device->CreateShaderResourceView(svr_content_tex, NULL, &svr_content_srv);
+        hr = svr_d3d11_device->CreateShaderResourceView(svr_content_tex, NULL, &svr_content_srv);
+        if (FAILED(hr)) goto rfail;
     }
 
-    bool ret = proc_start(svr_d3d11_device, svr_d3d11_context, movie_name, movie_profile, svr_content_srv);
-
-    if (!ret)
+    if (!proc_start(svr_d3d11_device, svr_d3d11_context, movie_name, movie_profile, svr_content_srv))
     {
-
+        goto rexit;
     }
 
+    ret = true;
     svr_movie_running = ret;
 
+    goto rexit;
+
+rfail:
+    svr_maybe_release(&svr_d3d9ex_share_surf);
+    svr_maybe_release(&svr_d3d9ex_share_tex);
+    svr_d3d9ex_share_h = NULL;
+    svr_maybe_release(&svr_content_tex);
+    svr_maybe_release(&svr_content_srv);
+    svr_maybe_release(&svr_d3d9ex_content_surf);
+
+rexit:
     return ret;
 }
 
@@ -211,13 +249,13 @@ void svr_stop()
 
     if (svr_d3d9ex_device)
     {
-        svr_d3d9ex_content_surf->Release();
-        svr_d3d9ex_share_tex->Release();
-        svr_d3d9ex_share_surf->Release();
+        svr_maybe_release(&svr_d3d9ex_content_surf);
+        svr_maybe_release(&svr_d3d9ex_share_tex);
+        svr_maybe_release(&svr_d3d9ex_share_surf);
     }
 
-    svr_content_tex->Release();
-    svr_content_srv->Release();
+    svr_maybe_release(&svr_content_tex);
+    svr_maybe_release(&svr_content_srv);
 
     svr_movie_running = false;
 }

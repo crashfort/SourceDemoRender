@@ -16,6 +16,9 @@
 // User or system errors will print messages to SVR_LOG.TXT (for standalone SVR) and/or to the game console (if available at the time of error).
 // All functions in this API must be called from the game main thread only.
 
+// Encoding with NVENC is available for select NVIDIA adapters and software encoding will be used otherwise.
+// The difference for the user is that NVENC encoding will be a lot faster in this instance.
+
 // Windows only.
 
 #if SVR_GAME_DLL
@@ -37,11 +40,6 @@ struct IDirect3DDevice9Ex;
 struct ID3D11ShaderResourceView;
 struct ID3D11Device;
 
-using SvrEncoder = int;
-const SvrEncoder SVR_ENCODER_AUTO = 0;
-const SvrEncoder SVR_ENCODER_SW = 1;
-const SvrEncoder SVR_ENCODER_NVENC = 2;
-
 struct SvrStartMovie
 {
     // A view to a texture that contains the game content.
@@ -49,10 +47,6 @@ struct SvrStartMovie
     // This should be a view to the swapchain backbuffer texture.
     // This can be either a ID3D11ShaderResourceView for D3D11 games or IDirect3DSurface9 for D3D9Ex games.
     IUnknown* game_tex_view;
-
-    // What encoder to use. Set to SVR_ENCODER_AUTO to automatically select.
-    // Automatic selection mean that NVENC will be used if possible.
-    SvrEncoder encoder;
 };
 
 // For checking mismatch between built DLL and client header.
@@ -65,7 +59,9 @@ SVR_API int svr_dll_version();
 
 // To see if the system supports encoding through NVENC. Will only work on select NVIDIA devices.
 // This can be called before or after svr_init, but only call this once because the value will not change.
-// You only need to call this once as the value will not change.
+// It makes more sense to call this after svr_init, as it will also call this as an optimization to not cause
+// a first penalty delay if called after.
+// Encoding with NVENC will automatically be chosen if available.
 SVR_API bool svr_can_use_nvenc();
 
 // To be called once at startup.
@@ -112,6 +108,8 @@ SVR_API bool svr_movie_active();
 //
 // After calling this function, set host_framerate to the value returned by svr_get_game_rate.
 // Load svr_movie_start.cfg after calling this.
+//
+// Encoding with NVENC will automatically be chosen if available.
 SVR_API bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie* movie_data);
 
 // This function should be called after svr_start to read how fast the game should be running.

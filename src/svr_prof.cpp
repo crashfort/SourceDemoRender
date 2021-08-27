@@ -21,21 +21,21 @@ void svr_init_prof()
 
 #if SVR_PROF
 
-void svr_start_prof(SvrProf& prof)
+void svr_start_prof(SvrProf* prof)
 {
-    prof.start = svr_prof_get_real_time();
+    prof->start = svr_prof_get_real_time();
 }
 
-void svr_end_prof(SvrProf& prof)
+void svr_end_prof(SvrProf* prof)
 {
-    prof.runs++;
-    prof.total += (svr_prof_get_real_time() - prof.start);
+    prof->runs++;
+    prof->total += (svr_prof_get_real_time() - prof->start);
 }
 
-void svr_reset_prof(SvrProf& prof)
+void svr_reset_prof(SvrProf* prof)
 {
-    prof.runs = 0;
-    prof.total = 0;
+    prof->runs = 0;
+    prof->total = 0;
 }
 
 #endif

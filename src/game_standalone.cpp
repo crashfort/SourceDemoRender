@@ -73,7 +73,7 @@ s32 check_loaded_proc_modules(const char** list, s32 size)
 
         for (s32 j = 0; j < size; j++)
         {
-            if (_stricmp(list[j], name) == 0)
+            if (!_stricmp(list[j], name))
             {
                 hits++;
                 break;
@@ -174,13 +174,13 @@ void pattern_bytes_from_string(const char* input, ScanPattern* out)
     assert(out->used > 0);
 }
 
-bool compare_data(u8* data, ScanPattern& pattern)
+bool compare_data(u8* data, ScanPattern* pattern)
 {
     s32 index = 0;
 
-    s16* bytes = pattern.bytes;
+    s16* bytes = pattern->bytes;
 
-    for (s32 i = 0; i < pattern.used; i++)
+    for (s32 i = 0; i < pattern->used; i++)
     {
         s16 byte = *bytes;
 
@@ -194,12 +194,12 @@ bool compare_data(u8* data, ScanPattern& pattern)
         ++index;
     }
 
-    return index == pattern.used;
+    return index == pattern->used;
 }
 
-void* find_pattern(void* start, s32 search_length, ScanPattern& pattern)
+void* find_pattern(void* start, s32 search_length, ScanPattern* pattern)
 {
-    s16 length = pattern.used;
+    s16 length = pattern->used;
 
     for (s32 i = 0; i <= search_length - length; ++i)
     {
@@ -222,7 +222,7 @@ void* pattern_scan(const char* module, const char* pattern)
     ScanPattern pattern_bytes;
     pattern_bytes_from_string(pattern, &pattern_bytes);
 
-    return find_pattern(info.lpBaseOfDll, info.SizeOfImage, pattern_bytes);
+    return find_pattern(info.lpBaseOfDll, info.SizeOfImage, &pattern_bytes);
 }
 
 void apply_patch(void* target, u8* bytes, s32 num_bytes)
@@ -522,16 +522,11 @@ void __cdecl start_movie_override(void* args)
         };
 
         const char** ext_it = H264_ALLOWED_EXTS;
-
-        if (_stricmp(*ext_it, ".avi") == 0)
-        {
-            svr_log("Tried to use avi as video container for movie. Setting to mp4\n");
-            *ext_it = NULL;
-        }
+        bool has_valid_name = true;
 
         while (*ext_it)
         {
-            if (_stricmp(*ext_it, movie_ext) == 0)
+            if (!_stricmp(*ext_it, movie_ext))
             {
                 break;
             }
@@ -540,6 +535,11 @@ void __cdecl start_movie_override(void* args)
         }
 
         if (*ext_it == NULL)
+        {
+            has_valid_name = false;
+        }
+
+        if (!has_valid_name)
         {
             char renamed[MAX_PATH];
             StringCchCopyA(renamed, MAX_PATH, movie_name);
@@ -556,13 +556,11 @@ void __cdecl start_movie_override(void* args)
     gm_d3d9ex_device->GetRenderTarget(0, &bb_surf);
 
     SvrStartMovie startmovie_data;
-    startmovie_data.encoder = SVR_ENCODER_AUTO;
     startmovie_data.game_tex_view = bb_surf;
 
     if (!svr_start(movie_name, profile, &startmovie_data))
     {
-        bb_surf->Release();
-        return;
+        goto rfail;
     }
 
     // Run all user supplied commands.
@@ -574,6 +572,10 @@ void __cdecl start_movie_override(void* args)
     StringCchPrintfA(hfr_buf, 32, "host_framerate %d\n", svr_get_game_rate());
 
     client_command(hfr_buf);
+
+rfail:
+rexit:
+    bb_surf->Release();
 }
 
 void __cdecl end_movie_override(void* args)
@@ -604,12 +606,12 @@ const char* CSGO_LIBS[] = {
     "client.dll"
 };
 
-bool wait_for_game_libs()
+bool wait_for_game_libs(u32 game_id)
 {
     const char** libs = NULL;
     s32 num_libs = 0;
 
-    switch (launcher_data.app_id)
+    switch (game_id)
     {
         case SVR_GAME_CSS:
         {
@@ -630,7 +632,6 @@ bool wait_for_game_libs()
 
     if (!wait_for_libs_to_load(libs, num_libs))
     {
-        svr_log("Not all game dlls were loaded in time\n");
         return false;
     }
 
@@ -835,12 +836,10 @@ void* get_get_player_by_index_fn(u32 game_id)
     return NULL;
 }
 
-bool create_game_hooks()
+void create_game_hooks(u32 game_id)
 {
     // It's impossible to know whether or not these will actually point to the right thing. We cannot verify it so therefore we don't.
     // If any turns out to point to the wrong thing, we might get a crash. Patterns must be updated in such case, and not as error handling.
-
-    u32 game_id = launcher_data.app_id;
 
     // So far all games are D3D9Ex based except Momentum but it has SVR integration.
     gm_d3d9ex_device = get_d3d9ex_device(game_id);
@@ -867,8 +866,6 @@ bool create_game_hooks()
     hook_function(gm_view_render_fn, view_render_override, &view_render_hook);
 
     // Hooking the D3D9Ex present function to skip presenting is not worthwhile as it does not improve the game frame time.
-
-    return true;
 }
 
 DWORD WINAPI standalone_init_async(void* param)
@@ -887,23 +884,24 @@ DWORD WINAPI standalone_init_async(void* param)
     // Need to notify that we have started because a lot of things can go wrong in standalone launch.
     svr_log("Hello from the game\n");
 
-    if (!wait_for_game_libs())
+    u32 game_id = launcher_data.app_id;
+
+    if (!wait_for_game_libs(game_id))
     {
+        game_error("Mismatch between game version and supported SVR version. Ensure you are using the latest version of SVR and upload your SVR_LOG.TXT.");
         return 1;
     }
 
     MH_Initialize();
 
-    if (!create_game_hooks())
-    {
-        return 1;
-    }
+    create_game_hooks(game_id);
 
     // All other threads will be frozen during this period.
     MH_EnableHook(MH_ALL_HOOKS);
 
     if (!svr_init(launcher_data.svr_path, gm_d3d9ex_device))
     {
+        game_error("Could not initialize SVR.\nEnsure you are using the latest version of SVR and upload your SVR_LOG.TXT.");
         return 1;
     }
 

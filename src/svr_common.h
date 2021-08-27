@@ -23,7 +23,11 @@ using wchar = wchar_t;
 // For data separation between threads in the same structure.
 #define SVR_THREAD_PADDING() u8 SVR_CAT(thread_padding_, __LINE__)[SVR_CPU_CACHE_SIZE]
 
-const s32 SVR_VERSION = 33;
+#define SVR_STR_CAT1(X) #X
+#define SVR_STR_CAT(X) SVR_STR_CAT1(X)
+#define SVR_FILE_LOCATION __FILE__ ":" SVR_STR_CAT(__LINE__)
+
+const s32 SVR_VERSION = 34;
 
 // Used by launcher and injector as parameter for svr_init_standalone in svr_game.dll.
 struct SvrGameInitData
@@ -36,8 +40,44 @@ struct SvrGameInitData
 const u32 SVR_GAME_CSS = 240;
 const u32 SVR_GAME_CSGO = 730;
 
-inline void svr_clamp(s32& v, s32 min, s32 max) { if (v < min) v = min; if (v > max) v = max; }
-inline void svr_clamp(float& v, float min, float max) { if (v < min) v = min; if (v > max) v = max; }
+template <class T>
+inline void svr_clamp(T* v, T min, T max)
+{
+    if (*v < min) *v = min;
+    if (*v > max) *v = max;
+}
 
-inline float svr_max(float a, float b) { return a > b ? a : b; }
-inline float svr_max(s32 a, s32 b) { return a > b ? a : b; }
+template <class T>
+inline float svr_max(T a, T b)
+{
+    return a > b ? a : b;
+}
+
+template <class T>
+inline float svr_min(T a, T b)
+{
+    return a < b ? a : b;
+}
+
+template <class T>
+inline void svr_maybe_release(T** ptr)
+{
+    if (*ptr) (*ptr)->Release();
+    *ptr = NULL;
+}
+
+template <class T>
+inline void svr_swap_ptrs(T** first, T** second)
+{
+    T* temp = *first;
+    *first = *second;
+    *second = temp;
+}
+
+template <class T>
+inline void svr_maybe_free(T** ptr)
+{
+    void free(void*);
+    if (*ptr) free(*ptr);
+    *ptr = NULL;
+}

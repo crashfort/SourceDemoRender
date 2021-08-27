@@ -90,10 +90,10 @@ SvrIniLine svr_alloc_ini_line()
     return ret;
 }
 
-void svr_free_ini_line(SvrIniLine& line)
+void svr_free_ini_line(SvrIniLine* line)
 {
-    free(line.title);
-    free(line.value);
+    free(line->title);
+    free(line->value);
 }
 
 bool svr_open_ini_read(const char* path, SvrIniMem* mem)
@@ -128,31 +128,31 @@ bool svr_open_ini_read(const char* path, SvrIniMem* mem)
     return ret;
 }
 
-bool svr_read_ini_line(SvrIniMem& mem)
+bool svr_read_ini_line(SvrIniMem* mem)
 {
-    if (*mem.mov_str == 0)
+    if (*mem->mov_str == 0)
     {
         return false;
     }
 
-    char* line_start = mem.mov_str;
+    char* line_start = mem->mov_str;
 
     // Skip all blank lines.
 
-    for (; *mem.mov_str != 0;)
+    for (; *mem->mov_str != 0;)
     {
-        if (s32 nl = ini_is_newline(mem.mov_str))
+        if (s32 nl = ini_is_newline(mem->mov_str))
         {
-            char* line_end = mem.mov_str;
+            char* line_end = mem->mov_str;
             s32 line_length = line_end - line_start;
 
             if (line_length > 0)
             {
-                StringCchCopyNA(mem.line_buf, SVR_INI_LINE_BUF_SIZE, line_start, line_length); 
+                StringCchCopyNA(mem->line_buf, SVR_INI_LINE_BUF_SIZE, line_start, line_length); 
             }
 
-            mem.mov_str += nl;
-            line_start = mem.mov_str;
+            mem->mov_str += nl;
+            line_start = mem->mov_str;
 
             if (line_length > 0)
             {
@@ -162,18 +162,18 @@ bool svr_read_ini_line(SvrIniMem& mem)
 
         else
         {
-            mem.mov_str++;
+            mem->mov_str++;
         }
     }
 
     return false;
 }
 
-bool svr_read_ini(SvrIniMem& mem, SvrIniLine* line, SvrIniTokenType* token_type)
+bool svr_read_ini(SvrIniMem* mem, SvrIniLine* line, SvrIniTokenType* token_type)
 {
     while (svr_read_ini_line(mem))
     {
-        ini_parse_line(mem.line_buf, line, token_type);
+        ini_parse_line(mem->line_buf, line, token_type);
 
         if (*token_type != SVR_INI_OTHER)
         {
@@ -184,7 +184,7 @@ bool svr_read_ini(SvrIniMem& mem, SvrIniLine* line, SvrIniTokenType* token_type)
     return false;
 }
 
-void svr_close_ini(SvrIniMem mem)
+void svr_close_ini(SvrIniMem* mem)
 {
-    free(mem.mem);
+    free(mem->mem);
 }
