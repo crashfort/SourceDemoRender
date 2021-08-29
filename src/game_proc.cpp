@@ -121,7 +121,6 @@ ID3D11UnorderedAccessView* work_buf_legacy_sb_uav;
 // Mosample state.
 
 ID3D11ComputeShader* mosample_cs;
-ID3D11ComputeShader* mosample_legacy_cs;
 
 // Both these constant buffers should be merged into one instead and the shader preprocessor selects what data to have.
 ID3D11Buffer* mosample_cb;
@@ -492,8 +491,8 @@ void download_textures(ID3D11DeviceContext* d3d11_context, ID3D11Texture2D** gpu
     void** map_datas = (void**)_alloca(sizeof(void*) * num_texes);
     UINT* row_pitches = (UINT*)_alloca(sizeof(UINT) * num_texes);
 
-    // Mapping will take between 400 and 1500 us on average, not much to do about that.
-    // We cannot use D3D11_MAP_FLAG_DO_NOT_WAIT here (and advance the cpu texture queue) because of the CopyResource use above which
+    // Mapping will take between 400 and 1500 us on average, not much to do about that. Probably has to do with waiting for CopyResource above to finish.
+    // We cannot use D3D11_MAP_FLAG_DO_NOT_WAIT here (and advance the cpu texture queue) because of the CopyResource call above which
     // may not have finished yet.
 
     for (s32 i = 0; i < num_texes; i++)
@@ -544,6 +543,7 @@ void download_textures(ID3D11DeviceContext* d3d11_context, ID3D11Texture2D** gpu
     }
 }
 
+// Put texture into video format.
 void convert_pixel_formats(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* source_srv)
 {
     d3d11_context->CSSetShader(pxconv_cs[movie_pxconv], NULL, 0);
@@ -586,17 +586,11 @@ bool create_pxconv_textures(ID3D11Device* d3d11_device, DXGI_FORMAT* formats)
 
         if (FAILED(hr))
         {
-            svr_log("Could not create SWENC texture %d for PXCONV %s+%s (%#x)\n", i, text.format, text.color_space);
+            svr_log("ERROR: Could not create SWENC texture %d for PXCONV %s+%s (%#x)\n", i, text.format, text.color_space, hr);
             goto rfail;
         }
 
-        hr = d3d11_device->CreateUnorderedAccessView(pxconv_texs[i], NULL, &pxconv_uavs[i]);
-
-        if (FAILED(hr))
-        {
-            svr_log("Could not create SWENC UAV %d for PXCONV %s+%s (%#x)\n", i, text.format, text.color_space);
-            goto rfail;
-        }
+        d3d11_device->CreateUnorderedAccessView(pxconv_texs[i], NULL, &pxconv_uavs[i]);
 
         tex_desc.Usage = D3D11_USAGE_STAGING;
         tex_desc.BindFlags = 0;
@@ -608,7 +602,7 @@ bool create_pxconv_textures(ID3D11Device* d3d11_device, DXGI_FORMAT* formats)
 
             if (FAILED(hr))
             {
-                svr_log("Could not create SWENC CPU texture %d (rotation %d) for PXCONV %s+%s (%#x)\n", i, j, text.format, text.color_space);
+                svr_log("ERROR: Could not create SWENC CPU texture %d (rotation %d) for PXCONV %s+%s (%#x)\n", i, j, text.format, text.color_space, hr);
                 goto rfail;
             }
         }
@@ -785,7 +779,7 @@ bool init_nvenc()
 
     if (FAILED(hr))
     {
-        svr_log("Could not create D3D11 device for NVENC encoding (%#x)\n", hr);
+        svr_log("ERROR: Could not create D3D11 device for NVENC encoding (%#x)\n", hr);
         goto rfail;
     }
 
@@ -800,7 +794,7 @@ bool init_nvenc()
 
     if (ns != NV_ENC_SUCCESS)
     {
-        svr_log("Could not open NVENC encoder (%d)\n", (s32)ns);
+        svr_log("ERROR: Could not open NVENC encoder (%d)\n", (s32)ns);
         goto rfail;
     }
 
@@ -862,7 +856,7 @@ bool start_with_nvenc()
 
     if (ns != NV_ENC_SUCCESS)
     {
-        svr_log("Could not initialize the NVENC encoder (%d)\n", (s32)ns);
+        svr_log("ERROR: Could not initialize the NVENC encoder (%d)\n", (s32)ns);
         goto rfail;
     }
 
@@ -876,22 +870,22 @@ bool start_with_nvenc()
 
     for (s32 i = 0; i < nvenc_num_pics; i++)
     {
-        D3D11_TEXTURE2D_DESC enc_tex_desc = {};
-        enc_tex_desc.Width = movie_width;
-        enc_tex_desc.Height = movie_height;
-        enc_tex_desc.MipLevels = 1;
-        enc_tex_desc.ArraySize = 1;
-        enc_tex_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        enc_tex_desc.SampleDesc.Count = 1;
-        enc_tex_desc.Usage = D3D11_USAGE_DEFAULT;
-        enc_tex_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+        D3D11_TEXTURE2D_DESC nvenc_tex_desc = {};
+        nvenc_tex_desc.Width = movie_width;
+        nvenc_tex_desc.Height = movie_height;
+        nvenc_tex_desc.MipLevels = 1;
+        nvenc_tex_desc.ArraySize = 1;
+        nvenc_tex_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        nvenc_tex_desc.SampleDesc.Count = 1;
+        nvenc_tex_desc.Usage = D3D11_USAGE_DEFAULT;
+        nvenc_tex_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
 
         ID3D11Texture2D* nvenc_tex;
-        hr = nvenc_d3d11_device->CreateTexture2D(&enc_tex_desc, NULL, &nvenc_tex);
+        hr = nvenc_d3d11_device->CreateTexture2D(&nvenc_tex_desc, NULL, &nvenc_tex);
 
         if (FAILED(hr))
         {
-            svr_log("Could not create NVENC textures (%#x)\n", hr);
+            svr_log("ERROR: Could not create NVENC texture %d/%d (%#x)\n", i + 1, nvenc_num_pics, hr);
             goto rfail;
         }
 
@@ -910,7 +904,7 @@ bool start_with_nvenc()
 
         if (ns != NV_ENC_SUCCESS)
         {
-            svr_log("Could not register NVENC textures as NVENC resources (%d)\n", (s32)ns);
+            svr_log("ERROR: Could not register NVENC texture %d/%d as an NVENC resource (%d)\n", i + 1, nvenc_num_pics, (s32)ns);
             goto rfail;
         }
 
@@ -1122,7 +1116,7 @@ bool create_a_cs_shader(const char* name, void* file_mem, s32 file_mem_size, ID3
 
     if (FAILED(hr))
     {
-        svr_log("Could not create shader %s (%#x)", name, hr);
+        svr_log("ERROR: Could not create shader %s (%#x)", name, hr);
         goto rfail;
     }
 
@@ -1160,7 +1154,7 @@ bool create_shaders(ID3D11Device* d3d11_device)
 
     else
     {
-        if (!create_a_cs_shader("cf3aa43b232f4624ef5e002a716b67045f45b044", file_mem, SHADER_MEM_SIZE, d3d11_device, &mosample_legacy_cs)) goto rfail;
+        if (!create_a_cs_shader("cf3aa43b232f4624ef5e002a716b67045f45b044", file_mem, SHADER_MEM_SIZE, d3d11_device, &mosample_cs)) goto rfail;
     }
 
     ret = true;
@@ -1173,7 +1167,6 @@ rfail:
     }
 
     svr_maybe_release(&mosample_cs);
-    svr_maybe_release(&mosample_legacy_cs);
 
 rexit:
     free(file_mem);
@@ -1237,7 +1230,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("Could not create mosample constant buffer (%#x)\n", hr);
+        svr_log("ERROR: Could not create mosample constant buffer (%#x)\n", hr);
         goto rfail;
     }
 
@@ -1255,7 +1248,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
         if (FAILED(hr))
         {
-            svr_log("Could not create legacy mosample constant buffer (%#x)\n", hr);
+            svr_log("ERROR: Could not create legacy mosample constant buffer (%#x)\n", hr);
             goto rfail;
         }
     }
@@ -1548,35 +1541,34 @@ void log_profile()
 {
     MovieProfile& p = movie_profile;
 
-    game_log("Using profile:\n");
-    game_log("Movie fps: %d\n", p.movie_fps);
-    game_log("Video encoder: %s\n", p.sw_encoder);
-    game_log("Video pixel format: %s\n", p.sw_pxformat);
-    game_log("Video colorspace: %s\n", p.sw_colorspace);
-    game_log("Video crf: %d\n", p.sw_crf);
-    game_log("Video x264 preset: %s\n", p.sw_x264_preset);
-    game_log("Video x264 intra: %d\n", p.sw_x264_intra);
-    game_log("Use motion blur: %d\n", p.mosample_enabled);
+    svr_log("Movie fps: %d\n", p.movie_fps);
+    svr_log("Video encoder: %s\n", p.sw_encoder);
+    svr_log("Video pixel format: %s\n", p.sw_pxformat);
+    svr_log("Video colorspace: %s\n", p.sw_colorspace);
+    svr_log("Video crf: %d\n", p.sw_crf);
+    svr_log("Video x264 preset: %s\n", p.sw_x264_preset);
+    svr_log("Video x264 intra: %d\n", p.sw_x264_intra);
+    svr_log("Use motion blur: %d\n", p.mosample_enabled);
 
     if (p.mosample_enabled)
     {
-        game_log("Motion blur multiplier: %d\n", p.mosample_mult);
-        game_log("Motion blur exposure: %0.2f\n", p.mosample_exposure);
+        svr_log("Motion blur multiplier: %d\n", p.mosample_mult);
+        svr_log("Motion blur exposure: %0.2f\n", p.mosample_exposure);
     }
 
-    game_log("Use velocity overlay: %d\n", p.veloc_enabled);
+    svr_log("Use velocity overlay: %d\n", p.veloc_enabled);
 
     if (p.veloc_enabled)
     {
-        game_log("Velocity font: %s\n", p.veloc_font);
-        game_log("Velocity font size: %d\n", p.veloc_font_size);
-        game_log("Velocity font color: %d %d %d %d\n", p.veloc_font_color[0], p.veloc_font_color[1], p.veloc_font_color[2], p.veloc_font_color[3]);
-        game_log("Velocity font style: %s\n", rl_map_str_in_list(p.veloc_font_style, FONT_STYLE_TABLE, SVR_ARRAY_SIZE(FONT_STYLE_TABLE)));
-        game_log("Velocity font weight: %s\n", rl_map_str_in_list(p.veloc_font_weight, FONT_WEIGHT_TABLE, SVR_ARRAY_SIZE(FONT_WEIGHT_TABLE)));
-        game_log("Velocity font stretch: %s\n", rl_map_str_in_list(p.veloc_font_stretch, FONT_STRETCH_TABLE, SVR_ARRAY_SIZE(FONT_STRETCH_TABLE)));
-        game_log("Velocity text align: %s\n", rl_map_str_in_list(p.veloc_text_align, TEXT_ALIGN_TABLE, SVR_ARRAY_SIZE(TEXT_ALIGN_TABLE)));
-        game_log("Velocity paragraph align: %s\n", rl_map_str_in_list(p.veloc_para_align, PARAGRAPH_ALIGN_TABLE, SVR_ARRAY_SIZE(PARAGRAPH_ALIGN_TABLE)));
-        game_log("Velocity text padding: %d\n", p.veloc_padding);
+        svr_log("Velocity font: %s\n", p.veloc_font);
+        svr_log("Velocity font size: %d\n", p.veloc_font_size);
+        svr_log("Velocity font color: %d %d %d %d\n", p.veloc_font_color[0], p.veloc_font_color[1], p.veloc_font_color[2], p.veloc_font_color[3]);
+        svr_log("Velocity font style: %s\n", rl_map_str_in_list(p.veloc_font_style, FONT_STYLE_TABLE, SVR_ARRAY_SIZE(FONT_STYLE_TABLE)));
+        svr_log("Velocity font weight: %s\n", rl_map_str_in_list(p.veloc_font_weight, FONT_WEIGHT_TABLE, SVR_ARRAY_SIZE(FONT_WEIGHT_TABLE)));
+        svr_log("Velocity font stretch: %s\n", rl_map_str_in_list(p.veloc_font_stretch, FONT_STRETCH_TABLE, SVR_ARRAY_SIZE(FONT_STRETCH_TABLE)));
+        svr_log("Velocity text align: %s\n", rl_map_str_in_list(p.veloc_text_align, TEXT_ALIGN_TABLE, SVR_ARRAY_SIZE(TEXT_ALIGN_TABLE)));
+        svr_log("Velocity paragraph align: %s\n", rl_map_str_in_list(p.veloc_para_align, PARAGRAPH_ALIGN_TABLE, SVR_ARRAY_SIZE(PARAGRAPH_ALIGN_TABLE)));
+        svr_log("Velocity text padding: %d\n", p.veloc_padding);
     }
 }
 
@@ -1710,7 +1702,7 @@ bool start_ffmpeg_proc()
 
     if (!CreatePipe(&read_h, &write_h, &sa, 4 * 1024))
     {
-        svr_log("Could not create ffmpeg process pipes (%lu)\n", GetLastError());
+        svr_log("ERROR: Could not create ffmpeg process pipes (%lu)\n", GetLastError());
         goto rfail;
     }
 
@@ -1732,9 +1724,11 @@ bool start_ffmpeg_proc()
     start_info.hStdInput = read_h;
     start_info.dwFlags |= STARTF_USESTDHANDLES;
 
+    build_ffmpeg_process_args(full_args, FULL_ARGS_SIZE);
+
     if (!CreateProcessA(full_ffmpeg_path, full_args, NULL, NULL, TRUE, create_flags, NULL, svr_resource_path, &start_info, &proc_info))
     {
-        game_log("Could not create ffmpeg process (%lu)\n", GetLastError());
+        game_log("ERROR: Could not create ffmpeg process (%lu)\n", GetLastError());
         goto rfail;
     }
 
@@ -1854,16 +1848,16 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         work_tex_desc.CPUAccessFlags = 0;
 
         hr = d3d11_device->CreateTexture2D(&work_tex_desc, NULL, &work_tex);
-        if (FAILED(hr)) goto rfail;
 
-        hr = d3d11_device->CreateShaderResourceView(work_tex, NULL, &work_tex_srv);
-        if (FAILED(hr)) goto rfail;
+        if (FAILED(hr))
+        {
+            svr_log("ERROR: Could not create work texture (%#x)\n", hr);
+            goto rfail;
+        }
 
-        hr = d3d11_device->CreateRenderTargetView(work_tex, NULL, &work_tex_rtv);
-        if (FAILED(hr)) goto rfail;
-
-        hr = d3d11_device->CreateUnorderedAccessView(work_tex, NULL, &work_tex_uav);
-        if (FAILED(hr)) goto rfail;
+        d3d11_device->CreateShaderResourceView(work_tex, NULL, &work_tex_srv);
+        d3d11_device->CreateRenderTargetView(work_tex, NULL, &work_tex_rtv);
+        d3d11_device->CreateUnorderedAccessView(work_tex, NULL, &work_tex_uav);
     }
 
     else
@@ -1877,13 +1871,15 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         work_buf_desc.StructureByteStride = sizeof(float) * 4;
 
         hr = d3d11_device->CreateBuffer(&work_buf_desc, NULL, &work_buf_legacy_sb);
-        if (FAILED(hr)) goto rfail;
 
-        hr = d3d11_device->CreateShaderResourceView(work_buf_legacy_sb, NULL, &work_buf_legacy_sb_srv);
-        if (FAILED(hr)) goto rfail;
+        if (FAILED(hr))
+        {
+            svr_log("ERROR: Could not create legacy work buffer (%#x)\n", hr);
+            goto rfail;
+        }
 
-        hr = d3d11_device->CreateUnorderedAccessView(work_buf_legacy_sb, NULL, &work_buf_legacy_sb_uav);
-        if (FAILED(hr)) goto rfail;
+        d3d11_device->CreateShaderResourceView(work_buf_legacy_sb, NULL, &work_buf_legacy_sb_srv);
+        d3d11_device->CreateUnorderedAccessView(work_buf_legacy_sb, NULL, &work_buf_legacy_sb_uav);
 
         // For dest_texture_width.
         update_constant_buffer(d3d11_context, mosample_legacy_cb, &tex_desc.Width, sizeof(UINT));
@@ -1935,6 +1931,7 @@ rexit:
     return ret;
 }
 
+// For SW encoding, send uncompressed frame over pipe.
 void send_converted_video_frame_to_ffmpeg(ID3D11DeviceContext* d3d11_context)
 {
     svr_sem_wait(&ffmpeg_read_sem);
@@ -1950,6 +1947,10 @@ void send_converted_video_frame_to_ffmpeg(ID3D11DeviceContext* d3d11_context)
     ffmpeg_write_queue.push(&mem);
 
     svr_sem_release(&ffmpeg_write_sem);
+}
+
+void encode_game_frame_with_nvenc(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv)
+{
 }
 
 void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv, float weight)
@@ -1971,7 +1972,7 @@ void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView*
     else
     {
         ID3D11Buffer* legacy_cbs[] = { mosample_cb, mosample_legacy_cb };
-        d3d11_context->CSSetShader(mosample_legacy_cs, NULL, 0);
+        d3d11_context->CSSetShader(mosample_cs, NULL, 0);
         d3d11_context->CSSetConstantBuffers(0, 2, legacy_cbs);
         d3d11_context->CSSetUnorderedAccessViews(0, 1, &work_buf_legacy_sb_uav, NULL);
         d3d11_context->CSSetShaderResources(0, 1, &game_content_srv);
@@ -1992,8 +1993,69 @@ void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView*
 
 void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv)
 {
-    convert_pixel_formats(d3d11_context, srv);
-    send_converted_video_frame_to_ffmpeg(d3d11_context);
+    if (!hw_has_nvenc_support)
+    {
+        convert_pixel_formats(d3d11_context, srv);
+        send_converted_video_frame_to_ffmpeg(d3d11_context);
+    }
+
+    else
+    {
+        encode_game_frame_with_nvenc(d3d11_context, srv);
+
+        // The compressed H264 stream is sent to the ffmpeg process elsewhere.
+        // We will receive a notification from NVENC when it's ready.
+    }
+}
+
+void mosample_game_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv)
+{
+    float old_rem = mosample_remainder;
+    float exposure = movie_profile.mosample_exposure;
+
+    mosample_remainder += mosample_remainder_step;
+
+    if (mosample_remainder <= (1.0f - exposure))
+    {
+
+    }
+
+    else if (mosample_remainder < 1.0f)
+    {
+        float weight = (mosample_remainder - svr_max(1.0f - exposure, old_rem)) * (1.0f / exposure);
+        motion_sample(d3d11_context, game_content_srv, weight);
+    }
+
+    else
+    {
+        float weight = (1.0f - svr_max(1.0f - exposure, old_rem)) * (1.0f / exposure);
+        motion_sample(d3d11_context, game_content_srv, weight);
+
+        encode_video_frame(d3d11_context, work_tex_srv);
+
+        mosample_remainder -= 1.0f;
+
+        s32 additional = mosample_remainder;
+
+        if (additional > 0)
+        {
+            for (s32 i = 0; i < additional; i++)
+            {
+                encode_video_frame(d3d11_context, work_tex_srv);
+            }
+
+            mosample_remainder -= additional;
+        }
+
+        float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        d3d11_context->ClearRenderTargetView(work_tex_rtv, clear_color);
+
+        if (mosample_remainder > FLT_EPSILON && mosample_remainder > (1.0f - exposure))
+        {
+            weight = ((mosample_remainder - (1.0f - exposure)) * (1.0f / exposure));
+            motion_sample(d3d11_context, game_content_srv, weight);
+        }
+    }
 }
 
 void proc_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv)
@@ -2004,52 +2066,7 @@ void proc_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* ga
 
         if (movie_profile.mosample_enabled)
         {
-            float old_rem = mosample_remainder;
-            float exposure = movie_profile.mosample_exposure;
-
-            mosample_remainder += mosample_remainder_step;
-
-            if (mosample_remainder <= (1.0f - exposure))
-            {
-
-            }
-
-            else if (mosample_remainder < 1.0f)
-            {
-                float weight = (mosample_remainder - svr_max(1.0f - exposure, old_rem)) * (1.0f / exposure);
-                motion_sample(d3d11_context, game_content_srv, weight);
-            }
-
-            else
-            {
-                float weight = (1.0f - svr_max(1.0f - exposure, old_rem)) * (1.0f / exposure);
-                motion_sample(d3d11_context, game_content_srv, weight);
-
-                encode_video_frame(d3d11_context, work_tex_srv);
-
-                mosample_remainder -= 1.0f;
-
-                s32 additional = mosample_remainder;
-
-                if (additional > 0)
-                {
-                    for (s32 i = 0; i < additional; i++)
-                    {
-                        encode_video_frame(d3d11_context, work_tex_srv);
-                    }
-
-                    mosample_remainder -= additional;
-                }
-
-                float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-                d3d11_context->ClearRenderTargetView(work_tex_rtv, clear_color);
-
-                if (mosample_remainder > FLT_EPSILON && mosample_remainder > (1.0f - exposure))
-                {
-                    weight = ((mosample_remainder - (1.0f - exposure)) * (1.0f / exposure));
-                    motion_sample(d3d11_context, game_content_srv, weight);
-                }
-            }
+            mosample_game_frame(d3d11_context, game_content_srv);
         }
 
         else

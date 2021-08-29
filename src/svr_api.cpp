@@ -14,8 +14,6 @@ ID3D11DeviceContext* svr_d3d11_context;
 // For D3D9Ex, we have to create an additional D3D9Ex texture and then copy that to a D3D11 texture.
 IDirect3DDevice9Ex* svr_d3d9ex_device;
 IDirect3DSurface9* svr_d3d9ex_content_surf;
-HANDLE svr_d3d9ex_share_h;
-IDirect3DTexture9* svr_d3d9ex_share_tex;
 IDirect3DSurface9* svr_d3d9ex_share_surf;
 
 // For D3D11 we can read the game texture directly.
@@ -110,7 +108,7 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
 
         if (FAILED(hr))
         {
-            svr_log("Could not create a new D3D11 device (%#x)\n", hr);
+            svr_log("ERROR: Could not create D3D11 device (%#x)\n", hr);
             goto rfail;
         }
     }
@@ -165,16 +163,11 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie*
     // We are a D3D11 game.
     if (svr_content_srv)
     {
-        // We can get the texture from the srv, and then get the dimensions of the texture.
-
         ID3D11Resource* game_tex_res;
 
         svr_content_srv->GetResource(&game_tex_res);
 
         game_tex_res->QueryInterface(IID_PPV_ARGS(&svr_content_tex));
-
-        D3D11_TEXTURE2D_DESC game_tex_desc;
-        svr_content_tex->GetDesc(&game_tex_desc);
 
         game_tex_res->Release();
     }
@@ -182,26 +175,28 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie*
     // We are a D3D9Ex game.
     else if (svr_d3d9ex_content_surf)
     {
-        // Have to create a new texture that we can open in D3D11. This D3D9Ex texture will be copied to the game content texture.
+        // Have to create a new texture that we can open in D3D11. This D3D9Ex texture will be copied to the game content texture every frame.
 
         D3DSURFACE_DESC desc;
         svr_d3d9ex_content_surf->GetDesc(&desc);
 
         HRESULT hr;
+        HANDLE d3d9ex_share_h = NULL;
+        IDirect3DTexture9* d3d9ex_share_tex = NULL;
 
-        hr = svr_d3d9ex_device->CreateTexture(desc.Width, desc.Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &svr_d3d9ex_share_tex, &svr_d3d9ex_share_h);
-        if (FAILED(hr)) goto rfail;
+        hr = svr_d3d9ex_device->CreateTexture(desc.Width, desc.Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &d3d9ex_share_tex, &d3d9ex_share_h);
 
-        svr_d3d9ex_share_tex->GetSurfaceLevel(0, &svr_d3d9ex_share_surf);
+        if (FAILED(hr))
+        {
+            svr_log("ERROR: Could not create D3D9Ex share texture (%#x)\n", hr);
+            goto rfail;
+        }
 
-        ID3D11Resource* temp_resource;
-        svr_d3d11_device->OpenSharedResource(svr_d3d9ex_share_h, IID_PPV_ARGS(&temp_resource));
+        d3d9ex_share_tex->GetSurfaceLevel(0, &svr_d3d9ex_share_surf);
+        d3d9ex_share_tex->Release();
 
-        temp_resource->QueryInterface(IID_PPV_ARGS(&svr_content_tex));
-        temp_resource->Release();
-
-        hr = svr_d3d11_device->CreateShaderResourceView(svr_content_tex, NULL, &svr_content_srv);
-        if (FAILED(hr)) goto rfail;
+        svr_d3d11_device->OpenSharedResource(d3d9ex_share_h, IID_PPV_ARGS(&svr_content_tex));
+        svr_d3d11_device->CreateShaderResourceView(svr_content_tex, NULL, &svr_content_srv);
     }
 
     if (!proc_start(svr_d3d11_device, svr_d3d11_context, movie_name, movie_profile, svr_content_srv))
@@ -216,8 +211,6 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie*
 
 rfail:
     svr_maybe_release(&svr_d3d9ex_share_surf);
-    svr_maybe_release(&svr_d3d9ex_share_tex);
-    svr_d3d9ex_share_h = NULL;
     svr_maybe_release(&svr_content_tex);
     svr_maybe_release(&svr_content_srv);
     svr_maybe_release(&svr_d3d9ex_content_surf);
@@ -250,7 +243,6 @@ void svr_stop()
     if (svr_d3d9ex_device)
     {
         svr_maybe_release(&svr_d3d9ex_content_surf);
-        svr_maybe_release(&svr_d3d9ex_share_tex);
         svr_maybe_release(&svr_d3d9ex_share_surf);
     }
 

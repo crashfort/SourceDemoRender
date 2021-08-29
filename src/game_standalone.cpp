@@ -9,6 +9,7 @@
 #include <d3d9.h>
 #include <Psapi.h>
 #include <charconv>
+#include "stb_sprintf.h"
 
 // Entrypoint for standalone SVR. Reverse engineered code to use the SVR API from unsupported games.
 //
@@ -27,6 +28,7 @@
 
 // Stuff passed in from launcher.
 SvrGameInitData launcher_data;
+DWORD main_thread_id;
 
 // --------------------------------------------------------------------------
 
@@ -258,6 +260,36 @@ void* get_export(const char* module, const char* name)
 {
     HMODULE hmodule = GetModuleHandleA(module);
     return GetProcAddress(hmodule, name);
+}
+
+// --------------------------------------------------------------------------
+
+BOOL CALLBACK EnumThreadWndProc(HWND hwnd, LPARAM lParam)
+{
+    HWND* out_hwnd = (HWND*)lParam;
+    *out_hwnd = hwnd;
+    return FALSE;
+}
+
+void standalone_error(const char* format, ...)
+{
+    char message[1024];
+
+    va_list va;
+    va_start(va, format);
+    stbsp_vsnprintf(message, 1024, format, va);
+    va_end(va);
+
+    svr_log("!!! ERROR: %s\n", message);
+
+    // MB_TASKMODAL or MB_APPLMODAL flags do not work.
+
+    HWND hwnd = NULL;
+    EnumThreadWindows(main_thread_id, EnumThreadWndProc, (LPARAM)&hwnd);
+
+    MessageBoxA(hwnd, message, "SVR", MB_ICONERROR | MB_OK);
+
+    ExitProcess(1);
 }
 
 // --------------------------------------------------------------------------
@@ -888,7 +920,7 @@ DWORD WINAPI standalone_init_async(void* param)
 
     if (!wait_for_game_libs(game_id))
     {
-        game_error("Mismatch between game version and supported SVR version. Ensure you are using the latest version of SVR and upload your SVR_LOG.TXT.");
+        standalone_error("Mismatch between game version and supported SVR version. Ensure you are using the latest version of SVR and upload your SVR_LOG.TXT.");
         return 1;
     }
 
@@ -901,7 +933,7 @@ DWORD WINAPI standalone_init_async(void* param)
 
     if (!svr_init(launcher_data.svr_path, gm_d3d9ex_device))
     {
-        game_error("Could not initialize SVR.\nEnsure you are using the latest version of SVR and upload your SVR_LOG.TXT.");
+        standalone_error("Could not initialize SVR.\nEnsure you are using the latest version of SVR and upload your SVR_LOG.TXT.");
         return 1;
     }
 
@@ -921,6 +953,7 @@ DWORD WINAPI standalone_init_async(void* param)
 extern "C" __declspec(dllexport) void svr_init_standalone(SvrGameInitData* init_data)
 {
     launcher_data = *init_data;
+    main_thread_id = GetCurrentThreadId();
 
     // Init needs to be done async because we need to wait for the libraries to load while the game loads as normal.
     CreateThread(NULL, 0, standalone_init_async, NULL, 0, NULL);

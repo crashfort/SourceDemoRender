@@ -230,7 +230,7 @@ void append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
                 if (depth == 0 && !strcmp(vdf_line.title, "UserLocalConfigStore")) { depth++; break; }
                 else if (depth == 1 && !strcmp(vdf_line.title, "Software")) { depth++; break; }
                 else if (depth == 2 && !strcmp(vdf_line.title, "valve")) { depth++; break; }
-                else if (depth == 3 && !strcmp(vdf_line.title, "Steam")) { depth++; break; }
+                else if (depth == 3 && !strcmp(vdf_line.title, "steam")) { depth++; break; }
                 else if (depth == 4 && !strcmp(vdf_line.title, "Apps")) { depth++; break; }
                 else if (depth == 5 && !strcmp(vdf_line.title, buf)) { depth++; break; }
             }

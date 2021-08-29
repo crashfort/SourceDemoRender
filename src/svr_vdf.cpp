@@ -65,8 +65,7 @@ void vdf_parse_line(char* line_buf, SvrVdfLine* vdf_line, SvrVdfTokenType* type)
         {
             if (!in_quote)
             {
-                ptr++;
-                token_start[token_index] = ptr;
+                token_start[token_index] = ptr + 1;
             }
 
             else
