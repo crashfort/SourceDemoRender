@@ -34,7 +34,7 @@ struct SvrAsyncStream
     }
 
     // When every item is going to be readded.
-    // The environment must be controlled for this to be called.
+    // The environment must be controlled and known for this to be called.
     inline void reset()
     {
         svr_atom_set(&head_, 0);
@@ -42,8 +42,7 @@ struct SvrAsyncStream
     }
 
     // Mem is not copied! Mem is only referenced!
-    // Size or extra don't have to be specified, they're just additional info to put in the pack. Just know to pull the pack the same way it was pushed.
-    // Returns false if the buffer is full.
+    // Returns false if the buffer appears full.
     inline bool push(T* item)
     {
         s32 head = svr_atom_read(&head_);
@@ -67,8 +66,7 @@ struct SvrAsyncStream
     }
 
     // Tries to get a pack from the reading end.
-    // The mem may have to be freed dependning on how it was created! It must be freed the same way it was allocated.
-    // Returns false if there's nothing to pull and *pack is set to NULL.
+    // Returns true if there was something.
     inline bool pull(T* item)
     {
         s32 tail = svr_atom_read(&tail_);

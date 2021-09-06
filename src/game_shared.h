@@ -1,5 +1,6 @@
 #pragma once
 #include "svr_common.h"
+#include "svr_defs.h"
 #include "svr_logging.h"
 #include <stdarg.h>
 

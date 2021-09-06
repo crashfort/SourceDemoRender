@@ -1,6 +1,5 @@
 #pragma once
 #include "svr_common.h"
-#include <Windows.h>
 
 // Proc is the layer below the public API. This is where the magic happens.
 

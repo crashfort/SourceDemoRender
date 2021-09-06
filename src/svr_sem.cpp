@@ -18,7 +18,9 @@ void svr_sem_release(SvrSemaphore* sem)
         // Would surpass max count.
         assert(new_count <= sem->max_count);
 
-        if (InterlockedCompareExchange((volatile LONG*)&sem->count, (LONG)new_count, (LONG)orig_count) == (LONG)orig_count)
+        LONG prev_count = InterlockedCompareExchange((volatile LONG*)&sem->count, (LONG)new_count, (LONG)orig_count);
+
+        if (prev_count == (LONG)orig_count)
         {
             WakeByAddressSingle(&sem->count);
             return;
@@ -38,7 +40,9 @@ void svr_sem_wait(SvrSemaphore* sem)
             orig_count = sem->count;
         }
 
-        if (InterlockedCompareExchange((volatile LONG*)&sem->count, (LONG)orig_count - 1, (LONG)orig_count) == (LONG)orig_count)
+        LONG prev_count = InterlockedCompareExchange((volatile LONG*)&sem->count, (LONG)orig_count - 1, (LONG)orig_count);
+
+        if (prev_count == (LONG)orig_count)
         {
             return;
         }

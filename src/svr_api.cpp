@@ -8,11 +8,13 @@
 // Used for internal and external SVR.
 // This layer if necessary translates operations from D3D9Ex to D3D11 which game_proc uses and is also the public API.
 
+// -------------------------------------------------
+
 ID3D11Device* svr_d3d11_device;
 ID3D11DeviceContext* svr_d3d11_context;
+IDirect3DDevice9Ex* svr_d3d9ex_device;
 
 // For D3D9Ex, we have to create an additional D3D9Ex texture and then copy that to a D3D11 texture.
-IDirect3DDevice9Ex* svr_d3d9ex_device;
 IDirect3DSurface9* svr_d3d9ex_content_surf;
 IDirect3DSurface9* svr_d3d9ex_share_surf;
 
@@ -21,7 +23,11 @@ IDirect3DSurface9* svr_d3d9ex_share_surf;
 ID3D11Texture2D* svr_content_tex;
 ID3D11ShaderResourceView* svr_content_srv;
 
+// -------------------------------------------------
+
 bool svr_movie_running;
+
+// -------------------------------------------------
 
 int svr_api_version()
 {
@@ -36,6 +42,23 @@ int svr_dll_version()
 bool svr_can_use_nvenc()
 {
     return proc_is_nvenc_supported();
+}
+
+// Stuff that is created during init.
+void free_all_static_svr_stuff()
+{
+    svr_maybe_release(&svr_d3d11_device);
+    svr_maybe_release(&svr_d3d11_context);
+    svr_maybe_release(&svr_d3d9ex_device);
+}
+
+// Stuff that is created during movie start.
+void free_all_dynamic_svr_stuff()
+{
+    svr_maybe_release(&svr_d3d9ex_content_surf);
+    svr_maybe_release(&svr_d3d9ex_share_surf);
+    svr_maybe_release(&svr_content_tex);
+    svr_maybe_release(&svr_content_srv);
 }
 
 bool svr_init(const char* svr_path, IUnknown* game_device)
@@ -128,9 +151,7 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
     goto rexit;
 
 rfail:
-    svr_maybe_release(&svr_d3d11_device);
-    svr_maybe_release(&svr_d3d11_context);
-    svr_maybe_release(&svr_d3d9ex_device);
+    free_all_static_svr_stuff();
 
 rexit:
     return ret;
@@ -141,14 +162,14 @@ bool svr_movie_active()
     return svr_movie_running;
 }
 
-bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie* movie_data)
+bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieData* movie_data)
 {
     bool ret = false;
 
     if (svr_movie_running)
     {
         OutputDebugStringA("SVR (svr_start): Movie is already started. It is not allowed to call this now\n");
-        goto rexit;
+        return false;
     }
 
     movie_data->game_tex_view->QueryInterface(IID_PPV_ARGS(&svr_d3d9ex_content_surf));
@@ -157,7 +178,7 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie*
     if (svr_d3d9ex_content_surf == NULL && svr_content_srv == NULL)
     {
         OutputDebugStringA("SVR (svr_start): The passed game texture view is not a D3D11 (ID3D11ShaderResourceView) or a D3D9Ex (IDirect3DSurface9) type\n");
-        goto rexit;
+        goto rfail;
     }
 
     // We are a D3D11 game.
@@ -201,19 +222,16 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie*
 
     if (!proc_start(svr_d3d11_device, svr_d3d11_context, movie_name, movie_profile, svr_content_srv))
     {
-        goto rexit;
+        goto rfail;
     }
 
-    ret = true;
-    svr_movie_running = ret;
+    svr_movie_running = true;
 
+    ret = true;
     goto rexit;
 
 rfail:
-    svr_maybe_release(&svr_d3d9ex_share_surf);
-    svr_maybe_release(&svr_content_tex);
-    svr_maybe_release(&svr_content_srv);
-    svr_maybe_release(&svr_d3d9ex_content_surf);
+    free_all_dynamic_svr_stuff();
 
 rexit:
     return ret;
@@ -240,14 +258,7 @@ void svr_stop()
 
     proc_end();
 
-    if (svr_d3d9ex_device)
-    {
-        svr_maybe_release(&svr_d3d9ex_content_surf);
-        svr_maybe_release(&svr_d3d9ex_share_surf);
-    }
-
-    svr_maybe_release(&svr_content_tex);
-    svr_maybe_release(&svr_content_srv);
+    free_all_dynamic_svr_stuff();
 
     svr_movie_running = false;
 }

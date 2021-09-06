@@ -35,11 +35,14 @@ bool vdf_is_whitespace(char c)
 
 void vdf_parse_line(char* line_buf, SvrVdfLine* vdf_line, SvrVdfTokenType* type)
 {
+    // Titles use one token. Keyvalues use two tokens.
+    const s32 MAX_VDF_TOKENS = 2;
+
     char* ptr = line_buf;
     bool in_quote = false;
 
-    char* token_start[2] = { NULL, NULL };
-    char* token_end[2] = { NULL, NULL };
+    char* token_start[MAX_VDF_TOKENS] = { NULL, NULL };
+    char* token_end[MAX_VDF_TOKENS] = { NULL, NULL };
     s32 token_index = 0;
     SvrVdfTokenType token_type = SVR_VDF_OTHER;
 
@@ -79,6 +82,8 @@ void vdf_parse_line(char* line_buf, SvrVdfLine* vdf_line, SvrVdfTokenType* type)
                 {
                     token_type = SVR_VDF_KV;
                 }
+
+                assert(token_index < MAX_VDF_TOKENS);
 
                 token_end[token_index] = ptr;
                 token_index++;

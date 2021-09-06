@@ -31,7 +31,7 @@ extern "C"
 {
 
 // To be increased when something in the interface changes. Internal DLL changes (svr_dll_version) does not have to up this.
-// The API should not be used if the DLL API version does not match the client header API version.
+// The API must not be used if the DLL API version does not match the client header API version.
 const int SVR_API_VERSION = 1;
 
 struct IUnknown;
@@ -40,7 +40,7 @@ struct IDirect3DDevice9Ex;
 struct ID3D11ShaderResourceView;
 struct ID3D11Device;
 
-struct SvrStartMovie
+struct SvrStartMovieData
 {
     // A view to a texture that contains the game content.
     // A reference will be added to this when starting, and released when stopping.
@@ -92,7 +92,7 @@ SVR_API bool svr_movie_active();
 //
 // The movie name is the filename of the video that will be created, including the extension.
 // Movies are saved in the SVR directory.
-// The allowed extensions (containers) for the H264 video stream is one of the following: mp4, mkv, mov.
+// The allowed extensions (media containers) for the H264 video stream is one of the following: mp4, mkv, mov.
 // Starting the movie will fail if the container is not one of these. AVI is not supported as it's a very outdated
 // container that does not support various H264 features.
 //
@@ -110,7 +110,7 @@ SVR_API bool svr_movie_active();
 // Load svr_movie_start.cfg after calling this.
 //
 // Encoding with NVENC will automatically be chosen if available.
-SVR_API bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovie* movie_data);
+SVR_API bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieData* movie_data);
 
 // This function should be called after svr_start to read how fast the game should be running.
 // Set host_framerate to the value this returns.

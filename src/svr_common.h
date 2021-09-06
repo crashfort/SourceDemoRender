@@ -27,18 +27,15 @@ using wchar = wchar_t;
 #define SVR_STR_CAT(X) SVR_STR_CAT1(X)
 #define SVR_FILE_LOCATION __FILE__ ":" SVR_STR_CAT(__LINE__)
 
-const s32 SVR_VERSION = 34;
+// Should be same type from Steam API.
+using SteamAppId = u32;
 
 // Used by launcher and injector as parameter for svr_init_standalone in svr_game.dll.
 struct SvrGameInitData
 {
     const char* svr_path;
-    u32 app_id;
+    SteamAppId app_id;
 };
-
-// Steam app ids of the games we support.
-const u32 SVR_GAME_CSS = 240;
-const u32 SVR_GAME_CSGO = 730;
 
 template <class T>
 inline void svr_clamp(T* v, T min, T max)
@@ -63,21 +60,5 @@ template <class T>
 inline void svr_maybe_release(T** ptr)
 {
     if (*ptr) (*ptr)->Release();
-    *ptr = NULL;
-}
-
-template <class T>
-inline void svr_swap_ptrs(T** first, T** second)
-{
-    T* temp = *first;
-    *first = *second;
-    *second = temp;
-}
-
-template <class T>
-inline void svr_maybe_free(T** ptr)
-{
-    void free(void*);
-    if (*ptr) free(*ptr);
     *ptr = NULL;
 }

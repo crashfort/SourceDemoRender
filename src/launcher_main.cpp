@@ -1,4 +1,5 @@
 #include "svr_common.h"
+#include "svr_defs.h"
 #include <Windows.h>
 #include <stdio.h>
 #include <strsafe.h>
@@ -7,6 +8,11 @@
 #include "svr_vdf.h"
 #include <VersionHelpers.h>
 #include "stb_sprintf.h"
+
+struct FilePathA
+{
+    char path[MAX_PATH];
+};
 
 // Will put both to console and to file.
 // Use printf for other messages that should not be shown in file.
@@ -37,9 +43,9 @@ __declspec(noreturn) void launcher_error(const char* format, ...)
 }
 
 // These are the supported games.
-const u32 GAME_APP_IDS[] = {
-    SVR_GAME_CSS,
-    SVR_GAME_CSGO,
+const SteamAppId GAME_APP_IDS[] = {
+    STEAM_GAME_CSS,
+    STEAM_GAME_CSGO,
 };
 
 // Display names shown on Steam.
@@ -71,12 +77,7 @@ const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(GAME_APP_IDS);
 // Base arguments that every game will have.
 const char* BASE_GAME_ARGS = "-steam -insecure +sv_lan 1 -console";
 
-struct SvrFilePathA
-{
-    char path[MAX_PATH];
-};
-
-const s32 MAX_STEAM_LIBRARIES = 256;
+const s32 MAX_STEAM_LIBRARIES = 32;
 
 // Whether or not the games we support are installed.
 bool steam_install_states[NUM_SUPPORTED_GAMES];
@@ -85,7 +86,7 @@ s32 num_installed_games;
 // A Steam library can be installed anywhere, we have to iterate over all of them to see where a game is located.
 
 s32 num_steam_libraries;
-SvrFilePathA steam_library_paths[MAX_STEAM_LIBRARIES];
+FilePathA steam_library_paths[MAX_STEAM_LIBRARIES];
 
 // This is used to remap indexes when selecting games in the menu from games that are installed vs games that are supported.
 s32 steam_index_remaps[NUM_SUPPORTED_GAMES];
@@ -99,7 +100,7 @@ DWORD steam_active_user;
 // Our directory where we are running from. The game needs to know this.
 char working_dir[MAX_PATH];
 
-using SvrInitFuncType = void(__cdecl*)(SvrGameInitData* init_data);
+using InitFuncType = void(__cdecl*)(SvrGameInitData* init_data);
 
 // The structure that will be located in the started process.
 // It is used as a parameter to the below function.
@@ -120,7 +121,7 @@ struct IpcStructure
     const char* svr_path;
 
     // What Steam game we are starting.
-    u32 app_id;
+    SteamAppId app_id;
 };
 
 // This is the function that will be injected into the target process.
@@ -142,14 +143,15 @@ VOID CALLBACK remote_func(ULONG_PTR param)
     // Add our resource path as searchable to resolve library dependencies.
     data->SetDllDirectoryA(data->svr_path);
 
+    // We need to call svr_init_standalone in svr_game.dll.
+
     HMODULE module = data->LoadLibraryA(data->library_name);
-    SvrInitFuncType init_func = (SvrInitFuncType)data->GetProcAddress(module, data->export_name);
+    InitFuncType init_func = (InitFuncType)data->GetProcAddress(module, data->export_name);
 
     SvrGameInitData init_data;
     init_data.svr_path = data->svr_path;
     init_data.app_id = data->app_id;
 
-    // This will call svr_init_standalone in svr_game.dll.
     init_func(&init_data);
 
     // Restore the default search order.
@@ -158,7 +160,7 @@ VOID CALLBACK remote_func(ULONG_PTR param)
 
 // The code that will run in the started process.
 // It is responsible of injecting our library into itself.
-u8 REMOTE_FUNC_BYTES[] =
+const u8 REMOTE_FUNC_BYTES[] =
 {
     0x55,
     0x8b, 0xec,
@@ -257,7 +259,7 @@ void find_installed_game_path(s32 game_index, char* out_path, s32 out_path_cch)
 
     for (s32 i = 0; i < num_steam_libraries; i++)
     {
-        SvrFilePathA& lib = steam_library_paths[i];
+        FilePathA& lib = steam_library_paths[i];
 
         // If this file is available here then the game is installed in this library.
 
@@ -347,11 +349,14 @@ s32 start_game(s32 game_index)
     structure.GetProcAddress = GetProcAddress;
     structure.SetDllDirectoryA = SetDllDirectoryA;
 
-    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, "svr_game.dll", 13, &remote_written);
+    char GAME_DLL_NAME[] = "svr_game.dll";
+    char INIT_FN_NAME[] = "svr_init_standalone";
+
+    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, GAME_DLL_NAME, SVR_ARRAY_SIZE(GAME_DLL_NAME), &remote_written);
     structure.library_name = (char*)remote_mem + remote_write_pos;
     remote_write_pos += remote_written;
 
-    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, "svr_init_standalone", 20, &remote_written);
+    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, INIT_FN_NAME, SVR_ARRAY_SIZE(INIT_FN_NAME), &remote_written);
     structure.export_name = (char*)remote_mem + remote_write_pos;
     remote_write_pos += remote_written;
 
@@ -416,7 +421,7 @@ s32 show_menu()
     while (selection == -1)
     {
         char buf[4];
-        char* res = fgets(buf, sizeof(buf), stdin);
+        char* res = fgets(buf, 4, stdin);
 
         if (res == NULL)
         {
@@ -439,7 +444,7 @@ s32 show_menu()
     return start_game(game_index);
 }
 
-s32 autostart_game(u32 app_id)
+s32 autostart_game(SteamAppId app_id)
 {
     s32 game_index = -1;
 
@@ -558,6 +563,7 @@ void show_processor()
 
     RegGetValueA(hkey, NULL, "ProcessorNameString", RRF_RT_REG_SZ, NULL, name, &name_size);
 
+    // The value will have a lot of extra spaces at the end.
     trim_right(name, strlen(name));
 
     launcher_log("Using processor %s (%lu cpus)\n", name, GetActiveProcessorCount(ALL_PROCESSOR_GROUPS));
@@ -588,18 +594,18 @@ void find_steam_path()
     RegGetValueA(steam_hkey, NULL, "SteamPath", RRF_RT_REG_SZ, NULL, steam_path, &steam_path_size);
     RegGetValueA(steam_hkey, "ActiveProcess", "ActiveUser", RRF_RT_DWORD, NULL, &steam_active_user, &steam_active_user_size);
 
+    // Not strictly true but we need Steam to be running in order to read the launch parameters to use.
+    if (steam_active_user == 0)
+    {
+        launcher_error("Steam must be running for SVR to work.");
+    }
+
     for (DWORD i = 0; i < steam_path_size; i++)
     {
         if (steam_path[i] == '/')
         {
             steam_path[i] = '\\';
         }
-    }
-
-    // Not strictly true but we need Steam to be running in order to read the launch parameters to use.
-    if (steam_active_user == 0)
-    {
-        launcher_error("Steam must be running for SVR to work.");
     }
 }
 
@@ -701,7 +707,7 @@ void find_steam_libraries()
 
 void find_installed_supported_games()
 {
-    // We do a quick search through the registry to determine if we have the games.
+    // We do a quick search through the registry to determine if we have the supported games.
 
     HKEY steam_apps_hkey;
     RegOpenKeyExA(steam_hkey, "Apps", 0, KEY_READ, &steam_apps_hkey);
@@ -764,6 +770,9 @@ void find_installed_supported_games()
 // Enable this to generate the machine code for remote_func (see comments at that function).
 #define SIMULATE_REMOTE_BYTES 0
 
+// Enable to skip gathering system information and stuff on start during testing.
+#define SHOW_START_INFO 1
+
 int main(int argc, char** argv)
 {
     #if SIMULATE_REMOTE_BYTES
@@ -783,27 +792,29 @@ int main(int argc, char** argv)
     return 0;
     #endif
 
-    if (!IsWindows10OrGreater())
-    {
-        launcher_error("Windows 10 or later is needed to use SVR.");
-    }
-
     GetCurrentDirectoryA(MAX_PATH, working_dir);
 
     // For standalone mode, the launcher creates the log file that the game then appends to.
     svr_init_log("data\\SVR_LOG.TXT", false);
+
+    #if !SHOW_START_INFO
+    if (!IsWindows10OrGreater())
+    {
+        launcher_error("Windows 10 or later is needed to use SVR.");
+    }
 
     SYSTEMTIME lt;
     GetLocalTime(&lt);
 
     launcher_log("SVR version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
     launcher_log("This is a standalone version of SVR. Interoperability with other applications may not work\n");
-    launcher_log("To use SVR in Momentum, start Momentum\n");
+    // launcher_log("To use SVR in Momentum, start Momentum\n");
     launcher_log("For more information see https://github.com/crashfort/SourceDemoRender\n");
 
     show_windows_version();
     show_processor();
     show_available_memory();
+    #endif
 
     find_steam_path();
     find_installed_supported_games();
@@ -816,7 +827,7 @@ int main(int argc, char** argv)
     // Autostarting a game works by giving the app id.
     if (argc == 2)
     {
-        u32 app_id = strtoul(argv[1], NULL, 10);
+        SteamAppId app_id = strtoul(argv[1], NULL, 10);
 
         if (app_id == 0)
         {

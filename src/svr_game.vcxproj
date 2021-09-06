@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="game_proc_profile.cpp" />
     <ClCompile Include="stb_sprintf.cpp" />
     <ClCompile Include="svr_atom.cpp" />
     <ClCompile Include="svr_logging.cpp" />
@@ -23,9 +24,11 @@
     <ClCompile Include="svr_sem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="game_proc_profile.h" />
     <ClInclude Include="stb_sprintf.h" />
     <ClInclude Include="svr_atom.h" />
     <ClInclude Include="svr_common.h" />
+    <ClInclude Include="svr_defs.h" />
     <ClInclude Include="svr_logging.h" />
     <ClInclude Include="game_proc.h" />
     <ClInclude Include="game_shared.h" />

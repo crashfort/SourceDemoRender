@@ -35,9 +35,11 @@ bool ini_is_whitespace(char c)
 
 void ini_parse_line(char* line_buf, SvrIniLine* ini_line, SvrIniTokenType* type)
 {
+    const s32 MAX_INI_TOKENS = 3;
+
     char* ptr = line_buf;
 
-    char* tokens[3] = { NULL, NULL, NULL };
+    char* tokens[MAX_INI_TOKENS] = { NULL, NULL, NULL };
     s32 token_index = 0;
 
     tokens[token_index] = ptr;
@@ -54,10 +56,14 @@ void ini_parse_line(char* line_buf, SvrIniLine* ini_line, SvrIniTokenType* type)
 
         else if (*ptr == '=')
         {
-            tokens[token_index] = ptr;
+            assert(token_index < MAX_INI_TOKENS);
+
+            tokens[token_index] = ptr + 1;
             token_index++;
         }
     }
+
+    assert(token_index < MAX_INI_TOKENS);
 
     tokens[token_index] = ptr;
     token_index++;
@@ -67,10 +73,8 @@ void ini_parse_line(char* line_buf, SvrIniLine* ini_line, SvrIniTokenType* type)
     ini_line->title[0] = 0;
     ini_line->value[0] = 0;
 
-    // Need to offset by 1 to remove the equal sign.
-
-    s32 title_length = tokens[1] - tokens[0];
-    s32 value_length = (tokens[2] - tokens[1]) - 1;
+    s32 title_length = (tokens[1] - tokens[0]) - 1;
+    s32 value_length = (tokens[2] - tokens[1]);
 
     if (title_length == 0 || value_length == 0)
     {
@@ -78,7 +82,7 @@ void ini_parse_line(char* line_buf, SvrIniLine* ini_line, SvrIniTokenType* type)
     }
 
     StringCchCopyNA(ini_line->title, SVR_INI_TOKEN_BUF_SIZE, tokens[0], title_length);
-    StringCchCopyNA(ini_line->value, SVR_INI_TOKEN_BUF_SIZE, tokens[1] + 1, value_length);
+    StringCchCopyNA(ini_line->value, SVR_INI_TOKEN_BUF_SIZE, tokens[1], value_length);
 }
 
 SvrIniLine svr_alloc_ini_line()

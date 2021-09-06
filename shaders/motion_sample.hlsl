@@ -27,13 +27,14 @@ cbuffer mosample_buffer_1 : register(b1)
 void main(uint3 dtid : SV_DispatchThreadID)
 {
     uint2 pos = dtid.xy;
-
     float4 source_pix = source_texture.Load(dtid);
+    float4 add_pix = source_pix * mosample_weight;
 
     #if MOTION_SAMPLE_LEGACY
+    // The legacy buffer is 1D so map 2D coordinate.
     uint di = pos.x + dest_texture_width * pos.y;
-    dest_buffer[di] = source_pix * mosample_weight;
+    dest_buffer[di] += add_pix;
     #else
-    dest_texture[pos] += source_pix * mosample_weight;
+    dest_texture[pos] += add_pix;
     #endif
 }
