@@ -4,7 +4,7 @@
 #include <d3d11_4.h>
 #include <strsafe.h>
 #include <dwrite.h>
-#include <d2d1.h>
+#include <d2d1_1.h>
 #include <malloc.h>
 #include <assert.h>
 #include <limits>
@@ -12,6 +12,7 @@
 #include "svr_stream.h"
 #include "svr_sem.h"
 #include "game_proc_profile.h"
+#include "stb_sprintf.h"
 
 // Don't use fatal process ending errors in here as this is used both in standalone and in integration.
 // It is only standalone SVR that can do fatal processs ending errors.
@@ -52,6 +53,22 @@ ID3D11Texture2D* work_tex;
 ID3D11RenderTargetView* work_tex_rtv;
 ID3D11ShaderResourceView* work_tex_srv;
 ID3D11UnorderedAccessView* work_tex_uav;
+
+// -------------------------------------------------
+// Velo state.
+
+ID2D1Factory1* d2d1_factory;
+ID2D1Device* d2d1_device;
+ID2D1DeviceContext* d2d1_context;
+IDWriteFactory* dwrite_factory;
+ID2D1SolidColorBrush* velo_brush;
+
+// This texture is linked to the game content / work tex by some means.
+ID2D1Bitmap1* d2d1_tex;
+
+IDWriteTextFormat* velo_text_format;
+
+float player_velo[3];
 
 // -------------------------------------------------
 // Mosample state.
@@ -718,6 +735,12 @@ void free_all_static_proc_stuff()
     svr_maybe_release(&mosample_cs);
 
     svr_maybe_release(&mosample_cb);
+
+    svr_maybe_release(&d2d1_factory);
+    svr_maybe_release(&d2d1_device);
+    svr_maybe_release(&d2d1_context);
+    svr_maybe_release(&dwrite_factory);
+    svr_maybe_release(&velo_brush);
 }
 
 void free_all_dynamic_proc_stuff()
@@ -726,16 +749,60 @@ void free_all_dynamic_proc_stuff()
     svr_maybe_release(&work_tex_rtv);
     svr_maybe_release(&work_tex_srv);
     svr_maybe_release(&work_tex_uav);
+
+    svr_maybe_release(&d2d1_tex);
+    svr_maybe_release(&velo_text_format);
 }
 
 bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 {
     bool ret = false;
+    HRESULT hr;
+    D3D11_BUFFER_DESC mosample_cb_desc = {};
 
     StringCchCopyA(svr_resource_path, MAX_PATH, svr_path);
 
     IDXGIDevice* dxgi_device;
     d3d11_device->QueryInterface(IID_PPV_ARGS(&dxgi_device));
+
+    {
+        hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, IID_PPV_ARGS(&d2d1_factory));
+
+        if (FAILED(hr))
+        {
+            svr_log("ERROR: D2D1CreateFactory returned %#x\n", hr);
+            goto rfail;
+        }
+
+        hr = d2d1_factory->CreateDevice(dxgi_device, &d2d1_device);
+
+        if (FAILED(hr))
+        {
+            svr_log("ERROR: ID2D1Factory7::CreateDevice returned %#x\n", hr);
+            goto rfail;
+        }
+
+        hr = d2d1_device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &d2d1_context);
+
+        if (FAILED(hr))
+        {
+            svr_log("ERROR: ID2D1Device6::CreateDeviceContext returned %#x\n", hr);
+            goto rfail;
+        }
+
+        // We want grayscale AA for velo because of the moving background.
+        d2d1_context->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+
+        hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&dwrite_factory);
+
+        if (FAILED(hr))
+        {
+            svr_log("ERROR: Could not create dwrite factory (#x)\n", hr);
+            goto rfail;
+        }
+
+        d2d1_context->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &velo_brush);
+    }
 
     IDXGIAdapter* dxgi_adapter;
     dxgi_device->GetAdapter(&dxgi_adapter);
@@ -744,23 +811,17 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
     dxgi_adapter->GetDesc(&dxgi_adapter_desc);
 
     dxgi_adapter->Release();
-    dxgi_device->Release();
 
     // Useful for future troubleshooting.
     // Use https://www.pcilookup.com/ to see more information about device and vendor ids.
     svr_log("Using graphics device %x by vendor %x\n", dxgi_adapter_desc.DeviceId, dxgi_adapter_desc.VendorId);
 
-    // Minimum size of a constant buffer is 16 bytes.
-
-    // For mosample_buffer_0.
-    D3D11_BUFFER_DESC mosample_cb_desc = {};
     mosample_cb_desc.ByteWidth = sizeof(MosampleCb);
     mosample_cb_desc.Usage = D3D11_USAGE_DYNAMIC;
     mosample_cb_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     mosample_cb_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     mosample_cb_desc.MiscFlags = 0;
 
-    HRESULT hr;
     hr = d3d11_device->CreateBuffer(&mosample_cb_desc, NULL, &mosample_cb);
 
     if (FAILED(hr))
@@ -790,6 +851,8 @@ rfail:
     free_all_static_proc_stuff();
 
 rexit:
+    dxgi_device->Release();
+
     return ret;
 }
 
@@ -976,6 +1039,18 @@ void end_ffmpeg_proc()
     ffmpeg_proc = NULL;
 }
 
+s32 to_utf16(const char* value, s32 value_length, wchar* buf, s32 buf_chars)
+{
+    auto length = MultiByteToWideChar(CP_UTF8, 0, value, value_length, buf, buf_chars);
+
+    if (length < buf_chars)
+    {
+        buf[length] = 0;
+    }
+
+    return length;
+}
+
 bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, const char* dest, const char* profile, ID3D11ShaderResourceView* game_content_srv)
 {
     bool ret = false;
@@ -1034,6 +1109,7 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         goto rfail;
     }
 
+    if (movie_profile.mosample_enabled)
     {
         D3D11_TEXTURE2D_DESC work_tex_desc = {};
         work_tex_desc.Width = tex_desc.Width;
@@ -1057,6 +1133,60 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         d3d11_device->CreateShaderResourceView(work_tex, NULL, &work_tex_srv);
         d3d11_device->CreateRenderTargetView(work_tex, NULL, &work_tex_rtv);
         d3d11_device->CreateUnorderedAccessView(work_tex, NULL, &work_tex_uav);
+    }
+
+    if (movie_profile.veloc_enabled)
+    {
+        // No mosample means the game texture is used directly.
+        ID3D11Texture2D* actual_tex = content_tex;
+        DXGI_FORMAT actual_format = tex_desc.Format;
+
+        if (movie_profile.mosample_enabled)
+        {
+            actual_tex = work_tex;
+            actual_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        }
+
+        D2D1_BITMAP_PROPERTIES1 bmp_props = {};
+        bmp_props.pixelFormat = D2D1::PixelFormat(actual_format, D2D1_ALPHA_MODE_IGNORE);
+        bmp_props.dpiX = 96;
+        bmp_props.dpiY = 96;
+        bmp_props.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+
+        IDXGISurface* dxgi_surface;
+
+        actual_tex->QueryInterface(IID_PPV_ARGS(&dxgi_surface));
+        d2d1_context->CreateBitmapFromDxgiSurface(dxgi_surface, &bmp_props, &d2d1_tex);
+
+        dxgi_surface->Release();
+
+        MovieProfile& p = movie_profile;
+
+        D2D1_COLOR_F velo_color;
+        velo_color.r = p.veloc_font_color[0] / 255.0f;
+        velo_color.g = p.veloc_font_color[1] / 255.0f;
+        velo_color.b = p.veloc_font_color[2] / 255.0f;
+        velo_color.a = p.veloc_font_color[3] / 255.0f;
+
+        velo_brush->SetColor(&velo_color);
+        velo_brush->SetOpacity(1.0f);
+
+        // DirectWrite uses stupid wchar.
+
+        wchar stupid_buf[128];
+        to_utf16(p.veloc_font, strlen(p.veloc_font), stupid_buf, 128);
+
+        hr = dwrite_factory->CreateTextFormat(stupid_buf, NULL, p.veloc_font_weight, p.veloc_font_style, p.veloc_font_stretch, p.veloc_font_size, L"en-gb", &velo_text_format);
+
+        // User can have input a font family that doesn't exist.
+        if (FAILED(hr))
+        {
+            game_log("Velocity text could not be created (%#x). Is the %s font installed?\n", hr, p.veloc_font);
+            goto rfail;
+        }
+
+        velo_text_format->SetTextAlignment(p.veloc_text_align);
+        velo_text_format->SetParagraphAlignment(p.veloc_para_align);
     }
 
     // Need to overwrite with new data.
@@ -1123,10 +1253,6 @@ void send_converted_video_frame_to_ffmpeg(ID3D11DeviceContext* d3d11_context)
     svr_sem_release(&ffmpeg_write_sem);
 }
 
-void encode_game_frame_with_nvenc(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv)
-{
-}
-
 void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv, float weight)
 {
     if (weight != mosample_weight_cache)
@@ -1159,6 +1285,34 @@ void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView*
 
 void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv)
 {
+    if (movie_profile.veloc_enabled)
+    {
+        float p = movie_profile.veloc_padding;
+
+        D2D1_RECT_F viewbox;
+        viewbox.left = 0.0f + p;
+        viewbox.top = 0.0f + p;
+        viewbox.right = movie_width - p;
+        viewbox.bottom = movie_height - p;
+
+        // We only deal with XY velo.
+        float vel = sqrt(player_velo[0] * player_velo[0] + player_velo[1] * player_velo[1]);
+
+        char buf[64];
+        s32 len = stbsp_snprintf(buf, 64, "%d", (s32)(vel + 0.5f));
+
+        // DirectWrite deals with stupid wchar.
+
+        wchar stupid_buf[64];
+        s32 stupid_len = to_utf16(buf, len, stupid_buf, 64);
+
+        d2d1_context->SetTarget(d2d1_tex);
+        d2d1_context->BeginDraw();
+        d2d1_context->DrawTextW(stupid_buf, stupid_len, velo_text_format, &viewbox, velo_brush, D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_GDI_NATURAL);
+        d2d1_context->EndDraw();
+        d2d1_context->SetTarget(NULL);
+    }
+
     convert_pixel_formats(d3d11_context, srv);
     send_converted_video_frame_to_ffmpeg(d3d11_context);
 }
@@ -1237,9 +1391,7 @@ void proc_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* ga
 
 void proc_give_velocity(float* xyz)
 {
-    float x = xyz[0];
-    float y = xyz[1];
-    float z = xyz[2];
+    memcpy(player_velo, xyz, sizeof(float) * 3);
 }
 
 void show_total_prof(const char* name, SvrProf* prof)

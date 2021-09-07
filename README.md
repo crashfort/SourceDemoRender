@@ -43,7 +43,7 @@ The default profile is used if none is specified when starting the movie. You ca
 | video_fps | The constant framerate to use for the movie. Whole numbers only.
 | video_encoder | The video encoder to use for the movie. Available options are *libx264* or *libx264rgb*. For YUV video, *libx264* is used. For RGB video, *libx264rgb* is used. There may be compatibility issues with *libx264rgb* but it produces the highest quality.
 | video_x264_crf | The constant rate factor to use for the movie. This is the direct link between quality and file size. Using 0 here produces lossless video, but may cause the video stream to not be supported in some media programs. This should be between 0 and 52. A lower value means better quality but larger file size.
-| video_x264_preset | The quality vs speed to use for encoding the movie. This can be one of *ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo*. A slower preset will produce slightly better quality but will significantly slow down the producing process.
+| video_x264_preset | The quality vs speed to use for encoding the movie. This can be one of *ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo*. A slower preset may decrease the file size, will produce slightly better quality but will significantly slow down the processing speed. A faster preset can create worse quality and will create larger files but will be much faster.
 | video_x264_intra | This decides whether or not the resulting video stream will consist only of keyframes. This essentially disables any compression. This will greatly increase the file size, but makes video editing very fast. This should be *0* or *1*.
 
 ### Motion blur
@@ -59,7 +59,7 @@ See the [motion blur demo](#motion-blur-demo) for what these values correspond t
 | --- | -----
 | velo_enabled | Whether or not the velocity overlay is enabled. The velocity overlay will show the velocity of the current player. In case of multiplayer games with spectating, it will use the spectated player. This should be *0* or *1*.
 | velo_font | The font family name to use. This should be the name of a font family that is installed on the system (such as Arial. You can see the installed fonts by searching *Fonts* in Start).
-| velo_font_size | The size of the font in points in 72 dpi.
+| velo_font_size | The size of the font in points in 96 dpi.
 | velo_color_r | The red color component between 0 and 255.
 | velo_color_g | The green color component between 0 and 255.
 | velo_color_b | The blue color component between 0 and 255.

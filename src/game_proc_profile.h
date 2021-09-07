@@ -13,9 +13,6 @@ struct MovieProfile
     const char* sw_x264_preset;
     s32 sw_x264_intra;
 
-    // NVENC encoding:
-    // Nothing yet.
-
     // Mosample:
     s32 mosample_enabled;
     s32 mosample_mult;
