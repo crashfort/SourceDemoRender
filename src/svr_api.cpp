@@ -39,11 +39,6 @@ int svr_dll_version()
     return SVR_VERSION;
 }
 
-bool svr_can_use_nvenc()
-{
-    return proc_is_nvenc_supported();
-}
-
 // Stuff that is created during init.
 void free_all_static_svr_stuff()
 {
@@ -135,10 +130,6 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
             goto rfail;
         }
     }
-
-    // Call this now to make the next call return instantly and not cause unexpected delays.
-    // The value is cached and cannot change.
-    proc_is_nvenc_supported();
 
     game_init();
 

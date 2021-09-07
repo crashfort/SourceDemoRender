@@ -16,9 +16,6 @@
 // User or system errors will print messages to SVR_LOG.TXT (for standalone SVR) and/or to the game console (if available at the time of error).
 // All functions in this API must be called from the game main thread only.
 
-// Encoding with NVENC is available for select NVIDIA adapters and software encoding will be used otherwise.
-// The difference for the user is that NVENC encoding will be a lot faster in this instance.
-
 // Windows only.
 
 #if SVR_GAME_DLL
@@ -57,13 +54,6 @@ SVR_API int svr_api_version();
 // SVR binary version. Marks new features or fixes.
 SVR_API int svr_dll_version();
 
-// To see if the system supports encoding through NVENC. Will only work on select NVIDIA devices.
-// This can be called before or after svr_init, but only call this once because the value will not change.
-// It makes more sense to call this after svr_init, as it will also call this as an optimization to not cause
-// a first penalty delay if called after.
-// Encoding with NVENC will automatically be chosen if available.
-SVR_API bool svr_can_use_nvenc();
-
 // To be called once at startup.
 //
 // The SVR path is the path to where SVR is located. This needs to be passed in because
@@ -79,8 +69,6 @@ SVR_API bool svr_can_use_nvenc();
 // The device must be created with a feature level greater or equal to D3D_FEATURE_LEVEL_11_0 and also with the flag D3D11_CREATE_DEVICE_BGRA_SUPPORT.
 //
 // If game_device is a IDirect3DDevice9Ex, then a new D3D11 device will be created, and additional resources will be created using both devices.
-//
-// If NVENC encoding is supported and enabled, an additional D3D11 device is always created.
 SVR_API bool svr_init(const char* svr_path, IUnknown* game_device);
 
 // Returns whether or not movie processing is happening.
@@ -108,8 +96,6 @@ SVR_API bool svr_movie_active();
 //
 // After calling this function, set host_framerate to the value returned by svr_get_game_rate.
 // Load svr_movie_start.cfg after calling this.
-//
-// Encoding with NVENC will automatically be chosen if available.
 SVR_API bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieData* movie_data);
 
 // This function should be called after svr_start to read how fast the game should be running.

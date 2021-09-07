@@ -11,7 +11,6 @@
 #include "svr_prof.h"
 #include "svr_stream.h"
 #include "svr_sem.h"
-#include <nvEncodeAPI.h>
 #include "game_proc_profile.h"
 
 // Don't use fatal process ending errors in here as this is used both in standalone and in integration.
@@ -112,9 +111,6 @@ MovieProfile movie_profile;
 // If the hardware does not have this support, then buffers need to be used instead of textures.
 bool hw_has_typed_uav_support;
 
-// NVENC support will always be used if available (not an option).
-bool hw_has_nvenc_support;
-
 // Certain things are locked behind HW models.
 bool hw_nvenc_has_lookahead;
 bool hw_nvenc_has_psycho_aq;
@@ -141,7 +137,6 @@ const s32 MAX_BUFFERED_SEND_BUFS = 8;
 
 // The buffers that are sent to the ffmpeg process.
 // For SW encoding these buffers are uncompressed frames of equal size.
-// For NVENC encoding these buffers are some amount of compressed packets in a H264 stream.
 ThreadPipeData ffmpeg_send_bufs[MAX_BUFFERED_SEND_BUFS];
 
 HANDLE ffmpeg_thread;
@@ -628,379 +623,6 @@ rexit:
 }
 
 // -------------------------------------------------
-// NVENC encoding.
-
-// NVENC encoding for NVIDIA cards.
-// Implemented with version 11.0.10 of the SDK.
-// See the documentation in NVENC_VideoEncoder_API_ProgGuide.pdf (from NVIDIA website).
-
-// This device and context are used in the NVENC thread that receives the encoded output.
-// We pass this to NVENC for its processing for multithreaded purposes since ID3D11DeviceContext is not thread safe (so we cannot
-// use the existing svr_d3d11_device).
-
-ID3D11Device* nvenc_d3d11_device;
-ID3D11DeviceContext* nvenc_d3d11_context;
-NV_ENCODE_API_FUNCTION_LIST nvenc_funs;
-
-// NVENC resources have to be destroyed in a specific order and all pending operations need to be flushed.
-
-void* nvenc_encoder;
-HANDLE nvenc_thread;
-
-SvrSemaphore nvenc_raw_sem;
-SvrSemaphore nvenc_enc_sem;
-
-struct NvencPicture
-{
-    ID3D11Texture2D* tex;
-    NV_ENC_REGISTERED_PTR resource;
-    NV_ENC_INPUT_PTR mapped_resource;
-};
-
-s32 nvenc_num_pics;
-NvencPicture* nvenc_pics;
-
-#define NV_FAILED(ns) (((s32)(ns)) != NV_ENC_SUCCESS)
-
-// Stuff that is created during init.
-void free_all_static_nvenc_stuff()
-{
-    svr_maybe_release(&nvenc_d3d11_device);
-    svr_maybe_release(&nvenc_d3d11_context);
-    nvenc_funs = {};
-}
-
-// Stuff that is created during movie start.
-void free_all_dynamic_nvenc_stuff()
-{
-    if (nvenc_pics)
-    {
-        for (s32 i = 0; i < nvenc_num_pics; i++)
-        {
-            NvencPicture* pic = &nvenc_pics[i];
-
-            svr_maybe_release(&pic->tex);
-        }
-
-        free(nvenc_pics);
-        nvenc_pics = NULL;
-    }
-
-    nvenc_num_pics = 0;
-
-    if (nvenc_encoder)
-    {
-        nvenc_funs.nvEncDestroyEncoder(nvenc_encoder);
-        nvenc_encoder = NULL;
-    }
-}
-
-s32 check_nvenc_support_cap(NV_ENC_CAPS cap)
-{
-    assert(nvenc_encoder);
-
-    NV_ENC_CAPS_PARAM param = {};
-    param.version = NV_ENC_CAPS_PARAM_VER;
-    param.capsToQuery = cap;
-
-    int v;
-    nvenc_funs.nvEncGetEncodeCaps(nvenc_encoder, NV_ENC_CODEC_H264_GUID, &param, &v);
-
-    return v;
-}
-
-bool init_nvenc()
-{
-    bool ret = false;
-
-    NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS nvenc_open_session_params = {};
-
-    HRESULT hr;
-    D3D_FEATURE_LEVEL created_device_level;
-
-    UINT device_create_flags = 0;
-
-    NVENCSTATUS ns;
-
-    // Should be good enough for all the features that we make use of.
-    const D3D_FEATURE_LEVEL MINIMUM_DEVICE_VERSION = D3D_FEATURE_LEVEL_11_0;
-
-    const D3D_FEATURE_LEVEL DEVICE_LEVELS[] = {
-        MINIMUM_DEVICE_VERSION
-    };
-
-    #if SVR_DEBUG
-    device_create_flags |= D3D11_CREATE_DEVICE_DEBUG;
-    #endif
-
-    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, DEVICE_LEVELS, 1, D3D11_SDK_VERSION, &nvenc_d3d11_device, &created_device_level, &nvenc_d3d11_context);
-
-    if (FAILED(hr))
-    {
-        svr_log("ERROR: Could not create D3D11 device for NVENC encoding (%#x)\n", hr);
-        goto rfail;
-    }
-
-    nvenc_funs.version = NV_ENCODE_API_FUNCTION_LIST_VER;
-    NvEncodeAPICreateInstance(&nvenc_funs);
-
-    nvenc_open_session_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
-    nvenc_open_session_params.device = nvenc_d3d11_device;
-    nvenc_open_session_params.deviceType = NV_ENC_DEVICE_TYPE_DIRECTX;
-    nvenc_open_session_params.apiVersion = NVENCAPI_VERSION;
-    ns = nvenc_funs.nvEncOpenEncodeSessionEx(&nvenc_open_session_params, &nvenc_encoder);
-
-    if (NV_FAILED(ns))
-    {
-        svr_log("ERROR: Could not open NVENC encoder (%d)\n", (s32)ns);
-        goto rfail;
-    }
-
-    hw_nvenc_has_lookahead = check_nvenc_support_cap(NV_ENC_CAPS_SUPPORT_LOOKAHEAD);
-    hw_nvenc_has_psycho_aq = check_nvenc_support_cap(NV_ENC_CAPS_SUPPORT_TEMPORAL_AQ);
-    hw_nvenc_has_lossless_encode = check_nvenc_support_cap(NV_ENC_CAPS_SUPPORT_LOSSLESS_ENCODE);
-    hw_nvenc_has_444_encode = check_nvenc_support_cap(NV_ENC_CAPS_SUPPORT_YUV444_ENCODE);
-
-    svr_log("NVENC lookahead support: %d\n", (s32)hw_nvenc_has_lookahead);
-    svr_log("NVENC psycho aq support: %d\n", (s32)hw_nvenc_has_psycho_aq);
-    svr_log("NVENC lossless encode support: %d\n", (s32)hw_nvenc_has_lossless_encode);
-    svr_log("NVENC 444 encode support: %d\n", (s32)hw_nvenc_has_444_encode);
-
-    ret = true;
-    goto rexit;
-
-rfail:
-    free_all_static_nvenc_stuff();
-
-rexit:
-    return ret;
-}
-
-DWORD WINAPI nvenc_thread_proc(LPVOID lpParameter)
-{
-    return 0;
-}
-
-bool start_with_nvenc()
-{
-    bool ret = false;
-
-    NVENCSTATUS ns;
-    HRESULT hr;
-
-    GUID preset_guid = NV_ENC_PRESET_LOSSLESS_HP_GUID;
-
-    NV_ENC_INITIALIZE_PARAMS nvenc_init_params = {};
-    NV_ENC_PRESET_CONFIG preset_config;
-
-    nvenc_init_params.version = NV_ENC_INITIALIZE_PARAMS_VER;
-    nvenc_init_params.encodeGUID = NV_ENC_CODEC_H264_GUID;
-    nvenc_init_params.presetGUID = preset_guid;
-    nvenc_init_params.encodeWidth = movie_width;
-    nvenc_init_params.encodeHeight = movie_height;
-    nvenc_init_params.frameRateNum = movie_profile.movie_fps;
-    nvenc_init_params.frameRateDen = 1;
-    nvenc_init_params.enableEncodeAsync = 1;
-    nvenc_init_params.enablePTD = 1;
-    ns = nvenc_funs.nvEncInitializeEncoder(nvenc_encoder, &nvenc_init_params);
-
-    if (NV_FAILED(ns))
-    {
-        svr_log("ERROR: Could not initialize the NVENC encoder (%d)\n", (s32)ns);
-        goto rfail;
-    }
-
-    preset_config.version = NV_ENC_PRESET_CONFIG_VER;
-    preset_config.presetCfg.version = NV_ENC_CONFIG_VER;
-    nvenc_funs.nvEncGetEncodePresetConfig(nvenc_encoder, NV_ENC_CODEC_H264_GUID, preset_guid, &preset_config);
-
-    nvenc_num_pics = svr_max(4, preset_config.presetCfg.frameIntervalP * 2 * 2);
-    nvenc_pics = (NvencPicture*)malloc(sizeof(NvencPicture) * nvenc_num_pics);
-    memset(nvenc_pics, 0x00, sizeof(NvencPicture) * nvenc_num_pics);
-
-    for (s32 i = 0; i < nvenc_num_pics; i++)
-    {
-        D3D11_TEXTURE2D_DESC nvenc_tex_desc = {};
-        NV_ENC_REGISTER_RESOURCE nvenc_resource = {};
-
-        nvenc_tex_desc.Width = movie_width;
-        nvenc_tex_desc.Height = movie_height;
-        nvenc_tex_desc.MipLevels = 1;
-        nvenc_tex_desc.ArraySize = 1;
-        nvenc_tex_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        nvenc_tex_desc.SampleDesc.Count = 1;
-        nvenc_tex_desc.Usage = D3D11_USAGE_DEFAULT;
-        nvenc_tex_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
-
-        ID3D11Texture2D* nvenc_tex = NULL;
-        hr = nvenc_d3d11_device->CreateTexture2D(&nvenc_tex_desc, NULL, &nvenc_tex);
-
-        if (FAILED(hr))
-        {
-            svr_log("ERROR: Could not create NVENC texture (%#x)\n", hr);
-            goto rfail;
-        }
-
-        nvenc_tex->SetEvictionPriority(DXGI_RESOURCE_PRIORITY_MAXIMUM);
-
-        nvenc_resource.version = NV_ENC_REGISTER_RESOURCE_VER;
-        nvenc_resource.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_DIRECTX;
-        nvenc_resource.width = movie_width;
-        nvenc_resource.height = movie_height;
-        nvenc_resource.resourceToRegister = nvenc_tex;
-        nvenc_resource.bufferFormat = NV_ENC_BUFFER_FORMAT_ARGB;
-        nvenc_resource.bufferUsage = NV_ENC_INPUT_IMAGE;
-
-        ns = nvenc_funs.nvEncRegisterResource(nvenc_encoder, &nvenc_resource);
-
-        if (NV_FAILED(ns))
-        {
-            svr_log("ERROR: Could not register NVENC resource (%d)\n", (s32)ns);
-            goto rfail;
-        }
-
-        NvencPicture* pic = &nvenc_pics[i];
-        pic->tex = nvenc_tex;
-        pic->resource = nvenc_resource.registeredResource;
-    }
-
-    ret = true;
-    goto rexit;
-
-rfail:
-    free_all_dynamic_nvenc_stuff();
-
-rexit:
-    return ret;
-}
-
-// NV_ENC_CAPS_SUPPORT_YUV444_ENCODE
-// NV_ENC_CAPS_SUPPORT_LOSSLESS_ENCODE
-
-const UINT NVIDIA_VENDOR_ID = 0x10de;
-
-// Blocked adapters from OBS.
-// See https://github.com/obsproject/obs-studio/blob/master/plugins/obs-ffmpeg/obs-ffmpeg.c
-// Use https://www.pcilookup.com/ to see more information about device and vendor ids.
-const UINT BLACKLISTED_ADAPTERS[] = {
-    0x1298, // GK208M [GeForce GT 720M]
-    0x1140, // GF117M [GeForce 610M/710M/810M/820M / GT 620M/625M/630M/720M]
-    0x1293, // GK208M [GeForce GT 730M]
-    0x1290, // GK208M [GeForce GT 730M]
-    0x0fe1, // GK107M [GeForce GT 730M]
-    0x0fdf, // GK107M [GeForce GT 740M]
-    0x1294, // GK208M [GeForce GT 740M]
-    0x1292, // GK208M [GeForce GT 740M]
-    0x0fe2, // GK107M [GeForce GT 745M]
-    0x0fe3, // GK107M [GeForce GT 745M]
-    0x1140, // GF117M [GeForce 610M/710M/810M/820M / GT 620M/625M/630M/720M]
-    0x0fed, // GK107M [GeForce 820M]
-    0x1340, // GM108M [GeForce 830M]
-    0x1393, // GM107M [GeForce 840M]
-    0x1341, // GM108M [GeForce 840M]
-    0x1398, // GM107M [GeForce 845M]
-    0x1390, // GM107M [GeForce 845M]
-    0x1344, // GM108M [GeForce 845M]
-    0x1299, // GK208BM [GeForce 920M]
-    0x134f, // GM108M [GeForce 920MX]
-    0x134e, // GM108M [GeForce 930MX]
-    0x1349, // GM108M [GeForce 930M]
-    0x1346, // GM108M [GeForce 930M]
-    0x179c, // GM107 [GeForce 940MX]
-    0x139c, // GM107M [GeForce 940M]
-    0x1347, // GM108M [GeForce 940M]
-    0x134d, // GM108M [GeForce 940MX]
-    0x134b, // GM108M [GeForce 940MX]
-    0x1399, // GM107M [GeForce 945M]
-    0x1348, // GM108M [GeForce 945M / 945A]
-    0x1d01, // GP108 [GeForce GT 1030]
-    0x0fc5, // GK107 [GeForce GT 1030]
-    0x174e, // GM108M [GeForce MX110]
-    0x174d, // GM108M [GeForce MX130]
-    0x1d10, // GP108M [GeForce MX150]
-    0x1d12, // GP108M [GeForce MX150]
-    0x1d11, // GP108M [GeForce MX230]
-    0x1d13, // GP108M [GeForce MX250]
-    0x1d52, // GP108BM [GeForce MX250]
-    0x1c94, // GP107 [GeForce MX350]
-    0x137b, // GM108GLM [Quadro M520 Mobile]
-    0x1d33, // GP108GLM [Quadro P500 Mobile]
-    0x137a, // GM108GLM [Quadro K620M / Quadro M500M]
-};
-
-bool is_blacklisted_device(UINT device_id)
-{
-    for (s32 i = 0; i < SVR_ARRAY_SIZE(BLACKLISTED_ADAPTERS); i++)
-    {
-        if (device_id == BLACKLISTED_ADAPTERS[i])
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool has_nvidia_device()
-{
-    IDXGIFactory2* dxgi_factory;
-
-    IDXGIAdapter1* adapter = NULL;
-    bool supported = false;
-
-    CreateDXGIFactory2(0, IID_PPV_ARGS(&dxgi_factory));
-
-    for (UINT i = 0; SUCCEEDED(dxgi_factory->EnumAdapters1(i, &adapter)); i++)
-    {
-        DXGI_ADAPTER_DESC1 adapter_desc;
-        adapter->GetDesc1(&adapter_desc);
-
-        adapter->Release();
-
-        // Integrated chips are not supported.
-        if (adapter_desc.VendorId == NVIDIA_VENDOR_ID && !is_blacklisted_device(adapter_desc.DeviceId))
-        {
-            supported = true;
-            break;
-        }
-    }
-
-    dxgi_factory->Release();
-
-    return supported;
-}
-
-bool has_nvenc_driver()
-{
-    HMODULE dll = LoadLibraryA("nvEncodeAPI.dll");
-    bool exists = dll != NULL;
-    FreeLibrary(dll);
-    return exists;
-}
-
-bool is_nvenc_supported_real()
-{
-    if (!has_nvidia_device())
-    {
-        return false;
-    }
-
-    if (!has_nvenc_driver())
-    {
-        return false;
-    }
-
-    return true;
-}
-
-bool proc_is_nvenc_supported()
-{
-    // Store the result because this will probably be called multiple times, and the result will not change.
-    static bool ret = is_nvenc_supported_real();
-    return ret;
-}
-
-// -------------------------------------------------
 
 // This thread will write data to the ffmpeg process.
 // Writing to the pipe is real slow and we want to buffer up a few to send which it can work on.
@@ -1018,7 +640,6 @@ DWORD WINAPI ffmpeg_thread_proc(LPVOID lpParameter)
         // Writing with pipes is very inconsistent and can wary with several milliseconds.
         // It has been tested to use overlapped I/O with completion routines but that was also too inconsistent and way too complicated.
         // For SW encoding this will take about 300 - 6000 us (always sending the same size).
-        // For NVENC encoding we send smaller data so it's faster.
 
         // There is some issue with writing with pipes that if it starts off slower than it should be, then it will forever be slow until the computer restarts.
         // Therefore it is useful to measure this.
@@ -1096,12 +717,9 @@ bool create_shaders(ID3D11Device* d3d11_device)
 
     // Pixel format conversion shaders are only used in SW encoding.
 
-    if (!hw_has_nvenc_support)
+    for (s32 i = 0; i < NUM_PXCONVS; i++)
     {
-        for (s32 i = 0; i < NUM_PXCONVS; i++)
-        {
-            if (!create_a_cs_shader(PXCONV_SHADER_NAMES[i], file_mem, SHADER_MEM_SIZE, d3d11_device, &pxconv_cs[i])) goto rfail;
-        }
+        if (!create_a_cs_shader(PXCONV_SHADER_NAMES[i], file_mem, SHADER_MEM_SIZE, d3d11_device, &pxconv_cs[i])) goto rfail;
     }
 
     if (hw_has_typed_uav_support)
@@ -1168,8 +786,6 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     hw_has_typed_uav_support = (fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD) && (fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE);
 
-    hw_has_nvenc_support = proc_is_nvenc_supported();
-
     IDXGIDevice* dxgi_device;
     d3d11_device->QueryInterface(IID_PPV_ARGS(&dxgi_device));
 
@@ -1187,7 +803,6 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
     svr_log("Using graphics device %x by vendor %x\n", dxgi_adapter_desc.DeviceId, dxgi_adapter_desc.VendorId);
 
     svr_log("Typed UAV support: %d\n", (s32)hw_has_typed_uav_support);
-    svr_log("NVENC support: %d\n", (s32)hw_has_nvenc_support);
 
     // Minimum size of a constant buffer is 16 bytes.
 
@@ -1234,14 +849,6 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     ffmpeg_thread = CreateThread(NULL, 0, ffmpeg_thread_proc, NULL, 0, NULL);
 
-    if (hw_has_nvenc_support)
-    {
-        if (!init_nvenc())
-        {
-            goto rfail;
-        }
-    }
-
     ret = true;
     goto rexit;
 
@@ -1268,23 +875,14 @@ void build_ffmpeg_process_args(char* full_args, s32 full_args_size)
 
     // Parameters below here is regarding the input (the stuff we are sending).
 
-    if (hw_has_nvenc_support)
-    {
-        // We are sending an H264 stream.
-        StringCchCatA(full_args, full_args_size, " -f rawvideo -vcodec h264");
-    }
+    PxConvText pxconv_text = PXCONV_FFMPEG_TEXT_TABLE[movie_pxconv];
 
-    else
-    {
-        PxConvText pxconv_text = PXCONV_FFMPEG_TEXT_TABLE[movie_pxconv];
+    // We are sending uncompressed frames.
+    StringCchCatA(full_args, full_args_size, " -f rawvideo -vcodec rawvideo");
 
-        // We are sending uncompressed frames.
-        StringCchCatA(full_args, full_args_size, " -f rawvideo -vcodec rawvideo");
-
-        // Pixel format that goes through the pipe.
-        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -pix_fmt %s", pxconv_text.format);
-        StringCchCatA(full_args, full_args_size, buf);
-    }
+    // Pixel format that goes through the pipe.
+    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -pix_fmt %s", pxconv_text.format);
+    StringCchCatA(full_args, full_args_size, buf);
 
     // Video size.
     StringCchPrintfA(buf, ARGS_BUF_SIZE, " -s %dx%d", movie_width, movie_height);
@@ -1304,43 +902,32 @@ void build_ffmpeg_process_args(char* full_args, s32 full_args_size)
     // there are too many problems in the Source engine that we cannot control. It leads to many buggy and weird scenarios (like animations not playing or demos jumping).
     StringCchCatA(full_args, full_args_size, " -threads 0");
 
-    if (hw_has_nvenc_support)
+    // Output video codec.
+    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -vcodec %s", movie_profile.sw_encoder);
+    StringCchCatA(full_args, full_args_size, buf);
+
+    if (pxconv_text.color_space)
     {
-        // Output video codec.
-        StringCchCatA(full_args, full_args_size, " -vcodec h264");
+        // Output video color space (only for YUV).
+        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -colorspace %s", pxconv_text.color_space);
+        StringCchCatA(full_args, full_args_size, buf);
     }
 
-    else
+    // Output video framerate.
+    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -framerate %d", movie_profile.movie_fps);
+    StringCchCatA(full_args, full_args_size, buf);
+
+    // Output quality factor.
+    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -crf %d", movie_profile.sw_crf);
+    StringCchCatA(full_args, full_args_size, buf);
+
+    // Output x264 preset.
+    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -preset %s", movie_profile.sw_x264_preset);
+    StringCchCatA(full_args, full_args_size, buf);
+
+    if (movie_profile.sw_x264_intra)
     {
-        PxConvText pxconv_text = PXCONV_FFMPEG_TEXT_TABLE[movie_pxconv];
-
-        // Output video codec.
-        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -vcodec %s", movie_profile.sw_encoder);
-        StringCchCatA(full_args, full_args_size, buf);
-
-        if (pxconv_text.color_space)
-        {
-            // Output video color space (only for YUV).
-            StringCchPrintfA(buf, ARGS_BUF_SIZE, " -colorspace %s", pxconv_text.color_space);
-            StringCchCatA(full_args, full_args_size, buf);
-        }
-
-        // Output video framerate.
-        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -framerate %d", movie_profile.movie_fps);
-        StringCchCatA(full_args, full_args_size, buf);
-
-        // Output quality factor.
-        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -crf %d", movie_profile.sw_crf);
-        StringCchCatA(full_args, full_args_size, buf);
-
-        // Output x264 preset.
-        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -preset %s", movie_profile.sw_x264_preset);
-        StringCchCatA(full_args, full_args_size, buf);
-
-        if (movie_profile.sw_x264_intra)
-        {
-            StringCchCatA(full_args, full_args_size, " -x264-params keyint=1");
-        }
+        StringCchCatA(full_args, full_args_size, " -x264-params keyint=1");
     }
 
     // The path can be specified as relative here because we set the working directory of the ffmpeg process
@@ -1357,7 +944,6 @@ void build_ffmpeg_process_args(char* full_args, s32 full_args_size)
 //    and there is no reliable documentation.
 // Data is sent to this process through a pipe that we create.
 // For SW encoding we send uncompressed frames which are then encoded and muxed in the ffmpeg process.
-// For NVENC encoding we send compressed H264 packets which are then muxed in the ffmpeg process.
 bool start_ffmpeg_proc()
 {
     const s32 FULL_ARGS_SIZE = 1024;
@@ -1509,20 +1095,9 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     movie_height = tex_desc.Height;
     StringCchCopyA(movie_path, MAX_PATH, dest);
 
-    if (hw_has_nvenc_support)
+    if (!start_with_sw(d3d11_device))
     {
-        if (!start_with_nvenc())
-        {
-            goto rfail;
-        }
-    }
-
-    else
-    {
-        if (!start_with_sw(d3d11_device))
-        {
-            goto rfail;
-        }
+        goto rfail;
     }
 
     if (hw_has_typed_uav_support)
@@ -1582,30 +1157,15 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     // Need to overwrite with new data.
     ffmpeg_read_queue.reset();
 
-    if (hw_has_nvenc_support)
+    // Each buffer contains 1 uncompressed frame.
+
+    for (s32 i = 0; i < MAX_BUFFERED_SEND_BUFS; i++)
     {
-        assert(false);
+        ThreadPipeData pipe_data;
+        pipe_data.ptr = (u8*)malloc(pxconv_total_plane_sizes);
+        pipe_data.size = pxconv_total_plane_sizes;
 
-        for (s32 i = 0; i < MAX_BUFFERED_SEND_BUFS; i++)
-        {
-            // Can we preallocate anything with NVENC encoding? The size of the H264 stream packets will wary but there still has
-            // to be an upper limit.
-            ffmpeg_send_bufs[i] = {};
-        }
-    }
-
-    else
-    {
-        // Each buffer contains 1 uncompressed frame.
-
-        for (s32 i = 0; i < MAX_BUFFERED_SEND_BUFS; i++)
-        {
-            ThreadPipeData pipe_data;
-            pipe_data.ptr = (u8*)malloc(pxconv_total_plane_sizes);
-            pipe_data.size = pxconv_total_plane_sizes;
-
-            ffmpeg_send_bufs[i] = pipe_data;
-        }
+        ffmpeg_send_bufs[i] = pipe_data;
     }
 
     for (s32 i = 0; i < MAX_BUFFERED_SEND_BUFS; i++)
@@ -1714,19 +1274,8 @@ void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView*
 
 void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv)
 {
-    if (hw_has_nvenc_support)
-    {
-        encode_game_frame_with_nvenc(d3d11_context, srv);
-
-        // The compressed H264 stream is sent to the ffmpeg process elsewhere.
-        // We will receive a notification from NVENC when it's ready.
-    }
-
-    else
-    {
-        convert_pixel_formats(d3d11_context, srv);
-        send_converted_video_frame_to_ffmpeg(d3d11_context);
-    }
+    convert_pixel_formats(d3d11_context, srv);
+    send_converted_video_frame_to_ffmpeg(d3d11_context);
 }
 
 void mosample_game_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv)
@@ -1827,15 +1376,7 @@ void proc_end()
 
     end_ffmpeg_proc();
 
-    if (hw_has_nvenc_support)
-    {
-        free_all_dynamic_nvenc_stuff();
-    }
-
-    else
-    {
-        free_all_dynamic_sw_stuff();
-    }
+    free_all_dynamic_sw_stuff();
 
     free_all_dynamic_proc_stuff();
 

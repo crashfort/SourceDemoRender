@@ -115,7 +115,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StackReserveSize>4194304</StackReserveSize>
       <StackCommitSize>4096</StackCommitSize>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;B:\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;B:\Video_Codec_SDK_11.0.10\Lib\Win32\nvencodeapi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;B:\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -146,7 +146,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <StackReserveSize>4194304</StackReserveSize>
       <StackCommitSize>4096</StackCommitSize>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;B:\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;B:\Video_Codec_SDK_11.0.10\Lib\Win32\nvencodeapi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;B:\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
