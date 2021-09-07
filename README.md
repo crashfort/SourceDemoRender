@@ -9,6 +9,9 @@ SVR operates on the H264 family of codecs for video with *libx264* for YUV and *
 
 When using `svr_launcher.exe` you are starting the standalone SVR, which modifies existing games to add SVR support. Steam must be running for the standalone launcher to work. The launcher will list all installed supported games and you can select a game to start.
 
+## Updates
+You can use `update.cmd` in the SVR directory to automatically download the latest release.
+
 ## Game support
 | Game          | Windows
 | ------------- | -----------------------
