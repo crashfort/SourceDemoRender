@@ -8,6 +8,7 @@
 #include "svr_vdf.h"
 #include <VersionHelpers.h>
 #include "stb_sprintf.h"
+#include <d3d11.h>
 
 struct FilePathA
 {
@@ -767,11 +768,49 @@ void find_installed_supported_games()
     }
 }
 
+// We cannot store this result so it has to be done every start.
+void check_hw_caps()
+{
+    ID3D11Device* d3d11_device = NULL;
+    ID3D11DeviceContext* d3d11_context = NULL;
+
+    UINT device_create_flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
+
+    // Should be good enough for all the features that we make use of.
+    const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_11_0;
+
+    const D3D_FEATURE_LEVEL DEVICE_LEVELS[] = {
+        MINIMUM_DEVICE_LEVEL
+    };
+
+    D3D_FEATURE_LEVEL created_device_level;
+
+    HRESULT hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, DEVICE_LEVELS, 1, D3D11_SDK_VERSION, &d3d11_device, &created_device_level, &d3d11_context);
+
+    if (FAILED(hr))
+    {
+        launcher_error("HW support could not be queried (%#x). Is there a graphics adapter in the system?", hr);
+    }
+
+    D3D11_FEATURE_DATA_FORMAT_SUPPORT2 fmt_support2;
+    fmt_support2.InFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    d3d11_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &fmt_support2, sizeof(D3D11_FEATURE_DATA_FORMAT_SUPPORT2));
+
+    bool has_typed_uav_load = fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD;
+    bool has_typed_uav_store = fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE;
+    bool has_typed_uav_support = has_typed_uav_load && has_typed_uav_store;
+
+    if (!has_typed_uav_support)
+    {
+        launcher_error("This system does not meet the requirements to use SVR.");
+    }
+}
+
 // Enable this to generate the machine code for remote_func (see comments at that function).
 #define SIMULATE_REMOTE_BYTES 0
 
 // Enable to skip gathering system information and stuff on start during testing.
-#define SHOW_START_INFO 1
+#define SHOW_START_INFO 0
 
 int main(int argc, char** argv)
 {
@@ -802,6 +841,8 @@ int main(int argc, char** argv)
     {
         launcher_error("Windows 10 or later is needed to use SVR.");
     }
+
+    check_hw_caps();
 
     SYSTEMTIME lt;
     GetLocalTime(&lt);

@@ -233,27 +233,25 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
     {
         if OPT_S32("video_fps", p->movie_fps, 1, 1000)
         else if OPT_STR_LIST("video_encoder", p->sw_encoder, ENCODER_TABLE, "libx264")
-        else if OPT_STR_LIST("video_pixel_format", p->sw_pxformat, PXFORMAT_TABLE, "yuv420")
-        else if OPT_STR_LIST("video_colorspace", p->sw_colorspace, COLORSPACE_TABLE, "601")
         else if OPT_S32("video_x264_crf", p->sw_crf, 0, 52)
         else if OPT_STR_LIST("video_x264_preset", p->sw_x264_preset, ENCODER_PRESET_TABLE, "veryfast")
         else if OPT_S32("video_x264_intra", p->sw_x264_intra, 0, 1)
         else if OPT_S32("motion_blur_enabled", p->mosample_enabled, 0, 1)
         else if OPT_S32("motion_blur_fps_mult", p->mosample_mult, 1, INT32_MAX)
         else if OPT_FLOAT("motion_blur_frame_exposure", p->mosample_exposure, 0.0f, 1.0f)
-        else if OPT_S32("velocity_overlay_enabled", p->veloc_enabled, 0, 1)
-        else if OPT_STR("velocity_overlay_font_family", p->veloc_font, MAX_VELOC_FONT_NAME)
-        else if OPT_S32("velocity_overlay_font_size", p->veloc_font_size, 0, INT32_MAX)
-        else if OPT_S32("velocity_overlay_color_r", p->veloc_font_color[0], 0, 255)
-        else if OPT_S32("velocity_overlay_color_g", p->veloc_font_color[1], 0, 255)
-        else if OPT_S32("velocity_overlay_color_b", p->veloc_font_color[2], 0, 255)
-        else if OPT_S32("velocity_overlay_color_a", p->veloc_font_color[3], 0, 255)
-        else if OPT_STR_MAP("velocity_overlay_font_style", p->veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
-        else if OPT_STR_MAP("velocity_overlay_font_weight", p->veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
-        else if OPT_STR_MAP("velocity_overlay_font_stretch", p->veloc_font_stretch, FONT_STRETCH_TABLE, DWRITE_FONT_STRETCH_NORMAL)
-        else if OPT_STR_MAP("velocity_overlay_text_align", p->veloc_text_align, TEXT_ALIGN_TABLE, DWRITE_TEXT_ALIGNMENT_CENTER)
-        else if OPT_STR_MAP("velocity_overlay_paragraph_align", p->veloc_para_align, PARAGRAPH_ALIGN_TABLE, DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
-        else if OPT_S32("velocity_overlay_padding", p->veloc_padding, 0, INT32_MAX)
+        else if OPT_S32("velo_enabled", p->veloc_enabled, 0, 1)
+        else if OPT_STR("velo_font", p->veloc_font, MAX_VELOC_FONT_NAME)
+        else if OPT_S32("velo_font_size", p->veloc_font_size, 0, INT32_MAX)
+        else if OPT_S32("velo_color_r", p->veloc_font_color[0], 0, 255)
+        else if OPT_S32("velo_color_g", p->veloc_font_color[1], 0, 255)
+        else if OPT_S32("velo_color_b", p->veloc_font_color[2], 0, 255)
+        else if OPT_S32("velo_color_a", p->veloc_font_color[3], 0, 255)
+        else if OPT_STR_MAP("velo_font_style", p->veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
+        else if OPT_STR_MAP("velo_font_weight", p->veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
+        else if OPT_STR_MAP("velo_font_stretch", p->veloc_font_stretch, FONT_STRETCH_TABLE, DWRITE_FONT_STRETCH_NORMAL)
+        else if OPT_STR_MAP("velo_text_align", p->veloc_text_align, TEXT_ALIGN_TABLE, DWRITE_TEXT_ALIGNMENT_CENTER)
+        else if OPT_STR_MAP("velo_paragraph_align", p->veloc_para_align, PARAGRAPH_ALIGN_TABLE, DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
+        else if OPT_S32("velo_padding", p->veloc_padding, 0, INT32_MAX)
     }
 
     svr_free_ini_line(&ini_line);
@@ -273,36 +271,6 @@ bool verify_profile(MovieProfile* p)
     // We discard the movie if these are not right, because we don't want to spend
     // a very long time creating a movie which then would get thrown away since it didn't use the correct settings.
 
-    if (!strcmp(p->sw_encoder, "libx264"))
-    {
-        if (!strcmp(p->sw_pxformat, "bgr0"))
-        {
-            game_log("The libx264 encoder can only use YUV pixel formats\n");
-            return false;
-        }
-
-        if (!strcmp(p->sw_colorspace, "rgb"))
-        {
-            game_log("The libx264 encoder can only use YUV color spaces\n");
-            return false;
-        }
-    }
-
-    else if (!strcmp(p->sw_encoder, "libx264rgb"))
-    {
-        if (strcmp(p->sw_pxformat, "bgr0"))
-        {
-            game_log("The libx264rgb encoder can only use the rgb pixel format\n");
-            return false;
-        }
-
-        if (strcmp(p->sw_colorspace, "rgb"))
-        {
-            game_log("The libx264rgb encoder can only use the rgb color space\n");
-            return false;
-        }
-    }
-
     if (p->mosample_mult == 1)
     {
         game_log("motion_blur_fps_mult is set to 1, which doesn't enable motion blur\n");
@@ -316,8 +284,6 @@ void set_default_profile(MovieProfile* p)
 {
     p->movie_fps = 60;
     p->sw_encoder = "libx264";
-    p->sw_pxformat = "yuv420";
-    p->sw_colorspace = "601";
     p->sw_crf = 23;
     p->sw_x264_preset = "veryfast";
     p->sw_x264_intra = 0;
@@ -343,8 +309,6 @@ void log_profile(MovieProfile* p)
 {
     svr_log("Movie fps: %d\n", p->movie_fps);
     svr_log("Video encoder: %s\n", p->sw_encoder);
-    svr_log("Video pixel format: %s\n", p->sw_pxformat);
-    svr_log("Video colorspace: %s\n", p->sw_colorspace);
     svr_log("Video crf: %d\n", p->sw_crf);
     svr_log("Video x264 preset: %s\n", p->sw_x264_preset);
     svr_log("Video x264 intra: %d\n", p->sw_x264_intra);

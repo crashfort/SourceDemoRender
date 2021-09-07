@@ -22,7 +22,6 @@ const s32 NUM_BUFFERED_DL_TEXS = 2;
 // Rotation of CPU textures to download to.
 struct CpuTexDl
 {
-    // Keep the textures rotating for downloads.
     ID3D11Texture2D* texs[NUM_BUFFERED_DL_TEXS];
     s32 i;
 
@@ -47,17 +46,12 @@ char svr_resource_path[MAX_PATH];
 ID3D11PixelShader* texture_ps;
 ID3D11VertexShader* overlay_vs;
 
+// High precision texture used for the result of mosample. Need to have high precision (need to be 32 bits per channel).
+
 ID3D11Texture2D* work_tex;
 ID3D11RenderTargetView* work_tex_rtv;
 ID3D11ShaderResourceView* work_tex_srv;
 ID3D11UnorderedAccessView* work_tex_uav;
-
-// For when we don't have typed UAV loads and stores we have to use buffers
-// instead of textures. So this buffer contains the equivalent 32 bit floats for R32G32B32A32.
-// Because it is not a texture, it needs an additional constant buffer that tells the width so we can calculate the index.
-ID3D11Buffer* work_buf_legacy_sb;
-ID3D11ShaderResourceView* work_buf_legacy_sb_srv;
-ID3D11UnorderedAccessView* work_buf_legacy_sb_uav;
 
 // -------------------------------------------------
 // Mosample state.
@@ -67,16 +61,10 @@ __declspec(align(16)) struct MosampleCb
     float mosample_weight;
 };
 
-__declspec(align(16)) struct MosampleLegacyCb
-{
-    UINT dest_texture_width;
-};
-
 ID3D11ComputeShader* mosample_cs;
 
-// Constains the mosample weight and for legacy systems it also contains the work buffer width.
+// Constains the mosample weight.
 ID3D11Buffer* mosample_cb;
-ID3D11Buffer* mosample_legacy_cb;
 
 // To not upload data all the time.
 float mosample_weight_cache;
@@ -104,18 +92,6 @@ SvrProf mosample_prof;
 // Movie profile.
 
 MovieProfile movie_profile;
-
-// -------------------------------------------------
-// HW caps.
-
-// If the hardware does not have this support, then buffers need to be used instead of textures.
-bool hw_has_typed_uav_support;
-
-// Certain things are locked behind HW models.
-bool hw_nvenc_has_lookahead;
-bool hw_nvenc_has_psycho_aq;
-bool hw_nvenc_has_lossless_encode;
-bool hw_nvenc_has_444_encode;
 
 // -------------------------------------------------
 // FFmpeg process communication.
@@ -541,17 +517,16 @@ bool start_with_sw(ID3D11Device* d3d11_device)
 {
     bool ret = false;
 
-    HRESULT hr;
+    // We don't allow the pixel format and color space to be selectable anymore, but we will keep the support in for now.
 
-    for (s32 i = 0; i < NUM_PXCONVS; i++)
+    if (!strcmp(movie_profile.sw_encoder, "libx264"))
     {
-        PxConvText& text = PXCONV_INI_TEXT_TABLE[i];
+        movie_pxconv = PXCONV_NV12_601;
+    }
 
-        if (!strcmp(text.format, movie_profile.sw_pxformat) && !strcmp(text.color_space, movie_profile.sw_colorspace))
-        {
-            movie_pxconv = (PxConv)i;
-            break;
-        }
+    else if (!strcmp(movie_profile.sw_encoder, "libx264rgb"))
+    {
+        movie_pxconv = PXCONV_BGR0;
     }
 
     used_pxconv_planes = calc_format_planes(movie_pxconv);
@@ -722,15 +697,7 @@ bool create_shaders(ID3D11Device* d3d11_device)
         if (!create_a_cs_shader(PXCONV_SHADER_NAMES[i], file_mem, SHADER_MEM_SIZE, d3d11_device, &pxconv_cs[i])) goto rfail;
     }
 
-    if (hw_has_typed_uav_support)
-    {
-        if (!create_a_cs_shader("c52620855f15b2c47b8ca24b890850a90fdc7017", file_mem, SHADER_MEM_SIZE, d3d11_device, &mosample_cs)) goto rfail;
-    }
-
-    else
-    {
-        if (!create_a_cs_shader("cf3aa43b232f4624ef5e002a716b67045f45b044", file_mem, SHADER_MEM_SIZE, d3d11_device, &mosample_cs)) goto rfail;
-    }
+    if (!create_a_cs_shader("c52620855f15b2c47b8ca24b890850a90fdc7017", file_mem, SHADER_MEM_SIZE, d3d11_device, &mosample_cs)) goto rfail;
 
     ret = true;
     goto rexit;
@@ -751,7 +718,6 @@ void free_all_static_proc_stuff()
     svr_maybe_release(&mosample_cs);
 
     svr_maybe_release(&mosample_cb);
-    svr_maybe_release(&mosample_legacy_cb);
 }
 
 void free_all_dynamic_proc_stuff()
@@ -760,10 +726,6 @@ void free_all_dynamic_proc_stuff()
     svr_maybe_release(&work_tex_rtv);
     svr_maybe_release(&work_tex_srv);
     svr_maybe_release(&work_tex_uav);
-
-    svr_maybe_release(&work_buf_legacy_sb);
-    svr_maybe_release(&work_buf_legacy_sb_srv);
-    svr_maybe_release(&work_buf_legacy_sb_uav);
 }
 
 bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
@@ -771,20 +733,6 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
     bool ret = false;
 
     StringCchCopyA(svr_resource_path, MAX_PATH, svr_path);
-
-    // See if typed UAV loads and stores are supported so we can decide what code path to use.
-    // It becomes more complicated without this, but still doable. More reports than expected have come out regarding the absence
-    // of this feature in certain hardware.
-
-    // If we have hardware support for this, we can add the game content directly to the work texture and be on our way.
-    // If we don't we have to create a structured buffer that we can motion sample on instead.
-    // Both ways will be identical in memory but hardware support differs on how efficiently it can be worked on.
-
-    D3D11_FEATURE_DATA_FORMAT_SUPPORT2 fmt_support2;
-    fmt_support2.InFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
-    d3d11_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &fmt_support2, sizeof(D3D11_FEATURE_DATA_FORMAT_SUPPORT2));
-
-    hw_has_typed_uav_support = (fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD) && (fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE);
 
     IDXGIDevice* dxgi_device;
     d3d11_device->QueryInterface(IID_PPV_ARGS(&dxgi_device));
@@ -801,8 +749,6 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
     // Useful for future troubleshooting.
     // Use https://www.pcilookup.com/ to see more information about device and vendor ids.
     svr_log("Using graphics device %x by vendor %x\n", dxgi_adapter_desc.DeviceId, dxgi_adapter_desc.VendorId);
-
-    svr_log("Typed UAV support: %d\n", (s32)hw_has_typed_uav_support);
 
     // Minimum size of a constant buffer is 16 bytes.
 
@@ -823,19 +769,6 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
         goto rfail;
     }
 
-    if (!hw_has_typed_uav_support)
-    {
-        mosample_cb_desc.ByteWidth = sizeof(MosampleLegacyCb);
-
-        hr = d3d11_device->CreateBuffer(&mosample_cb_desc, NULL, &mosample_legacy_cb);
-
-        if (FAILED(hr))
-        {
-            svr_log("ERROR: Could not create legacy mosample constant buffer (%#x)\n", hr);
-            goto rfail;
-        }
-    }
-
     if (!create_shaders(d3d11_device))
     {
         goto rfail;
@@ -847,6 +780,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
     ffmpeg_write_queue.init(MAX_BUFFERED_SEND_BUFS);
     ffmpeg_read_queue.init(MAX_BUFFERED_SEND_BUFS);
 
+    // This thread never exits.
     ffmpeg_thread = CreateThread(NULL, 0, ffmpeg_thread_proc, NULL, 0, NULL);
 
     ret = true;
@@ -875,7 +809,7 @@ void build_ffmpeg_process_args(char* full_args, s32 full_args_size)
 
     // Parameters below here is regarding the input (the stuff we are sending).
 
-    PxConvText pxconv_text = PXCONV_FFMPEG_TEXT_TABLE[movie_pxconv];
+    PxConvText& pxconv_text = PXCONV_FFMPEG_TEXT_TABLE[movie_pxconv];
 
     // We are sending uncompressed frames.
     StringCchCatA(full_args, full_args_size, " -f rawvideo -vcodec rawvideo");
@@ -1100,7 +1034,6 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         goto rfail;
     }
 
-    if (hw_has_typed_uav_support)
     {
         D3D11_TEXTURE2D_DESC work_tex_desc = {};
         work_tex_desc.Width = tex_desc.Width;
@@ -1124,34 +1057,6 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         d3d11_device->CreateShaderResourceView(work_tex, NULL, &work_tex_srv);
         d3d11_device->CreateRenderTargetView(work_tex, NULL, &work_tex_rtv);
         d3d11_device->CreateUnorderedAccessView(work_tex, NULL, &work_tex_uav);
-    }
-
-    else
-    {
-        D3D11_BUFFER_DESC work_buf_desc = {};
-        work_buf_desc.ByteWidth = calc_bytes_pitch(DXGI_FORMAT_R32G32B32A32_FLOAT) * tex_desc.Width * tex_desc.Height;
-        work_buf_desc.Usage = D3D11_USAGE_DEFAULT;
-        work_buf_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
-        work_buf_desc.CPUAccessFlags = 0;
-        work_buf_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-        work_buf_desc.StructureByteStride = calc_bytes_pitch(DXGI_FORMAT_R32G32B32A32_FLOAT);
-
-        hr = d3d11_device->CreateBuffer(&work_buf_desc, NULL, &work_buf_legacy_sb);
-
-        if (FAILED(hr))
-        {
-            svr_log("ERROR: Could not create legacy work buffer (%#x)\n", hr);
-            goto rfail;
-        }
-
-        d3d11_device->CreateShaderResourceView(work_buf_legacy_sb, NULL, &work_buf_legacy_sb_srv);
-        d3d11_device->CreateUnorderedAccessView(work_buf_legacy_sb, NULL, &work_buf_legacy_sb_uav);
-
-        MosampleLegacyCb cb_data;
-        cb_data.dest_texture_width = tex_desc.Width;
-
-        // For dest_texture_width.
-        update_constant_buffer(d3d11_context, mosample_legacy_cb, &cb_data, sizeof(MosampleLegacyCb));
     }
 
     // Need to overwrite with new data.
@@ -1210,17 +1115,7 @@ void send_converted_video_frame_to_ffmpeg(ID3D11DeviceContext* d3d11_context)
     assert(res1);
 
     svr_start_prof(&dl_prof);
-
-    if (hw_has_typed_uav_support)
-    {
-        download_textures(d3d11_context, pxconv_texs, pxconv_dls, used_pxconv_planes, pipe_data.ptr, pipe_data.size);
-    }
-
-    else
-    {
-        assert(false);
-    }
-
+    download_textures(d3d11_context, pxconv_texs, pxconv_dls, used_pxconv_planes, pipe_data.ptr, pipe_data.size);
     svr_end_prof(&dl_prof);
 
     ffmpeg_write_queue.push(&pipe_data);
@@ -1246,18 +1141,8 @@ void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView*
     d3d11_context->CSSetShader(mosample_cs, NULL, 0);
     d3d11_context->CSSetShaderResources(0, 1, &game_content_srv);
 
-    if (hw_has_typed_uav_support)
-    {
-        d3d11_context->CSSetConstantBuffers(0, 1, &mosample_cb);
-        d3d11_context->CSSetUnorderedAccessViews(0, 1, &work_tex_uav, NULL);
-    }
-
-    else
-    {
-        ID3D11Buffer* cbs[] = { mosample_cb, mosample_legacy_cb };
-        d3d11_context->CSSetConstantBuffers(0, 2, cbs);
-        d3d11_context->CSSetUnorderedAccessViews(0, 1, &work_buf_legacy_sb_uav, NULL);
-    }
+    d3d11_context->CSSetConstantBuffers(0, 1, &mosample_cb);
+    d3d11_context->CSSetUnorderedAccessViews(0, 1, &work_tex_uav, NULL);
 
     d3d11_context->Dispatch(calc_cs_thread_groups(movie_width), calc_cs_thread_groups(movie_height), 1);
 
@@ -1377,7 +1262,6 @@ void proc_end()
     end_ffmpeg_proc();
 
     free_all_dynamic_sw_stuff();
-
     free_all_dynamic_proc_stuff();
 
     #if SVR_PROF

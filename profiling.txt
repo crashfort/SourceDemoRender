@@ -14,3 +14,9 @@ Total work time: 4181972
 Download: 1168
 Write: 237
 Mosample: 82
+
+# Legacy work buffer
+Total work time: 4308762
+Download: 1184
+Write: 290
+Mosample: 85

@@ -9,7 +9,7 @@
 
 // Output texture is based in UINT (0 to 255).
 // Input texture based in BGRA unorm format (0.0 to 1.0).
-Texture2D<unorm float4> input_texture : register(t0);
+Texture2D<float4> input_texture : register(t0);
 
 // --------------------------------------------------------------------------------------------------------------------
 

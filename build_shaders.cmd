@@ -27,6 +27,4 @@ fxc shaders\tex2vid.hlsl %FXCOPTS% /D AV_PIX_FMT_NV21=1 /D AVCOL_SPC_BT709=1 /Fo
 
 fxc shaders\tex2vid.hlsl %FXCOPTS% /D AV_PIX_FMT_BGR0=1 /D AVCOL_SPC_RGB=1 /Fo %OUTDIR%\b44000e74095a254ef98a2cdfcbaf015ab6c295e
 
-REM We compile both shaders and then select at runtime based on the HW.
 fxc shaders\motion_sample.hlsl %FXCOPTS% /Fo %OUTDIR%\c52620855f15b2c47b8ca24b890850a90fdc7017
-fxc shaders\motion_sample.hlsl %FXCOPTS% /D MOTION_SAMPLE_LEGACY /Fo %OUTDIR%\cf3aa43b232f4624ef5e002a716b67045f45b044

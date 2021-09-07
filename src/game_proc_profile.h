@@ -9,8 +9,6 @@ struct MovieProfile
 
     // SW encoding:
     const char* sw_encoder;
-    const char* sw_pxformat;
-    const char* sw_colorspace;
     s32 sw_crf;
     const char* sw_x264_preset;
     s32 sw_x264_intra;
