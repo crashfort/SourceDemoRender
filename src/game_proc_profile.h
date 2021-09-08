@@ -23,6 +23,8 @@ struct MovieProfile
     char veloc_font[MAX_VELOC_FONT_NAME];
     s32 veloc_font_size;
     s32 veloc_font_color[4];
+    s32 veloc_font_border_color[4];
+    s32 veloc_font_border_size;
     enum DWRITE_FONT_STYLE veloc_font_style;
     enum DWRITE_FONT_WEIGHT veloc_font_weight;
     enum DWRITE_FONT_STRETCH veloc_font_stretch;

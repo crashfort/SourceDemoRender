@@ -4,7 +4,7 @@
 #include <d3d11_4.h>
 #include <strsafe.h>
 #include <dwrite.h>
-#include <d2d1_1.h>
+#include <d2d1_2.h>
 #include <malloc.h>
 #include <assert.h>
 #include <limits>
@@ -57,18 +57,165 @@ ID3D11UnorderedAccessView* work_tex_uav;
 // -------------------------------------------------
 // Velo state.
 
-ID2D1Factory1* d2d1_factory;
-ID2D1Device* d2d1_device;
-ID2D1DeviceContext* d2d1_context;
+// V1 is the fastest but does not have any border.
+// V2 is slower than V1 and uses geometry instead of text (has no glyph alignment and supports borders).
+// V3 is slower than V1 and uses a custom text renderer (has glyph alignment and supports borders).
+
+#define USE_VELO_V1 0
+#define USE_VELO_V2 0
+#define USE_VELO_V3 1
+
+ID2D1Factory2* d2d1_factory;
+ID2D1Device1* d2d1_device;
+ID2D1DeviceContext1* d2d1_context;
 IDWriteFactory* dwrite_factory;
 ID2D1SolidColorBrush* velo_brush;
+
+#if USE_VELO_V2 || USE_VELO_V3
+ID2D1SolidColorBrush* velo_border_brush;
+#endif
 
 // This texture is linked to the game content / work tex by some means.
 ID2D1Bitmap1* d2d1_tex;
 
+#if USE_VELO_V1 || USE_VELO_V3
 IDWriteTextFormat* velo_text_format;
+#elif USE_VELO_V2
+IDWriteFontFace* velo_font_face;
+#endif
+
+#if USE_VELO_V3
+const s32 NUM_VELO_CACHES = 20000;
+ID2D1Geometry** velo_geom_cache;
+IDWriteTextLayout** velo_tl_cache;
+#endif
 
 float player_velo[3];
+
+#if USE_VELO_V3
+struct VeloTextRenderer : IDWriteTextRenderer
+{
+    HRESULT __stdcall QueryInterface(REFIID riid, void** ppvObject)
+    {
+        if (__uuidof(IDWriteTextRenderer) == riid)
+        {
+            *ppvObject = this;
+        }
+
+        else if (__uuidof(IDWritePixelSnapping) == riid)
+        {
+            *ppvObject = this;
+        }
+
+        else if (__uuidof(IUnknown) == riid)
+        {
+            *ppvObject = this;
+        }
+
+        else
+        {
+            *ppvObject = NULL;
+            return E_FAIL;
+        }
+
+        this->AddRef();
+        return S_OK;
+    }
+
+    ULONG __stdcall AddRef()
+    {
+        return 0;
+    }
+
+    ULONG __stdcall Release()
+    {
+        return 0;
+    }
+
+    HRESULT __stdcall IsPixelSnappingDisabled(void* clientDrawingContext, BOOL* isDisabled)
+    {
+        *isDisabled = FALSE;
+        return S_OK;
+    }
+
+    HRESULT __stdcall GetCurrentTransform(void* clientDrawingContext, DWRITE_MATRIX* transform)
+    {
+        d2d1_context->GetTransform((D2D1_MATRIX_3X2_F*)transform);
+        return S_OK;
+    }
+
+    HRESULT __stdcall GetPixelsPerDip(void* clientDrawingContext, FLOAT* pixelsPerDip)
+    {
+        *pixelsPerDip = 1.0f;
+        return S_OK;
+    }
+
+    HRESULT __stdcall DrawGlyphRun(void* clientDrawingContext, FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_MEASURING_MODE measuringMode, DWRITE_GLYPH_RUN const* glyphRun, DWRITE_GLYPH_RUN_DESCRIPTION const* glyphRunDescription, IUnknown* clientDrawingEffect)
+    {
+        s32 real_vel = *(s32*)clientDrawingContext;
+
+        ID2D1Geometry* geom_cache = velo_geom_cache[real_vel];
+
+        if (geom_cache)
+        {
+            d2d1_context->DrawGeometry(geom_cache, velo_border_brush, 4.0f);
+            d2d1_context->FillGeometry(geom_cache, velo_brush);
+            return S_OK;
+        }
+
+        DWRITE_GLYPH_RUN const* gr = glyphRun;
+
+        ID2D1PathGeometry* geom;
+        d2d1_factory->CreatePathGeometry(&geom);
+
+        ID2D1GeometrySink* sink;
+        geom->Open(&sink);
+
+        gr->fontFace->GetGlyphRunOutline(gr->fontEmSize, gr->glyphIndices, gr->glyphAdvances, gr->glyphOffsets, gr->glyphCount, FALSE, FALSE, sink);
+        sink->Close();
+
+        D2D1_MATRIX_3X2_F transform;
+        transform.m11 = 1.0f;
+        transform.m12 = 0.0f;
+        transform.m21 = 0.0f;
+        transform.m22 = 1.0f;
+        transform.dx = baselineOriginX;
+        transform.dy = baselineOriginY;
+
+        ID2D1TransformedGeometry* trans_geom;
+        d2d1_factory->CreateTransformedGeometry(geom, &transform, &trans_geom);
+
+        sink->Release();
+        geom->Release();
+
+        velo_geom_cache[real_vel] = trans_geom;
+        geom_cache = velo_geom_cache[real_vel];
+
+        d2d1_context->DrawGeometry(geom_cache, velo_border_brush, 4.0f);
+        d2d1_context->FillGeometry(geom_cache, velo_brush);
+        return S_OK;
+    }
+
+    HRESULT __stdcall DrawUnderline(void* clientDrawingContext, FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_UNDERLINE const* underline, IUnknown* clientDrawingEffect)
+    {
+        return E_NOTIMPL;
+    }
+
+    HRESULT __stdcall DrawStrikethrough(void* clientDrawingContext, FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_STRIKETHROUGH const* strikethrough, IUnknown* clientDrawingEffect)
+    {
+        return E_NOTIMPL;
+    }
+
+    HRESULT __stdcall DrawInlineObject(void* clientDrawingContext, FLOAT originX, FLOAT originY, IDWriteInlineObject* inlineObject, BOOL isSideways, BOOL isRightToLeft, IUnknown* clientDrawingEffect)
+    {
+        return E_NOTIMPL;
+    }
+};
+#endif
+
+#if USE_VELO_V3
+VeloTextRenderer velo_renderer;
+#endif
 
 // -------------------------------------------------
 // Mosample state.
@@ -741,6 +888,10 @@ void free_all_static_proc_stuff()
     svr_maybe_release(&d2d1_context);
     svr_maybe_release(&dwrite_factory);
     svr_maybe_release(&velo_brush);
+
+    #if USE_VELO_V2 || USE_VELO_V3
+    svr_maybe_release(&velo_border_brush);
+    #endif
 }
 
 void free_all_dynamic_proc_stuff()
@@ -751,7 +902,12 @@ void free_all_dynamic_proc_stuff()
     svr_maybe_release(&work_tex_uav);
 
     svr_maybe_release(&d2d1_tex);
+
+    #if USE_VELO_V1 || USE_VELO_V3
     svr_maybe_release(&velo_text_format);
+    #elif USE_VELO_V2
+    svr_maybe_release(&velo_font_face);
+    #endif
 }
 
 bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
@@ -782,7 +938,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
             goto rfail;
         }
 
-        hr = d2d1_device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &d2d1_context);
+        hr = d2d1_device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, &d2d1_context);
 
         if (FAILED(hr))
         {
@@ -790,8 +946,17 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
             goto rfail;
         }
 
+        #if USE_VELO_V1 || USE_VELO_V3
         // We want grayscale AA for velo because of the moving background.
         d2d1_context->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+        #endif
+
+        #if USE_VELO_V3
+        d2d1_context->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+        #endif
+
+        // We are not a desktop application and users will be expecting pixel offsets for velo text.
+        d2d1_context->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
 
         hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&dwrite_factory);
 
@@ -802,6 +967,10 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
         }
 
         d2d1_context->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &velo_brush);
+
+        #if USE_VELO_V2 || USE_VELO_V3
+        d2d1_context->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &velo_border_brush);
+        #endif
     }
 
     IDXGIAdapter* dxgi_adapter;
@@ -1051,6 +1220,161 @@ s32 to_utf16(const char* value, s32 value_length, wchar* buf, s32 buf_chars)
     return length;
 }
 
+// For when you are dealing with numbers but stupid wchar gets in your way!
+s32 numbers_to_utf16(const char* value, s32 value_length, wchar* buf, s32 buf_chars)
+{
+    const char* ptr = value;
+    s32 i = 0;
+
+    for (; *ptr != 0; ptr++)
+    {
+        wchar add[] = { *ptr, 0 };
+        buf[i] = add[0];
+        buf[i + 1] = add[1];
+
+        i++;
+    }
+
+    return value_length;
+}
+
+bool create_velo(ID3D11Texture2D* actual_tex, DXGI_FORMAT actual_format)
+{
+    bool ret = false;
+    MovieProfile& p = movie_profile;
+
+    D2D1_BITMAP_PROPERTIES1 bmp_props = {};
+    bmp_props.pixelFormat = D2D1::PixelFormat(actual_format, D2D1_ALPHA_MODE_IGNORE);
+    bmp_props.dpiX = 96;
+    bmp_props.dpiY = 96;
+    bmp_props.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+
+    IDXGISurface* dxgi_surface;
+
+    actual_tex->QueryInterface(IID_PPV_ARGS(&dxgi_surface));
+    d2d1_context->CreateBitmapFromDxgiSurface(dxgi_surface, &bmp_props, &d2d1_tex);
+
+    dxgi_surface->Release();
+
+    D2D1_COLOR_F color;
+    color.r = p.veloc_font_color[0] / 255.0f;
+    color.g = p.veloc_font_color[1] / 255.0f;
+    color.b = p.veloc_font_color[2] / 255.0f;
+    color.a = p.veloc_font_color[3] / 255.0f;
+    velo_brush->SetColor(&color);
+
+    #if USE_VELO_V2 || USE_VELO_V3
+    D2D1_COLOR_F bord_color;
+    bord_color.r = p.veloc_font_border_color[0] / 255.0f;
+    bord_color.g = p.veloc_font_border_color[1] / 255.0f;
+    bord_color.b = p.veloc_font_border_color[2] / 255.0f;
+    bord_color.a = p.veloc_font_border_color[3] / 255.0f;
+    velo_border_brush->SetColor(&bord_color);
+    #endif
+
+    // DirectWrite uses stupid wchar.
+
+    wchar stupid_buf[128];
+    to_utf16(p.veloc_font, strlen(p.veloc_font), stupid_buf, 128);
+
+    HRESULT hr;
+
+    #if USE_VELO_V2
+    IDWriteFontCollection* coll = NULL;
+    IDWriteFontFamily* font_fam = NULL;
+    IDWriteFont* font = NULL;
+
+    dwrite_factory->GetSystemFontCollection(&coll, FALSE);
+
+    UINT font_index;
+    BOOL font_exists;
+    coll->FindFamilyName(stupid_buf, &font_index, &font_exists);
+
+    if (!font_exists)
+    {
+        game_log("The specified velo font %s is not installed in the system\n", p.veloc_font);
+        goto rfail;
+    }
+
+    coll->GetFontFamily(font_index, &font_fam);
+    font_fam->GetFirstMatchingFont(p.veloc_font_weight, p.veloc_font_stretch, p.veloc_font_style, &font);
+    font->CreateFontFace(&velo_font_face);
+    #elif USE_VELO_V1 || USE_VELO_V3
+    hr = dwrite_factory->CreateTextFormat(stupid_buf, NULL, p.veloc_font_weight, p.veloc_font_style, p.veloc_font_stretch, p.veloc_font_size, L"en-gb", &velo_text_format);
+
+    // User can have input a font family that doesn't exist.
+    if (FAILED(hr))
+    {
+        game_log("Velocity text could not be created (%#x). Is the %s font installed?\n", hr, p.veloc_font);
+        goto rfail;
+    }
+
+    velo_text_format->SetTextAlignment(p.veloc_text_align);
+    velo_text_format->SetParagraphAlignment(p.veloc_para_align);
+    #endif
+
+    #if USE_VELO_V3
+    if (velo_geom_cache == NULL && velo_tl_cache == NULL)
+    {
+        velo_geom_cache = (ID2D1Geometry**)malloc(sizeof(ID2D1Geometry*) * NUM_VELO_CACHES);
+        velo_tl_cache = (IDWriteTextLayout**)malloc(sizeof(IDWriteTextLayout*) * NUM_VELO_CACHES);
+
+        memset(velo_geom_cache, 0x00, sizeof(ID2D1Geometry*) * NUM_VELO_CACHES);
+        memset(velo_tl_cache, 0x00, sizeof(IDWriteTextLayout*) * NUM_VELO_CACHES);
+    }
+
+    for (s32 i = 0; i < NUM_VELO_CACHES; i++)
+    {
+        svr_maybe_release(&velo_geom_cache[i]);
+    }
+
+    for (s32 i = 0; i < NUM_VELO_CACHES; i++)
+    {
+        svr_maybe_release(&velo_tl_cache[i]);
+    }
+
+    memset(velo_geom_cache, 0x00, sizeof(ID2D1Geometry*) * NUM_VELO_CACHES);
+    memset(velo_tl_cache, 0x00, sizeof(IDWriteTextLayout*) * NUM_VELO_CACHES);
+
+    D2D1_RECT_F viewbox;
+    viewbox.left = 0.0f + p.veloc_padding;
+    viewbox.top = 0.0f + p.veloc_padding;
+    viewbox.right = movie_width - p.veloc_padding;
+    viewbox.bottom = movie_height - p.veloc_padding;
+
+    for (s32 i = 0; i < NUM_VELO_CACHES; i++)
+    {
+        char buf[64];
+        s32 len = stbsp_snprintf(buf, 64, "%d", i);
+
+        wchar stupid_buf[64];
+        numbers_to_utf16(buf, len, stupid_buf, 64);
+
+        dwrite_factory->CreateTextLayout(stupid_buf, len, velo_text_format, viewbox.right, viewbox.bottom, &velo_tl_cache[i]);
+    }
+
+    for (s32 i = 0; i < NUM_VELO_CACHES; i++)
+    {
+        IDWriteTextLayout* tl = velo_tl_cache[i];
+        tl->Draw(&i, &velo_renderer, viewbox.left, viewbox.top);
+    }
+
+    #endif
+
+    ret = true;
+    goto rexit;
+
+rfail:
+rexit:
+    #if USE_VELO_V2
+    svr_maybe_release(&font);
+    svr_maybe_release(&font_fam);
+    svr_maybe_release(&coll);
+    #endif
+
+    return ret;
+}
+
 bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, const char* dest, const char* profile, ID3D11ShaderResourceView* game_content_srv)
 {
     bool ret = false;
@@ -1147,46 +1471,10 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
             actual_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
         }
 
-        D2D1_BITMAP_PROPERTIES1 bmp_props = {};
-        bmp_props.pixelFormat = D2D1::PixelFormat(actual_format, D2D1_ALPHA_MODE_IGNORE);
-        bmp_props.dpiX = 96;
-        bmp_props.dpiY = 96;
-        bmp_props.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
-
-        IDXGISurface* dxgi_surface;
-
-        actual_tex->QueryInterface(IID_PPV_ARGS(&dxgi_surface));
-        d2d1_context->CreateBitmapFromDxgiSurface(dxgi_surface, &bmp_props, &d2d1_tex);
-
-        dxgi_surface->Release();
-
-        MovieProfile& p = movie_profile;
-
-        D2D1_COLOR_F velo_color;
-        velo_color.r = p.veloc_font_color[0] / 255.0f;
-        velo_color.g = p.veloc_font_color[1] / 255.0f;
-        velo_color.b = p.veloc_font_color[2] / 255.0f;
-        velo_color.a = p.veloc_font_color[3] / 255.0f;
-
-        velo_brush->SetColor(&velo_color);
-        velo_brush->SetOpacity(1.0f);
-
-        // DirectWrite uses stupid wchar.
-
-        wchar stupid_buf[128];
-        to_utf16(p.veloc_font, strlen(p.veloc_font), stupid_buf, 128);
-
-        hr = dwrite_factory->CreateTextFormat(stupid_buf, NULL, p.veloc_font_weight, p.veloc_font_style, p.veloc_font_stretch, p.veloc_font_size, L"en-gb", &velo_text_format);
-
-        // User can have input a font family that doesn't exist.
-        if (FAILED(hr))
+        if (!create_velo(actual_tex, actual_format))
         {
-            game_log("Velocity text could not be created (%#x). Is the %s font installed?\n", hr, p.veloc_font);
             goto rfail;
         }
-
-        velo_text_format->SetTextAlignment(p.veloc_text_align);
-        velo_text_format->SetParagraphAlignment(p.veloc_para_align);
     }
 
     // Need to overwrite with new data.
@@ -1289,28 +1577,98 @@ void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResource
     {
         float p = movie_profile.veloc_padding;
 
+        // We only deal with XY velo.
+        float vel = sqrt(player_velo[0] * player_velo[0] + player_velo[1] * player_velo[1]);
+        s32 real_vel = (s32)(vel + 0.5f);
+
+        char buf[64];
+        s32 len = stbsp_snprintf(buf, 64, "%d", real_vel);
+
+        #if USE_VELO_V2
+        UINT32* code_points = (UINT32*)_alloca(sizeof(UINT32) * len);
+        UINT16* glyph_idxs = (UINT16*)_alloca(sizeof(UINT16) * len);
+
+        for (s32 i = 0; i < len; i++)
+        {
+            code_points[i] = buf[i];
+        }
+
+        velo_font_face->GetGlyphIndicesW(code_points, len, glyph_idxs);
+
+        // In epic D2D1 fashion everything has to be remade every frame!
+
+        ID2D1PathGeometry* geom;
+        d2d1_factory->CreatePathGeometry(&geom);
+
+        ID2D1GeometrySink* sink;
+        geom->Open(&sink);
+        velo_font_face->GetGlyphRunOutline(movie_profile.veloc_font_size, glyph_idxs, NULL, NULL, len, FALSE, FALSE, sink);
+        sink->Close();
+
+        // The geometry has its origin in the bottom left for who knows what reason!
+        // We want to use the center of the text for alignment because that's what human beings want.
+
+        D2D1_RECT_F geom_rect;
+        geom->GetBounds(NULL, &geom_rect);
+
+        float geom_width = geom_rect.right - geom_rect.left;
+        float geom_height = geom_rect.bottom - geom_rect.top;
+
+        D2D1_MATRIX_3X2_F transform = {};
+        transform.m11 = 1.0f;
+        transform.m22 = 1.0f;
+        transform.dx -= geom_width / 2.0f;
+        transform.dy += geom_height / 2.0f;
+        transform.dx += movie_width / 2.0f;
+        transform.dy += movie_height / 2.0f;
+
+        d2d1_context->SetTarget(d2d1_tex);
+        d2d1_context->BeginDraw();
+        d2d1_context->SetTransform(transform);
+        d2d1_context->FillGeometry(geom, velo_brush, NULL);
+
+        if (movie_profile.veloc_font_border_size > 0)
+        {
+            d2d1_context->DrawGeometry(geom, velo_border_brush, movie_profile.veloc_font_border_size, NULL);
+        }
+
+        d2d1_context->DrawRectangle(&geom_rect, velo_brush, 1.0f);
+
+        d2d1_context->EndDraw();
+        d2d1_context->SetTarget(NULL);
+
+        sink->Release();
+        geom->Release();
+        #elif USE_VELO_V1
         D2D1_RECT_F viewbox;
         viewbox.left = 0.0f + p;
         viewbox.top = 0.0f + p;
         viewbox.right = movie_width - p;
         viewbox.bottom = movie_height - p;
 
-        // We only deal with XY velo.
-        float vel = sqrt(player_velo[0] * player_velo[0] + player_velo[1] * player_velo[1]);
-
-        char buf[64];
-        s32 len = stbsp_snprintf(buf, 64, "%d", (s32)(vel + 0.5f));
-
-        // DirectWrite deals with stupid wchar.
-
         wchar stupid_buf[64];
-        s32 stupid_len = to_utf16(buf, len, stupid_buf, 64);
+        s32 stupid_len = numbers_to_utf16(buf, len, stupid_buf, 64);
 
         d2d1_context->SetTarget(d2d1_tex);
         d2d1_context->BeginDraw();
         d2d1_context->DrawTextW(stupid_buf, stupid_len, velo_text_format, &viewbox, velo_brush, D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_GDI_NATURAL);
         d2d1_context->EndDraw();
         d2d1_context->SetTarget(NULL);
+        #elif USE_VELO_V3
+        D2D1_RECT_F viewbox;
+        viewbox.left = 0.0f + p;
+        viewbox.top = 0.0f + p;
+        viewbox.right = movie_width - p;
+        viewbox.bottom = movie_height - p;
+
+        IDWriteTextLayout* tl = velo_tl_cache[real_vel];
+
+        d2d1_context->SetTarget(d2d1_tex);
+        d2d1_context->BeginDraw();
+        tl->Draw(&real_vel, &velo_renderer, viewbox.left, viewbox.top);
+        d2d1_context->EndDraw();
+        d2d1_context->SetTarget(NULL);
+        #endif
     }
 
     convert_pixel_formats(d3d11_context, srv);

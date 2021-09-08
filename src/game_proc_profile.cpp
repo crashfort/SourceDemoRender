@@ -50,15 +50,15 @@ StrIntMapping FONT_STRETCH_TABLE[] = {
 
 // Names for ini.
 StrIntMapping TEXT_ALIGN_TABLE[] = {
-    StrIntMapping { "leading", DWRITE_TEXT_ALIGNMENT_LEADING },
-    StrIntMapping { "trailing", DWRITE_TEXT_ALIGNMENT_TRAILING },
+    StrIntMapping { "left", DWRITE_TEXT_ALIGNMENT_LEADING },
+    StrIntMapping { "right", DWRITE_TEXT_ALIGNMENT_TRAILING },
     StrIntMapping { "center", DWRITE_TEXT_ALIGNMENT_CENTER },
 };
 
 // Names for ini.
 StrIntMapping PARAGRAPH_ALIGN_TABLE[] = {
-    StrIntMapping { "near", DWRITE_PARAGRAPH_ALIGNMENT_NEAR },
-    StrIntMapping { "far", DWRITE_PARAGRAPH_ALIGNMENT_FAR },
+    StrIntMapping { "top", DWRITE_PARAGRAPH_ALIGNMENT_NEAR },
+    StrIntMapping { "bottom", DWRITE_PARAGRAPH_ALIGNMENT_FAR },
     StrIntMapping { "center", DWRITE_PARAGRAPH_ALIGNMENT_CENTER },
 };
 
@@ -211,6 +211,22 @@ s32 map_str_in_list_or(SvrIniLine* line, StrIntMapping* mappings, s32 num, s32 d
     return def;
 }
 
+void make_color(SvrIniLine* line, s32* target)
+{
+    s32 ret = sscanf(line->value, "%d %d %d %d", &target[0], &target[1], &target[2], &target[3]);
+
+    svr_clamp(&target[0], 0, 255);
+    svr_clamp(&target[1], 0, 255);
+    svr_clamp(&target[2], 0, 255);
+    svr_clamp(&target[3], 0, 255);
+
+    if (ret != 4)
+    {
+        memset(target, 255, sizeof(s32) * 4);
+        svr_log("Option %s has incorrect formatting. It should be a color in the format of 255 255 255 255 (RGBA). Setting to 255 255 255 255\n", line->title);
+    }
+}
+
 bool read_profile(const char* full_profile_path, MovieProfile* p)
 {
     SvrIniMem ini_mem;
@@ -224,6 +240,7 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
     SvrIniTokenType ini_token_type;
 
     #define OPT_S32(NAME, VAR, MIN, MAX) (!strcmp(ini_line.title, NAME)) { VAR = atoi_in_range(&ini_line, MIN, MAX); }
+    #define OPT_COLOR(NAME, VAR) (!strcmp(ini_line.title, NAME)) { make_color(&ini_line, VAR); }
     #define OPT_FLOAT(NAME, VAR, MIN, MAX) (!strcmp(ini_line.title, NAME)) { VAR = atof_in_range(&ini_line, MIN, MAX); }
     #define OPT_STR(NAME, VAR, SIZE) (!strcmp(ini_line.title, NAME)) { StringCchCopyA(VAR, SIZE, ini_line.value); }
     #define OPT_STR_LIST(NAME, VAR, LIST, DEF) (!strcmp(ini_line.title, NAME)) { VAR = str_in_list_or(&ini_line, LIST, SVR_ARRAY_SIZE(LIST), DEF); }
@@ -242,15 +259,14 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
         else if OPT_S32("velo_enabled", p->veloc_enabled, 0, 1)
         else if OPT_STR("velo_font", p->veloc_font, MAX_VELOC_FONT_NAME)
         else if OPT_S32("velo_font_size", p->veloc_font_size, 0, INT32_MAX)
-        else if OPT_S32("velo_color_r", p->veloc_font_color[0], 0, 255)
-        else if OPT_S32("velo_color_g", p->veloc_font_color[1], 0, 255)
-        else if OPT_S32("velo_color_b", p->veloc_font_color[2], 0, 255)
-        else if OPT_S32("velo_color_a", p->veloc_font_color[3], 0, 255)
+        else if OPT_COLOR("velo_color", p->veloc_font_color)
+        else if OPT_COLOR("velo_border_color", p->veloc_font_border_color)
+        else if OPT_S32("velo_border_size", p->veloc_font_border_size, 0, 1000)
         else if OPT_STR_MAP("velo_font_style", p->veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
         else if OPT_STR_MAP("velo_font_weight", p->veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
         else if OPT_STR_MAP("velo_font_stretch", p->veloc_font_stretch, FONT_STRETCH_TABLE, DWRITE_FONT_STRETCH_NORMAL)
-        else if OPT_STR_MAP("velo_text_align", p->veloc_text_align, TEXT_ALIGN_TABLE, DWRITE_TEXT_ALIGNMENT_CENTER)
-        else if OPT_STR_MAP("velo_paragraph_align", p->veloc_para_align, PARAGRAPH_ALIGN_TABLE, DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
+        else if OPT_STR_MAP("velo_x_align", p->veloc_text_align, TEXT_ALIGN_TABLE, DWRITE_TEXT_ALIGNMENT_CENTER)
+        else if OPT_STR_MAP("velo_y_align", p->veloc_para_align, PARAGRAPH_ALIGN_TABLE, DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
         else if OPT_S32("velo_padding", p->veloc_padding, 0, INT32_MAX)
     }
 

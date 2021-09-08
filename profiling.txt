@@ -20,3 +20,9 @@ Total work time: 4308762
 Download: 1184
 Write: 290
 Mosample: 85
+
+# Velo v3 (with border)
+Total work time: 4166655
+Download: 934
+Write: 271
+Mosample: 83
