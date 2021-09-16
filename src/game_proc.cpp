@@ -187,7 +187,6 @@ const s32 MAX_BUFFERED_SEND_BUFS = 8;
 // For SW encoding these buffers are uncompressed frames of equal size.
 ThreadPipeData ffmpeg_send_bufs[MAX_BUFFERED_SEND_BUFS];
 
-// This thread never exits.
 HANDLE ffmpeg_thread;
 
 // Queues and semaphores for communicating between the threads.
@@ -394,6 +393,14 @@ void calc_plane_dims(PxConv pxconv, s32 width, s32 height, s32 plane, s32* out_w
 
         case PXCONV_YUV444_601:
         case PXCONV_YUV444_709:
+        {
+            assert(plane < 3);
+
+            *out_width = width;
+            *out_height = height;
+            break;
+        }
+
         case PXCONV_BGR0:
         {
             assert(plane < 1);
@@ -684,6 +691,11 @@ DWORD WINAPI ffmpeg_thread_proc(LPVOID lpParameter)
         bool res1 = ffmpeg_write_queue.pull(&pipe_data);
         assert(res1);
 
+        if (pipe_data.ptr == NULL)
+        {
+            return 0;
+        }
+
         // This will not return until the data has been read by the remote process.
         // Writing with pipes is very inconsistent and can wary with several milliseconds.
         // It has been tested to use overlapped I/O with completion routines but that was also too inconsistent and way too complicated.
@@ -700,6 +712,8 @@ DWORD WINAPI ffmpeg_thread_proc(LPVOID lpParameter)
 
         svr_sem_release(&ffmpeg_read_sem);
     }
+
+    return 0;
 }
 
 bool load_one_shader(const char* name, void* buf, s32 buf_size, DWORD* shader_size)
@@ -999,14 +1013,8 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
         goto rfail;
     }
 
-    svr_sem_init(&ffmpeg_write_sem, 0, MAX_BUFFERED_SEND_BUFS);
-    svr_sem_init(&ffmpeg_read_sem, MAX_BUFFERED_SEND_BUFS, MAX_BUFFERED_SEND_BUFS);
-
     ffmpeg_write_queue.init(MAX_BUFFERED_SEND_BUFS);
     ffmpeg_read_queue.init(MAX_BUFFERED_SEND_BUFS);
-
-    // This thread never exits.
-    ffmpeg_thread = CreateThread(NULL, 0, ffmpeg_thread_proc, NULL, 0, NULL);
 
     ret = true;
     goto rexit;
@@ -1182,13 +1190,23 @@ rexit:
 
 void end_ffmpeg_proc()
 {
-    while (ffmpeg_write_queue.read_buffer_health() > 0)
-    {
-        // Stupid but we can't use any other mechanism with the ffmpeg thread loop.
-        Sleep(100);
-    }
+    svr_sem_wait(&ffmpeg_read_sem);
+
+    ThreadPipeData pipe_data;
+    pipe_data.ptr = NULL;
+    pipe_data.size = 0;
+
+    ffmpeg_write_queue.push(&pipe_data);
+
+    svr_sem_release(&ffmpeg_write_sem);
+
+    WaitForSingleObject(ffmpeg_thread, INFINITE);
+
+    CloseHandle(ffmpeg_thread);
+    ffmpeg_thread = NULL;
 
     // Both queues should not be updated anymore at this point so they should be the same when observed.
+    // Since we exit with a sentinel value, the semaphores will be out of sync from the queues but they are reinit on movie start.
     assert(ffmpeg_write_queue.read_buffer_health() == 0);
     assert(ffmpeg_read_queue.read_buffer_health() == MAX_BUFFERED_SEND_BUFS);
 
@@ -1786,8 +1804,15 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         }
     }
 
+    // We have a controlled environment until the ffmpeg thread is started.
+    // Set the semaphore and queues to known states.
+
+    svr_sem_init(&ffmpeg_write_sem, 0, MAX_BUFFERED_SEND_BUFS);
+    svr_sem_init(&ffmpeg_read_sem, MAX_BUFFERED_SEND_BUFS, MAX_BUFFERED_SEND_BUFS);
+
     // Need to overwrite with new data.
     ffmpeg_read_queue.reset();
+    ffmpeg_write_queue.reset();
 
     // Each buffer contains 1 uncompressed frame.
 
@@ -1817,6 +1842,10 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     {
         goto rfail;
     }
+
+    _ReadWriteBarrier();
+
+    ffmpeg_thread = CreateThread(NULL, 0, ffmpeg_thread_proc, NULL, 0, NULL);
 
     game_log("Starting movie to %s\n", dest);
 
