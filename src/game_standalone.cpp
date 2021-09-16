@@ -103,14 +103,14 @@ bool wait_for_libs_to_load(const char** libs, s32 num)
     // Alternate method instead of hooking the LoadLibrary family of functions.
     // We don't need particular accuracy so this is good enough and much simpler.
 
-    for (s32 i = 0; i < 5; i++)
+    for (s32 i = 0; i < 60; i++)
     {
         if (check_loaded_proc_modules(libs, num) == num)
         {
             return true;
         }
 
-        Sleep(2000);
+        Sleep(500);
     }
 
     return false;

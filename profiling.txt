@@ -1,3 +1,6 @@
+# 60 fps veryfast crf 15
+# mosample mult 60 exposure 0.5
+
 # Single threaded
 Total work time: 5010353
 Download: 1235
@@ -26,3 +29,9 @@ Total work time: 4166655
 Download: 934
 Write: 271
 Mosample: 83
+
+# Velo quads
+Total work time: 4076607
+Download: 1095
+Write: 229
+Mosample: 82

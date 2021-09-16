@@ -30,8 +30,8 @@ StrIntMapping FONT_WEIGHT_TABLE[] = {
 // Names for ini.
 StrIntMapping FONT_STYLE_TABLE[] = {
     StrIntMapping { "normal", DWRITE_FONT_STYLE_NORMAL },
-    StrIntMapping { "oblique", DWRITE_FONT_STYLE_OBLIQUE },
     StrIntMapping { "italic", DWRITE_FONT_STYLE_ITALIC },
+    StrIntMapping { "extraitalic", DWRITE_FONT_STYLE_OBLIQUE },
 };
 
 // Names for ini.
@@ -213,18 +213,20 @@ s32 map_str_in_list_or(SvrIniLine* line, StrIntMapping* mappings, s32 num, s32 d
 
 void make_color(SvrIniLine* line, s32* target)
 {
-    s32 ret = sscanf(line->value, "%d %d %d %d", &target[0], &target[1], &target[2], &target[3]);
+    s32 ret = sscanf(line->value, "%d %d %d", &target[0], &target[1], &target[2]);
 
     svr_clamp(&target[0], 0, 255);
     svr_clamp(&target[1], 0, 255);
     svr_clamp(&target[2], 0, 255);
-    svr_clamp(&target[3], 0, 255);
 
-    if (ret != 4)
+    if (ret != 3)
     {
-        memset(target, 255, sizeof(s32) * 4);
-        svr_log("Option %s has incorrect formatting. It should be a color in the format of 255 255 255 255 (RGBA). Setting to 255 255 255 255\n", line->title);
+        memset(target, 255, sizeof(s32) * 3);
+        svr_log("Option %s has incorrect formatting. It should be a color in the format of 255 255 255 (RGB). Setting to 255 255 255\n", line->title);
     }
+
+    // Always opaque.
+    target[3] = 255;
 }
 
 bool read_profile(const char* full_profile_path, MovieProfile* p)
@@ -233,6 +235,7 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
 
     if (!svr_open_ini_read(full_profile_path, &ini_mem))
     {
+        game_log("Could not load profile %s\n", full_profile_path);
         return false;
     }
 
@@ -254,14 +257,14 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
         else if OPT_STR_LIST("video_x264_preset", p->sw_x264_preset, ENCODER_PRESET_TABLE, "veryfast")
         else if OPT_S32("video_x264_intra", p->sw_x264_intra, 0, 1)
         else if OPT_S32("motion_blur_enabled", p->mosample_enabled, 0, 1)
-        else if OPT_S32("motion_blur_fps_mult", p->mosample_mult, 1, INT32_MAX)
+        else if OPT_S32("motion_blur_fps_mult", p->mosample_mult, 2, INT32_MAX)
         else if OPT_FLOAT("motion_blur_frame_exposure", p->mosample_exposure, 0.0f, 1.0f)
         else if OPT_S32("velo_enabled", p->veloc_enabled, 0, 1)
         else if OPT_STR("velo_font", p->veloc_font, MAX_VELOC_FONT_NAME)
         else if OPT_S32("velo_font_size", p->veloc_font_size, 0, INT32_MAX)
         else if OPT_COLOR("velo_color", p->veloc_font_color)
         else if OPT_COLOR("velo_border_color", p->veloc_font_border_color)
-        else if OPT_S32("velo_border_size", p->veloc_font_border_size, 0, 1000)
+        else if OPT_S32("velo_border_size", p->veloc_font_border_size, 0, INT32_MAX)
         else if OPT_STR_MAP("velo_font_style", p->veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
         else if OPT_STR_MAP("velo_font_weight", p->veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
         else if OPT_STR_MAP("velo_font_stretch", p->veloc_font_stretch, FONT_STRETCH_TABLE, DWRITE_FONT_STRETCH_NORMAL)
@@ -274,80 +277,11 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
     svr_close_ini(&ini_mem);
 
     #undef OPT_S32
+    #undef OPT_COLOR
     #undef OPT_FLOAT
     #undef OPT_STR
     #undef OPT_STR_LIST
     #undef OPT_STR_MAP
 
     return true;
-}
-
-bool verify_profile(MovieProfile* p)
-{
-    // We discard the movie if these are not right, because we don't want to spend
-    // a very long time creating a movie which then would get thrown away since it didn't use the correct settings.
-
-    if (p->mosample_mult == 1)
-    {
-        game_log("motion_blur_fps_mult is set to 1, which doesn't enable motion blur\n");
-        return false;
-    }
-
-    return true;
-}
-
-void set_default_profile(MovieProfile* p)
-{
-    p->movie_fps = 60;
-    p->sw_encoder = "libx264";
-    p->sw_crf = 23;
-    p->sw_x264_preset = "veryfast";
-    p->sw_x264_intra = 0;
-    p->mosample_enabled = 1;
-    p->mosample_mult = 60;
-    p->mosample_exposure = 0.5f;
-    p->veloc_enabled = 0;
-    StringCchCopyA(p->veloc_font, MAX_VELOC_FONT_NAME, "Arial");
-    p->veloc_font_size = 72;
-    p->veloc_font_color[0] = 255;
-    p->veloc_font_color[1] = 255;
-    p->veloc_font_color[2] = 255;
-    p->veloc_font_color[3] = 255;
-    p->veloc_font_style = DWRITE_FONT_STYLE_NORMAL;
-    p->veloc_font_weight = DWRITE_FONT_WEIGHT_BOLD;
-    p->veloc_font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-    p->veloc_text_align = DWRITE_TEXT_ALIGNMENT_CENTER;
-    p->veloc_para_align = DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
-    p->veloc_padding = 100;
-}
-
-void log_profile(MovieProfile* p)
-{
-    svr_log("Movie fps: %d\n", p->movie_fps);
-    svr_log("Video encoder: %s\n", p->sw_encoder);
-    svr_log("Video crf: %d\n", p->sw_crf);
-    svr_log("Video x264 preset: %s\n", p->sw_x264_preset);
-    svr_log("Video x264 intra: %d\n", p->sw_x264_intra);
-    svr_log("Use motion blur: %d\n", p->mosample_enabled);
-
-    if (p->mosample_enabled)
-    {
-        svr_log("Motion blur multiplier: %d\n", p->mosample_mult);
-        svr_log("Motion blur exposure: %0.2f\n", p->mosample_exposure);
-    }
-
-    svr_log("Use velocity overlay: %d\n", p->veloc_enabled);
-
-    if (p->veloc_enabled)
-    {
-        svr_log("Velocity font: %s\n", p->veloc_font);
-        svr_log("Velocity font size: %d\n", p->veloc_font_size);
-        svr_log("Velocity font color: %d %d %d %d\n", p->veloc_font_color[0], p->veloc_font_color[1], p->veloc_font_color[2], p->veloc_font_color[3]);
-        svr_log("Velocity font style: %s\n", rl_map_str_in_list(p->veloc_font_style, FONT_STYLE_TABLE, SVR_ARRAY_SIZE(FONT_STYLE_TABLE)));
-        svr_log("Velocity font weight: %s\n", rl_map_str_in_list(p->veloc_font_weight, FONT_WEIGHT_TABLE, SVR_ARRAY_SIZE(FONT_WEIGHT_TABLE)));
-        svr_log("Velocity font stretch: %s\n", rl_map_str_in_list(p->veloc_font_stretch, FONT_STRETCH_TABLE, SVR_ARRAY_SIZE(FONT_STRETCH_TABLE)));
-        svr_log("Velocity text align: %s\n", rl_map_str_in_list(p->veloc_text_align, TEXT_ALIGN_TABLE, SVR_ARRAY_SIZE(TEXT_ALIGN_TABLE)));
-        svr_log("Velocity paragraph align: %s\n", rl_map_str_in_list(p->veloc_para_align, PARAGRAPH_ALIGN_TABLE, SVR_ARRAY_SIZE(PARAGRAPH_ALIGN_TABLE)));
-        svr_log("Velocity text padding: %d\n", p->veloc_padding);
-    }
 }

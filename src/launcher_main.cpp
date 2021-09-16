@@ -76,7 +76,7 @@ const char* GAME_EXE_PATHS[] = {
 const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(GAME_APP_IDS);
 
 // Base arguments that every game will have.
-const char* BASE_GAME_ARGS = "-steam -insecure +sv_lan 1 -console";
+const char* BASE_GAME_ARGS = "-steam -insecure +sv_lan 1 -console -novid";
 
 const s32 MAX_STEAM_LIBRARIES = 32;
 
@@ -196,7 +196,7 @@ const u8 REMOTE_FUNC_BYTES[] =
 };
 
 // Use the launch parameters from Steam if we can.
-void append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
+bool append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
 {
     char full_vdf_path[MAX_PATH];
     full_vdf_path[0] = 0;
@@ -213,8 +213,9 @@ void append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
 
     if (!svr_open_vdf_read(full_vdf_path, &mem))
     {
-        launcher_log("Steam launch parameters for %s could not be found\n", GAME_NAMES[game_index]);
-        return;
+        // Steam must be installed wrong if this fails.
+        launcher_log("Could not read Steam user settings. Steam may be installed wrong.");
+        return false;
     }
 
     SvrVdfLine vdf_line = svr_alloc_vdf_line();
@@ -230,27 +231,30 @@ void append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
         {
             case SVR_VDF_GROUP_TITLE:
             {
-                if (depth == 0 && !strcmp(vdf_line.title, "UserLocalConfigStore")) { depth++; break; }
-                else if (depth == 1 && !strcmp(vdf_line.title, "Software")) { depth++; break; }
-                else if (depth == 2 && !strcmp(vdf_line.title, "valve")) { depth++; break; }
-                else if (depth == 3 && !strcmp(vdf_line.title, "steam")) { depth++; break; }
-                else if (depth == 4 && !strcmp(vdf_line.title, "Apps")) { depth++; break; }
-                else if (depth == 5 && !strcmp(vdf_line.title, buf)) { depth++; break; }
+                if (depth == 0 && !strcmpi(vdf_line.title, "UserLocalConfigStore")) { depth++; break; }
+                else if (depth == 1 && !strcmpi(vdf_line.title, "Software")) { depth++; break; }
+                else if (depth == 2 && !strcmpi(vdf_line.title, "Valve")) { depth++; break; }
+                else if (depth == 3 && !strcmpi(vdf_line.title, "Steam")) { depth++; break; }
+                else if (depth == 4 && !strcmpi(vdf_line.title, "Apps")) { depth++; break; }
+                else if (depth == 5 && !strcmpi(vdf_line.title, buf)) { depth++; break; }
             }
 
             case SVR_VDF_KV:
             {
-                if (depth == 6 && !strcmp(vdf_line.title, "LaunchOptions"))
+                if (depth == 6 && !strcmpi(vdf_line.title, "LaunchOptions"))
                 {
                     StringCchCatA(out_buf, out_buf_cch, " ");
                     StringCchCatA(out_buf, out_buf_cch, vdf_line.value);
-                    return;
+                    return true;
                 }
 
                 break;
             }
         }
     }
+
+    launcher_log("Steam launch parameters for %s could not be found\n", GAME_NAMES[game_index]);
+    return false;
 }
 
 void find_installed_game_path(s32 game_index, char* out_path, s32 out_path_cch)

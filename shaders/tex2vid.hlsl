@@ -1,10 +1,6 @@
 // This file is intended to be compiled into many resulting shaders.
 // Purpose of these are to convert the program pixel format to a video pixel format.
 
-// For the 4:2:0 formats we should ideally sample 2 pixels for the U and V planes, but that would mean
-// adding branches to the shaders which we want to avoid. The difference is also so minimal that it doesn't matter when we will be
-// using constantly moving content.
-
 // --------------------------------------------------------------------------------------------------------------------
 
 // Output texture is based in UINT (0 to 255).
@@ -39,6 +35,64 @@ uint3 convert_rgb_to_yuv(float3 rgb)
     return ret;
 }
 
+float4 average_nearby_for_yuv(uint3 dtid)
+{
+    uint width;
+    uint height;
+    input_texture.GetDimensions(width, height);
+
+    float4 base = input_texture.Load(dtid);
+
+    float4 topright;
+    float4 botleft;
+    float4 botright;
+
+    if (dtid.x + 1 < width)
+    {
+        topright = input_texture.Load(dtid, int2(1, 0));
+    }
+
+    else
+    {
+        topright = base;
+    }
+
+    if (dtid.y + 1 < height)
+    {
+        botleft = input_texture.Load(dtid, int2(0, 1));
+    }
+
+    else
+    {
+        botleft = base;
+    }
+
+    if (dtid.x + 1 < width && dtid.y + 1 < height)
+    {
+        botright = input_texture.Load(dtid, int2(1, 1));
+    }
+
+    else
+    {
+        if (dtid.x + 1 < width)
+        {
+            botright = topright;
+        }
+
+        else if (dtid.y + 1 < height)
+        {
+            botright = botleft;
+        }
+
+        else
+        {
+            botright = base;
+        }
+    }
+
+    return (base + topright + botleft + botright) / 4.0;
+}
+
 // --------------------------------------------------------------------------------------------------------------------
 
 #if AV_PIX_FMT_YUV420P
@@ -52,7 +106,7 @@ RWTexture2D<uint> output_texture_v : register(u2);
 
 void proc(uint3 dtid)
 {
-    float4 pix = input_texture[dtid.xy];
+    float4 pix = average_nearby_for_yuv(dtid);
     uint3 yuv = convert_rgb_to_yuv(pix.xyz);
     output_texture_y[dtid.xy] = yuv.x;
     output_texture_u[dtid.xy >> 1] = yuv.y;
@@ -94,7 +148,7 @@ RWTexture2D<uint2> output_texture_uv : register(u1);
 
 void proc(uint3 dtid)
 {
-    float4 pix = input_texture[dtid.xy];
+    float4 pix = average_nearby_for_yuv(dtid);
     uint3 yuv = convert_rgb_to_yuv(pix.xyz);
     output_texture_y[dtid.xy] = yuv.x;
     output_texture_uv[dtid.xy >> 1] = uint2(yuv.yz);
@@ -115,7 +169,7 @@ RWTexture2D<uint2> output_texture_vu : register(u1);
 
 void proc(uint3 dtid)
 {
-    float4 pix = input_texture[dtid.xy];
+    float4 pix = average_nearby_for_yuv(dtid);
     uint3 yuv = convert_rgb_to_yuv(pix.xyz);
     output_texture_y[dtid.xy] = yuv.x;
     output_texture_vu[dtid.xy >> 1] = uint2(yuv.zy);

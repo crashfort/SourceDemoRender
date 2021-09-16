@@ -34,6 +34,3 @@ struct MovieProfile
 };
 
 bool read_profile(const char* full_profile_path, MovieProfile* p);
-bool verify_profile(MovieProfile* p);
-void set_default_profile(MovieProfile* p);
-void log_profile(MovieProfile* p);
