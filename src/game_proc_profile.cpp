@@ -35,20 +35,6 @@ StrIntMapping FONT_STYLE_TABLE[] = {
 };
 
 // Names for ini.
-StrIntMapping FONT_STRETCH_TABLE[] = {
-    StrIntMapping { "undefined", DWRITE_FONT_STRETCH_UNDEFINED },
-    StrIntMapping { "ultracondensed", DWRITE_FONT_STRETCH_ULTRA_CONDENSED },
-    StrIntMapping { "extracondensed", DWRITE_FONT_STRETCH_EXTRA_CONDENSED },
-    StrIntMapping { "condensed", DWRITE_FONT_STRETCH_CONDENSED },
-    StrIntMapping { "semicondensed", DWRITE_FONT_STRETCH_SEMI_CONDENSED },
-    StrIntMapping { "normal", DWRITE_FONT_STRETCH_NORMAL },
-    StrIntMapping { "semiexpanded", DWRITE_FONT_STRETCH_SEMI_EXPANDED },
-    StrIntMapping { "expanded", DWRITE_FONT_STRETCH_EXPANDED },
-    StrIntMapping { "extraexpanded", DWRITE_FONT_STRETCH_EXTRA_EXPANDED },
-    StrIntMapping { "ultraexpanded", DWRITE_FONT_STRETCH_ULTRA_EXPANDED },
-};
-
-// Names for ini.
 StrIntMapping TEXT_ALIGN_TABLE[] = {
     StrIntMapping { "left", DWRITE_TEXT_ALIGNMENT_LEADING },
     StrIntMapping { "right", DWRITE_TEXT_ALIGNMENT_TRAILING },
@@ -267,7 +253,6 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
         else if OPT_S32("velo_border_size", p->veloc_font_border_size, 0, INT32_MAX)
         else if OPT_STR_MAP("velo_font_style", p->veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
         else if OPT_STR_MAP("velo_font_weight", p->veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
-        else if OPT_STR_MAP("velo_font_stretch", p->veloc_font_stretch, FONT_STRETCH_TABLE, DWRITE_FONT_STRETCH_NORMAL)
         else if OPT_STR_MAP("velo_x_align", p->veloc_text_align, TEXT_ALIGN_TABLE, DWRITE_TEXT_ALIGNMENT_CENTER)
         else if OPT_STR_MAP("velo_y_align", p->veloc_para_align, PARAGRAPH_ALIGN_TABLE, DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
         else if OPT_S32("velo_padding", p->veloc_padding, 0, INT32_MAX)

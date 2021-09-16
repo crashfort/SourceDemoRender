@@ -1556,7 +1556,7 @@ bool create_velo_font_face(MovieProfile* p, IDWriteFontFace** font_face)
 
     coll->GetFontFamily(font_index, &font_fam);
 
-    hr = font_fam->GetFirstMatchingFont(p->veloc_font_weight, p->veloc_font_stretch, p->veloc_font_style, &font);
+    hr = font_fam->GetFirstMatchingFont(p->veloc_font_weight, DWRITE_FONT_STRETCH_NORMAL, p->veloc_font_style, &font);
 
     if (FAILED(hr))
     {

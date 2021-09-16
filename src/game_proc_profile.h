@@ -27,7 +27,6 @@ struct MovieProfile
     s32 veloc_font_border_size;
     enum DWRITE_FONT_STYLE veloc_font_style;
     enum DWRITE_FONT_WEIGHT veloc_font_weight;
-    enum DWRITE_FONT_STRETCH veloc_font_stretch;
     enum DWRITE_TEXT_ALIGNMENT veloc_text_align;
     enum DWRITE_PARAGRAPH_ALIGNMENT veloc_para_align;
     s32 veloc_padding;
