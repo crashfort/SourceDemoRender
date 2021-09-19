@@ -10,7 +10,6 @@
 #include <Psapi.h>
 #include <charconv>
 #include "stb_sprintf.h"
-#include <malloc.h>
 
 // Entrypoint for standalone SVR. Reverse engineered code to use the SVR API from unsupported games.
 //

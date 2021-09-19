@@ -3,6 +3,7 @@
 
 // User level semaphore.
 // Based on "Creating a semaphore from WaitOnAddress" https://devblogs.microsoft.com/oldnewthing/20170612-00/?p=96375
+// Was faster in testing and also useful being able to see and reset the semaphore count.
 
 struct SvrSemaphore
 {

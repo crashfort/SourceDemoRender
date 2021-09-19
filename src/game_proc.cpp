@@ -15,8 +15,6 @@
 #include "stb_image_write.h"
 #include "stb_sprintf.h"
 
-#undef or
-
 // We have intrinsics disabled. The operations we do would not benefit from them.
 #include <DirectXMath.h>
 

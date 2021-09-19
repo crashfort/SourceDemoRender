@@ -43,6 +43,7 @@ struct SvrStartMovieData
     // A reference will be added to this when starting, and released when stopping.
     // This should be a view to the swapchain backbuffer texture.
     // This can be either a ID3D11ShaderResourceView for D3D11 games or IDirect3DSurface9 for D3D9Ex games.
+    // For D3D11 games the source texture must be created with D3D11_BIND_RENDER_TARGET.
     IUnknown* game_tex_view;
 };
 
@@ -112,7 +113,7 @@ SVR_API void svr_stop();
 // The texture (game_tex_view) that's passed in to svr_start will be encoded.
 SVR_API void svr_frame();
 
-// For the velocity extension, call this to give the player velocity so it can be drawn to the encoded video.
+// For the velocity extension, call this to give the player xyz velocity so it can be drawn to the encoded video.
 // Must be called before svr_frame.
 SVR_API void svr_give_velocity(float* xyz);
 
