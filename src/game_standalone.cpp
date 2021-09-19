@@ -10,6 +10,7 @@
 #include <Psapi.h>
 #include <charconv>
 #include "stb_sprintf.h"
+#include <malloc.h>
 
 // Entrypoint for standalone SVR. Reverse engineered code to use the SVR API from unsupported games.
 //
@@ -205,7 +206,7 @@ void* find_pattern(void* start, s32 search_length, ScanPattern* pattern)
 
     for (s32 i = 0; i <= search_length - length; ++i)
     {
-        u8* addr = static_cast<u8*>(start) + i;
+        u8* addr = (u8*)start + i;
 
         if (compare_data(addr, pattern))
         {
@@ -319,6 +320,20 @@ FnHook start_movie_hook;
 FnHook end_movie_hook;
 FnHook view_render_hook;
 
+bool has_velo_support(SteamAppId game_id)
+{
+    switch (game_id)
+    {
+        case STEAM_GAME_CSS:
+        case STEAM_GAME_CSGO:
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void client_command(const char* cmd)
 {
     gm_engine_client_exec_cmd_fn(gm_engine_client_ptr, NULL, cmd);
@@ -360,36 +375,24 @@ float* get_player_vel(SteamAppId game_id, void* player)
     {
         case STEAM_GAME_CSS:
         {
-            return (float*)player + 61;
+            u8* addr = (u8*)player + 244;
+            return (float*)addr;
         }
 
         case STEAM_GAME_CSGO:
         {
-            return (float*)player + 69;
+            u8* addr = (u8*)player + 276;
+            return (float*)addr;
         }
     }
 
     return NULL;
 }
 
-bool has_velo_support(SteamAppId game_id)
-{
-    switch (game_id)
-    {
-        case STEAM_GAME_CSS:
-        case STEAM_GAME_CSGO:
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void __fastcall view_render_override(void* p, void* edx, void* rect)
 {
-    GmViewRenderFn view_render_org_fn = (GmViewRenderFn)view_render_hook.original;
-    view_render_org_fn(p, edx, rect);
+    GmViewRenderFn org_fn = (GmViewRenderFn)view_render_hook.original;
+    org_fn(p, edx, rect);
 
     SteamAppId game_id = launcher_data.app_id;
 
@@ -928,6 +931,9 @@ void create_game_hooks(SteamAppId game_id)
     hook_and_redirect_functions(game_id);
 
     // Hooking the D3D9Ex present function to skip presenting is not worthwhile as it does not improve the game frame time.
+
+    // All other threads will be frozen during this call.
+    MH_EnableHook(MH_ALL_HOOKS);
 }
 
 DWORD WINAPI standalone_init_async(void* param)
@@ -957,9 +963,6 @@ DWORD WINAPI standalone_init_async(void* param)
     MH_Initialize();
 
     create_game_hooks(game_id);
-
-    // All other threads will be frozen during this period.
-    MH_EnableHook(MH_ALL_HOOKS);
 
     if (!svr_init(launcher_data.svr_path, gm_d3d9ex_device))
     {

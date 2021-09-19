@@ -35,20 +35,6 @@ StrIntMapping FONT_STYLE_TABLE[] = {
 };
 
 // Names for ini.
-StrIntMapping TEXT_ALIGN_TABLE[] = {
-    StrIntMapping { "left", DWRITE_TEXT_ALIGNMENT_LEADING },
-    StrIntMapping { "right", DWRITE_TEXT_ALIGNMENT_TRAILING },
-    StrIntMapping { "center", DWRITE_TEXT_ALIGNMENT_CENTER },
-};
-
-// Names for ini.
-StrIntMapping PARAGRAPH_ALIGN_TABLE[] = {
-    StrIntMapping { "top", DWRITE_PARAGRAPH_ALIGNMENT_NEAR },
-    StrIntMapping { "bottom", DWRITE_PARAGRAPH_ALIGNMENT_FAR },
-    StrIntMapping { "center", DWRITE_PARAGRAPH_ALIGNMENT_CENTER },
-};
-
-// Names for ini.
 const char* PXFORMAT_TABLE[] = {
     "yuv420",
     "yuv444",
@@ -197,6 +183,17 @@ s32 map_str_in_list_or(SvrIniLine* line, StrIntMapping* mappings, s32 num, s32 d
     return def;
 }
 
+void make_vec2(SvrIniLine* line, s32* target)
+{
+    s32 ret = sscanf(line->value, "%d %d", &target[0], &target[1]);
+
+    if (ret != 2)
+    {
+        memset(target, 0, sizeof(s32) * 2);
+        svr_log("Option %s has incorrect formatting. It should be in the format of <number> <number>. Setting to 0 0\n", line->title);
+    }
+}
+
 void make_color(SvrIniLine* line, s32* target)
 {
     s32 ret = sscanf(line->value, "%d %d %d", &target[0], &target[1], &target[2]);
@@ -230,6 +227,7 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
 
     #define OPT_S32(NAME, VAR, MIN, MAX) (!strcmp(ini_line.title, NAME)) { VAR = atoi_in_range(&ini_line, MIN, MAX); }
     #define OPT_COLOR(NAME, VAR) (!strcmp(ini_line.title, NAME)) { make_color(&ini_line, VAR); }
+    #define OPT_VEC2(NAME, VAR) (!strcmp(ini_line.title, NAME)) { make_vec2(&ini_line, VAR); }
     #define OPT_FLOAT(NAME, VAR, MIN, MAX) (!strcmp(ini_line.title, NAME)) { VAR = atof_in_range(&ini_line, MIN, MAX); }
     #define OPT_STR(NAME, VAR, SIZE) (!strcmp(ini_line.title, NAME)) { StringCchCopyA(VAR, SIZE, ini_line.value); }
     #define OPT_STR_LIST(NAME, VAR, LIST, DEF) (!strcmp(ini_line.title, NAME)) { VAR = str_in_list_or(&ini_line, LIST, SVR_ARRAY_SIZE(LIST), DEF); }
@@ -247,15 +245,13 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
         else if OPT_FLOAT("motion_blur_frame_exposure", p->mosample_exposure, 0.0f, 1.0f)
         else if OPT_S32("velo_enabled", p->veloc_enabled, 0, 1)
         else if OPT_STR("velo_font", p->veloc_font, MAX_VELOC_FONT_NAME)
-        else if OPT_S32("velo_font_size", p->veloc_font_size, 0, INT32_MAX)
+        else if OPT_S32("velo_font_size", p->veloc_font_size, 32, 192)
         else if OPT_COLOR("velo_color", p->veloc_font_color)
         else if OPT_COLOR("velo_border_color", p->veloc_font_border_color)
         else if OPT_S32("velo_border_size", p->veloc_font_border_size, 0, INT32_MAX)
         else if OPT_STR_MAP("velo_font_style", p->veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
         else if OPT_STR_MAP("velo_font_weight", p->veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
-        else if OPT_STR_MAP("velo_x_align", p->veloc_text_align, TEXT_ALIGN_TABLE, DWRITE_TEXT_ALIGNMENT_CENTER)
-        else if OPT_STR_MAP("velo_y_align", p->veloc_para_align, PARAGRAPH_ALIGN_TABLE, DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
-        else if OPT_S32("velo_padding", p->veloc_padding, 0, INT32_MAX)
+        else if OPT_VEC2("velo_align", p->veloc_align)
     }
 
     svr_free_ini_line(&ini_line);
@@ -263,6 +259,7 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
 
     #undef OPT_S32
     #undef OPT_COLOR
+    #undef OPT_VEC2
     #undef OPT_FLOAT
     #undef OPT_STR
     #undef OPT_STR_LIST
