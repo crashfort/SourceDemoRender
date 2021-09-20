@@ -1,3 +1,4 @@
+# 1920x1080
 # 60 fps veryfast crf 15
 # mosample mult 60 exposure 0.5
 

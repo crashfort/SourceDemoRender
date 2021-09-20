@@ -130,7 +130,7 @@ struct IpcStructure
 // You can use code listing in Visual Studio to generate the machine code for this:
 // Using the property pages UI for svr_launcher_main.cpp, go to C/C++ -> Output Files -> Assembler Output and set it to Assembly With Machine Code (/FaC).
 // Then compile the file and find the .cod file in the build directory. Open this and extract the bytes then paste.
-// For the function to actually be compiled in, it must be referenced. Set SIMULATE_REMOTE_BYTES to 1 for this and build in Release.
+// For the function to actually be compiled in, it must be referenced. Enable the generation code in main for this and build in Release.
 // Note that MSVC sometimes doesn't always create this file or it is sometimes not updated properly. Rebuild the project until it works.
 VOID CALLBACK remote_func(ULONG_PTR param)
 {
@@ -195,8 +195,10 @@ const u8 REMOTE_FUNC_BYTES[] =
     0xc2, 0x04, 0x00,
 };
 
+const s32 FULL_ARGS_SIZE = 512;
+
 // Use the launch parameters from Steam if we can.
-bool append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
+bool append_steam_launch_params(s32 game_index, char* out_buf)
 {
     char full_vdf_path[MAX_PATH];
     full_vdf_path[0] = 0;
@@ -243,8 +245,8 @@ bool append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
             {
                 if (depth == 6 && !strcmpi(vdf_line.title, "LaunchOptions"))
                 {
-                    StringCchCatA(out_buf, out_buf_cch, " ");
-                    StringCchCatA(out_buf, out_buf_cch, vdf_line.value);
+                    StringCchCatA(out_buf, FULL_ARGS_SIZE, " ");
+                    StringCchCatA(out_buf, FULL_ARGS_SIZE, vdf_line.value);
                     return true;
                 }
 
@@ -257,7 +259,7 @@ bool append_steam_launch_params(s32 game_index, char* out_buf, s32 out_buf_cch)
     return false;
 }
 
-void find_installed_game_path(s32 game_index, char* out_path, s32 out_path_cch)
+void find_installed_game_path(s32 game_index, char* out_path)
 {
     char buf[64];
     StringCchPrintfA(buf, 64, "%u", GAME_APP_IDS[game_index]);
@@ -278,8 +280,8 @@ void find_installed_game_path(s32 game_index, char* out_path, s32 out_path_cch)
         WIN32_FILE_ATTRIBUTE_DATA attr;
         if (GetFileAttributesExA(id_file_path, GetFileExInfoStandard, &attr))
         {
-            StringCchCatA(out_path, out_path_cch, lib.path);
-            StringCchCatA(out_path, out_path_cch, GAME_ROOT_DIRS[game_index]);
+            StringCchCatA(out_path, MAX_PATH, lib.path);
+            StringCchCatA(out_path, MAX_PATH, GAME_ROOT_DIRS[game_index]);
             return;
         }
     }
@@ -298,12 +300,10 @@ s32 start_game(s32 game_index)
 
     char installed_game_path[MAX_PATH];
     installed_game_path[0] = 0;
-    find_installed_game_path(game_index, installed_game_path, MAX_PATH);
+    find_installed_game_path(game_index, installed_game_path);
 
     StringCchCatA(full_exe_path, MAX_PATH, installed_game_path);
     StringCchCatA(full_exe_path, MAX_PATH, GAME_EXE_PATHS[game_index]);
-
-    const s32 FULL_ARGS_SIZE = 512;
 
     char full_args[FULL_ARGS_SIZE];
     full_args[0] = 0;
@@ -312,7 +312,7 @@ s32 start_game(s32 game_index)
     StringCchCatA(full_args, FULL_ARGS_SIZE, " ");
     StringCchCatA(full_args, FULL_ARGS_SIZE, EXTRA_GAME_ARGS[game_index]);
 
-    append_steam_launch_params(game_index, full_args, FULL_ARGS_SIZE);
+    append_steam_launch_params(game_index, full_args);
 
     launcher_log("Starting %s (%u) with arguments %s\n", GAME_NAMES[game_index], GAME_APP_IDS[game_index], full_args);
 
@@ -515,13 +515,15 @@ void show_windows_version()
         return;
     }
 
-    char product_name[64];
-    char current_build[64];
-    char release_id[64];
+    const s32 REG_BUF_SIZE = 64;
 
-    DWORD product_name_size = sizeof(product_name);
-    DWORD current_build_size = sizeof(current_build);
-    DWORD release_id_size = sizeof(release_id);
+    char product_name[REG_BUF_SIZE];
+    char current_build[REG_BUF_SIZE];
+    char release_id[REG_BUF_SIZE];
+
+    DWORD product_name_size = REG_BUF_SIZE;
+    DWORD current_build_size = REG_BUF_SIZE;
+    DWORD release_id_size = REG_BUF_SIZE;
 
     RegGetValueA(hkey, NULL, "ProductName", RRF_RT_REG_SZ, NULL, product_name, &product_name_size);
     RegGetValueA(hkey, NULL, "CurrentBuild", RRF_RT_REG_SZ, NULL, current_build, &current_build_size);
@@ -563,8 +565,10 @@ void show_processor()
         return;
     }
 
-    char name[128];
-    DWORD name_size = sizeof(name);
+    const s32 REG_BUF_SIZE = 128;
+
+    char name[REG_BUF_SIZE];
+    DWORD name_size = REG_BUF_SIZE;
 
     RegGetValueA(hkey, NULL, "ProcessorNameString", RRF_RT_REG_SZ, NULL, name, &name_size);
 
@@ -591,7 +595,7 @@ void find_steam_path()
         launcher_error("Steam is not installed.");
     }
 
-    DWORD steam_path_size = sizeof(steam_path);
+    DWORD steam_path_size = MAX_PATH;
     DWORD steam_active_user_size = sizeof(DWORD);
 
     // These have to exist otherwise Steam wouldn't work.
@@ -810,15 +814,10 @@ void check_hw_caps()
     }
 }
 
-// Enable this to generate the machine code for remote_func (see comments at that function).
-#define SIMULATE_REMOTE_BYTES 0
-
-// Enable to skip gathering system information and stuff on start during testing.
-#define SHOW_START_INFO 0
-
 int main(int argc, char** argv)
 {
-    #if SIMULATE_REMOTE_BYTES
+    // Enable this to generate the machine code for remote_func (see comments at that function).
+    #if 0
     IpcStructure structure = {};
     structure.LoadLibraryA = LoadLibraryA;
     structure.GetProcAddress = GetProcAddress;
@@ -840,7 +839,8 @@ int main(int argc, char** argv)
     // For standalone mode, the launcher creates the log file that the game then appends to.
     svr_init_log("data\\SVR_LOG.TXT", false);
 
-    #if !SHOW_START_INFO
+    // Enable to show system information and stuff on start.
+    #if 1
     if (!IsWindows10OrGreater())
     {
         launcher_error("Windows 10 or later is needed to use SVR.");

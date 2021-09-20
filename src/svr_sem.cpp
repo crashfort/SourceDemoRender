@@ -36,7 +36,7 @@ void svr_sem_wait(SvrSemaphore* sem)
 
         while (orig_count == 0)
         {
-            WaitOnAddress(&sem->count, &orig_count, sizeof(orig_count), INFINITE);
+            WaitOnAddress(&sem->count, &orig_count, sizeof(s32), INFINITE);
             orig_count = sem->count;
         }
 

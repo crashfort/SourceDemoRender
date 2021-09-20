@@ -1743,7 +1743,7 @@ void draw_velo(ID3D11DeviceContext* d3d11_context, ID3D11RenderTargetView* rtv, 
         }
     }
 
-    // Use the draw centers as the origin for placement.
+    // Use the draw width center as the origin for placement.
 
     float shift_x = (movie_width - draw_width) / 2.0f;
 
