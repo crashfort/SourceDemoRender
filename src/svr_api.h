@@ -47,6 +47,12 @@ struct SvrStartMovieData
     IUnknown* game_tex_view;
 };
 
+struct SvrWaveSample
+{
+    short l;
+    short r;
+};
+
 // For checking mismatch between built DLL and client header.
 // Always call this and ensure that the versions match (compare to SVR_API_VERSION). The API should not be used if these mismatch, as it will most likely crash!
 // You should not call svr_init (or any function at all) if there is a mismatch.
@@ -111,10 +117,14 @@ SVR_API void svr_stop();
 
 // To be called when a new game frame has been rendered, but before it is presented (because the double buffered textures would be swapped).
 // The texture (game_tex_view) that's passed in to svr_start will be encoded.
+// This must only be called if svr_movie_active returns true.
 SVR_API void svr_frame();
 
 // For the velocity extension, call this to give the player xyz velocity so it can be drawn to the encoded video.
 // Must be called before svr_frame.
 SVR_API void svr_give_velocity(float* xyz);
+
+// Give audio samples to write. This must be 16 bit samples.
+SVR_API void svr_give_audio(SvrWaveSample* samples, int num_samples);
 
 }

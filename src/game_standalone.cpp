@@ -10,6 +10,7 @@
 #include <Psapi.h>
 #include <charconv>
 #include "stb_sprintf.h"
+#include <malloc.h>
 
 // Entrypoint for standalone SVR. Reverse engineered code to use the SVR API from unsupported games.
 //
@@ -75,7 +76,7 @@ s32 check_loaded_proc_modules(const char** list, s32 size)
 
         for (s32 j = 0; j < size; j++)
         {
-            if (!_stricmp(list[j], name))
+            if (!strcmpi(list[j], name))
             {
                 hits++;
                 break;
@@ -299,17 +300,22 @@ void* gm_engine_client_ptr;
 
 // Add new function variants as needed.
 
+struct GmSndSample
+{
+    int left;
+    int right;
+};
+
 using GmClientCmdFn = void(__fastcall*)(void* p, void* edx, const char* str);
 using GmViewRenderFn = void(__fastcall*)(void* p, void* edx, void* rect);
 using GmStartMovieFn = void(__cdecl*)(void* args);
 using GmEndMovieFn = void(__cdecl*)(void* args);
 using GmGetSpecTargetFn = int(__cdecl*)();
 using GmPlayerByIdxFn = void*(__cdecl*)(int index);
+using GmSndPaintChansFn = void(__cdecl*)(int end_time, bool is_underwater);
+using GmSndTxStereoFn = void(__cdecl*)(void*, const GmSndSample* paintbuf, int painted_time, int end_time);
 
 GmClientCmdFn gm_engine_client_exec_cmd_fn;
-GmViewRenderFn gm_view_render_fn;
-GmStartMovieFn gm_start_movie_fn;
-GmEndMovieFn gm_end_movie_fn;
 
 void* gm_local_player_ptr;
 GmGetSpecTargetFn gm_get_spec_target_fn;
@@ -319,19 +325,13 @@ FnHook start_movie_hook;
 FnHook end_movie_hook;
 FnHook view_render_hook;
 
-bool has_velo_support(SteamAppId game_id)
-{
-    switch (game_id)
-    {
-        case STEAM_GAME_CSS:
-        case STEAM_GAME_CSGO:
-        {
-            return true;
-        }
-    }
+FnHook gm_snd_tx_stereo_hook;
+FnHook gm_snd_mix_chans_hook;
+int* gm_snd_paint_time;
 
-    return false;
-}
+bool snd_is_painting;
+float snd_audio_remainder;
+bool snd_listener_underwater;
 
 void client_command(const char* cmd)
 {
@@ -388,22 +388,96 @@ float* get_player_vel(SteamAppId game_id, void* player)
     return NULL;
 }
 
+void __cdecl snd_paint_chans_override(int end_time, bool is_underwater)
+{
+    snd_listener_underwater = is_underwater;
+
+    if (svr_movie_active() && !snd_is_painting)
+    {
+        // When movie is active we call this ourselves with the real number of samples write.
+        return;
+    }
+
+    // Will call snd_tx_stereo_override.
+
+    GmSndPaintChansFn org_fn = (GmSndPaintChansFn)gm_snd_mix_chans_hook.original;
+    org_fn(end_time, is_underwater);
+}
+
+void __cdecl snd_tx_stereo_override(void*, const GmSndSample* paintbuf, int painted_time, int end_time)
+{
+    if (!svr_movie_active())
+    {
+        return;
+    }
+
+    assert(snd_is_painting);
+
+    s32 num_samples = end_time - painted_time;
+    s32 buf_size = sizeof(SvrWaveSample) * num_samples;
+
+    SvrWaveSample* buf = (SvrWaveSample*)_alloca(buf_size);
+
+    // We don't allow the volume to be changed.
+    s32 volume = (s32)((1.0f * 256.0f) + 0.5f);
+
+    for (s32 i = 0; i < num_samples; i++)
+    {
+        GmSndSample sample = paintbuf[i];
+        s32 l = (sample.left * volume) >> 8;
+        s32 r = (sample.right * volume) >> 8;
+
+        svr_clamp(&l, (s32)INT16_MIN, (s32)INT16_MAX);
+        svr_clamp(&r, (s32)INT16_MIN, (s32)INT16_MAX);
+
+        buf[i] = SvrWaveSample { (s16)l, (s16)r };
+    }
+
+    svr_give_audio(buf, num_samples);
+}
+
+void give_player_velo()
+{
+    SteamAppId game_id = launcher_data.app_id;
+
+    void* player = get_active_player(game_id);
+    float* vel = get_player_vel(game_id, player);
+
+    svr_give_velocity(vel);
+}
+
+void paint_audio()
+{
+    // Figure out how many samples we need to process for this frame.
+
+    snd_audio_remainder += 1.0f / (float)svr_get_game_rate();
+
+    float samples_to_capture = snd_audio_remainder * 44100.0f;
+    int samples_rounded = (s32)(samples_to_capture + 0.5f);
+    int new_end_time = *gm_snd_paint_time + samples_rounded;
+
+    snd_is_painting = true;
+    snd_paint_chans_override(new_end_time, snd_listener_underwater);
+    snd_is_painting = false;
+
+    snd_audio_remainder = (samples_to_capture - (float)samples_rounded) / 44100.0f;
+}
+
 void __fastcall view_render_override(void* p, void* edx, void* rect)
 {
+    if (svr_movie_active())
+    {
+        paint_audio();
+    }
+
     GmViewRenderFn org_fn = (GmViewRenderFn)view_render_hook.original;
     org_fn(p, edx, rect);
 
-    SteamAppId game_id = launcher_data.app_id;
-
-    if (has_velo_support(game_id))
+    if (svr_movie_active())
     {
-        void* player = get_active_player(game_id);
-        float* vel = get_player_vel(game_id, player);
-
-        svr_give_velocity(vel);
+        give_player_velo();
+        svr_frame();
     }
-
-    svr_frame();
 }
 
 const char* args_skip_spaces(const char* str)
@@ -573,7 +647,7 @@ void __cdecl start_movie_override(void* args)
 
         while (*ext_it)
         {
-            if (!_stricmp(*ext_it, movie_ext))
+            if (!strcmpi(*ext_it, movie_ext))
             {
                 break;
             }
@@ -722,6 +796,8 @@ void patch_cvar_restrict(SteamAppId game_id)
 
             break;
         }
+
+        default: assert(false);
     }
 }
 
@@ -734,9 +810,10 @@ IDirect3DDevice9Ex* get_d3d9ex_device(SteamAppId game_id)
         {
             u8* addr = (u8*)pattern_scan("shaderapidx9.dll", "A1 ?? ?? ?? ?? 6A 00 56 6A 00 8B 08 6A 15 68 ?? ?? ?? ?? 6A 00 6A 01 6A 01 50 FF 51 5C 85 C0 79 06 C7 06 ?? ?? ?? ??");
             addr += 1;
-
             return **(IDirect3DDevice9Ex***)addr;
         }
+
+        default: assert(false);
     }
 
     return NULL;
@@ -751,6 +828,8 @@ void* get_engine_client_ptr(SteamAppId game_id)
         {
             return create_interface("engine.dll", "VEngineClient014");
         }
+
+        default: assert(false);
     }
 
     return NULL;
@@ -764,7 +843,6 @@ void* get_local_player_ptr(SteamAppId game_id)
         {
             u8* addr = (u8*)pattern_scan("client.dll", "A3 ?? ?? ?? ?? 68 ?? ?? ?? ?? 8B 01 FF 50 34 8B C8 E8 ?? ?? ?? ??");
             addr += 1;
-
             return addr;
         }
 
@@ -772,9 +850,10 @@ void* get_local_player_ptr(SteamAppId game_id)
         {
             u8* addr = (u8*)pattern_scan("client.dll", "8B 35 ?? ?? ?? ?? 85 F6 74 2E 8B 06 8B CE FF 50 28");
             addr += 2;
-
             return addr;
         }
+
+        default: assert(false);
     }
 
     return NULL;
@@ -793,6 +872,8 @@ void* get_engine_client_exec_cmd_fn(SteamAppId game_id, void* engine_client_ptr)
         {
             return get_virtual(engine_client_ptr, 108);
         }
+
+        default: assert(false);
     }
 
     return NULL;
@@ -811,6 +892,8 @@ void* get_view_render_fn(SteamAppId game_id)
         {
             return pattern_scan("client.dll", "55 8B EC 83 E4 F0 81 EC ?? ?? ?? ?? 56 57 8B F9 8B 0D ?? ?? ?? ?? 89 7C 24 18");
         }
+
+        default: assert(false);
     }
 
     return NULL;
@@ -829,6 +912,8 @@ void* get_start_movie_fn(SteamAppId game_id)
         {
             return pattern_scan("engine.dll", "55 8B EC 83 EC 08 53 56 57 8B 7D 08 8B 1F 83 FB 02 7D 5F");
         }
+
+        default: assert(false);
     }
 
     return NULL;
@@ -847,6 +932,8 @@ void* get_end_movie_fn(SteamAppId game_id)
         {
             return pattern_scan("engine.dll", "80 3D ?? ?? ?? ?? ?? 75 0F 68 ?? ?? ?? ??");
         }
+
+        default: assert(false);
     }
 
     return NULL;
@@ -865,6 +952,8 @@ void* get_get_spec_target_fn(SteamAppId game_id)
         {
             return pattern_scan("client.dll", "8B 0D ?? ?? ?? ?? 85 C9 74 ?? 8B 01 FF A0 ?? ?? ?? ?? 33 C0 C3");
         }
+
+        default: assert(false);
     }
 
     return NULL;
@@ -883,6 +972,55 @@ void* get_get_player_by_index_fn(SteamAppId game_id)
         {
             return pattern_scan("client.dll", "83 F9 01 7C ?? A1 ?? ?? ?? ?? 3B 48 ?? 7F ?? 56");
         }
+
+        default: assert(false);
+    }
+
+    return NULL;
+}
+
+void* get_snd_paint_chans_fn(SteamAppId game_id)
+{
+    switch (game_id)
+    {
+        case STEAM_GAME_CSS:
+        {
+            return pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 33 DB 89 5D D0 89 5D D4");
+        }
+
+        default: assert(false);
+    }
+
+    return NULL;
+}
+
+void* get_snd_tx_stereo_fn(SteamAppId game_id)
+{
+    switch (game_id)
+    {
+        case STEAM_GAME_CSS:
+        {
+            return pattern_scan("engine.dll", "55 8B EC 51 53 56 57 E8 ?? ?? ?? ?? D8 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ??");
+        }
+
+        default: assert(false);
+    }
+
+    return NULL;
+}
+
+void* get_snd_paint_time_ptr(SteamAppId game_id)
+{
+    switch (game_id)
+    {
+        case STEAM_GAME_CSS:
+        {
+            u8* addr = (u8*)pattern_scan("engine.dll", "2B 05 ?? ?? ?? ?? 0F 48 C1 89 45 FC 85 C0 74 59");
+            addr += 2;
+            return addr;
+        }
+
+        default: assert(false);
     }
 
     return NULL;
@@ -895,11 +1033,16 @@ void hook_and_redirect_functions(SteamAppId game_id)
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         {
-            hook_function(gm_start_movie_fn, start_movie_override, &start_movie_hook);
-            hook_function(gm_end_movie_fn, end_movie_override, &end_movie_hook);
-            hook_function(gm_view_render_fn, view_render_override, &view_render_hook);
+            hook_function(get_start_movie_fn(game_id), start_movie_override, &start_movie_hook);
+            hook_function(get_end_movie_fn(game_id), end_movie_override, &end_movie_hook);
+            hook_function(get_view_render_fn(game_id), view_render_override, &view_render_hook);
+
+            hook_function(get_snd_paint_chans_fn(game_id), snd_paint_chans_override, &gm_snd_mix_chans_hook);
+            hook_function(get_snd_tx_stereo_fn(game_id), snd_tx_stereo_override, &gm_snd_tx_stereo_hook);
             break;
         }
+
+        default: assert(false);
     }
 }
 
@@ -911,16 +1054,12 @@ void create_game_hooks(SteamAppId game_id)
     gm_d3d9ex_device = get_d3d9ex_device(game_id);
     gm_engine_client_ptr = get_engine_client_ptr(game_id);
     gm_engine_client_exec_cmd_fn = (GmClientCmdFn)get_engine_client_exec_cmd_fn(game_id, gm_engine_client_ptr);
-    gm_view_render_fn = (GmViewRenderFn)get_view_render_fn(game_id);
-    gm_start_movie_fn = (GmStartMovieFn)get_start_movie_fn(game_id);
-    gm_end_movie_fn = (GmEndMovieFn)get_end_movie_fn(game_id);
 
-    if (has_velo_support(game_id))
-    {
-        gm_local_player_ptr = get_local_player_ptr(game_id);
-        gm_get_spec_target_fn = (GmGetSpecTargetFn)get_get_spec_target_fn(game_id);
-        gm_get_player_by_index_fn = (GmPlayerByIdxFn)get_get_player_by_index_fn(game_id);
-    }
+    gm_local_player_ptr = get_local_player_ptr(game_id);
+    gm_get_spec_target_fn = (GmGetSpecTargetFn)get_get_spec_target_fn(game_id);
+    gm_get_player_by_index_fn = (GmPlayerByIdxFn)get_get_player_by_index_fn(game_id);
+
+    gm_snd_paint_time = *(int**)get_snd_paint_time_ptr(game_id);
 
     if (has_cvar_restrict(game_id))
     {

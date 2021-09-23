@@ -14,6 +14,8 @@
 #include "game_proc_profile.h"
 #include "stb_image_write.h"
 #include "stb_sprintf.h"
+#include "svr_api.h"
+#include <Shlwapi.h>
 
 // We have intrinsics disabled. The operations we do would not benefit from them.
 #include <DirectXMath.h>
@@ -56,6 +58,17 @@ ID3D11Texture2D* work_tex;
 ID3D11RenderTargetView* work_tex_rtv;
 ID3D11ShaderResourceView* work_tex_srv;
 ID3D11UnorderedAccessView* work_tex_uav;
+
+// -------------------------------------------------
+// Audio state.
+
+// We write wav for now because writing multiple streams over a single pipe is weird. Will be looked into later.
+
+HANDLE wav_f;
+DWORD wav_data_length;
+DWORD wav_file_length;
+DWORD wav_header_pos;
+DWORD wav_data_pos;
 
 // -------------------------------------------------
 // Velo state.
@@ -883,6 +896,12 @@ void free_all_dynamic_proc_stuff()
     svr_maybe_release(&velo_atlas_tex);
     svr_maybe_release(&velo_atlas_tex_srv);
     svr_maybe_release(&velo_atlas_tex_rtv);
+
+    if (wav_f)
+    {
+        CloseHandle(wav_f);
+        wav_f = NULL;
+    }
 }
 
 bool init_velo(ID3D11Device* d3d11_device)
@@ -1743,7 +1762,7 @@ void draw_velo(ID3D11DeviceContext* d3d11_context, ID3D11RenderTargetView* rtv, 
         }
     }
 
-    // Use the draw width center as the origin for placement.
+    // Use the draw width center and vertical baseline as the origin for placement.
 
     float shift_x = (movie_width - draw_width) / 2.0f;
 
@@ -1818,6 +1837,59 @@ void draw_velo(ID3D11DeviceContext* d3d11_context, ID3D11RenderTargetView* rtv, 
     d3d11_context->OMSetRenderTargets(1, &null_rtv, NULL);
 }
 
+bool create_audio()
+{
+    char wav_path[MAX_PATH];
+    StringCchCopyA(wav_path, MAX_PATH, movie_path);
+    PathRenameExtensionA(wav_path, ".wav");
+
+    wav_f = CreateFileA(wav_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if (wav_f == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    const DWORD RIFF = MAKEFOURCC('R', 'I', 'F', 'F');
+    const DWORD WAVE = MAKEFOURCC('W', 'A', 'V', 'E');
+    const DWORD FMT_ = MAKEFOURCC('f', 'm', 't', ' ');
+    const DWORD DATA = MAKEFOURCC('d', 'a', 't', 'a');
+
+    const DWORD WAV_PLACEHOLDER = 0;
+
+    WriteFile(wav_f, &RIFF, sizeof(DWORD), NULL, NULL);
+    wav_header_pos = SetFilePointer(wav_f, 0, NULL, FILE_CURRENT);
+    WriteFile(wav_f, &WAV_PLACEHOLDER, sizeof(DWORD), NULL, NULL);
+
+    WriteFile(wav_f, &WAVE, sizeof(DWORD), NULL, NULL);
+
+    WORD channels = 2;
+    WORD sample_rate = 44100;
+    WORD sample_bits = 16;
+
+    WAVEFORMATEX wfx = {};
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nChannels = channels;
+    wfx.nSamplesPerSec = sample_rate;
+    wfx.wBitsPerSample = sample_bits;
+    wfx.nBlockAlign = wfx.nChannels * (wfx.wBitsPerSample / 8);
+    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+
+    DWORD wfx_size = sizeof(WAVEFORMATEX);
+
+    WriteFile(wav_f, &FMT_, sizeof(DWORD), NULL, NULL);
+    WriteFile(wav_f, &wfx_size, sizeof(DWORD), NULL, NULL);
+    WriteFile(wav_f, &wfx, sizeof(WAVEFORMATEX), NULL, NULL);
+
+    WriteFile(wav_f, &DATA, sizeof(DWORD), NULL, NULL);
+    wav_data_pos = SetFilePointer(wav_f, 0, NULL, FILE_CURRENT);
+    WriteFile(wav_f, &WAV_PLACEHOLDER, sizeof(DWORD), NULL, NULL);
+
+    wav_file_length = SetFilePointer(wav_f, 0, NULL, FILE_CURRENT);
+
+    return true;
+}
+
 bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, const char* dest, const char* profile, ID3D11ShaderResourceView* game_content_srv)
 {
     bool ret = false;
@@ -1856,7 +1928,12 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     frame_num = 0;
     movie_width = tex_desc.Width;
     movie_height = tex_desc.Height;
-    StringCchCopyA(movie_path, MAX_PATH, dest);
+
+    movie_path[0] = 0;
+    StringCchCatA(movie_path, MAX_PATH, svr_resource_path);
+    // StringCchCatA(movie_path, MAX_PATH, "\\movies\\");
+    StringCchCatA(movie_path, MAX_PATH, "\\");
+    StringCchCatA(movie_path, MAX_PATH, dest);
 
     if (!start_with_sw(d3d11_device))
     {
@@ -1895,6 +1972,11 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         {
             goto rfail;
         }
+    }
+
+    if (!create_audio())
+    {
+        goto rfail;
     }
 
     // We have a controlled environment until the ffmpeg thread is started.
@@ -2068,8 +2150,27 @@ void mosample_game_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourc
     }
 }
 
+s64 first_frame_time;
+s64 last_frame_time;
+
+void update_time_stats()
+{
+    if (frame_num == 0)
+    {
+        first_frame_time = svr_prof_get_real_time();
+    }
+
+    else
+    {
+        last_frame_time = svr_prof_get_real_time();
+    }
+}
+
 void proc_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv, ID3D11RenderTargetView* game_content_rtv)
 {
+    // Useful to see real time taken
+    update_time_stats();
+
     if (frame_num > 0)
     {
         svr_start_prof(&frame_prof);
@@ -2095,6 +2196,16 @@ void proc_give_velocity(float* xyz)
     memcpy(player_velo, xyz, sizeof(float) * 3);
 }
 
+void proc_give_audio(SvrWaveSample* samples, s32 num_samples)
+{
+    s32 buf_size = sizeof(SvrWaveSample) * num_samples;
+
+    wav_data_length += buf_size;
+    wav_file_length += buf_size;
+
+    WriteFile(wav_f, samples, buf_size, NULL, NULL);
+}
+
 void show_total_prof(const char* name, SvrProf* prof)
 {
     game_log("%s: %lld\n", name, prof->total);
@@ -2110,9 +2221,15 @@ void show_prof(const char* name, SvrProf* prof)
 
 void proc_end()
 {
-    game_log("Ending movie\n");
+    game_log("Ending movie after %0.2f seconds\n", (last_frame_time - first_frame_time) / 1000000.0f);
 
     end_ffmpeg_proc();
+
+    SetFilePointer(wav_f, wav_header_pos, NULL, FILE_BEGIN);
+    WriteFile(wav_f, &wav_file_length, sizeof(DWORD), NULL, NULL);
+
+    SetFilePointer(wav_f, wav_data_pos, NULL, FILE_BEGIN);
+    WriteFile(wav_f, &wav_data_length, sizeof(DWORD), NULL, NULL);
 
     free_all_dynamic_sw_stuff();
     free_all_dynamic_proc_stuff();

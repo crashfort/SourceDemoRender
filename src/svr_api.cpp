@@ -270,11 +270,6 @@ void svr_stop()
 
 void svr_frame()
 {
-    if (!svr_movie_running)
-    {
-        return;
-    }
-
     // If we are a D3D9Ex game, we have to copy over the game content texture to the D3D11 texture.
     if (svr_d3d9ex_device)
     {
@@ -291,4 +286,9 @@ void svr_frame()
 void svr_give_velocity(float* xyz)
 {
     proc_give_velocity(xyz);
+}
+
+void svr_give_audio(SvrWaveSample* samples, int num_samples)
+{
+    proc_give_audio(samples, num_samples);
 }
