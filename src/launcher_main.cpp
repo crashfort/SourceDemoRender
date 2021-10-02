@@ -73,6 +73,12 @@ const char* GAME_EXE_PATHS[] = {
     "csgo.exe", // Counter-Strike: Global Offensive
 };
 
+// Build versions that have been tested (located in the appmanifest acf).
+s32 GAME_BUILDS[] = {
+    6946501, // Counter-Strike: Source
+    7421361, // Counter-Strike: Global Offensive
+};
+
 const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(GAME_APP_IDS);
 
 // Base arguments that every game will have.
@@ -259,7 +265,7 @@ bool append_steam_launch_params(s32 game_index, char* out_buf)
     return false;
 }
 
-void find_installed_game_path(s32 game_index, char* out_path)
+void find_game_paths(s32 game_index, char* game_path, char* acf_path)
 {
     char buf[64];
     StringCchPrintfA(buf, 64, "%u", GAME_APP_IDS[game_index]);
@@ -278,16 +284,64 @@ void find_installed_game_path(s32 game_index, char* out_path)
         StringCchCatA(id_file_path, MAX_PATH, ".acf");
 
         WIN32_FILE_ATTRIBUTE_DATA attr;
+
         if (GetFileAttributesExA(id_file_path, GetFileExInfoStandard, &attr))
         {
-            StringCchCatA(out_path, MAX_PATH, lib.path);
-            StringCchCatA(out_path, MAX_PATH, GAME_ROOT_DIRS[game_index]);
+            StringCchCatA(game_path, MAX_PATH, lib.path);
+            StringCchCatA(game_path, MAX_PATH, GAME_ROOT_DIRS[game_index]);
+
+            StringCchCopyA(acf_path, MAX_PATH, id_file_path);
             return;
         }
     }
 
     // Cannot happen unless Steam is installed wrong in which case it wouldn't work anyway.
     launcher_error("Game %s was not found in any Steam library. Steam may be installed wrong.", GAME_NAMES[game_index]);
+}
+
+void find_game_build(s32 game_index, const char* acf_path, s32* build_id)
+{
+    SvrVdfMem vdf_mem;
+
+    if (!svr_open_vdf_read(acf_path, &vdf_mem))
+    {
+        launcher_log("Could not open appmanifest of game %s (%lu)\n", GAME_NAMES[game_index], GetLastError());
+        return;
+    }
+
+    SvrVdfLine vdf_line = svr_alloc_vdf_line();
+    SvrVdfTokenType vdf_token_type;
+
+    s32 depth = 0;
+
+    while (svr_read_vdf(&vdf_mem, &vdf_line, &vdf_token_type))
+    {
+        switch (vdf_token_type)
+        {
+            case SVR_VDF_GROUP_TITLE:
+            {
+                if (depth == 0 && !strcmpi(vdf_line.title, "AppState")) { depth++; break; }
+            }
+
+            case SVR_VDF_KV:
+            {
+                // Value will be like "buildid" "7421361".
+
+                if (depth == 1)
+                {
+                    if (!strcmpi(vdf_line.title, "buildid"))
+                    {
+                        *build_id = strtol(vdf_line.value, NULL, 10);
+                        return;
+                    }
+                }
+
+                break;
+            }
+        }
+    }
+
+    launcher_log("Build number was not found in appmanifest of game %s\n", GAME_NAMES[game_index]);
 }
 
 s32 start_game(s32 game_index)
@@ -300,7 +354,14 @@ s32 start_game(s32 game_index)
 
     char installed_game_path[MAX_PATH];
     installed_game_path[0] = 0;
-    find_installed_game_path(game_index, installed_game_path);
+
+    char game_acf_path[MAX_PATH];
+    game_acf_path[0] = 0;
+
+    find_game_paths(game_index, installed_game_path, game_acf_path);
+
+    s32 game_build_id = 0;
+    find_game_build(game_index, game_acf_path, &game_build_id);
 
     StringCchCatA(full_exe_path, MAX_PATH, installed_game_path);
     StringCchCatA(full_exe_path, MAX_PATH, GAME_EXE_PATHS[game_index]);
@@ -314,7 +375,19 @@ s32 start_game(s32 game_index)
 
     append_steam_launch_params(game_index, full_args);
 
-    launcher_log("Starting %s (%u) with arguments %s\n", GAME_NAMES[game_index], GAME_APP_IDS[game_index], full_args);
+    if (game_build_id > 0)
+    {
+        s32 tested_build_id = GAME_BUILDS[game_index];
+
+        if (game_build_id != tested_build_id)
+        {
+            launcher_log("WARNING: Mismatch between installed Steam build and tested SVR build. "
+                         "Steam game build is %d and tested build is %d. "
+                         "Problems may occur as this game build has not been tested!\n", game_build_id, tested_build_id);
+        }
+    }
+
+    launcher_log("Starting %s (build %d). If launching doesn't work then make sure any antivirus is disabled\n", GAME_NAMES[game_index], game_build_id);
 
     STARTUPINFOA start_info = {};
     start_info.cb = sizeof(STARTUPINFOA);
@@ -674,7 +747,7 @@ void find_steam_libraries()
         {
             case SVR_VDF_GROUP_TITLE:
             {
-                if (depth == 0 && !strcmp(vdf_line.title, "LibraryFolders")) { depth++; break; }
+                if (depth == 0 && !strcmpi(vdf_line.title, "LibraryFolders")) { depth++; break; }
             }
 
             case SVR_VDF_KV:
@@ -686,7 +759,7 @@ void find_steam_libraries()
                     char buf[64];
                     StringCchPrintfA(buf, 64, "%d", num_steam_libraries);
 
-                    if (!strcmp(vdf_line.title, buf))
+                    if (!strcmpi(vdf_line.title, buf))
                     {
                         // Paths in vdf will be escaped, we need to unescape.
 

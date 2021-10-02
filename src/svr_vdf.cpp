@@ -164,7 +164,6 @@ bool svr_open_vdf_read(const char* path, SvrVdfMem* mem)
     }
 
     CloseHandle(h);
-
     return ret;
 }
 

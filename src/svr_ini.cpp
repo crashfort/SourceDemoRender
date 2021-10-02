@@ -128,7 +128,6 @@ bool svr_open_ini_read(const char* path, SvrIniMem* mem)
     }
 
     CloseHandle(h);
-
     return ret;
 }
 
