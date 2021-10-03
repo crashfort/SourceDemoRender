@@ -741,6 +741,9 @@ void find_steam_libraries()
 
     s32 depth = 0;
 
+    char cur_lib_number[64];
+    StringCchPrintfA(cur_lib_number, 64, "%d", num_steam_libraries);
+
     while (svr_read_vdf(&vdf_mem, &vdf_line, &vdf_token_type))
     {
         switch (vdf_token_type)
@@ -748,18 +751,14 @@ void find_steam_libraries()
             case SVR_VDF_GROUP_TITLE:
             {
                 if (depth == 0 && !strcmpi(vdf_line.title, "LibraryFolders")) { depth++; break; }
+                if (depth == 1 && !strcmpi(vdf_line.title, cur_lib_number)) { depth++; break; }
             }
 
             case SVR_VDF_KV:
             {
-                // Value will be like "1" "B:\\SteamLibrary" with an increasing number for each library.
-
-                if (depth == 1)
+                if (depth == 2)
                 {
-                    char buf[64];
-                    StringCchPrintfA(buf, 64, "%d", num_steam_libraries);
-
-                    if (!strcmpi(vdf_line.title, buf))
+                    if (!strcmpi(vdf_line.title, "path"))
                     {
                         // Paths in vdf will be escaped, we need to unescape.
 
@@ -778,6 +777,11 @@ void find_steam_libraries()
                             launcher_log("Too many Steam libraries installed, using first %d\n", MAX_STEAM_LIBRARIES);
                             return;
                         }
+
+                        char cur_lib_number[64];
+                        StringCchPrintfA(cur_lib_number, 64, "%d", num_steam_libraries);
+
+                        depth--;
                     }
                 }
 
