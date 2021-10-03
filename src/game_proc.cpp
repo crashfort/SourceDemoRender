@@ -1847,6 +1847,7 @@ bool create_audio()
 
     if (wav_f == INVALID_HANDLE_VALUE)
     {
+        game_log("Could not create wave file %s (%lu)\n", wav_path, GetLastError());
         return false;
     }
 
@@ -2022,8 +2023,6 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
 
     ffmpeg_thread = CreateThread(NULL, 0, ffmpeg_thread_proc, NULL, 0, NULL);
 
-    game_log("Starting movie to %s\n", dest);
-
     ret = true;
     goto rexit;
 
@@ -2150,43 +2149,21 @@ void mosample_game_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourc
     }
 }
 
-s64 first_frame_time;
-s64 last_frame_time;
-
-void update_time_stats()
+void proc_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv, ID3D11RenderTargetView* game_content_rtv)
 {
-    if (frame_num == 0)
+    svr_start_prof(&frame_prof);
+
+    if (movie_profile.mosample_enabled)
     {
-        first_frame_time = svr_prof_get_real_time();
+        mosample_game_frame(d3d11_context, game_content_srv);
     }
 
     else
     {
-        last_frame_time = svr_prof_get_real_time();
+        encode_video_frame(d3d11_context, game_content_srv, game_content_rtv);
     }
-}
 
-void proc_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv, ID3D11RenderTargetView* game_content_rtv)
-{
-    // Useful to see real time taken
-    update_time_stats();
-
-    if (frame_num > 0)
-    {
-        svr_start_prof(&frame_prof);
-
-        if (movie_profile.mosample_enabled)
-        {
-            mosample_game_frame(d3d11_context, game_content_srv);
-        }
-
-        else
-        {
-            encode_video_frame(d3d11_context, game_content_srv, game_content_rtv);
-        }
-
-        svr_end_prof(&frame_prof);
-    }
+    svr_end_prof(&frame_prof);
 
     frame_num++;
 }
@@ -2219,17 +2196,25 @@ void show_prof(const char* name, SvrProf* prof)
     }
 }
 
-void proc_end()
+void end_audio()
 {
-    game_log("Ending movie after %0.2f seconds\n", (last_frame_time - first_frame_time) / 1000000.0f);
-
-    end_ffmpeg_proc();
-
     SetFilePointer(wav_f, wav_header_pos, NULL, FILE_BEGIN);
     WriteFile(wav_f, &wav_file_length, sizeof(DWORD), NULL, NULL);
 
     SetFilePointer(wav_f, wav_data_pos, NULL, FILE_BEGIN);
     WriteFile(wav_f, &wav_data_length, sizeof(DWORD), NULL, NULL);
+
+    wav_data_length = 0;
+    wav_file_length = 0;
+    wav_header_pos = 0;
+    wav_data_pos = 0;
+}
+
+void proc_end()
+{
+    end_ffmpeg_proc();
+
+    end_audio();
 
     free_all_dynamic_sw_stuff();
     free_all_dynamic_proc_stuff();
