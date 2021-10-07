@@ -30,6 +30,8 @@ When starting and ending a movie, the files `data/cfg/svr_movie_start_user.cfg` 
 
 In case you want to override SVR settings you can edit `data/cfg/svr_movie_start_user.cfg` or `data/cfg/svr_movie_end_user.cfg`. Create these files if you want to use them. It is recommended that you don't edit `svr_movie_start.cfg` and `svr_movie.end.cfg` as they may be changed in updates, which would overwrite your changes.
 
+The execution order of the cfgs is as follows: `svr_movie_start.cfg` > `svr_movie_start_user.cfg` > `svr_movie_start_<app_id>.cfg`. Each cfg can override the previous.
+
 ## Something's not working
 If something is not working properly, please find the `SVR_LOG.TXT` file in the `data/` directory of SVR and explain what you were doing and upload it to [Discord](https://discord.gg/5t8D68c).
 
