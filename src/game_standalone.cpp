@@ -794,6 +794,21 @@ rexit:
     if (h != INVALID_HANDLE_VALUE) CloseHandle(h);
 }
 
+// Run all cfgs for a given event (such as movie start or movie end).
+void run_cfgs_for_event(const char* name)
+{
+    char buf[MAX_PATH];
+
+    stbsp_snprintf(buf, MAX_PATH, "svr_movie_%s.cfg", name);
+    run_cfg(buf);
+
+    stbsp_snprintf(buf, MAX_PATH, "svr_movie_%s_user.cfg", name);
+    run_cfg(buf);
+
+    stbsp_snprintf(buf, MAX_PATH, "svr_movie_%s_%u.cfg", name, launcher_data.app_id);
+    run_cfg(buf);
+}
+
 // Return the full console command args string.
 const char* get_cmd_args(void* args)
 {
@@ -839,8 +854,7 @@ void __cdecl start_movie_override(void* args)
     if (*value_args == 0)
     {
         game_console_msg("Usage: startmovie <name> (<profile>)\n");
-        game_console_msg("Starts to record a movie with a profile when the game state is reached\n");
-        game_console_msg("You need to specify the extension, like .mp4 or .mkv\n");
+        game_console_msg("Starts to record a movie with an optional profile\n");
         game_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
         return;
     }
@@ -850,7 +864,7 @@ void __cdecl start_movie_override(void* args)
     char movie_name[MAX_PATH];
     movie_name[0] = 0;
 
-    char profile[64];
+    char profile[MAX_PATH];
     profile[0] = 0;
 
     const char* value_args_copy = value_args;
@@ -876,7 +890,6 @@ void __cdecl start_movie_override(void* args)
 
     if (*movie_ext == 0)
     {
-        svr_log("No container specified for movie, setting to mp4\n");
         StringCchCatA(movie_name, MAX_PATH, ".mp4");
     }
 
@@ -885,7 +898,6 @@ void __cdecl start_movie_override(void* args)
         const char* H264_ALLOWED_EXTS[] = {
             ".mp4",
             ".mkv",
-            ".mov",
             NULL
         };
 
@@ -913,11 +925,12 @@ void __cdecl start_movie_override(void* args)
             StringCchCopyA(renamed, MAX_PATH, movie_name);
             PathRenameExtensionA(renamed, ".mp4");
 
-            svr_log("Invalid movie name: %s (renaming to %s)\n", movie_name, renamed);
-
             StringCchCopyA(movie_name, MAX_PATH, renamed);
         }
     }
+
+    // Some commands must be set before svr_start (such as mat_queue_mode 0, due to the backbuffer ordering of below call).
+    run_cfgs_for_event("start");
 
     // The game backbuffer is the first index.
     IDirect3DSurface9* bb_surf = NULL;
@@ -928,18 +941,12 @@ void __cdecl start_movie_override(void* args)
 
     if (!svr_start(movie_name, profile, &startmovie_data))
     {
+        // Reverse above changes if something went wrong.
+        run_cfgs_for_event("end");
         goto rfail;
     }
 
     game_log("Starting movie to %s\n", movie_name);
-
-    // Run all required and user commands.
-    run_cfg("svr_movie_start.cfg");
-    run_cfg("svr_movie_start_user.cfg");
-
-    char game_cfg_name[64];
-    stbsp_snprintf(game_cfg_name, 64, "svr_movie_start_%d.cfg", launcher_data.app_id);
-    run_cfg(game_cfg_name);
 
     // Ensure the game runs at a fixed rate.
 
@@ -969,13 +976,7 @@ void __cdecl end_movie_override(void* args)
 
     svr_stop();
 
-    // Run all required and user commands.
-    run_cfg("svr_movie_end.cfg");
-    run_cfg("svr_movie_end_user.cfg");
-
-    char game_cfg_name[64];
-    stbsp_snprintf(game_cfg_name, 64, "svr_movie_end_%d.cfg", launcher_data.app_id);
-    run_cfg(game_cfg_name);
+    run_cfgs_for_event("end");
 }
 
 const char* CSS_LIBS[] = {
