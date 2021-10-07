@@ -11,6 +11,7 @@ build/
 bin/data/shaders
 bin/data/SVR_LOG.TXT
 *.mp4
+*.wav
 *.pro.user
 *.exp
 *.lib
