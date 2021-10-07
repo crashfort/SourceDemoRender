@@ -883,6 +883,19 @@ void check_hw_caps()
         launcher_error("HW support could not be queried (%#x). Is there a graphics adapter in the system?", hr);
     }
 
+    IDXGIDevice* dxgi_device;
+    d3d11_device->QueryInterface(IID_PPV_ARGS(&dxgi_device));
+
+    IDXGIAdapter* dxgi_adapter;
+    dxgi_device->GetAdapter(&dxgi_adapter);
+
+    DXGI_ADAPTER_DESC dxgi_adapter_desc;
+    dxgi_adapter->GetDesc(&dxgi_adapter_desc);
+
+    // Useful for future troubleshooting.
+    // Use https://www.pcilookup.com/ to see more information about device and vendor ids.
+    svr_log("Using graphics device %x by vendor %x\n", dxgi_adapter_desc.DeviceId, dxgi_adapter_desc.VendorId);
+
     D3D11_FEATURE_DATA_FORMAT_SUPPORT2 fmt_support2;
     fmt_support2.InFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
     d3d11_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &fmt_support2, sizeof(D3D11_FEATURE_DATA_FORMAT_SUPPORT2));
@@ -929,8 +942,6 @@ int main(int argc, char** argv)
         launcher_error("Windows 10 or later is needed to use SVR.");
     }
 
-    check_hw_caps();
-
     SYSTEMTIME lt;
     GetLocalTime(&lt);
 
@@ -942,6 +953,7 @@ int main(int argc, char** argv)
     show_windows_version();
     show_processor();
     show_available_memory();
+    check_hw_caps();
     #endif
 
     find_steam_path();
