@@ -26,10 +26,12 @@ When using `svr_launcher.exe` you are starting the standalone SVR, which modifie
 ## Recording
 Once in game, you can use the `startmovie` console command to start recording a movie and `endmovie` to stop. The `startmovie` command takes 1 or 2 parameters in this format: `startmovie <name> (<profile>)`. The *name* is the filename of the movie which will be located in `data/`. **If the name does not contain an extension (container), mp4 will automatically be selected.**. The *profile* is an optional parameter that decides which settings this movie will use. If not specified, the default profile is used (see Profiles below about profiles).
 
-When starting and ending a movie, the files `svr_movie_start_user.cfg` and `svr_movie_end_user.cfg` in `data/cfg` will be executed. This can be used to insert commands that should be active only during the movie period. Note that these files are **not** in the game directory. You can have game specific cfgs by using files called `svr_movie_start_<app_id>.cfg` and `svr_movie_end_<app_id>.cfg` in the game cfg folder. The `app_id` should be substituted for the Steam app id, such as 240 for Counter-Strike: Source.
+When starting and ending a movie, the files `data/cfg/svr_movie_start_user.cfg` and `data/cfg/svr_movie_end_user.cfg` in `data/cfg` will be executed (create these if you want to have them). This can be used to insert commands that should be active only during the movie period. Note that these files are **not** in the game directory, but in the SVR directory. You can have game specific cfgs by using files called `dat/cfg/svr_movie_start_<app_id>.cfg` and `data/cfg/svr_movie_end_<app_id>.cfg`. The `app_id` should be substituted for the Steam app id, such as 240 for Counter-Strike: Source.
+
+In case you want to override SVR settings you can edit `data/cfg/svr_movie_start_user.cfg` or `data/cfg/svr_movie_end_user.cfg`. Create these files if you want to use them. It is recommended that you don't edit `svr_movie_start.cfg` and `svr_movie.end.cfg` as they may be changed in updates, which would overwrite your changes.
 
 ## Something's not working
-If something is not working properly, please find the `SVR_LOG.TXT` file in the `data/` directory of SVR and explain what you were doing a nd upload it to [Discord](https://discord.gg/5t8D68c).
+If something is not working properly, please find the `SVR_LOG.TXT` file in the `data/` directory of SVR and explain what you were doing and upload it to [Discord](https://discord.gg/5t8D68c).
 
 ## Interoperability with other programs
 Due to the nature of reverse engineering games, it cannot be trusted that direct interoperability (with ReShade or HLAE for example) will work because at the risk of collision.
