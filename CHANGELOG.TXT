@@ -1,0 +1,37 @@
+Version 35, October 2021
+--------------------------
+
+Supported games in this release:
+* Counter-Strike: Source
+* Counter-Strike: Global Offensive
+* Team Fortress 2
+
+* Steam games are automatically scanned for by the launcher and no manual setup needs to be done.
+* Sound is now included as a new fast technique has been found for all games.
+* Performance has been improved by a lot (20%+).
+* Velocity text performance has been improved by a lot (34%+).
+* More helpful error messages.
+* Profiles are now in a INI style format that allows comments and does not have escaping nonsense and format nonsense as JSON (easily editable).
+* Hardware support is checked in the launcher. SVR cannot be used if the hardware is not supported.
+* Launch parameters to use in the launcher is read from Steam (needs Steam to be running).
+* Logging is now done to SVR_LOG.TXT, and not a hard to use console window (but the launcher still uses it - things are logged to both). This text file can easily be shared and contains useful information.
+* Identifying information about the graphics adapter and HW/OS is now logged for troubleshooting hardware issues.
+* The launcher now stores information about the tested game builds so we can see if the installed game version differs from the tested version (a warning will be logged).
+* Autostarting a game still works the same as before, by using "svr_launcher.exe <app_id>".
+* The profiles have been made simpler and the documentation for each setting is included in the profile file directly.
+* The video pixel format is now chosen from the encoder, and is not settable.
+* The video color range is no longer settable.
+* The number of encoding threads is now always matches the number of cores in the system.
+* Multiprocess rendering has been removed as Source works really weird when the same game is launched multiple times with the same game directory.
+* Optional border has been added to velo text.
+* Velo text is now aligned by screen percentages to allow any resolution independent position to be used.
+* Velo character spacing has been removed.
+* Game config and launcher config have both been removed. Launcher config has been replaced by the launcher doing the work automatically. Game config has been replaced by code directly to ease development and reduce scope.
+* An update.cmd file has been created to easily download the latest version (needs manual unzip).
+* SVR now supports both D3D9Ex and D3D11 games.
+* It's now possible to apply or override user settings when a movie starts or stops recording. These files are svr_movie_start_user.cfg, svr_movie_end_user.cfg, svr_movie_start_<app_id>.cfg, svr_movie_end_<app_id>.cfg.
+* If no extension is written when starting the movie, .mp4 will be set.
+* avi and mov are no longer allowed containers as they are outdated that do not support various encoding features.
+* A big message is now written in the console when SVR is initialized, to show that it has loaded.
+* There is now an SVR API that can be used for direct game integrations (Momentum in the future).
+* Various other fixes and performance improvements.
