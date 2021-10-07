@@ -129,7 +129,7 @@ void hook_function(FnOverride override, FnHook* result_hook)
     // The return value of MH_CreateHook is not useful, because a non executable page for example is not a useful error,
     // as a mismatch in the pattern can still point to an incorrect executable page.
 
-    void* orig;
+    void* orig = NULL;
 
     MH_CreateHook(override.target, override.hook, &orig);
 
@@ -253,7 +253,7 @@ void* create_interface(const char* module, const char* name)
     HMODULE hmodule = GetModuleHandleA(module);
     CreateInterfaceFn fun = (CreateInterfaceFn)GetProcAddress(hmodule, "CreateInterface");
 
-    int code;
+    s32 code;
     return fun(name, &code);
 }
 
@@ -301,33 +301,24 @@ void standalone_error(const char* format, ...)
 
 // --------------------------------------------------------------------------
 
-IDirect3DDevice9Ex* gm_d3d9ex_device;
-void* gm_engine_client_ptr;
-
-// Add new function variants as needed.
+// We don't allow the volume to be changed at the moment.
+const s32 SND_VOLUME = 1.0f;
 
 struct GmSndSample
 {
-    int left;
-    int right;
+    s32 left;
+    s32 right;
 };
 
-using GmClientCmdFn = void(__fastcall*)(void* p, void* edx, const char* str);
-using GmViewRenderFn = void(__fastcall*)(void* p, void* edx, void* rect);
-using GmStartMovieFn = void(__cdecl*)(void* args);
-using GmEndMovieFn = void(__cdecl*)(void* args);
-using GmGetSpecTargetFn = int(__cdecl*)();
-using GmPlayerByIdxFn = void*(__cdecl*)(int index);
-using GmSndPaintChansFn = void(__cdecl*)(int end_time, bool is_underwater);
-using GmSndTxStereoFn = void(__cdecl*)(void*, const GmSndSample* paintbuf, int painted_time, int end_time);
-using GmEngFilterTimeFn = bool(__fastcall*)(void* p, void* edx, float dt);
+IDirect3DDevice9Ex* gm_d3d9ex_device;
+void* gm_engine_client_ptr;
 
 void* gm_engine_client_exec_cmd_fn;
 
 void* gm_local_player_ptr;
 void* gm_get_spec_target_fn;
 void* gm_get_player_by_index_fn;
-int* gm_snd_paint_time;
+void* gm_snd_paint_time;
 
 FnHook start_movie_hook;
 FnHook end_movie_hook;
@@ -337,8 +328,12 @@ FnHook eng_filter_time_hook;
 FnHook snd_tx_stereo_hook;
 FnHook snd_mix_chans_hook;
 
+FnHook gm_snd_device_tx_hook;
+
 bool snd_is_painting;
 bool snd_listener_underwater;
+
+void* gm_snd_paint_buffer;
 
 // The number of samples to submit must align to 4 sample boundaries, that means there may be samples over
 // that we have to process in the next frame.
@@ -347,15 +342,20 @@ s32 snd_skipped_samples;
 // Time that was lost between the fps to sample rate conversion. This is added back next frame.
 float snd_lost_mix_time;
 
+s32 snd_num_samples;
+
+s64 tm_frame_num;
+s64 tm_first_frame_time;
+s64 tm_last_frame_time;
+
 void client_command(const char* cmd)
 {
-    SteamAppId game_id = launcher_data.app_id;
-
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         {
+            using GmClientCmdFn = void(__fastcall*)(void* p, void* edx, const char* str);
             GmClientCmdFn fn = (GmClientCmdFn)gm_engine_client_exec_cmd_fn;
             fn(gm_engine_client_ptr, NULL, cmd);
             break;
@@ -365,15 +365,14 @@ void client_command(const char* cmd)
     }
 }
 
-int get_spec_target()
+s32 get_spec_target()
 {
-    SteamAppId game_id = launcher_data.app_id;
-
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         {
+            using GmGetSpecTargetFn = int(__cdecl*)();
             GmGetSpecTargetFn fn = (GmGetSpecTargetFn)gm_get_spec_target_fn;
             return fn();
         }
@@ -384,15 +383,14 @@ int get_spec_target()
     return 0;
 }
 
-void* get_player_by_idx(int index)
+void* get_player_by_idx(s32 index)
 {
-    SteamAppId game_id = launcher_data.app_id;
-
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         {
+            using GmPlayerByIdxFn = void*(__cdecl*)(s32 index);
             GmPlayerByIdxFn fn = (GmPlayerByIdxFn)gm_get_player_by_index_fn;
             return fn(index);
         }
@@ -405,9 +403,7 @@ void* get_player_by_idx(int index)
 
 void* get_local_player()
 {
-    SteamAppId game_id = launcher_data.app_id;
-
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
@@ -422,9 +418,9 @@ void* get_local_player()
 }
 
 // Return local player or spectated player (for mp games).
-void* get_active_player(SteamAppId game_id)
+void* get_active_player()
 {
-    int spec = get_spec_target();
+    s32 spec = get_spec_target();
 
     void* player;
 
@@ -442,9 +438,9 @@ void* get_active_player(SteamAppId game_id)
 }
 
 // Return the absolute velocity variable.
-float* get_player_vel(SteamAppId game_id, void* player)
+float* get_player_vel(void* player)
 {
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -464,7 +460,7 @@ float* get_player_vel(SteamAppId game_id, void* player)
     return NULL;
 }
 
-void __cdecl snd_paint_chans_override(int end_time, bool is_underwater)
+void __cdecl snd_paint_chans_override(s32 end_time, bool is_underwater)
 {
     snd_listener_underwater = is_underwater;
 
@@ -474,33 +470,41 @@ void __cdecl snd_paint_chans_override(int end_time, bool is_underwater)
         return;
     }
 
-    // Will call snd_tx_stereo_override.
+    // Will call snd_tx_stereo_override or snd_device_tx_override.
 
+    using GmSndPaintChansFn = void(__cdecl*)(s32 end_time, bool is_underwater);
     GmSndPaintChansFn org_fn = (GmSndPaintChansFn)snd_mix_chans_hook.original;
     org_fn(end_time, is_underwater);
 }
 
-void __cdecl snd_tx_stereo_override(void*, const GmSndSample* paintbuf, int painted_time, int end_time)
+void __cdecl snd_paint_chans_override2(s64 end_time, bool is_underwater)
 {
-    if (!svr_movie_active())
+    snd_listener_underwater = is_underwater;
+
+    if (svr_movie_active() && !snd_is_painting)
     {
+        // When movie is active we call this ourselves with the real number of samples write.
         return;
     }
 
-    assert(snd_is_painting);
+    // Will call snd_tx_stereo_override or snd_device_tx_override.
 
-    s32 num_samples = end_time - painted_time;
+    using GmSndPaintChansFn2 = void(__cdecl*)(s64 end_time, bool is_underwater);
+    GmSndPaintChansFn2 org_fn = (GmSndPaintChansFn2)snd_mix_chans_hook.original;
+    org_fn(end_time, is_underwater);
+}
+
+void prepare_and_send_sound(GmSndSample* paint_buf, s32 num_samples)
+{
     s32 buf_size = sizeof(SvrWaveSample) * num_samples;
 
     SvrWaveSample* buf = (SvrWaveSample*)_alloca(buf_size);
 
-    // We don't allow the volume to be changed for now.
-    float frac_volume = 0.5f;
-    s32 volume = (s32)((frac_volume * 256.0f) + 0.5f);
+    s32 volume = (s32)((SND_VOLUME * 256.0f) + 0.5f);
 
     for (s32 i = 0; i < num_samples; i++)
     {
-        GmSndSample sample = paintbuf[i];
+        GmSndSample sample = paint_buf[i];
         s32 l = (sample.left * volume) >> 8;
         s32 r = (sample.right * volume) >> 8;
 
@@ -513,22 +517,48 @@ void __cdecl snd_tx_stereo_override(void*, const GmSndSample* paintbuf, int pain
     svr_give_audio(buf, num_samples);
 }
 
+void __cdecl snd_tx_stereo_override(void* unk, GmSndSample* paint_buf, s32 paint_time, s32 end_time)
+{
+    if (!svr_movie_active())
+    {
+        return;
+    }
+
+    assert(snd_is_painting);
+
+    s32 num_samples = end_time - paint_time;
+    prepare_and_send_sound(paint_buf, num_samples);
+}
+
+void __fastcall snd_device_tx_override(void* p, void* edx, u32 unused)
+{
+    if (!svr_movie_active())
+    {
+        return;
+    }
+
+    assert(snd_is_painting);
+    assert(snd_num_samples);
+
+    GmSndSample* paint_buf = **(GmSndSample***)gm_snd_paint_buffer;
+    prepare_and_send_sound(paint_buf, snd_num_samples);
+}
+
 void give_player_velo()
 {
-    SteamAppId game_id = launcher_data.app_id;
+    void* player = get_active_player();
 
-    void* player = get_active_player(game_id);
-
-    // Will be NULL for a few frames when recording starts in main menu.
+    // Will be NULL when recording starts in main menu.
     if (player)
     {
-        svr_give_velocity(get_player_vel(game_id, player));
+        svr_give_velocity(get_player_vel(player));
     }
 }
 
 // The DirectSound backend need times to be aligned to 4 sample boundaries.
 // We round down because we cannot add more samples out of thin air. The skipped samples are remembered for the next iteration.
-s32 align_sample_time_for_ds(s32 value)
+// This happens to also work for CSGO that doesn't use DirectSound.
+s32 align_sample_time(s32 value)
 {
     return value & ~3;
 }
@@ -537,7 +567,7 @@ void mix_audio_for_one_frame()
 {
     // Figure out how many samples we need to process for this frame.
 
-    s32 paint_time = *gm_snd_paint_time;
+    s32 paint_time = **(s32**)gm_snd_paint_time;
 
     float time_ahead_to_mix = 1.0f / (float)svr_get_game_rate();
     float num_frac_samples_to_mix = (time_ahead_to_mix * 44100.0f) + snd_lost_mix_time;
@@ -546,7 +576,7 @@ void mix_audio_for_one_frame()
     snd_lost_mix_time = num_frac_samples_to_mix - (float)num_samples_to_mix;
 
     s32 raw_end_time = paint_time + num_samples_to_mix + snd_skipped_samples;
-    s32 aligned_end_time = align_sample_time_for_ds(raw_end_time);
+    s32 aligned_end_time = align_sample_time(raw_end_time);
 
     s32 num_samples = aligned_end_time - paint_time;
 
@@ -560,25 +590,53 @@ void mix_audio_for_one_frame()
     }
 }
 
-s64 timing_frame_num;
-s64 first_frame_time;
-s64 last_frame_time;
+// Almost duplicate but whatever, CSGO sound is enough different to warrant.
+void mix_audio_for_one_frame2()
+{
+    // Figure out how many samples we need to process for this frame.
+
+    s64 paint_time = **(s64**)gm_snd_paint_time;
+
+    float time_ahead_to_mix = 1.0f / (float)svr_get_game_rate();
+    float num_frac_samples_to_mix = (time_ahead_to_mix * 44100.0f) + snd_lost_mix_time;
+
+    s64 num_samples_to_mix = (s64)num_frac_samples_to_mix;
+    snd_lost_mix_time = num_frac_samples_to_mix - (float)num_samples_to_mix;
+
+    s64 raw_end_time = paint_time + num_samples_to_mix + snd_skipped_samples;
+    s64 aligned_end_time = align_sample_time(raw_end_time);
+
+    s64 num_samples = aligned_end_time - paint_time;
+
+    snd_skipped_samples = raw_end_time - aligned_end_time;
+
+    if (num_samples > 0)
+    {
+        // For CSGO we need to store the number of samples to process.
+        snd_num_samples = num_samples;
+
+        snd_is_painting = true;
+        snd_paint_chans_override2(aligned_end_time, snd_listener_underwater);
+        snd_is_painting = false;
+    }
+}
 
 void update_time_stats()
 {
-    if (timing_frame_num == 0)
+    if (tm_frame_num == 0)
     {
-        first_frame_time = svr_prof_get_real_time();
+        tm_first_frame_time = svr_prof_get_real_time();
     }
 
     else
     {
-        last_frame_time = svr_prof_get_real_time();
+        tm_last_frame_time = svr_prof_get_real_time();
     }
 
-    timing_frame_num++;
+    tm_frame_num++;
 }
 
+// Probably remove this because it doesn't add anything other than show time since it only gets called when in game (not in menu).
 void __fastcall view_render_override(void* p, void* edx, void* rect)
 {
     if (svr_movie_active())
@@ -587,30 +645,74 @@ void __fastcall view_render_override(void* p, void* edx, void* rect)
         update_time_stats();
     }
 
+    using GmViewRenderFn = void(__fastcall*)(void* p, void* edx, void* rect);
     GmViewRenderFn org_fn = (GmViewRenderFn)view_render_hook.original;
     org_fn(p, edx, rect);
 }
 
+void do_svr_frame()
+{
+    // Mix audio for the upcoming frame.
+
+    if (launcher_data.app_id == STEAM_GAME_CSGO)
+    {
+        mix_audio_for_one_frame2();
+    }
+
+    else
+    {
+        mix_audio_for_one_frame();
+    }
+
+    give_player_velo();
+    svr_frame();
+}
+
 bool __fastcall eng_filter_time_override(void* p, void* edx, float dt)
 {
-    GmEngFilterTimeFn org_fn = (GmEngFilterTimeFn)eng_filter_time_hook.original;
-
     bool ret;
 
     if (svr_movie_active())
     {
-        // Mix audio for the upcoming frame.
-        mix_audio_for_one_frame();
-
-        give_player_velo();
-        svr_frame();
-
+        do_svr_frame();
         ret = true;
     }
 
     else
     {
+        using GmEngFilterTimeFn = bool(__fastcall*)(void* p, void* edx, float dt);
+        GmEngFilterTimeFn org_fn = (GmEngFilterTimeFn)eng_filter_time_hook.original;
         ret = org_fn(p, edx, dt);
+    }
+
+    return ret;
+}
+
+bool __fastcall eng_filter_time_override2(void* p, void* edx)
+{
+    float dt;
+
+    __asm {
+        movss dt, xmm1
+    };
+
+    bool ret;
+
+    if (svr_movie_active())
+    {
+        do_svr_frame();
+        ret = true;
+    }
+
+    else
+    {
+        __asm {
+            movss xmm1, dt
+        };
+
+        using GmEngFilterTimeFn2 = bool(__fastcall*)(void* p, void* edx);
+        GmEngFilterTimeFn2 org_fn = (GmEngFilterTimeFn2)eng_filter_time_hook.original;
+        ret = org_fn(p, edx);
     }
 
     return ret;
@@ -693,9 +795,9 @@ rexit:
 }
 
 // Return the full console command args string.
-const char* get_cmd_args(SteamAppId game_id, void* args)
+const char* get_cmd_args(void* args)
 {
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
@@ -712,7 +814,7 @@ const char* get_cmd_args(SteamAppId game_id, void* args)
 
 void __cdecl start_movie_override(void* args)
 {
-    timing_frame_num = 0;
+    tm_frame_num = 0;
     snd_skipped_samples = 0;
     snd_lost_mix_time = 0.0f;
 
@@ -724,9 +826,7 @@ void __cdecl start_movie_override(void* args)
         return;
     }
 
-    SteamAppId game_id = launcher_data.app_id;
-
-    const char* value_args = get_cmd_args(game_id, args);
+    const char* value_args = get_cmd_args(args);
 
     assert(value_args);
 
@@ -865,7 +965,7 @@ void __cdecl end_movie_override(void* args)
         return;
     }
 
-    game_log("Ending movie after %0.2f seconds\n", (last_frame_time - first_frame_time) / 1000000.0f);
+    game_log("Ending movie after %0.2f seconds\n", (tm_last_frame_time - tm_first_frame_time) / 1000000.0f);
 
     svr_stop();
 
@@ -892,12 +992,12 @@ const char* CSGO_LIBS[] = {
     "client.dll"
 };
 
-bool wait_for_game_libs(SteamAppId game_id)
+bool wait_for_game_libs()
 {
     const char** libs = NULL;
     s32 num_libs = 0;
 
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -926,47 +1026,39 @@ bool wait_for_game_libs(SteamAppId game_id)
 
 // If the game has a restriction that prevents cvars from changing when in game or demo playback.
 // This is the "switch to multiplayer or spectators" message.
-bool has_cvar_restrict(SteamAppId game_id)
-{
-    switch (game_id)
-    {
-        case STEAM_GAME_CSS:
-        case STEAM_GAME_CSGO:
-        {
-            return true;
-        }
-
-        default: assert(false);
-    }
-
-    return false;
-}
-
 // Remove cvar write restriction.
-void patch_cvar_restrict(SteamAppId game_id)
+void patch_cvar_restrict()
 {
-    switch (game_id)
+    u8* addr = NULL;
+
+    // This replaces the flags to compare to, so the comparison will always be false (removing cvar restriction).
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
-        case STEAM_GAME_CSGO:
         {
-            // This replaces the flags to compare to, so the comparison will always be false (removing cvar restriction).
-            u8* addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 58 83 3D ?? ?? ?? ?? ??");;
+            u8* addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 58 83 3D ?? ?? ?? ?? ??");
             addr += 1;
-
-            u8 cvar_restrict_patch_bytes[] = { 0x00, 0x00, 0x00, 0x00 };
-            apply_patch(addr, cvar_restrict_patch_bytes, SVR_ARRAY_SIZE(cvar_restrict_patch_bytes));
-
             break;
         }
 
-        default: assert(false);
+        case STEAM_GAME_CSGO:
+        {
+            u8* addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 5D A1 ?? ?? ?? ?? 83 B8 ?? ?? ?? ?? ??");
+            addr += 1;
+            break;
+        }
+    }
+
+    if (addr)
+    {
+        u8 cvar_restrict_patch_bytes[] = { 0x00, 0x00, 0x00, 0x00 };
+        apply_patch(addr, cvar_restrict_patch_bytes, SVR_ARRAY_SIZE(cvar_restrict_patch_bytes));
     }
 }
 
-IDirect3DDevice9Ex* get_d3d9ex_device(SteamAppId game_id)
+IDirect3DDevice9Ex* get_d3d9ex_device()
 {
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
@@ -982,9 +1074,9 @@ IDirect3DDevice9Ex* get_d3d9ex_device(SteamAppId game_id)
     return NULL;
 }
 
-void* get_engine_client_ptr(SteamAppId game_id)
+void* get_engine_client_ptr()
 {
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
@@ -998,9 +1090,9 @@ void* get_engine_client_ptr(SteamAppId game_id)
     return NULL;
 }
 
-void* get_local_player_ptr(SteamAppId game_id)
+void* get_local_player_ptr()
 {
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -1022,9 +1114,9 @@ void* get_local_player_ptr(SteamAppId game_id)
     return NULL;
 }
 
-void* get_engine_client_exec_cmd_fn(SteamAppId game_id, void* engine_client_ptr)
+void* get_engine_client_exec_cmd_fn(void* engine_client_ptr)
 {
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -1042,11 +1134,11 @@ void* get_engine_client_exec_cmd_fn(SteamAppId game_id, void* engine_client_ptr)
     return NULL;
 }
 
-FnOverride get_view_render_override(SteamAppId game_id)
+FnOverride get_view_render_override()
 {
     FnOverride ov;
 
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -1068,16 +1160,23 @@ FnOverride get_view_render_override(SteamAppId game_id)
     return ov;
 }
 
-FnOverride get_eng_filter_time_override(SteamAppId game_id)
+FnOverride get_eng_filter_time_override()
 {
     FnOverride ov;
 
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
             ov.target = pattern_scan("engine.dll", "55 8B EC 51 80 3D ?? ?? ?? ?? ?? 56 8B F1 74 39");
             ov.hook = eng_filter_time_override;
+            break;
+        }
+
+        case STEAM_GAME_CSGO:
+        {
+            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 0C 80 3D ?? ?? ?? ?? ?? 56");
+            ov.hook = eng_filter_time_override2;
             break;
         }
 
@@ -1087,11 +1186,11 @@ FnOverride get_eng_filter_time_override(SteamAppId game_id)
     return ov;
 }
 
-FnOverride get_start_movie_override(SteamAppId game_id)
+FnOverride get_start_movie_override()
 {
     FnOverride ov;
 
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -1113,11 +1212,11 @@ FnOverride get_start_movie_override(SteamAppId game_id)
     return ov;
 }
 
-FnOverride get_end_movie_override(SteamAppId game_id)
+FnOverride get_end_movie_override()
 {
     FnOverride ov;
 
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -1139,9 +1238,9 @@ FnOverride get_end_movie_override(SteamAppId game_id)
     return ov;
 }
 
-void* get_get_spec_target_fn(SteamAppId game_id)
+void* get_get_spec_target_fn()
 {
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -1159,9 +1258,9 @@ void* get_get_spec_target_fn(SteamAppId game_id)
     return NULL;
 }
 
-void* get_get_player_by_index_fn(SteamAppId game_id)
+void* get_get_player_by_index_fn()
 {
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -1179,16 +1278,23 @@ void* get_get_player_by_index_fn(SteamAppId game_id)
     return NULL;
 }
 
-FnOverride get_snd_paint_chans_override(SteamAppId game_id)
+FnOverride get_snd_paint_chans_override()
 {
     FnOverride ov;
 
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
             ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 33 DB 89 5D D0 89 5D D4");
             ov.hook = snd_paint_chans_override;
+            break;
+        }
+
+        case STEAM_GAME_CSGO:
+        {
+            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? A0 ?? ?? ?? ?? 53 56 88 45 F4");
+            ov.hook = snd_paint_chans_override2;
             break;
         }
 
@@ -1198,11 +1304,11 @@ FnOverride get_snd_paint_chans_override(SteamAppId game_id)
     return ov;
 }
 
-FnOverride get_snd_tx_stereo_override(SteamAppId game_id)
+FnOverride get_snd_tx_stereo_override()
 {
     FnOverride ov;
 
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
@@ -1217,13 +1323,56 @@ FnOverride get_snd_tx_stereo_override(SteamAppId game_id)
     return ov;
 }
 
-void* get_snd_paint_time_ptr(SteamAppId game_id)
+void* get_snd_paint_time_ptr()
 {
-    switch (game_id)
+    switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
         {
             u8* addr = (u8*)pattern_scan("engine.dll", "2B 05 ?? ?? ?? ?? 0F 48 C1 89 45 FC 85 C0 74 59");
+            addr += 2;
+            return addr;
+        }
+
+        case STEAM_GAME_CSGO:
+        {
+            u8* addr = (u8*)pattern_scan("engine.dll", "66 0F 13 05 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 68 ?? ?? ?? ??");
+            addr += 4;
+            return addr;
+        }
+
+        default: assert(false);
+    }
+
+    return NULL;
+}
+
+FnOverride get_snd_device_tx_override()
+{
+    FnOverride ov;
+
+    switch (launcher_data.app_id)
+    {
+        case STEAM_GAME_CSGO:
+        {
+            ov.target = pattern_scan("engine.dll", "53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? A1 ?? ?? ?? ??");
+            ov.hook = snd_device_tx_override;
+            break;
+        }
+
+        default: assert(false);
+    }
+
+    return ov;
+}
+
+void* get_snd_paint_buffer()
+{
+    switch (launcher_data.app_id)
+    {
+        case STEAM_GAME_CSGO:
+        {
+            u8* addr = (u8*)pattern_scan("engine.dll", "8B 35 ?? ?? ?? ?? 89 45 F8 A1 ?? ?? ?? ?? 57 8B 3D ?? ?? ?? ?? 89 45 FC");
             addr += 2;
             return addr;
         }
@@ -1234,35 +1383,45 @@ void* get_snd_paint_time_ptr(SteamAppId game_id)
     return NULL;
 }
 
-void create_game_hooks(SteamAppId game_id)
+void create_game_hooks()
 {
     // It's impossible to know whether or not these will actually point to the right thing. We cannot verify it so therefore we don't.
-    // If any turns out to point to the wrong thing, we get a crash. Patterns must be updated in such case.
+    // If any turns out to point to the wrong thing, we get a crash. Patterns must be updated in such case. The launcher and logwill say what
+    // build has been started, and we know what build we have been testing against.
 
-    gm_d3d9ex_device = get_d3d9ex_device(game_id);
-    gm_engine_client_ptr = get_engine_client_ptr(game_id);
-    gm_engine_client_exec_cmd_fn = get_engine_client_exec_cmd_fn(game_id, gm_engine_client_ptr);
+    gm_d3d9ex_device = get_d3d9ex_device();
+    gm_engine_client_ptr = get_engine_client_ptr();
+    gm_engine_client_exec_cmd_fn = get_engine_client_exec_cmd_fn(gm_engine_client_ptr);
 
-    gm_local_player_ptr = get_local_player_ptr(game_id);
-    gm_get_spec_target_fn = get_get_spec_target_fn(game_id);
-    gm_get_player_by_index_fn = get_get_player_by_index_fn(game_id);
+    gm_local_player_ptr = get_local_player_ptr();
+    gm_get_spec_target_fn = get_get_spec_target_fn();
+    gm_get_player_by_index_fn = get_get_player_by_index_fn();
 
-    gm_snd_paint_time = *(int**)get_snd_paint_time_ptr(game_id);
+    gm_snd_paint_time = get_snd_paint_time_ptr();
 
-    if (has_cvar_restrict(game_id))
+    hook_function(get_start_movie_override(), &start_movie_hook);
+    hook_function(get_end_movie_override(), &end_movie_hook);
+    hook_function(get_view_render_override(), &view_render_hook); // <-- Remove! Does not serve any purpose.
+    hook_function(get_eng_filter_time_override(), &eng_filter_time_hook);
+
+    hook_function(get_snd_paint_chans_override(), &snd_mix_chans_hook);
+
+    // Game specific stuff.
+
+    if (launcher_data.app_id == STEAM_GAME_CSGO)
     {
-        patch_cvar_restrict(game_id);
+        hook_function(get_snd_device_tx_override(), &gm_snd_device_tx_hook);
+        gm_snd_paint_buffer = get_snd_paint_buffer();
     }
 
-    hook_function(get_start_movie_override(game_id), &start_movie_hook);
-    hook_function(get_end_movie_override(game_id), &end_movie_hook);
-    hook_function(get_view_render_override(game_id), &view_render_hook);
-    hook_function(get_eng_filter_time_override(game_id), &eng_filter_time_hook);
-
-    hook_function(get_snd_paint_chans_override(game_id), &snd_mix_chans_hook);
-    hook_function(get_snd_tx_stereo_override(game_id), &snd_tx_stereo_hook);
+    else
+    {
+        hook_function(get_snd_tx_stereo_override(), &snd_tx_stereo_hook);
+    }
 
     // Hooking the D3D9Ex present function to skip presenting is not worthwhile as it does not improve the game frame time.
+
+    patch_cvar_restrict();
 
     // All other threads will be frozen during this call.
     MH_EnableHook(MH_ALL_HOOKS);
@@ -1284,9 +1443,7 @@ DWORD WINAPI standalone_init_async(void* param)
     // Need to notify that we have started because a lot of things can go wrong in standalone launch.
     svr_log("Hello from the game\n");
 
-    SteamAppId game_id = launcher_data.app_id;
-
-    if (!wait_for_game_libs(game_id))
+    if (!wait_for_game_libs())
     {
         standalone_error("Mismatch between game version and supported SVR version. Ensure you are using the latest version of SVR and upload your SVR_LOG.TXT.");
         return 1;
@@ -1294,7 +1451,7 @@ DWORD WINAPI standalone_init_async(void* param)
 
     MH_Initialize();
 
-    create_game_hooks(game_id);
+    create_game_hooks();
 
     if (!svr_init(launcher_data.svr_path, gm_d3d9ex_device))
     {

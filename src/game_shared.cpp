@@ -1,17 +1,20 @@
 #include "game_shared.h"
 #include <Windows.h>
+#include "stb_sprintf.h"
+#include <assert.h>
+
+// CSGO doesn't have MsgV that takes a va_list. Don't make a special case for CSGO and just format ourselves.
 
 using MsgFn = void(__cdecl*)(const char* format, ...);
-using MsgVFn = void(__cdecl*)(const char* format, va_list va);
 
 MsgFn console_msg_fn;
-MsgVFn console_msg_v_fn;
 
 void game_init()
 {
     HMODULE tier0 = GetModuleHandleA("tier0.dll");
     console_msg_fn = (MsgFn)GetProcAddress(tier0, "Msg");
-    console_msg_v_fn = (MsgVFn)GetProcAddress(tier0, "MsgV");
+
+    assert(console_msg_fn);
 }
 
 void game_console_msg(const char* format, ...)
@@ -24,7 +27,10 @@ void game_console_msg(const char* format, ...)
 
 void game_console_msg_v(const char* format, va_list va)
 {
-    console_msg_v_fn(format, va);
+    char buf[1024];
+    stbsp_vsnprintf(buf, 1024, format, va);
+
+    console_msg_fn(buf);
 }
 
 void game_log(const char* format, ...)
