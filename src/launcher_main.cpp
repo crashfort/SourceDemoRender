@@ -47,36 +47,42 @@ __declspec(noreturn) void launcher_error(const char* format, ...)
 const SteamAppId GAME_APP_IDS[] = {
     STEAM_GAME_CSS,
     STEAM_GAME_CSGO,
+    STEAM_GAME_TF2,
 };
 
 // Display names shown on Steam.
 const char* GAME_NAMES[] = {
-    "Counter-Strike: Source",
-    "Counter-Strike: Global Offensive",
+    "Counter-Strike: Source", // STEAM_GAME_CSS
+    "Counter-Strike: Global Offensive", // STEAM_GAME_CSGO
+    "Team Fortress 2", // STEAM_GAME_TF2
 };
 
 // Extra stuff to put in the start args.
 const char* EXTRA_GAME_ARGS[] = {
-    "-game cstrike", // Counter-Strike: Source
-    "-game csgo", // Counter-Strike: Global Offensive
+    "-game cstrike", // STEAM_GAME_CSS
+    "-game csgo", // STEAM_GAME_CSGO
+    "-game tf", // STEAM_GAME_TF2
 };
 
 // Paths to append to each Steam library.
 const char* GAME_ROOT_DIRS[] = {
-    "common\\Counter-Strike Source\\", // Counter-Strike: Source
-    "common\\Counter-Strike Global Offensive\\", // Counter-Strike: Global Offensive
+    "common\\Counter-Strike Source\\", // STEAM_GAME_CSS
+    "common\\Counter-Strike Global Offensive\\", // STEAM_GAME_CSGO
+    "common\\Team Fortress 2\\", // STEAM_GAME_TF2
 };
 
 // Where to find the executable built up from the Steam library path plus the game root directory (above).
 const char* GAME_EXE_PATHS[] = {
-    "hl2.exe", // Counter-Strike: Source
-    "csgo.exe", // Counter-Strike: Global Offensive
+    "hl2.exe", // STEAM_GAME_CSS
+    "csgo.exe", // STEAM_GAME_CSGO
+    "hl2.exe", // STEAM_GAME_TF2
 };
 
 // Build versions that have been tested (located in the appmanifest acf).
 s32 GAME_BUILDS[] = {
-    6946501, // Counter-Strike: Source
-    7421361, // Counter-Strike: Global Offensive
+    6946501, // STEAM_GAME_CSS
+    7421361, // STEAM_GAME_CSGO
+    7483663, // STEAM_GAME_TF2
 };
 
 const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(GAME_APP_IDS);

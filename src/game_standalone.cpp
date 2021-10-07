@@ -354,6 +354,7 @@ void client_command(const char* cmd)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
+        case STEAM_GAME_TF2:
         {
             using GmClientCmdFn = void(__fastcall*)(void* p, void* edx, const char* str);
             GmClientCmdFn fn = (GmClientCmdFn)gm_engine_client_exec_cmd_fn;
@@ -371,6 +372,7 @@ s32 get_spec_target()
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
+        case STEAM_GAME_TF2:
         {
             using GmGetSpecTargetFn = int(__cdecl*)();
             GmGetSpecTargetFn fn = (GmGetSpecTargetFn)gm_get_spec_target_fn;
@@ -389,6 +391,7 @@ void* get_player_by_idx(s32 index)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
+        case STEAM_GAME_TF2:
         {
             using GmPlayerByIdxFn = void*(__cdecl*)(s32 index);
             GmPlayerByIdxFn fn = (GmPlayerByIdxFn)gm_get_player_by_index_fn;
@@ -407,6 +410,7 @@ void* get_local_player()
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
+        case STEAM_GAME_TF2:
         {
             return **(void***)gm_local_player_ptr;
         }
@@ -451,6 +455,12 @@ float* get_player_vel(void* player)
         case STEAM_GAME_CSGO:
         {
             u8* addr = (u8*)player + 276;
+            return (float*)addr;
+        }
+
+        case STEAM_GAME_TF2:
+        {
+            u8* addr = (u8*)player + 348;
             return (float*)addr;
         }
 
@@ -816,6 +826,7 @@ const char* get_cmd_args(void* args)
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
+        case STEAM_GAME_TF2:
         {
             u8* addr = (u8*)args + 8;
             return (const char*)addr;
@@ -832,6 +843,7 @@ void __cdecl start_movie_override(void* args)
     tm_frame_num = 0;
     snd_skipped_samples = 0;
     snd_lost_mix_time = 0.0f;
+    snd_num_samples = 0;
 
     // We don't want to call the original function for this command.
 
@@ -993,6 +1005,13 @@ const char* CSGO_LIBS[] = {
     "client.dll"
 };
 
+const char* TF2_LIBS[] = {
+    "shaderapidx9.dll",
+    "engine.dll",
+    "tier0.dll",
+    "client.dll"
+};
+
 bool wait_for_game_libs()
 {
     const char** libs = NULL;
@@ -1011,6 +1030,13 @@ bool wait_for_game_libs()
         {
             libs = CSGO_LIBS;
             num_libs = SVR_ARRAY_SIZE(CSGO_LIBS);
+            break;
+        }
+
+        case STEAM_GAME_TF2:
+        {
+            libs = TF2_LIBS;
+            num_libs = SVR_ARRAY_SIZE(TF2_LIBS);
             break;
         }
 
@@ -1036,15 +1062,16 @@ void patch_cvar_restrict()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
-            u8* addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 58 83 3D ?? ?? ?? ?? ??");
+            addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 58 83 3D ?? ?? ?? ?? ??");
             addr += 1;
             break;
         }
 
         case STEAM_GAME_CSGO:
         {
-            u8* addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 5D A1 ?? ?? ?? ?? 83 B8 ?? ?? ?? ?? ??");
+            addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 5D A1 ?? ?? ?? ?? 83 B8 ?? ?? ?? ?? ??");
             addr += 1;
             break;
         }
@@ -1063,6 +1090,7 @@ IDirect3DDevice9Ex* get_d3d9ex_device()
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
+        case STEAM_GAME_TF2:
         {
             u8* addr = (u8*)pattern_scan("shaderapidx9.dll", "A1 ?? ?? ?? ?? 6A 00 56 6A 00 8B 08 6A 15 68 ?? ?? ?? ?? 6A 00 6A 01 6A 01 50 FF 51 5C 85 C0 79 06 C7 06 ?? ?? ?? ??");
             addr += 1;
@@ -1081,6 +1109,7 @@ void* get_engine_client_ptr()
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
+        case STEAM_GAME_TF2:
         {
             return create_interface("engine.dll", "VEngineClient014");
         }
@@ -1096,6 +1125,7 @@ void* get_local_player_ptr()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             u8* addr = (u8*)pattern_scan("client.dll", "A3 ?? ?? ?? ?? 68 ?? ?? ?? ?? 8B 01 FF 50 34 8B C8 E8 ?? ?? ?? ??");
             addr += 1;
@@ -1120,6 +1150,7 @@ void* get_engine_client_exec_cmd_fn(void* engine_client_ptr)
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             return get_virtual(engine_client_ptr, 102);
         }
@@ -1142,6 +1173,7 @@ FnOverride get_view_render_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             ov.target = pattern_scan("client.dll", "55 8B EC 8B 55 08 83 7A 08 00 74 17 83 7A 0C 00 74 11 8B 0D ?? ?? ?? ?? 52 8B 01 FF 50 14 E8 ?? ?? ?? ?? 5D C2 04 00");
             ov.hook = view_render_override;
@@ -1168,6 +1200,7 @@ FnOverride get_eng_filter_time_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             ov.target = pattern_scan("engine.dll", "55 8B EC 51 80 3D ?? ?? ?? ?? ?? 56 8B F1 74 39");
             ov.hook = eng_filter_time_override;
@@ -1194,6 +1227,7 @@ FnOverride get_start_movie_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 08 83 3D ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ??");
             ov.hook = start_movie_override;
@@ -1220,6 +1254,7 @@ FnOverride get_end_movie_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             ov.target = pattern_scan("engine.dll", "80 3D ?? ?? ?? ?? ?? 75 0F 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 04 C3 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 C3");
             ov.hook = end_movie_override;
@@ -1244,6 +1279,7 @@ void* get_get_spec_target_fn()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             return pattern_scan("client.dll", "E8 ?? ?? ?? ?? 85 C0 74 16 8B 10 8B C8 FF 92 ?? ?? ?? ?? 85 C0 74 08 8D 48 08 8B 01 FF 60 24 33 C0 C3");
         }
@@ -1264,6 +1300,7 @@ void* get_get_player_by_index_fn()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             return pattern_scan("client.dll", "55 8B EC 8B 0D ?? ?? ?? ?? 56 FF 75 08 E8 ?? ?? ?? ?? 8B F0 85 F6 74 15 8B 16 8B CE 8B 92 ?? ?? ?? ?? FF D2 84 C0 74 05 8B C6 5E 5D C3 33 C0 5E 5D C3");
         }
@@ -1286,6 +1323,7 @@ FnOverride get_snd_paint_chans_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 33 DB 89 5D D0 89 5D D4");
             ov.hook = snd_paint_chans_override;
@@ -1312,6 +1350,7 @@ FnOverride get_snd_tx_stereo_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
             ov.target = pattern_scan("engine.dll", "55 8B EC 51 53 56 57 E8 ?? ?? ?? ?? D8 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ??");
             ov.hook = snd_tx_stereo_override;
@@ -1329,8 +1368,9 @@ void* get_snd_paint_time_ptr()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
         {
-            u8* addr = (u8*)pattern_scan("engine.dll", "2B 05 ?? ?? ?? ?? 0F 48 C1 89 45 FC 85 C0 74 59");
+            u8* addr = (u8*)pattern_scan("engine.dll", "2B 05 ?? ?? ?? ?? 0F 48 C1 89 45 FC 85 C0");
             addr += 2;
             return addr;
         }
