@@ -5,12 +5,13 @@ REM We use zip because more often than not people don't have 7zip or equivalent.
 setlocal
 mkdir publish_temp\svr
 
-xcopy /Q /E bin\svr_game.dll publish_temp\svr\
-xcopy /Q /E bin\svr_launcher.exe publish_temp\svr\
-xcopy /Q /E bin\ffmpeg.exe publish_temp\svr\
-xcopy /Q /E bin\data\ publish_temp\svr\data\
-xcopy /Q /E update.cmd publish_temp\svr\
-del /S /Q publish_temp\svr\data\SVR_LOG.TXT
+copy /Y ".\bin\svr_game.dll" "publish_temp\svr\"
+copy /Y ".\bin\svr_launcher.exe" "publish_temp\svr\"
+copy /Y ".\bin\ffmpeg.exe" "publish_temp\svr\"
+xcopy /Q /E ".\bin\data\" "publish_temp\svr\data\"
+copy /Y ".\update.cmd" "publish_temp\svr\"
+copy /Y ".\README.MD" "publish_temp\svr\"
+del /S /Q ".\publish_temp\svr\data\SVR_LOG.TXT"
 
 cd publish_temp
 
