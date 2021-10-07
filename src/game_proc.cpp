@@ -1645,7 +1645,7 @@ bool create_velo_font_face(MovieProfile* p, IDWriteFontFace** font_face)
 
     if (FAILED(hr))
     {
-        game_log("Could not find the combination of font parameters (weight, stretch, style) in the font %s", p->veloc_font);
+        game_log("Could not find the combination of font parameters (weight, stretch, style) in the font %s\n", p->veloc_font);
         goto rfail;
     }
 
@@ -1933,7 +1933,6 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     movie_path[0] = 0;
     StringCchCatA(movie_path, MAX_PATH, svr_resource_path);
     StringCchCatA(movie_path, MAX_PATH, "\\movies\\");
-    StringCchCatA(movie_path, MAX_PATH, "\\");
     StringCchCatA(movie_path, MAX_PATH, dest);
 
     if (!start_with_sw(d3d11_device))

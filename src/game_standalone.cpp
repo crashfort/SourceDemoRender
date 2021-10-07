@@ -322,7 +322,6 @@ void* gm_snd_paint_time;
 
 FnHook start_movie_hook;
 FnHook end_movie_hook;
-FnHook view_render_hook;
 FnHook eng_filter_time_hook;
 
 FnHook snd_tx_stereo_hook;
@@ -344,7 +343,7 @@ float snd_lost_mix_time;
 
 s32 snd_num_samples;
 
-s64 tm_frame_num;
+s64 tm_num_frames;
 s64 tm_first_frame_time;
 s64 tm_last_frame_time;
 
@@ -633,7 +632,7 @@ void mix_audio_for_one_frame2()
 
 void update_time_stats()
 {
-    if (tm_frame_num == 0)
+    if (tm_num_frames == 0)
     {
         tm_first_frame_time = svr_prof_get_real_time();
     }
@@ -643,25 +642,13 @@ void update_time_stats()
         tm_last_frame_time = svr_prof_get_real_time();
     }
 
-    tm_frame_num++;
-}
-
-// Probably remove this because it doesn't add anything other than show time since it only gets called when in game (not in menu).
-void __fastcall view_render_override(void* p, void* edx, void* rect)
-{
-    if (svr_movie_active())
-    {
-        // Useful to see real time taken.
-        update_time_stats();
-    }
-
-    using GmViewRenderFn = void(__fastcall*)(void* p, void* edx, void* rect);
-    GmViewRenderFn org_fn = (GmViewRenderFn)view_render_hook.original;
-    org_fn(p, edx, rect);
+    tm_num_frames++;
 }
 
 void do_svr_frame()
 {
+    update_time_stats();
+
     // Mix audio for the upcoming frame.
 
     if (launcher_data.app_id == STEAM_GAME_CSGO)
@@ -728,26 +715,6 @@ bool __fastcall eng_filter_time_override2(void* p, void* edx)
     return ret;
 }
 
-const char* args_skip_spaces(const char* str)
-{
-    while (*str && *str == ' ')
-    {
-        str++;
-    }
-
-    return str;
-}
-
-const char* args_skip_to_space(const char* str)
-{
-    while (*str && *str != ' ')
-    {
-        str++;
-    }
-
-    return str;
-}
-
 // Subsitute for running exec on a cfg in the game directory. This is for running a cfg in the SVR directory.
 void run_cfg(const char* name)
 {
@@ -790,7 +757,7 @@ void run_cfg(const char* name)
     mem[file_size.LowPart - 1] = '\n';
     mem[file_size.LowPart] = 0;
 
-    game_console_msg("Running cfg %s\n", name);
+    svr_log("Running cfg %s\n", name);
 
     // The file can be executed as is. The game takes care of splitting by newline.
     // We don't monitor what is inside the cfg, it's up to the user.
@@ -840,7 +807,10 @@ const char* get_cmd_args(void* args)
 
 void __cdecl start_movie_override(void* args)
 {
-    tm_frame_num = 0;
+    tm_num_frames = 0;
+    tm_first_frame_time = 0;
+    tm_last_frame_time = 0;
+
     snd_skipped_samples = 0;
     snd_lost_mix_time = 0.0f;
     snd_num_samples = 0;
@@ -859,42 +829,20 @@ void __cdecl start_movie_override(void* args)
 
     // First argument is always startmovie.
 
-    value_args = args_skip_spaces(value_args);
-    value_args = args_skip_to_space(value_args);
-    value_args = args_skip_spaces(value_args);
-
-    if (*value_args == 0)
-    {
-        game_console_msg("Usage: startmovie <name> (<profile>)\n");
-        game_console_msg("Starts to record a movie with an optional profile\n");
-        game_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
-        return;
-    }
-
-    value_args = args_skip_spaces(value_args);
-
     char movie_name[MAX_PATH];
     movie_name[0] = 0;
 
     char profile[MAX_PATH];
     profile[0] = 0;
 
-    const char* value_args_copy = value_args;
-    value_args = args_skip_to_space(value_args);
+    s32 used_args = sscanf(value_args, "%*s %s %s", movie_name, profile);
 
-    s32 movie_name_len = value_args - value_args_copy;
-    StringCchCopyNA(movie_name, MAX_PATH, value_args_copy, movie_name_len);
-
-    value_args = args_skip_spaces(value_args);
-
-    // See if a profile was passed in.
-
-    if (*value_args != 0)
+    if (used_args == 0)
     {
-        value_args_copy = value_args;
-        value_args = args_skip_to_space(value_args);
-        s32 profile_len = value_args - value_args_copy;
-        StringCchCopyNA(profile, MAX_PATH, value_args_copy, profile_len);
+        game_console_msg("Usage: startmovie <name> (<optional profile>)\n");
+        game_console_msg("Starts to record a movie with an optional profile\n");
+        game_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
+        return;
     }
 
     // Will point to the end if no extension was provided.
@@ -984,7 +932,7 @@ void __cdecl end_movie_override(void* args)
         return;
     }
 
-    game_log("Ending movie after %0.2f seconds\n", (tm_last_frame_time - tm_first_frame_time) / 1000000.0f);
+    game_log("Ending movie after %0.2f seconds (%lld frames)\n", (tm_last_frame_time - tm_first_frame_time) / 1000000.0f, tm_num_frames);
 
     svr_stop();
 
@@ -1164,33 +1112,6 @@ void* get_engine_client_exec_cmd_fn(void* engine_client_ptr)
     }
 
     return NULL;
-}
-
-FnOverride get_view_render_override()
-{
-    FnOverride ov;
-
-    switch (launcher_data.app_id)
-    {
-        case STEAM_GAME_CSS:
-        case STEAM_GAME_TF2:
-        {
-            ov.target = pattern_scan("client.dll", "55 8B EC 8B 55 08 83 7A 08 00 74 17 83 7A 0C 00 74 11 8B 0D ?? ?? ?? ?? 52 8B 01 FF 50 14 E8 ?? ?? ?? ?? 5D C2 04 00");
-            ov.hook = view_render_override;
-            break;
-        }
-
-        case STEAM_GAME_CSGO:
-        {
-            ov.target = pattern_scan("client.dll", "55 8B EC 83 E4 F0 81 EC ?? ?? ?? ?? 56 57 8B F9 8B 0D ?? ?? ?? ?? 89 7C 24 18");
-            ov.hook = view_render_override;
-            break;
-        }
-
-        default: assert(false);
-    }
-
-    return ov;
 }
 
 FnOverride get_eng_filter_time_override()
@@ -1442,7 +1363,6 @@ void create_game_hooks()
 
     hook_function(get_start_movie_override(), &start_movie_hook);
     hook_function(get_end_movie_override(), &end_movie_hook);
-    hook_function(get_view_render_override(), &view_render_hook); // <-- Remove! Does not serve any purpose.
     hook_function(get_eng_filter_time_override(), &eng_filter_time_hook);
 
     hook_function(get_snd_paint_chans_override(), &snd_mix_chans_hook);
