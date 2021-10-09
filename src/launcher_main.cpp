@@ -388,7 +388,7 @@ void find_game_build(s32 game_index, const char* acf_path, s32* build_id)
         }
     }
 
-    launcher_log("Build number was not found in appmanifest of game %s\n", GAME_NAMES[game_index]);
+    svr_log("Build number was not found in appmanifest of game %s\n", GAME_NAMES[game_index]);
 }
 
 s32 start_game(s32 game_index)
@@ -660,7 +660,7 @@ void show_windows_version()
     char winver[192];
     StringCchPrintfA(winver, 192, "%s version %d build %d", product_name, strtol(release_id, NULL, 10), strtol(current_build, NULL, 10));
 
-    launcher_log("Using operating system %s\n", winver);
+    svr_log("Using operating system %s\n", winver);
 }
 
 bool is_whitespace(char c)
@@ -702,7 +702,7 @@ void show_processor()
     // The value will have a lot of extra spaces at the end.
     trim_right(name, strlen(name));
 
-    launcher_log("Using processor %s (%lu cpus)\n", name, GetActiveProcessorCount(ALL_PROCESSOR_GROUPS));
+    svr_log("Using processor %s (%lu cpus)\n", name, GetActiveProcessorCount(ALL_PROCESSOR_GROUPS));
 }
 
 void show_available_memory()
@@ -712,7 +712,7 @@ void show_available_memory()
 
     GlobalMemoryStatusEx(&mem);
 
-    launcher_log("The system has %lld mb of memory (%lld mb usable)\n", SVR_FROM_MB(mem.ullTotalPhys), SVR_FROM_MB(mem.ullAvailPhys));
+    svr_log("The system has %lld mb of memory (%lld mb usable)\n", SVR_FROM_MB(mem.ullTotalPhys), SVR_FROM_MB(mem.ullAvailPhys));
 }
 
 void find_steam_path()
@@ -828,7 +828,7 @@ void find_steam_libraries()
 
                         if (num_steam_libraries == MAX_STEAM_LIBRARIES)
                         {
-                            launcher_log("Too many Steam libraries installed, using first %d\n", MAX_STEAM_LIBRARIES);
+                            svr_log("Too many Steam libraries installed, using first %d\n", MAX_STEAM_LIBRARIES);
                             return;
                         }
 
