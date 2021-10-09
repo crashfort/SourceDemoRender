@@ -27,6 +27,7 @@ Supported games in this release:
 * Velo text is now aligned by screen percentages to allow any resolution independent position to be used.
 * Velo character spacing has been removed.
 * Game config and launcher config have both been removed. Launcher config has been replaced by the launcher doing the work automatically. Game config has been replaced by code directly to ease development and reduce scope.
+* Custom launch parameters are now in a file called svr_launch_params.ini.
 * An update.cmd file has been created to easily download the latest version (needs manual unzip).
 * SVR now supports both D3D9Ex and D3D11 games.
 * It's now possible to apply or override user settings when a movie starts or stops recording. These files are svr_movie_start_user.cfg, svr_movie_end_user.cfg, svr_movie_start_<app_id>.cfg, svr_movie_end_<app_id>.cfg.

@@ -16,12 +16,14 @@
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AssemblyAndMachineCode</AssemblerOutput>
     </ClCompile>
     <ClCompile Include="stb_sprintf.cpp" />
+    <ClCompile Include="svr_ini.cpp" />
     <ClCompile Include="svr_logging.cpp" />
     <ClCompile Include="svr_vdf.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_sprintf.h" />
     <ClInclude Include="svr_common.h" />
+    <ClInclude Include="svr_ini.h" />
     <ClInclude Include="svr_logging.h" />
     <ClInclude Include="svr_vdf.h" />
   </ItemGroup>

@@ -6,6 +6,7 @@
 #include "svr_logging.h"
 #include <conio.h>
 #include "svr_vdf.h"
+#include "svr_ini.h"
 #include <VersionHelpers.h>
 #include "stb_sprintf.h"
 #include <d3d11.h>
@@ -209,6 +210,46 @@ const u8 REMOTE_FUNC_BYTES[] =
 
 const s32 FULL_ARGS_SIZE = 512;
 
+bool append_custom_launch_params(s32 game_index, char* out_buf)
+{
+    SvrIniMem ini_mem;
+
+    if (!svr_open_ini_read("svr_launch_params.ini", &ini_mem))
+    {
+        return false;
+    }
+
+    SvrIniLine ini_line = svr_alloc_ini_line();
+    SvrIniTokenType ini_token_type;
+
+    char buf[64];
+    StringCchPrintfA(buf, 64, "%u", GAME_APP_IDS[game_index]);
+
+    while (svr_read_ini(&ini_mem, &ini_line, &ini_token_type))
+    {
+        switch (ini_token_type)
+        {
+            case SVR_INI_KV:
+            {
+                if (!strcmp(buf, ini_line.title))
+                {
+                    if (strlen(ini_line.value) > 0)
+                    {
+                        StringCchCatA(out_buf, FULL_ARGS_SIZE, " ");
+                        StringCchCatA(out_buf, FULL_ARGS_SIZE, ini_line.value);
+                    }
+
+                    return true;
+                }
+
+                break;
+            }
+        }
+    }
+
+    return false;
+}
+
 // Use the launch parameters from Steam if we can.
 bool append_steam_launch_params(s32 game_index, char* out_buf)
 {
@@ -223,9 +264,9 @@ bool append_steam_launch_params(s32 game_index, char* out_buf)
     StringCchCatA(full_vdf_path, MAX_PATH, buf);
     StringCchCatA(full_vdf_path, MAX_PATH, "\\config\\localconfig.vdf");
 
-    SvrVdfMem mem;
+    SvrVdfMem vdf_mem;
 
-    if (!svr_open_vdf_read(full_vdf_path, &mem))
+    if (!svr_open_vdf_read(full_vdf_path, &vdf_mem))
     {
         // Steam must be installed wrong if this fails.
         launcher_log("Could not read Steam user settings. Steam may be installed wrong.");
@@ -239,7 +280,7 @@ bool append_steam_launch_params(s32 game_index, char* out_buf)
 
     StringCchPrintfA(buf, 64, "%u", GAME_APP_IDS[game_index]);
 
-    while (svr_read_vdf(&mem, &vdf_line, &vdf_token_type))
+    while (svr_read_vdf(&vdf_mem, &vdf_line, &vdf_token_type))
     {
         switch (vdf_token_type)
         {
@@ -379,7 +420,12 @@ s32 start_game(s32 game_index)
     StringCchCatA(full_args, FULL_ARGS_SIZE, " ");
     StringCchCatA(full_args, FULL_ARGS_SIZE, EXTRA_GAME_ARGS[game_index]);
 
-    append_steam_launch_params(game_index, full_args);
+    // Prioritize custom args over Steam.
+
+    if (!append_custom_launch_params(game_index, full_args))
+    {
+        append_steam_launch_params(game_index, full_args);
+    }
 
     if (game_build_id > 0)
     {
@@ -387,9 +433,11 @@ s32 start_game(s32 game_index)
 
         if (game_build_id != tested_build_id)
         {
+            launcher_log("-----------------------------\n");
             launcher_log("WARNING: Mismatch between installed Steam build and tested SVR build. "
                          "Steam game build is %d and tested build is %d. "
                          "Problems may occur as this game build has not been tested!\n", game_build_id, tested_build_id);
+            launcher_log("-----------------------------\n");
         }
     }
 

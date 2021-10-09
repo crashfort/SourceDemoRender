@@ -76,7 +76,7 @@ void ini_parse_line(char* line_buf, SvrIniLine* ini_line, SvrIniTokenType* type)
     s32 title_length = (tokens[1] - tokens[0]) - 1;
     s32 value_length = (tokens[2] - tokens[1]);
 
-    if (title_length == 0 || value_length == 0)
+    if (title_length == 0)
     {
         return;
     }
