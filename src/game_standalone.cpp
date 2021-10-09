@@ -310,10 +310,18 @@ struct GmSndSample
     s32 right;
 };
 
+enum
+{
+    RECORD_STATE_STOPPED,
+    RECORD_STATE_WAITING,
+    RECORD_STATE_POSSIBLE,
+};
+
 IDirect3DDevice9Ex* gm_d3d9ex_device;
 void* gm_engine_client_ptr;
 
 void* gm_engine_client_exec_cmd_fn;
+void* gm_signon_state_ptr;
 
 void* gm_local_player_ptr;
 void* gm_get_spec_target_fn;
@@ -326,8 +334,7 @@ FnHook eng_filter_time_hook;
 
 FnHook snd_tx_stereo_hook;
 FnHook snd_mix_chans_hook;
-
-FnHook gm_snd_device_tx_hook;
+FnHook snd_device_tx_hook;
 
 bool snd_is_painting;
 bool snd_listener_underwater;
@@ -346,6 +353,8 @@ s32 snd_num_samples;
 s64 tm_num_frames;
 s64 tm_first_frame_time;
 s64 tm_last_frame_time;
+
+s32 recording_state;
 
 void client_command(const char* cmd)
 {
@@ -630,26 +639,12 @@ void mix_audio_for_one_frame2()
     }
 }
 
-void update_time_stats()
+void do_recording_frame()
 {
     if (tm_num_frames == 0)
     {
         tm_first_frame_time = svr_prof_get_real_time();
     }
-
-    else
-    {
-        tm_last_frame_time = svr_prof_get_real_time();
-    }
-
-    tm_num_frames++;
-}
-
-void do_svr_frame()
-{
-    update_time_stats();
-
-    // Mix audio for the upcoming frame.
 
     if (launcher_data.app_id == STEAM_GAME_CSGO)
     {
@@ -663,19 +658,84 @@ void do_svr_frame()
 
     give_player_velo();
     svr_frame();
+
+    tm_num_frames++;
+}
+
+// Recording should only be possible when fully connected. We don't want the menu and loading screen to be recorded.
+// When we start the movie we set the recording state to waiting, which means waiting for the connection to finish to where we are in game fully.
+void update_recording_state()
+{
+    const s32 SIGNON_STATE_NONE = 0;
+    const s32 SIGNON_STATE_FULL = 6;
+
+    s32 state = -1;
+
+    switch (launcher_data.app_id)
+    {
+        case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
+        {
+            state = **(s32**)gm_signon_state_ptr;
+            break;
+        }
+
+        case STEAM_GAME_CSGO:
+        {
+            state = *(s32*)gm_signon_state_ptr;
+            break;
+        }
+
+        default: assert(false);
+    }
+
+    if (state == SIGNON_STATE_NONE)
+    {
+        if (recording_state == RECORD_STATE_POSSIBLE)
+        {
+            recording_state = RECORD_STATE_STOPPED;
+        }
+    }
+
+    else if (state == SIGNON_STATE_FULL)
+    {
+        if (recording_state == RECORD_STATE_WAITING)
+        {
+            recording_state = RECORD_STATE_POSSIBLE;
+        }
+    }
+}
+
+void check_autostop()
+{
+    // If we disconnected the previous frame, stop recording this frame.
+    if (recording_state == RECORD_STATE_STOPPED && svr_movie_active())
+    {
+        void end_the_movie();
+        end_the_movie();
+    }
+}
+
+// If we are recording this frame then don't filter time.
+bool run_frame()
+{
+    update_recording_state();
+    check_autostop();
+
+    if (recording_state == RECORD_STATE_POSSIBLE && svr_movie_active())
+    {
+        do_recording_frame();
+        return true;
+    }
+
+    return false;
 }
 
 bool __fastcall eng_filter_time_override(void* p, void* edx, float dt)
 {
-    bool ret;
+    bool ret = run_frame();
 
-    if (svr_movie_active())
-    {
-        do_svr_frame();
-        ret = true;
-    }
-
-    else
+    if (!ret)
     {
         using GmEngFilterTimeFn = bool(__fastcall*)(void* p, void* edx, float dt);
         GmEngFilterTimeFn org_fn = (GmEngFilterTimeFn)eng_filter_time_hook.original;
@@ -693,15 +753,9 @@ bool __fastcall eng_filter_time_override2(void* p, void* edx)
         movss dt, xmm1
     };
 
-    bool ret;
+    bool ret = run_frame();
 
-    if (svr_movie_active())
-    {
-        do_svr_frame();
-        ret = true;
-    }
-
-    else
+    if (!ret)
     {
         __asm {
             movss xmm1, dt
@@ -906,6 +960,9 @@ void __cdecl start_movie_override(void* args)
         goto rfail;
     }
 
+    // Allow recording the next frame.
+    recording_state = RECORD_STATE_WAITING;
+
     game_log("Starting movie to %s\n", movie_name);
 
     // Ensure the game runs at a fixed rate.
@@ -922,6 +979,24 @@ rexit:
     svr_maybe_release(&bb_surf);
 }
 
+void end_the_movie()
+{
+    assert(svr_movie_active());
+
+    recording_state = RECORD_STATE_STOPPED;
+    tm_last_frame_time = svr_prof_get_real_time();
+
+    float time_taken = (tm_last_frame_time - tm_first_frame_time) / 1000000.0f;
+    float fps = 0.0f;
+    if (time_taken > 0.0f) fps = (float)tm_num_frames / time_taken;
+
+    game_log("Ending movie after %0.2f seconds (%lld frames, %0.2f fps)\n", time_taken, tm_num_frames, fps);
+
+    svr_stop();
+
+    run_cfgs_for_event("end");
+}
+
 void __cdecl end_movie_override(void* args)
 {
     // We don't want to call the original function for this command.
@@ -932,11 +1007,7 @@ void __cdecl end_movie_override(void* args)
         return;
     }
 
-    game_log("Ending movie after %0.2f seconds (%lld frames)\n", (tm_last_frame_time - tm_first_frame_time) / 1000000.0f, tm_num_frames);
-
-    svr_stop();
-
-    run_cfgs_for_event("end");
+    end_the_movie();
 }
 
 const char* CSS_LIBS[] = {
@@ -1106,6 +1177,36 @@ void* get_engine_client_exec_cmd_fn(void* engine_client_ptr)
         case STEAM_GAME_CSGO:
         {
             return get_virtual(engine_client_ptr, 108);
+        }
+
+        default: assert(false);
+    }
+
+    return NULL;
+}
+
+void* get_signon_state_ptr()
+{
+    switch (launcher_data.app_id)
+    {
+        case STEAM_GAME_CSS:
+        case STEAM_GAME_TF2:
+        {
+            u8* addr = (u8*)pattern_scan("engine.dll", "C7 05 ?? ?? ?? ?? ?? ?? ?? ?? 89 87 ?? ?? ?? ?? 89 87 ?? ?? ?? ?? 8B 45 08");
+            addr += 2;
+            return addr;
+        }
+
+        case STEAM_GAME_CSGO:
+        {
+            u8* addr = (u8*) pattern_scan("engine.dll", "A1 ?? ?? ?? ?? 33 D2 6A 00 6A 00 33 C9 C7 80 ?? ?? ?? ?? ?? ?? ?? ??");
+            addr += 1;
+
+            void* client_state = **(void***)addr;
+            addr = (u8*)client_state;
+            addr += 264;
+
+            return addr;
         }
 
         default: assert(false);
@@ -1354,6 +1455,7 @@ void create_game_hooks()
     gm_d3d9ex_device = get_d3d9ex_device();
     gm_engine_client_ptr = get_engine_client_ptr();
     gm_engine_client_exec_cmd_fn = get_engine_client_exec_cmd_fn(gm_engine_client_ptr);
+    gm_signon_state_ptr = get_signon_state_ptr();
 
     gm_local_player_ptr = get_local_player_ptr();
     gm_get_spec_target_fn = get_get_spec_target_fn();
@@ -1371,7 +1473,7 @@ void create_game_hooks()
 
     if (launcher_data.app_id == STEAM_GAME_CSGO)
     {
-        hook_function(get_snd_device_tx_override(), &gm_snd_device_tx_hook);
+        hook_function(get_snd_device_tx_override(), &snd_device_tx_hook);
         gm_snd_paint_buffer = get_snd_paint_buffer();
     }
 

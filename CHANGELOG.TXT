@@ -35,5 +35,5 @@ Supported games in this release:
 * avi and mov are no longer allowed containers as they are outdated that do not support various encoding features.
 * A big message is now written in the console when SVR is initialized, to show that it has loaded.
 * There is now an SVR API that can be used for direct game integrations (Momentum in the future).
-* Recording will now happen continously until endmovie is submitted. This is because the position in the frame where SVR works had to be changed to accomodate sound processing.
+* Recording will now automatically stop when demo ends or client disconnects.
 * Various other fixes and performance improvements.

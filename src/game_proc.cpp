@@ -164,7 +164,6 @@ float mosample_remainder_step;
 // -------------------------------------------------
 // Movie state.
 
-s32 frame_num;
 s32 movie_width;
 s32 movie_height;
 
@@ -1926,7 +1925,6 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     content_tex_res->Release();
     content_tex->Release();
 
-    frame_num = 0;
     movie_width = tex_desc.Width;
     movie_height = tex_desc.Height;
 
@@ -2163,8 +2161,6 @@ void proc_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* ga
     }
 
     svr_end_prof(&frame_prof);
-
-    frame_num++;
 }
 
 void proc_give_velocity(float* xyz)
