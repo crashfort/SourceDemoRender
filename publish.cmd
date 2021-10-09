@@ -11,6 +11,7 @@ copy /Y ".\bin\ffmpeg.exe" "publish_temp\svr\"
 xcopy /Q /E ".\bin\data\" "publish_temp\svr\data\"
 copy /Y ".\update.cmd" "publish_temp\svr\"
 copy /Y ".\README.MD" "publish_temp\svr\"
+mkdir ".\publish_temp\svr\movies"
 del /S /Q ".\publish_temp\svr\data\SVR_LOG.TXT"
 
 cd publish_temp
