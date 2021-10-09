@@ -64,11 +64,17 @@ ID3D11UnorderedAccessView* work_tex_uav;
 
 // We write wav for now because writing multiple streams over a single pipe is weird. Will be looked into later.
 
+const s32 WAV_BUFFERED_SAMPLES = 32768;
+
 HANDLE wav_f;
 DWORD wav_data_length;
 DWORD wav_file_length;
 DWORD wav_header_pos;
 DWORD wav_data_pos;
+
+// Only write out samples when we have enough.
+SvrWaveSample* wav_buf;
+s32 wav_num_samples;
 
 // -------------------------------------------------
 // Velo state.
@@ -883,6 +889,9 @@ void free_all_static_proc_stuff()
     svr_maybe_release(&velo_text_sb_srv);
     svr_maybe_release(&velo_text_vs);
     svr_maybe_release(&velo_text_ps);
+
+    free(wav_buf);
+    wav_buf = NULL;
 }
 
 void free_all_dynamic_proc_stuff()
@@ -1043,6 +1052,8 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     ffmpeg_write_queue.init(MAX_BUFFERED_SEND_BUFS);
     ffmpeg_read_queue.init(MAX_BUFFERED_SEND_BUFS);
+
+    wav_buf = (SvrWaveSample*)_aligned_malloc(sizeof(SvrWaveSample) * WAV_BUFFERED_SAMPLES, 16);
 
     ret = true;
     goto rexit;
@@ -2168,14 +2179,27 @@ void proc_give_velocity(float* xyz)
     memcpy(player_velo, xyz, sizeof(float) * 3);
 }
 
-void proc_give_audio(SvrWaveSample* samples, s32 num_samples)
+void write_wav_samples()
 {
-    s32 buf_size = sizeof(SvrWaveSample) * num_samples;
+    s32 buf_size = sizeof(SvrWaveSample) * wav_num_samples;
 
     wav_data_length += buf_size;
     wav_file_length += buf_size;
 
-    WriteFile(wav_f, samples, buf_size, NULL, NULL);
+    WriteFile(wav_f, wav_buf, buf_size, NULL, NULL);
+
+    wav_num_samples = 0;
+}
+
+void proc_give_audio(SvrWaveSample* samples, s32 num_samples)
+{
+    if (wav_num_samples + num_samples >= WAV_BUFFERED_SAMPLES)
+    {
+        write_wav_samples();
+    }
+
+    memcpy(wav_buf + wav_num_samples, samples, sizeof(SvrWaveSample) * num_samples);
+    wav_num_samples += num_samples;
 }
 
 void show_total_prof(const char* name, SvrProf* prof)
@@ -2193,6 +2217,11 @@ void show_prof(const char* name, SvrProf* prof)
 
 void end_audio()
 {
+    if (wav_num_samples > 0)
+    {
+        write_wav_samples();
+    }
+
     SetFilePointer(wav_f, wav_header_pos, NULL, FILE_BEGIN);
     WriteFile(wav_f, &wav_file_length, sizeof(DWORD), NULL, NULL);
 
@@ -2203,6 +2232,7 @@ void end_audio()
     wav_file_length = 0;
     wav_header_pos = 0;
     wav_data_pos = 0;
+    wav_num_samples = 0;
 }
 
 void proc_end()
