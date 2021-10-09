@@ -82,8 +82,8 @@ const char* GAME_EXE_PATHS[] = {
 // Build versions that have been tested (located in the appmanifest acf).
 s32 GAME_BUILDS[] = {
     6946501, // STEAM_GAME_CSS
-    7421361, // STEAM_GAME_CSGO
-    7483663, // STEAM_GAME_TF2
+    7498250, // STEAM_GAME_CSGO
+    7504322, // STEAM_GAME_TF2
 };
 
 const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(GAME_APP_IDS);
