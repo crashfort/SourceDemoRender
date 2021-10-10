@@ -3,7 +3,6 @@
 #include "stb_sprintf.h"
 #include <assert.h>
 #include <Windows.h>
-#include <strsafe.h>
 
 // File logging stuff.
 

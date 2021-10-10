@@ -1,18 +1,16 @@
 #include "game_proc.h"
 #include "game_shared.h"
-#include <dxgi1_6.h>
-#include <d3d11_4.h>
+#include <d3d11.h>
 #include <strsafe.h>
-#include <dwrite_3.h>
+#include <dwrite.h>
 #include <d2d1_1.h>
 #include <malloc.h>
 #include <assert.h>
-#include <limits>
+#include <intrin.h>
 #include "svr_prof.h"
 #include "svr_stream.h"
 #include "svr_sem.h"
 #include "game_proc_profile.h"
-#include "stb_image_write.h"
 #include "stb_sprintf.h"
 #include "svr_api.h"
 #include <Shlwapi.h>
@@ -1279,7 +1277,10 @@ s32 align_up_to_8(s32 value)
 
 // Enable this to save an image of the texture atlas to the working directory. Red and blue will be swapped in the image but
 // that's not the point.
-#define DUMP_VELO_ATLAS 0
+#define DUMP_VELO_ATLAS 1
+
+#if DUMP_VELO_ATLAS
+#include "stb_image_write.h"
 
 void dump_velo_font_atlas(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context)
 {
@@ -1321,6 +1322,7 @@ void dump_velo_font_atlas(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11
     free(dest);
     atlas_dl->Release();
 }
+#endif
 
 // We add dumb padding to each glyph because we cannot get exact bounds for a glyph.
 // This wastes atlas space but doesn't matter for the layout. We don't want any part of the glyph to be cut off on any side.

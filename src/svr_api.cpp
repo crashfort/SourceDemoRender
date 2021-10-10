@@ -3,7 +3,6 @@
 #include <d3d11.h>
 #include <d3d9.h>
 #include "game_shared.h"
-#include <strsafe.h>
 
 // Used for internal and external SVR.
 // This layer if necessary translates operations from D3D9Ex to D3D11 which game_proc uses and is also the public API.

@@ -8,7 +8,6 @@
 #include <Shlwapi.h>
 #include <d3d9.h>
 #include <Psapi.h>
-#include <charconv>
 #include "stb_sprintf.h"
 #include <malloc.h>
 
@@ -160,12 +159,8 @@ void pattern_bytes_from_string(const char* input, ScanPattern* out)
         {
             assert(is_hex_char(*(ptr + 1)));
 
-            std::from_chars_result res = std::from_chars(ptr, ptr + 2, out->bytes[out->used], 16);
-
-            assert(res.ec == std::errc());
-
+            out->bytes[out->used] = strtol(ptr, NULL, 16);
             out->used++;
-
             ptr++;
         }
 
@@ -175,7 +170,6 @@ void pattern_bytes_from_string(const char* input, ScanPattern* out)
 
             out->bytes[out->used] = -1;
             out->used++;
-
             ptr++;
         }
     }

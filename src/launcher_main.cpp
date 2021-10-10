@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <strsafe.h>
 #include "svr_logging.h"
-#include <conio.h>
 #include "svr_vdf.h"
 #include "svr_ini.h"
 #include <VersionHelpers.h>
