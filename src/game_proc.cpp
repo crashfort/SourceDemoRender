@@ -975,18 +975,6 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
     IDXGIDevice* dxgi_device;
     d3d11_device->QueryInterface(IID_PPV_ARGS(&dxgi_device));
 
-    IDXGIAdapter* dxgi_adapter;
-    dxgi_device->GetAdapter(&dxgi_adapter);
-
-    DXGI_ADAPTER_DESC dxgi_adapter_desc;
-    dxgi_adapter->GetDesc(&dxgi_adapter_desc);
-
-    dxgi_adapter->Release();
-
-    // Useful for future troubleshooting.
-    // Use https://www.pcilookup.com/ to see more information about device and vendor ids.
-    svr_log("Using graphics device %x by vendor %x\n", dxgi_adapter_desc.DeviceId, dxgi_adapter_desc.VendorId);
-
     // We use D2D1 only for rasterizing vector fonts.
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, IID_PPV_ARGS(&d2d1_factory));
@@ -1199,8 +1187,6 @@ bool start_ffmpeg_proc()
     start_info.dwFlags |= STARTF_USESTDHANDLES;
 
     build_ffmpeg_process_args(full_args, FULL_ARGS_SIZE);
-
-    svr_log("Starting ffmpeg with args %s\n", full_args);
 
     if (!CreateProcessA(full_ffmpeg_path, full_args, NULL, NULL, TRUE, create_flags, NULL, svr_resource_path, &start_info, &proc_info))
     {
@@ -2257,8 +2243,6 @@ void proc_end()
     svr_reset_prof(&dl_prof);
     svr_reset_prof(&write_prof);
     svr_reset_prof(&mosample_prof);
-
-    game_log("Movie finished\n");
 }
 
 s32 proc_get_game_rate()
