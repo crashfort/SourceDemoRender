@@ -980,9 +980,14 @@ void end_the_movie()
     recording_state = RECORD_STATE_STOPPED;
     tm_last_frame_time = svr_prof_get_real_time();
 
-    float time_taken = (tm_last_frame_time - tm_first_frame_time) / 1000000.0f;
+    float time_taken = 0.0f;
     float fps = 0.0f;
-    if (time_taken > 0.0f) fps = (float)tm_num_frames / time_taken;
+
+    if (tm_last_frame_time > 0 && tm_first_frame_time > 0)
+    {
+        time_taken = (tm_last_frame_time - tm_first_frame_time) / 1000000.0f;
+        fps = (float)tm_num_frames / time_taken;
+    }
 
     game_log("Ending movie after %0.2f seconds (%lld frames, %0.2f fps)\n", time_taken, tm_num_frames, fps);
 
