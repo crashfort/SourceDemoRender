@@ -1,0 +1,38 @@
+# 1920x1080
+# 60 fps veryfast crf 15
+# mosample mult 60 exposure 0.5
+
+# Single threaded
+Total work time: 5010353
+Download: 1235
+Mosample: 95
+
+# Write thread
+Total work time: 4352741
+Download: 1173
+Write: 244
+Mosample: 87
+
+# Write thread, less updating of mosample constant buffer
+Total work time: 4181972
+Download: 1168
+Write: 237
+Mosample: 82
+
+# Legacy work buffer
+Total work time: 4308762
+Download: 1184
+Write: 290
+Mosample: 85
+
+# Velo v3 (with border)
+Total work time: 4166655
+Download: 934
+Write: 271
+Mosample: 83
+
+# Velo quads
+Total work time: 4076607
+Download: 1095
+Write: 229
+Mosample: 82
