@@ -169,7 +169,20 @@ bool svr_read_ini_line(SvrIniMem* mem)
         }
     }
 
-    return false;
+    if (line_start == mem->mov_str)
+    {
+        return false;
+    }
+
+    char* line_end = mem->mov_str;
+    s32 line_length = line_end - line_start;
+
+    if (line_length > 0)
+    {
+        StringCchCopyNA(mem->line_buf, SVR_INI_LINE_BUF_SIZE, line_start, line_length); 
+    }
+
+    return true;
 }
 
 bool svr_read_ini(SvrIniMem* mem, SvrIniLine* line, SvrIniTokenType* token_type)
