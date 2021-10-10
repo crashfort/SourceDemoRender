@@ -534,7 +534,7 @@ void free_all_dynamic_sw_stuff()
 
     for (s32 i = 0; i < MAX_BUFFERED_SEND_BUFS; i++)
     {
-        ThreadPipeData& pipe_data =  ffmpeg_send_bufs[i];
+        ThreadPipeData& pipe_data = ffmpeg_send_bufs[i];
 
         if (pipe_data.ptr)
         {
@@ -1277,7 +1277,7 @@ s32 align_up_to_8(s32 value)
 
 // Enable this to save an image of the texture atlas to the working directory. Red and blue will be swapped in the image but
 // that's not the point.
-#define DUMP_VELO_ATLAS 1
+#define DUMP_VELO_ATLAS 0
 
 #if DUMP_VELO_ATLAS
 #include "stb_image_write.h"
