@@ -295,9 +295,6 @@ void standalone_error(const char* format, ...)
 
 // --------------------------------------------------------------------------
 
-// We don't allow the volume to be changed at the moment.
-const s32 SND_VOLUME = 1.0f;
-
 struct GmSndSample
 {
     s32 left;
@@ -508,22 +505,19 @@ void __cdecl snd_paint_chans_override2(s64 end_time, bool is_underwater)
 
 void prepare_and_send_sound(GmSndSample* paint_buf, s32 num_samples)
 {
-    s32 buf_size = sizeof(SvrWaveSample) * num_samples;
-
-    SvrWaveSample* buf = (SvrWaveSample*)_alloca(buf_size);
-
-    s32 volume = (s32)((SND_VOLUME * 256.0f) + 0.5f);
+    SvrWaveSample* buf = (SvrWaveSample*)_alloca(sizeof(SvrWaveSample) * num_samples);
 
     for (s32 i = 0; i < num_samples; i++)
     {
-        GmSndSample sample = paint_buf[i];
-        s32 l = (sample.left * volume) >> 8;
-        s32 r = (sample.right * volume) >> 8;
+        GmSndSample* sample = &paint_buf[i];
+        svr_clamp(&sample->left, (s32)INT16_MIN, (s32)INT16_MAX);
+        svr_clamp(&sample->right, (s32)INT16_MIN, (s32)INT16_MAX);
+    }
 
-        svr_clamp(&l, (s32)INT16_MIN, (s32)INT16_MAX);
-        svr_clamp(&r, (s32)INT16_MIN, (s32)INT16_MAX);
-
-        buf[i] = SvrWaveSample { (s16)l, (s16)r };
+    for (s32 i = 0; i < num_samples; i++)
+    {
+        GmSndSample* sample = &paint_buf[i];
+        buf[i] = SvrWaveSample { (s16)sample->left, (s16)sample->right };
     }
 
     svr_give_audio(buf, num_samples);
@@ -903,29 +897,8 @@ void __cdecl start_movie_override(void* args)
 
     else
     {
-        const char* H264_ALLOWED_EXTS[] = {
-            ".mp4",
-            ".mkv",
-            NULL
-        };
-
-        const char** ext_it = H264_ALLOWED_EXTS;
-        bool has_valid_name = true;
-
-        while (*ext_it)
-        {
-            if (!strcmpi(*ext_it, movie_ext))
-            {
-                break;
-            }
-
-            *ext_it++;
-        }
-
-        if (*ext_it == NULL)
-        {
-            has_valid_name = false;
-        }
+        // Only allowed containers that have sufficient encoder support.
+        bool has_valid_name = !strcmpi(movie_ext, ".mp4") || !strcmpi(movie_ext, ".mkv");
 
         if (!has_valid_name)
         {
@@ -949,6 +922,8 @@ void __cdecl start_movie_override(void* args)
 
     if (!svr_start(movie_name, profile, &startmovie_data))
     {
+        game_console_msg("Movie could not be started\n");
+
         // Reverse above changes if something went wrong.
         run_cfgs_for_event("end");
         goto rfail;
