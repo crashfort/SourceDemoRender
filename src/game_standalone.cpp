@@ -347,6 +347,24 @@ s64 tm_last_frame_time;
 
 s32 recording_state;
 
+// Velo is restricted to the movement based games.
+// This is done in order to increase reach for games, such as Source 2013 mods which may modify client.dll (otherwise every mod may need tailored setup).
+// We assume that those games only want the capture part of SVR.
+bool can_use_velo()
+{
+    switch (launcher_data.app_id)
+    {
+        case STEAM_GAME_CSS:
+        case STEAM_GAME_CSGO:
+        case STEAM_GAME_TF2:
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void client_command(const char* cmd)
 {
     switch (launcher_data.app_id)
@@ -372,9 +390,6 @@ s32 get_spec_target()
 {
     switch (launcher_data.app_id)
     {
-        case STEAM_GAME_ZPS:
-        case STEAM_GAME_HL2:
-        case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
@@ -394,9 +409,6 @@ void* get_player_by_idx(s32 index)
 {
     switch (launcher_data.app_id)
     {
-        case STEAM_GAME_ZPS:
-        case STEAM_GAME_HL2:
-        case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
@@ -416,9 +428,6 @@ void* get_local_player()
 {
     switch (launcher_data.app_id)
     {
-        case STEAM_GAME_ZPS:
-        case STEAM_GAME_HL2:
-        case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
@@ -457,21 +466,9 @@ float* get_player_vel(void* player)
 {
     switch (launcher_data.app_id)
     {
-        case STEAM_GAME_HL2:
-        {
-            u8* addr = (u8*)player + 240;
-            return (float*)addr;
-        }
-
         case STEAM_GAME_CSS:
         {
             u8* addr = (u8*)player + 244;
-            return (float*)addr;
-        }
-
-        case STEAM_GAME_BMS:
-        {
-            u8* addr = (u8*)player + 248;
             return (float*)addr;
         }
 
@@ -484,12 +481,6 @@ float* get_player_vel(void* player)
         case STEAM_GAME_TF2:
         {
             u8* addr = (u8*)player + 348;
-            return (float*)addr;
-        }
-
-        case STEAM_GAME_ZPS:
-        {
-            u8* addr = (u8*)player + 1068;
             return (float*)addr;
         }
 
@@ -674,7 +665,11 @@ void do_recording_frame()
         mix_audio_for_one_frame();
     }
 
-    give_player_velo();
+    if (can_use_velo())
+    {
+        give_player_velo();
+    }
+
     svr_frame();
 
     tm_num_frames++;
@@ -1214,9 +1209,6 @@ void* get_local_player_ptr()
 {
     switch (launcher_data.app_id)
     {
-        case STEAM_GAME_ZPS:
-        case STEAM_GAME_HL2:
-        case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
@@ -1395,9 +1387,6 @@ void* get_get_spec_target_fn()
 {
     switch (launcher_data.app_id)
     {
-        case STEAM_GAME_ZPS:
-        case STEAM_GAME_HL2:
-        case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
@@ -1419,9 +1408,6 @@ void* get_get_player_by_index_fn()
 {
     switch (launcher_data.app_id)
     {
-        case STEAM_GAME_ZPS:
-        case STEAM_GAME_HL2:
-        case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
@@ -1579,9 +1565,12 @@ void create_game_hooks()
     gm_engine_client_exec_cmd_fn = get_engine_client_exec_cmd_fn(gm_engine_client_ptr);
     gm_signon_state_ptr = get_signon_state_ptr();
 
-    gm_local_player_ptr = get_local_player_ptr();
-    gm_get_spec_target_fn = get_get_spec_target_fn();
-    gm_get_player_by_index_fn = get_get_player_by_index_fn();
+    if (can_use_velo())
+    {
+        gm_local_player_ptr = get_local_player_ptr();
+        gm_get_spec_target_fn = get_get_spec_target_fn();
+        gm_get_player_by_index_fn = get_get_player_by_index_fn();
+    }
 
     gm_snd_paint_time = get_snd_paint_time_ptr();
 
