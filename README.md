@@ -18,6 +18,7 @@ You can use `update.cmd` in the SVR directory to automatically download the late
 | Team Fortress 2                  | ✔
 | Zombie Panic! Source             | ✔
 | Half-Life 2                      | ✔
+| Source 2013 mods                 | ✔
 | Black Mesa                       | ✔
 
 ## Prerequisites
@@ -31,6 +32,12 @@ Use `svr_launcher.exe` to start SVR. The launcher will scan the installed Steam 
 ```
 
 Left of the equal sign is Steam app id and everything to the right are the parameters to add.
+
+It's possible to launch Source 2013 mods using this file by using the 220 app id (Half-Life 2) with a custom `-game` parameter. If a custom game parameter is used, the one specified by SVR will not be used. Do it like this:
+
+```ini
+220=-game <mod_name>
+```
 
 The following launch parameters are always used: ``-steam -insecure +sv_lan 1 -console -novid``.
 
