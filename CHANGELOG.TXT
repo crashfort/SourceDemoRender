@@ -6,6 +6,7 @@ Version 36
 * Added games Zombie Panic! Source, Half-Life 2 (and Source 2013 mods), Black Mesa.
 * Velo overlay and motion blur is now default off in default config.
 * Velo minimum font size is now 16.
+* Source 2013 mods can now be started by overriding the -game param.
 
 Supported games in this release:
 * Counter-Strike: Source
