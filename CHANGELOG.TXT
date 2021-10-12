@@ -1,3 +1,21 @@
+Version 36
+--------------------------
+
+* Fixed INI and VDF parsing skipping the last line if the file ended without a trailing newline (svr_launch_params.ini mostly).
+* Velo overlay is now restricted to the movement based games CSS, TF2 and CSGO. This is done to increase reach for Source 2013 mods which may have modified files.
+* Added games Zombie Panic! Source, Half-Life 2 (and Source 2013 mods), Black Mesa.
+* Velo overlay and motion blur is now default off in default config.
+* Velo minimum font size is now 16.
+
+Supported games in this release:
+* Counter-Strike: Source
+* Counter-Strike: Global Offensive
+* Team Fortress 2
+* Zombie Panic! Source
+* Half-Life 2
+* Source 2013 mods
+* Black Mesa
+
 Version 35, 10 October 2021
 --------------------------
 
