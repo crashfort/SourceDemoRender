@@ -790,20 +790,6 @@ bool __fastcall eng_filter_time_override2(void* p, void* edx)
     return ret;
 }
 
-bool __fastcall eng_filter_time_override3(int p, void* edx, float dt)
-{
-    bool ret = run_frame();
-
-    if (!ret)
-    {
-        using GmEngFilterTimeFn3 = bool(__fastcall*)(int p, void* edx, float dt);
-        GmEngFilterTimeFn3 org_fn = (GmEngFilterTimeFn3)eng_filter_time_hook.original;
-        ret = org_fn(p, edx, dt);
-    }
-
-    return ret;
-}
-
 // Subsitute for running exec on a cfg in the game directory. This is for running a cfg in the SVR directory.
 void run_cfg(const char* name)
 {
@@ -1325,17 +1311,17 @@ FnOverride get_eng_filter_time_override()
             break;
         }
 
+        case STEAM_GAME_BMS:
+        {
+            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 10 80 3D ?? ?? ?? ?? ?? 56");
+            ov.hook = eng_filter_time_override;
+            break;
+        }
+
         case STEAM_GAME_CSGO:
         {
             ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 0C 80 3D ?? ?? ?? ?? ?? 56");
             ov.hook = eng_filter_time_override2;
-            break;
-        }
-
-        case STEAM_GAME_BMS:
-        {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 10 80 3D ?? ?? ?? ?? ?? 56");
-            ov.hook = eng_filter_time_override3;
             break;
         }
 
