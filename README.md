@@ -16,6 +16,9 @@ You can use `update.cmd` in the SVR directory to automatically download the late
 | Counter-Strike: Source           | ✔
 | Counter-Strike: Global Offensive | ✔
 | Team Fortress 2                  | ✔
+| Zombie Panic! Source             | ✔
+| Half-Life 2                      | ✔
+| Black Mesa                       | ✔
 
 ## Prerequisites
 Any DirectX 11 (Direct3D 11.3) compatible graphics adapter with minimum of Windows 10 1909 is required. Hardware feature support verification will occur when starting the launcher.

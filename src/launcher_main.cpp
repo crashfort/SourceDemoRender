@@ -48,6 +48,9 @@ const SteamAppId GAME_APP_IDS[] = {
     STEAM_GAME_CSS,
     STEAM_GAME_CSGO,
     STEAM_GAME_TF2,
+    STEAM_GAME_ZPS,
+    STEAM_GAME_HL2,
+    STEAM_GAME_BMS,
 };
 
 // Display names shown on Steam.
@@ -55,6 +58,9 @@ const char* GAME_NAMES[] = {
     "Counter-Strike: Source", // STEAM_GAME_CSS
     "Counter-Strike: Global Offensive", // STEAM_GAME_CSGO
     "Team Fortress 2", // STEAM_GAME_TF2
+    "Zombie Panic! Source", // STEAM_GAME_ZPS
+    "Half-Life 2", // STEAM_GAME_HL2
+    "Black Mesa", // STEAM_GAME_BMS
 };
 
 // Extra stuff to put in the start args.
@@ -62,6 +68,9 @@ const char* EXTRA_GAME_ARGS[] = {
     "-game cstrike", // STEAM_GAME_CSS
     "-game csgo", // STEAM_GAME_CSGO
     "-game tf", // STEAM_GAME_TF2
+    "-game zps", // STEAM_GAME_ZPS
+    "-game hl2", // STEAM_GAME_HL2
+    "-game bms", // STEAM_GAME_BMS
 };
 
 // Paths to append to each Steam library.
@@ -69,6 +78,9 @@ const char* GAME_ROOT_DIRS[] = {
     "common\\Counter-Strike Source\\", // STEAM_GAME_CSS
     "common\\Counter-Strike Global Offensive\\", // STEAM_GAME_CSGO
     "common\\Team Fortress 2\\", // STEAM_GAME_TF2
+    "common\\Zombie Panic Source\\", // STEAM_GAME_ZPS
+    "common\\Half-Life 2\\", // STEAM_GAME_HL2
+    "common\\Black Mesa\\", // STEAM_GAME_BMS
 };
 
 // Where to find the executable built up from the Steam library path plus the game root directory (above).
@@ -76,6 +88,9 @@ const char* GAME_EXE_PATHS[] = {
     "hl2.exe", // STEAM_GAME_CSS
     "csgo.exe", // STEAM_GAME_CSGO
     "hl2.exe", // STEAM_GAME_TF2
+    "zps.exe", // STEAM_GAME_ZPS
+    "hl2.exe", // STEAM_GAME_HL2
+    "bms.exe", // STEAM_GAME_BMS
 };
 
 // Build versions that have been tested (located in the appmanifest acf).
@@ -83,6 +98,9 @@ s32 GAME_BUILDS[] = {
     6946501, // STEAM_GAME_CSS
     7498250, // STEAM_GAME_CSGO
     7504322, // STEAM_GAME_TF2
+    5972042, // STEAM_GAME_ZPS
+    4233294, // STEAM_GAME_HL2
+    4522431, // STEAM_GAME_BMS
 };
 
 const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(GAME_APP_IDS);
