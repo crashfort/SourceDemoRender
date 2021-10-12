@@ -1015,46 +1015,13 @@ void __cdecl end_movie_override(void* args)
     end_the_movie();
 }
 
-const char* ZPS_LIBS[] = {
+// If some game does not use the default convention then add a new array for that.
+
+const char* COMMON_LIBS[] = {
     "shaderapidx9.dll",
     "engine.dll",
     "tier0.dll",
     "client.dll",
-};
-
-const char* HL2_LIBS[] = {
-    "shaderapidx9.dll",
-    "engine.dll",
-    "tier0.dll",
-    "client.dll",
-};
-
-const char* BMS_LIBS[] = {
-    "shaderapidx9.dll",
-    "engine.dll",
-    "tier0.dll",
-    "client.dll",
-};
-
-const char* CSS_LIBS[] = {
-    "shaderapidx9.dll",
-    "engine.dll",
-    "tier0.dll",
-    "client.dll",
-};
-
-const char* CSGO_LIBS[] = {
-    "shaderapidx9.dll",
-    "engine.dll",
-    "tier0.dll",
-    "client.dll"
-};
-
-const char* TF2_LIBS[] = {
-    "shaderapidx9.dll",
-    "engine.dll",
-    "tier0.dll",
-    "client.dll"
 };
 
 bool wait_for_game_libs()
@@ -1065,44 +1032,14 @@ bool wait_for_game_libs()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
-        {
-            libs = ZPS_LIBS;
-            num_libs = SVR_ARRAY_SIZE(ZPS_LIBS);
-            break;
-        }
-
         case STEAM_GAME_HL2:
-        {
-            libs = HL2_LIBS;
-            num_libs = SVR_ARRAY_SIZE(HL2_LIBS);
-            break;
-        }
-
         case STEAM_GAME_BMS:
-        {
-            libs = BMS_LIBS;
-            num_libs = SVR_ARRAY_SIZE(BMS_LIBS);
-            break;
-        }
-
         case STEAM_GAME_CSS:
-        {
-            libs = CSS_LIBS;
-            num_libs = SVR_ARRAY_SIZE(CSS_LIBS);
-            break;
-        }
-
         case STEAM_GAME_CSGO:
-        {
-            libs = CSGO_LIBS;
-            num_libs = SVR_ARRAY_SIZE(CSGO_LIBS);
-            break;
-        }
-
         case STEAM_GAME_TF2:
         {
-            libs = TF2_LIBS;
-            num_libs = SVR_ARRAY_SIZE(TF2_LIBS);
+            libs = COMMON_LIBS;
+            num_libs = SVR_ARRAY_SIZE(COMMON_LIBS);
             break;
         }
 
