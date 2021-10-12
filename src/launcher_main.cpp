@@ -434,14 +434,20 @@ s32 start_game(s32 game_index)
     full_args[0] = 0;
 
     StringCchCatA(full_args, FULL_ARGS_SIZE, BASE_GAME_ARGS);
-    StringCchCatA(full_args, FULL_ARGS_SIZE, " ");
-    StringCchCatA(full_args, FULL_ARGS_SIZE, EXTRA_GAME_ARGS[game_index]);
 
     // Prioritize custom args over Steam.
 
     if (!append_custom_launch_params(game_index, full_args))
     {
         append_steam_launch_params(game_index, full_args);
+    }
+
+    // Use the written game arg if the Steam or custom launch params don't specify it.
+
+    if (strstr(full_args, "-game ") == NULL)
+    {
+        StringCchCatA(full_args, FULL_ARGS_SIZE, " ");
+        StringCchCatA(full_args, FULL_ARGS_SIZE, EXTRA_GAME_ARGS[game_index]);
     }
 
     if (game_build_id > 0)
