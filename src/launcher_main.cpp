@@ -442,12 +442,30 @@ s32 start_game(s32 game_index)
         append_steam_launch_params(game_index, full_args);
     }
 
-    // Use the written game arg if the Steam or custom launch params don't specify it.
+    // Use the written game arg if the user params don't specify it.
 
-    if (strstr(full_args, "-game ") == NULL)
+    const char* custom_game_arg = strstr(full_args, "-game ");
+
+    if (custom_game_arg == NULL)
     {
         StringCchCatA(full_args, FULL_ARGS_SIZE, " ");
         StringCchCatA(full_args, FULL_ARGS_SIZE, EXTRA_GAME_ARGS[game_index]);
+    }
+
+    else
+    {
+        char game_dir[MAX_PATH];
+        s32 used = sscanf_s(custom_game_arg, "%*s %s", game_dir, MAX_PATH - 1);
+
+        if (used == 1)
+        {
+            launcher_log("Using %s as custom game override\n", game_dir);
+        }
+
+        else
+        {
+            launcher_error("Custom -game parameter in Steam or svr_launch_params.ini is missing the value. The value should be the mod name.");
+        }
     }
 
     if (game_build_id > 0)
