@@ -242,7 +242,7 @@ void apply_patch(void* target, u8* bytes, s32 num_bytes)
 
 void* create_interface(const char* module, const char* name)
 {
-    using CreateInterfaceFn = void*(__cdecl*)(const char* name, int* code);
+    using CreateInterfaceFn = void*(__cdecl*)(const char* name, s32* code);
 
     HMODULE hmodule = GetModuleHandleA(module);
     CreateInterfaceFn fun = (CreateInterfaceFn)GetProcAddress(hmodule, "CreateInterface");
@@ -394,7 +394,7 @@ s32 get_spec_target()
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
         {
-            using GmGetSpecTargetFn = int(__cdecl*)();
+            using GmGetSpecTargetFn = s32(__cdecl*)();
             GmGetSpecTargetFn fn = (GmGetSpecTargetFn)gm_get_spec_target_fn;
             return fn();
         }
@@ -897,8 +897,6 @@ void __cdecl start_movie_override(void* args)
     }
 
     const char* value_args = get_cmd_args(args);
-
-    assert(value_args);
 
     // First argument is always startmovie.
 
