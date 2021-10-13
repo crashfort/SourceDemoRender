@@ -873,7 +873,6 @@ void find_steam_libraries()
                             return;
                         }
 
-                        char cur_lib_number[64];
                         StringCchPrintfA(cur_lib_number, 64, "%d", num_steam_libraries);
 
                         depth--;
