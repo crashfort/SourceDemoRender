@@ -2,7 +2,7 @@
 #include "svr_common.h"
 
 // Disable for releases.
-#define SVR_PROF 1
+#define SVR_PROF 0
 
 struct SvrProf
 {
