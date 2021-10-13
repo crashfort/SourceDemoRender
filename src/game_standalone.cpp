@@ -908,7 +908,7 @@ void __cdecl start_movie_override(void* args)
     char profile[MAX_PATH];
     profile[0] = 0;
 
-    s32 used_args = sscanf(value_args, "%*s %s %s", movie_name, profile);
+    s32 used_args = sscanf_s(value_args, "%*s %s %s", movie_name, MAX_PATH - 5, profile, MAX_PATH - 5);
 
     if (used_args == 0)
     {
