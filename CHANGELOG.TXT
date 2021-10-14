@@ -17,6 +17,7 @@ Supported games in this release:
 * Velo minimum font size is now 16.
 * Source 2013 mods can now be started by overriding the -game param.
 * Fixed the launcher not reading more than 2 Steam libraries.
+* Fixed CSGO spec showing the wrong player velo.
 
 Version 35, 10 October 2021
 --------------------------
