@@ -1021,7 +1021,7 @@ int main(int argc, char** argv)
     GetCurrentDirectoryA(MAX_PATH, working_dir);
 
     // For standalone mode, the launcher creates the log file that the game then appends to.
-    svr_init_log("data\\SVR_LOG.TXT", false);
+    svr_init_log("data\\SVR_LOG.txt", false);
 
     // Enable to show system information and stuff on start.
     #if 1

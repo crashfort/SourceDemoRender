@@ -1549,7 +1549,7 @@ DWORD WINAPI standalone_init_async(void* param)
     char log_file_path[MAX_PATH];
     log_file_path[0] = 0;
     StringCchCatA(log_file_path, MAX_PATH, launcher_data.svr_path);
-    StringCchCatA(log_file_path, MAX_PATH, "\\data\\SVR_LOG.TXT");
+    StringCchCatA(log_file_path, MAX_PATH, "\\data\\SVR_LOG.txt");
 
     // Append to the log file the launcher created.
     svr_init_log(log_file_path, true);
@@ -1559,7 +1559,7 @@ DWORD WINAPI standalone_init_async(void* param)
 
     if (!wait_for_game_libs())
     {
-        standalone_error("Mismatch between game version and supported SVR version. Ensure you are using the latest version of SVR and upload your SVR_LOG.TXT.");
+        standalone_error("Mismatch between game version and supported SVR version. Ensure you are using the latest version of SVR and upload your SVR_LOG.txt.");
         return 1;
     }
 
@@ -1569,7 +1569,7 @@ DWORD WINAPI standalone_init_async(void* param)
 
     if (!svr_init(launcher_data.svr_path, gm_d3d9ex_device))
     {
-        standalone_error("Could not initialize SVR.\nEnsure you are using the latest version of SVR and upload your SVR_LOG.TXT.");
+        standalone_error("Could not initialize SVR.\nEnsure you are using the latest version of SVR and upload your SVR_LOG.txt.");
         return 1;
     }
 

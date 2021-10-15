@@ -16,6 +16,13 @@ void log_function(const char* text, s32 length)
 
 void svr_init_log(const char* log_file_path, bool append)
 {
+    // If we are the launcher, we delete the log before creating it to allow changing case.
+    // Normally Windows does not allow renaming cases, so we start new.
+    if (!append)
+    {
+        DeleteFileA(log_file_path);
+    }
+
     DWORD open_flags = append ? OPEN_EXISTING : CREATE_ALWAYS;
     log_file_handle = CreateFileA(log_file_path, GENERIC_WRITE, FILE_SHARE_READ, NULL, open_flags, FILE_ATTRIBUTE_NORMAL, NULL);
 

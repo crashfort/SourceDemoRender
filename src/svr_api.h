@@ -13,7 +13,7 @@
 // 5) Call svr_stop when movie production should stop.
 
 // Programming errors are printed to the debugger output (prefixed with "SVR (<function name>):").
-// User or system errors will print messages to SVR_LOG.TXT (for standalone SVR) and/or to the game console (if available at the time of error).
+// User or system errors will print messages to SVR_LOG.txt (for standalone SVR) and/or to the game console (if available at the time of error).
 // All functions in this API must be called from the game main thread only.
 
 // Windows only.

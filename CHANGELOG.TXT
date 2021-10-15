@@ -19,6 +19,7 @@ Supported games in this release:
 * Fixed the launcher not reading more than 2 Steam libraries.
 * Fixed CSGO spec showing the wrong player velo.
 * Fix crash if wanted velo font is not installed.
+* SVR_LOG.txt now uses a lower extension so it can be embedded in Discord (but Windows is not case sensitive).
 
 Version 35, 10 October 2021
 --------------------------
