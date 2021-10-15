@@ -7,7 +7,7 @@
 #include "svr_vdf.h"
 #include "svr_ini.h"
 #include <VersionHelpers.h>
-#include "stb_sprintf.h"
+#include <stb_sprintf.h>
 #include <d3d11.h>
 
 struct FilePathA

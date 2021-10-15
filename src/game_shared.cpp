@@ -1,6 +1,6 @@
 #include "game_shared.h"
 #include <Windows.h>
-#include "stb_sprintf.h"
+#include <stb_sprintf.h>
 #include <assert.h>
 
 // CSGO doesn't have MsgV that takes a va_list. Don't make a special case for CSGO and just format ourselves.

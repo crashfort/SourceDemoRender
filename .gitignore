@@ -1,5 +1,5 @@
 .vs
-build/
+/build/
 *.dll
 *.exe
 *.sqlite
@@ -8,6 +8,7 @@ build/
 *.ipdb
 *.iobj
 *.vcxproj.user
+*.vcxproj.filters
 bin/data/shaders
 bin/data/SVR_LOG.TXT
 *.mp4

@@ -8,7 +8,7 @@
 #include <Shlwapi.h>
 #include <d3d9.h>
 #include <Psapi.h>
-#include "stb_sprintf.h"
+#include <stb_sprintf.h>
 #include <malloc.h>
 
 // Entrypoint for standalone SVR. Reverse engineered code to use the SVR API from unsupported games.

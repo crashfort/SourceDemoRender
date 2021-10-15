@@ -11,17 +11,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\deps\stb\stb_image_write.cpp" />
+    <ClCompile Include="..\deps\stb\stb_sprintf.cpp" />
     <ClCompile Include="launcher_main.cpp">
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AssemblyAndMachineCode</AssemblerOutput>
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AssemblyAndMachineCode</AssemblerOutput>
     </ClCompile>
-    <ClCompile Include="stb_sprintf.cpp" />
     <ClCompile Include="svr_ini.cpp" />
     <ClCompile Include="svr_logging.cpp" />
     <ClCompile Include="svr_vdf.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stb_sprintf.h" />
     <ClInclude Include="svr_common.h" />
     <ClInclude Include="svr_ini.h" />
     <ClInclude Include="svr_logging.h" />
@@ -93,8 +93,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <OpenMPSupport>false</OpenMPSupport>
       <EnableModules>false</EnableModules>
@@ -129,8 +128,7 @@
       <EnableModules>false</EnableModules>
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>

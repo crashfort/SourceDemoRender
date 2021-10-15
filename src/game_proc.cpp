@@ -11,7 +11,7 @@
 #include "svr_stream.h"
 #include "svr_sem.h"
 #include "game_proc_profile.h"
-#include "stb_sprintf.h"
+#include <stb_sprintf.h>
 #include "svr_api.h"
 #include <Shlwapi.h>
 
@@ -1266,7 +1266,7 @@ s32 align_up_to_8(s32 value)
 #define DUMP_VELO_ATLAS 0
 
 #if DUMP_VELO_ATLAS
-#include "stb_image_write.h"
+#include <stb_image_write.h>
 
 void dump_velo_font_atlas(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context)
 {
