@@ -14,8 +14,6 @@
 #include <stb_sprintf.h>
 #include "svr_api.h"
 #include <Shlwapi.h>
-
-// We have intrinsics disabled. The operations we do would not benefit from them.
 #include <DirectXMath.h>
 
 using namespace DirectX;
@@ -1791,7 +1789,6 @@ void draw_velo(ID3D11DeviceContext* d3d11_context, ID3D11RenderTargetView* rtv, 
     for (s32 i = 0; i < num_verts; i++)
     {
         VeloVtx& vtx = vtxs[i];
-
         XMVECTOR pos = XMLoadFloat2(&vtx.pos);
         XMVECTOR trans_pos = XMVector2Transform(pos, mat);
         XMStoreFloat2(&vtx.pos, trans_pos);
