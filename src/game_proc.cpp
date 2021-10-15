@@ -1665,7 +1665,7 @@ rexit:
 bool create_velo(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context)
 {
     bool ret = false;
-    IDWriteFontFace* font_face;
+    IDWriteFontFace* font_face = NULL;
 
     if (!create_velo_font_face(&movie_profile, &font_face))
     {
