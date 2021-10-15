@@ -137,10 +137,13 @@ void hook_function(FnOverride override, FnHook* result_hook)
     result_hook->original = orig;
 }
 
+// How many bytes there can be in a pattern scan.
+const s32 MAX_SCAN_BYTES = 256;
+
 struct ScanPattern
 {
     // Negative value means unknown byte.
-    s16 bytes[256];
+    s16 bytes[MAX_SCAN_BYTES];
     s16 used = 0;
 };
 
@@ -155,6 +158,8 @@ void pattern_bytes_from_string(const char* input, ScanPattern* out)
 
     for (; *ptr != 0; ptr++)
     {
+        assert(out->used < MAX_SCAN_BYTES);
+
         if (is_hex_char(*ptr))
         {
             assert(is_hex_char(*(ptr + 1)));
@@ -245,10 +250,10 @@ void* create_interface(const char* module, const char* name)
     using CreateInterfaceFn = void*(__cdecl*)(const char* name, s32* code);
 
     HMODULE hmodule = GetModuleHandleA(module);
-    CreateInterfaceFn fun = (CreateInterfaceFn)GetProcAddress(hmodule, "CreateInterface");
+    CreateInterfaceFn fn = (CreateInterfaceFn)GetProcAddress(hmodule, "CreateInterface");
 
     s32 code;
-    return fun(name, &code);
+    return fn(name, &code);
 }
 
 void* get_virtual(void* ptr, s32 index)
