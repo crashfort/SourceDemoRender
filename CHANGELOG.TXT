@@ -18,6 +18,7 @@ Supported games in this release:
 * Source 2013 mods can now be started by overriding the -game param.
 * Fixed the launcher not reading more than 2 Steam libraries.
 * Fixed CSGO spec showing the wrong player velo.
+* Fix crash if wanted velo font is not installed.
 
 Version 35, 10 October 2021
 --------------------------
