@@ -791,7 +791,7 @@ bool __fastcall eng_filter_time_override2(void* p, void* edx)
 }
 
 // Subsitute for running exec on a cfg in the game directory. This is for running a cfg in the SVR directory.
-void run_cfg(const char* name)
+bool run_cfg(const char* name)
 {
     char full_cfg_path[MAX_PATH];
     full_cfg_path[0] = 0;
@@ -801,6 +801,7 @@ void run_cfg(const char* name)
 
     HANDLE h = INVALID_HANDLE_VALUE;
     char* mem = NULL;
+    bool ret = false;
 
     h = CreateFileA(full_cfg_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -838,21 +839,20 @@ void run_cfg(const char* name)
     // We don't monitor what is inside the cfg, it's up to the user.
     client_command(mem);
 
+    ret = true;
     goto rexit;
 
 rfail:
 rexit:
     if (mem) free(mem);
     if (h != INVALID_HANDLE_VALUE) CloseHandle(h);
+    return ret;
 }
 
-// Run all cfgs for a given event (such as movie start or movie end).
-void run_cfgs_for_event(const char* name)
+// Run all user cfgs for a given event (such as movie start or movie end).
+void run_user_cfgs_for_event(const char* name)
 {
     char buf[MAX_PATH];
-
-    stbsp_snprintf(buf, MAX_PATH, "svr_movie_%s.cfg", name);
-    run_cfg(buf);
 
     stbsp_snprintf(buf, MAX_PATH, "svr_movie_%s_user.cfg", name);
     run_cfg(buf);
@@ -944,11 +944,19 @@ void __cdecl start_movie_override(void* args)
         }
     }
 
-    // Some commands must be set before svr_start (such as mat_queue_mode 0, due to the backbuffer ordering of below call).
-    run_cfgs_for_event("start");
+    IDirect3DSurface9* bb_surf = NULL;
+
+    // Some commands must be set before svr_start (such as mat_queue_mode 0, due to the backbuffer ordering of gm_d3d9ex_device->GetRenderTarget call).
+    // This file must always be run! Movie cannot be started otherwise!
+    if (!run_cfg("svr_movie_start.cfg"))
+    {
+        game_log("Required cfg svr_start_movie.cfg could not be run\n");
+        goto rfail;
+    }
+
+    run_user_cfgs_for_event("start");
 
     // The game backbuffer is the first index.
-    IDirect3DSurface9* bb_surf = NULL;
     gm_d3d9ex_device->GetRenderTarget(0, &bb_surf);
 
     SvrStartMovieData startmovie_data;
@@ -956,17 +964,11 @@ void __cdecl start_movie_override(void* args)
 
     if (!svr_start(movie_name, profile, &startmovie_data))
     {
-        game_console_msg("Movie could not be started\n");
-
         // Reverse above changes if something went wrong.
-        run_cfgs_for_event("end");
+        run_cfg("svr_movie_end.cfg");
+        run_user_cfgs_for_event("end");
         goto rfail;
     }
-
-    // Allow recording the next frame.
-    recording_state = RECORD_STATE_WAITING;
-
-    game_log("Starting movie to %s\n", movie_name);
 
     // Ensure the game runs at a fixed rate.
 
@@ -975,9 +977,16 @@ void __cdecl start_movie_override(void* args)
 
     client_command(hfr_buf);
 
+    // Allow recording the next frame.
+    recording_state = RECORD_STATE_WAITING;
+
+    game_log("Starting movie to %s\n", movie_name);
+
     goto rexit;
 
 rfail:
+    game_console_msg("Movie could not be started\n");
+
 rexit:
     svr_maybe_release(&bb_surf);
 }
@@ -1002,7 +1011,8 @@ void end_the_movie()
 
     svr_stop();
 
-    run_cfgs_for_event("end");
+    run_cfg("svr_movie_end.cfg");
+    run_user_cfgs_for_event("end");
 }
 
 void __cdecl end_movie_override(void* args)
