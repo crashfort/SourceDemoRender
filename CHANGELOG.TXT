@@ -20,6 +20,8 @@ Supported games in this release:
 * Fixed CSGO spec showing the wrong player velo.
 * Fix crash if wanted velo font is not installed.
 * SVR_LOG.txt now uses a lower extension so it can be embedded in Discord (but Windows is not case sensitive).
+* svr_movie_start.cfg must now always exist and be run before movie can be started.
+* Output movies folder is now created if it doesn't exist when movie starts.
 
 Version 35, 10 October 2021
 --------------------------
