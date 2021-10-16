@@ -1927,6 +1927,7 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     movie_path[0] = 0;
     StringCchCatA(movie_path, MAX_PATH, svr_resource_path);
     StringCchCatA(movie_path, MAX_PATH, "\\movies\\");
+    CreateDirectoryA(movie_path, NULL);
     StringCchCatA(movie_path, MAX_PATH, dest);
 
     if (!start_with_sw(d3d11_device))
