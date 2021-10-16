@@ -1,4 +1,6 @@
 # Source Video Render
+[![Build Status](https://github.com/crashfort/SourceDemoRender/workflows/CI/badge.svg?branch=master)](https://github.com/crashfort/SourceDemoRender/actions?query=branch:master)
+
 [Download](https://github.com/crashfort/SourceDemoRender/releases)
 
 [Discord](https://discord.gg/5t8D68c)
@@ -6,6 +8,10 @@
 Source Video Render (SVR, formely SDR) can be used to record movies for the Source engine with way higher performance than the built in `startmovie` command. SVR does not have video effects - if you need video effects, see [HLAE](https://www.advancedfx.org/).
 
 SVR can record faster than realtime for normal videos (a 3 minute video can be recorded in 42 seconds). Videos can also be created with high quality motion blur (this is a slower process).
+
+## Pre-releases
+
+You can download the latest development build from GitHub Actions. Open the topmost workflow and scroll down for Artifacts (requires GitHub account).
 
 ## Updates
 You can use `update.cmd` in the SVR directory to automatically download the latest release. The latest SVR will be downloaded to `svr.zip`. You can extract this folder and SVR is now updated.
