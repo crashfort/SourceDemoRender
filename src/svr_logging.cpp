@@ -11,7 +11,8 @@ HANDLE log_file_handle;
 void log_function(const char* text, s32 length)
 {
     assert(log_file_handle);
-    WriteFile(log_file_handle, text, length, NULL, NULL);
+    DWORD w;
+    WriteFile(log_file_handle, text, length, &w, NULL);
 }
 
 void svr_init_log(const char* log_file_path, bool append)

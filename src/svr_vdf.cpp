@@ -154,7 +154,8 @@ bool svr_open_vdf_read(const char* path, SvrVdfMem* mem)
     {
         mem->mem = malloc(large.LowPart + 1);
 
-        ReadFile(h, mem->mem, large.LowPart, NULL, NULL);
+        DWORD aa;
+        ReadFile(h, mem->mem, large.LowPart, &aa, NULL);
 
         mem->mov_str = (char*)mem->mem;
         mem->mov_str[large.LowPart] = 0;

@@ -525,6 +525,9 @@ s32 start_game(s32 game_index)
     char GAME_DLL_NAME[] = "svr_game.dll";
     char INIT_FN_NAME[] = "svr_init_standalone";
 
+    launcher_log("GAME_DLL_NAME: %s\n", GAME_DLL_NAME);
+    launcher_log("INIT_FN_NAME: %s\n", INIT_FN_NAME);
+    launcher_log("working_dir: %s\n", working_dir);
     WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, GAME_DLL_NAME, SVR_ARRAY_SIZE(GAME_DLL_NAME), &remote_written);
     structure.library_name = (char*)remote_mem + remote_write_pos;
     remote_write_pos += remote_written;
@@ -825,6 +828,8 @@ void find_steam_libraries()
 
     SvrVdfMem vdf_mem;
 
+    svr_log(full_vdf_path);
+
     if (!svr_open_vdf_read(full_vdf_path, &vdf_mem))
     {
         // Not having any extra Steam libraries is ok.
@@ -985,17 +990,12 @@ void check_hw_caps()
     svr_log("Using graphics device %x by vendor %x\n", dxgi_adapter_desc.DeviceId, dxgi_adapter_desc.VendorId);
 
     D3D11_FEATURE_DATA_FORMAT_SUPPORT2 fmt_support2;
-    fmt_support2.InFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    fmt_support2.InFormat = DXGI_FORMAT_R32_FLOAT;
     d3d11_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &fmt_support2, sizeof(D3D11_FEATURE_DATA_FORMAT_SUPPORT2));
 
     bool has_typed_uav_load = fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD;
     bool has_typed_uav_store = fmt_support2.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE;
     bool has_typed_uav_support = has_typed_uav_load && has_typed_uav_store;
-
-    if (!has_typed_uav_support)
-    {
-        launcher_error("This system does not meet the requirements to use SVR.");
-    }
 }
 
 int main(int argc, char** argv)
@@ -1025,10 +1025,6 @@ int main(int argc, char** argv)
 
     // Enable to show system information and stuff on start.
     #if 1
-    if (!IsWindows10OrGreater())
-    {
-        launcher_error("Windows 10 or later is needed to use SVR.");
-    }
 
     SYSTEMTIME lt;
     GetLocalTime(&lt);

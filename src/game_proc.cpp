@@ -376,7 +376,7 @@ UINT calc_bytes_pitch(DXGI_FORMAT format)
         case DXGI_FORMAT_R8_UINT: return 1;
         case DXGI_FORMAT_R8G8_UINT: return 2;
         case DXGI_FORMAT_R8G8B8A8_UINT: return 4;
-        case DXGI_FORMAT_R32G32B32A32_FLOAT: return 16;
+        case DXGI_FORMAT_R32_FLOAT: return 16;
     }
 
     assert(false);
@@ -729,7 +729,8 @@ DWORD WINAPI ffmpeg_thread_proc(LPVOID lpParameter)
         // Therefore it is useful to measure this.
 
         svr_start_prof(&write_prof);
-        WriteFile(ffmpeg_write_pipe, pipe_data.ptr, pipe_data.size, NULL, NULL);
+        DWORD nw;
+        WriteFile(ffmpeg_write_pipe, pipe_data.ptr, pipe_data.size, &nw, NULL);
         svr_end_prof(&write_prof);
 
         ffmpeg_read_queue.push(&pipe_data);
@@ -740,6 +741,22 @@ DWORD WINAPI ffmpeg_thread_proc(LPVOID lpParameter)
     return 0;
 }
 
+#include <stb_sprintf.h>
+static void standalone_error(const char* format, ...)
+{
+    char message[1024];
+
+    va_list va;
+    va_start(va, format);
+    stbsp_vsnprintf(message, 1024, format, va);
+    va_end(va);
+
+    svr_log("!!! ERROR: %s\n", message);
+
+    // MB_TASKMODAL or MB_APPLMODAL flags do not work.
+
+    MessageBoxA(NULL, message, "SVR", MB_ICONERROR | MB_OK);
+}
 bool load_one_shader(const char* name, void* buf, s32 buf_size, DWORD* shader_size)
 {
     char full_shader_path[MAX_PATH];
@@ -814,7 +831,7 @@ bool create_shaders(ID3D11Device* d3d11_device)
 
         if (FAILED(hr))
         {
-            svr_log("Could not create pxconv shader %d (%#x)\n", i, hr);
+            standalone_error("Could not create pxconv shader %d (%#x)\n", i, hr);
             goto rfail;
         }
     }
@@ -828,7 +845,7 @@ bool create_shaders(ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("Could not create mosample shader (%#x\n", hr);
+        standalone_error("Could not create mosample shader (%#x\n", hr);
         goto rfail;
     }
 
@@ -841,7 +858,7 @@ bool create_shaders(ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("Could not create text vertex shader (%#x\n", hr);
+        standalone_error("Could not create text vertex shader (%#x\n", hr);
         goto rfail;
     }
 
@@ -854,7 +871,7 @@ bool create_shaders(ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("Could not create text pixel shader (%#x\n", hr);
+        standalone_error("Could not create text pixel shader (%#x\n", hr);
         goto rfail;
     }
 
@@ -948,7 +965,7 @@ bool init_velo(ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("Could not create velo vertex buffer (%#x)\n", hr);
+        standalone_error("Could not create velo vertex buffer (%#x)\n", hr);
         goto rfail;
     }
 
@@ -961,7 +978,6 @@ rfail:
 rexit:
     return ret;
 }
-
 bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 {
     bool ret = false;
@@ -979,7 +995,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("ERROR: D2D1CreateFactory returned %#x\n", hr);
+        standalone_error("ERROR: D2D1CreateFactory returned %#x\n", hr);
         goto rfail;
     }
 
@@ -987,7 +1003,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("ERROR: ID2D1Factory::CreateDevice returned %#x\n", hr);
+        standalone_error("ERROR: ID2D1Factory::CreateDevice returned %#x\n", hr);
         goto rfail;
     }
 
@@ -995,7 +1011,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("ERROR: ID2D1Device::CreateDeviceContext returned %#x\n", hr);
+        standalone_error("ERROR: ID2D1Device::CreateDeviceContext returned %#x\n", hr);
         goto rfail;
     }
 
@@ -1003,7 +1019,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("ERROR: Could not create dwrite factory (#x)\n", hr);
+        standalone_error("ERROR: Could not create dwrite factory (#x)\n", hr);
         goto rfail;
     }
 
@@ -1025,7 +1041,7 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
 
     if (FAILED(hr))
     {
-        svr_log("ERROR: Could not create mosample constant buffer (%#x)\n", hr);
+        standalone_error("ERROR: Could not create mosample constant buffer (%#x)\n", hr);
         goto rfail;
     }
 
@@ -1519,6 +1535,7 @@ bool create_velo_atlas(MovieProfile* p, ID3D11Device* d3d11_device, ID3D11Device
         d2d1_context->SetTarget(bmp_rt);
         d2d1_context->BeginDraw();
 
+        /*
         for (s32 i = 0; i < NUM_VELO_NUMBERS; i++)
         {
             ID2D1Geometry* geom = geoms[i];
@@ -1567,6 +1584,7 @@ bool create_velo_atlas(MovieProfile* p, ID3D11Device* d3d11_device, ID3D11Device
             // Need to account for padding between chars.
             mat.dx += (s32)(glyph_info.width + GLYPH_INTERNAL_PADDING + 0.5f);
         }
+        */
 
         d2d1_context->EndDraw();
         d2d1_context->SetTarget(NULL);
@@ -1853,11 +1871,12 @@ bool create_audio()
 
     const DWORD WAV_PLACEHOLDER = 0;
 
-    WriteFile(wav_f, &RIFF, sizeof(DWORD), NULL, NULL);
+    DWORD nw;
+    WriteFile(wav_f, &RIFF, sizeof(DWORD), &nw, NULL);
     wav_header_pos = SetFilePointer(wav_f, 0, NULL, FILE_CURRENT);
-    WriteFile(wav_f, &WAV_PLACEHOLDER, sizeof(DWORD), NULL, NULL);
+    WriteFile(wav_f, &WAV_PLACEHOLDER, sizeof(DWORD), &nw, NULL);
 
-    WriteFile(wav_f, &WAVE, sizeof(DWORD), NULL, NULL);
+    WriteFile(wav_f, &WAVE, sizeof(DWORD), &nw, NULL);
 
     WORD channels = 2;
     WORD sample_rate = 44100;
@@ -1873,13 +1892,13 @@ bool create_audio()
 
     DWORD wfx_size = sizeof(WAVEFORMATEX);
 
-    WriteFile(wav_f, &FMT_, sizeof(DWORD), NULL, NULL);
-    WriteFile(wav_f, &wfx_size, sizeof(DWORD), NULL, NULL);
-    WriteFile(wav_f, &wfx, sizeof(WAVEFORMATEX), NULL, NULL);
+    WriteFile(wav_f, &FMT_, sizeof(DWORD), &nw, NULL);
+    WriteFile(wav_f, &wfx_size, sizeof(DWORD), &nw, NULL);
+    WriteFile(wav_f, &wfx, sizeof(WAVEFORMATEX), &nw, NULL);
 
-    WriteFile(wav_f, &DATA, sizeof(DWORD), NULL, NULL);
+    WriteFile(wav_f, &DATA, sizeof(DWORD), &nw, NULL);
     wav_data_pos = SetFilePointer(wav_f, 0, NULL, FILE_CURRENT);
-    WriteFile(wav_f, &WAV_PLACEHOLDER, sizeof(DWORD), NULL, NULL);
+    WriteFile(wav_f, &WAV_PLACEHOLDER, sizeof(DWORD), &nw, NULL);
 
     wav_file_length = SetFilePointer(wav_f, 0, NULL, FILE_CURRENT);
 
@@ -1942,7 +1961,7 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         work_tex_desc.Height = tex_desc.Height;
         work_tex_desc.MipLevels = 1;
         work_tex_desc.ArraySize = 1;
-        work_tex_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        work_tex_desc.Format = DXGI_FORMAT_R32_FLOAT;
         work_tex_desc.SampleDesc.Count = 1;
         work_tex_desc.Usage = D3D11_USAGE_DEFAULT;
         work_tex_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_RENDER_TARGET;
@@ -2172,7 +2191,8 @@ void write_wav_samples()
     wav_data_length += buf_size;
     wav_file_length += buf_size;
 
-    WriteFile(wav_f, wav_buf, buf_size, NULL, NULL);
+    DWORD nw;
+    WriteFile(wav_f, wav_buf, buf_size, &nw, NULL);
 
     wav_num_samples = 0;
 }
@@ -2209,10 +2229,11 @@ void end_audio()
     }
 
     SetFilePointer(wav_f, wav_header_pos, NULL, FILE_BEGIN);
-    WriteFile(wav_f, &wav_file_length, sizeof(DWORD), NULL, NULL);
+    DWORD nw;
+    WriteFile(wav_f, &wav_file_length, sizeof(DWORD), &nw, NULL);
 
     SetFilePointer(wav_f, wav_data_pos, NULL, FILE_BEGIN);
-    WriteFile(wav_f, &wav_data_length, sizeof(DWORD), NULL, NULL);
+    WriteFile(wav_f, &wav_data_length, sizeof(DWORD), &nw, NULL);
 
     wav_data_length = 0;
     wav_file_length = 0;

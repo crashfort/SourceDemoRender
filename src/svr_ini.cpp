@@ -118,7 +118,8 @@ bool svr_open_ini_read(const char* path, SvrIniMem* mem)
     {
         mem->mem = malloc(large.LowPart + 1);
 
-        ReadFile(h, mem->mem, large.LowPart, NULL, NULL);
+        DWORD nr;
+        ReadFile(h, mem->mem, large.LowPart, &nr, NULL);
 
         mem->mov_str = (char*)mem->mem;
         mem->mov_str[large.LowPart] = 0;

@@ -22,7 +22,7 @@ void svr_sem_release(SvrSemaphore* sem)
 
         if (prev_count == (LONG)orig_count)
         {
-            WakeByAddressSingle(&sem->count);
+            //WakeByAddressSingle(&sem->count);
             return;
         }
     }
@@ -36,7 +36,8 @@ void svr_sem_wait(SvrSemaphore* sem)
 
         while (orig_count == 0)
         {
-            WaitOnAddress(&sem->count, &orig_count, sizeof(s32), INFINITE);
+            //WaitOnAddress(&sem->count, &orig_count, sizeof(s32), INFINITE);
+            Sleep(10);
             orig_count = sem->count;
         }
 

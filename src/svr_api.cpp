@@ -57,6 +57,22 @@ void free_all_dynamic_svr_stuff()
     svr_maybe_release(&svr_content_rtv);
 }
 
+#include <stb_sprintf.h>
+static void standalone_error(const char* format, ...)
+{
+    char message[1024];
+
+    va_list va;
+    va_start(va, format);
+    stbsp_vsnprintf(message, 1024, format, va);
+    va_end(va);
+
+    svr_log("!!! ERROR: %s\n", message);
+
+    // MB_TASKMODAL or MB_APPLMODAL flags do not work.
+
+    MessageBoxA(NULL, message, "SVR", MB_ICONERROR | MB_OK);
+}
 bool svr_init(const char* svr_path, IUnknown* game_device)
 {
     bool ret = false;
@@ -66,7 +82,7 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
 
     if (svr_d3d11_device == NULL && svr_d3d9ex_device == NULL)
     {
-        OutputDebugStringA("SVR (svr_init): The passed game_device is not a D3D11 (ID3D11Device) or a D3D9Ex (IDirect3DDevice9Ex) type\n");
+        standalone_error("SVR (svr_init): The passed game_device is not a D3D11 (ID3D11Device) or a D3D9Ex (IDirect3DDevice9Ex) type\n");
         goto rfail;
     }
 
@@ -79,20 +95,20 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
 
         if (device_level < (UINT)D3D_FEATURE_LEVEL_11_0)
         {
-            OutputDebugStringA("SVR (svr_init): The game D3D11 device must be created with D3D_FEATURE_LEVEL_11_0 or higher\n");
+            standalone_error("SVR (svr_init): The game D3D11 device must be created with D3D_FEATURE_LEVEL_11_0 or higher\n");
             goto rfail;
         }
 
         if (!(device_flags & D3D11_CREATE_DEVICE_BGRA_SUPPORT))
         {
-            OutputDebugStringA("SVR (svr_init): The game D3D11 device must be created with the D3D11_CREATE_DEVICE_BGRA_SUPPORT flag\n");
+            standalone_error("SVR (svr_init): The game D3D11 device must be created with the D3D11_CREATE_DEVICE_BGRA_SUPPORT flag\n");
             goto rfail;
         }
 
         #if SVR_DEBUG
         if (device_flags & D3D11_CREATE_DEVICE_DEBUG)
         {
-            OutputDebugStringA("SVR (svr_init): The game D3D11 device has the debug layer enabled\n");
+            standalone_error("SVR (svr_init): The game D3D11 device has the debug layer enabled\n");
         }
         #endif
 
@@ -127,7 +143,7 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
 
         if (FAILED(hr))
         {
-            svr_log("ERROR: Could not create D3D11 device (%#x)\n", hr);
+            standalone_error("ERROR: Could not create D3D11 device (%#x)\n", hr);
             goto rfail;
         }
     }

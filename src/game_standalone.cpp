@@ -829,7 +829,8 @@ bool run_cfg(const char* name)
     // Commands must end with a newline, also need to terminate.
 
     mem = (char*)malloc(file_size.LowPart + 2);
-    ReadFile(h, mem, file_size.LowPart, NULL, NULL);
+    DWORD nr;
+    ReadFile(h, mem, file_size.LowPart, &nr, NULL);
     mem[file_size.LowPart - 1] = '\n';
     mem[file_size.LowPart] = 0;
 
