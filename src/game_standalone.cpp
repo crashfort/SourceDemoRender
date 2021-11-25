@@ -327,6 +327,7 @@ void* gm_snd_paint_time;
 FnHook start_movie_hook;
 FnHook end_movie_hook;
 FnHook eng_filter_time_hook;
+FnHook reset_tone_mapping_hook;
 
 FnHook snd_tx_stereo_hook;
 FnHook snd_mix_chans_hook;
@@ -1028,6 +1029,8 @@ void __cdecl end_movie_override(void* args)
     end_the_movie();
 }
 
+void __cdecl reset_tone_mapping_override(float value) { return; }
+
 // If some game does not use the default convention then add a new array for that.
 
 const char* COMMON_LIBS[] = {
@@ -1333,6 +1336,31 @@ FnOverride get_end_movie_override()
     return ov;
 }
 
+FnOverride get_reset_tone_mapping_override()
+{
+    FnOverride ov;
+
+    switch (launcher_data.app_id)
+    {
+        case STEAM_GAME_HL2:
+        {
+            ov.target = pattern_scan("client.dll", "55 8B EC 8B 0D ?? ?? ?? ?? 56 8B 01 FF 90 88 01 00 00 8B F0 85 F6 74 07 8B 06 8B CE FF 50 08 8B 06 D9 45 08");
+            ov.hook = reset_tone_mapping_override;
+            break;
+        }
+        case STEAM_GAME_BMS:
+        {
+            ov.target = pattern_scan("client.dll", "55 8B EC 8B 0D ?? ?? ?? ?? 56 8B 01 FF 90 ?? ?? ?? ?? 8B F0 85 F6 74 ?? 8B 06 8B CE FF 50 ?? 8B 06 D9 45 ?? 51 8B CE");
+            ov.hook = reset_tone_mapping_override;
+            break;
+        }
+
+        default: assert(false);
+    }
+
+    return ov;
+}
+
 void* get_get_spec_target_fn()
 {
     switch (launcher_data.app_id)
@@ -1527,6 +1555,7 @@ void create_game_hooks()
     hook_function(get_start_movie_override(), &start_movie_hook);
     hook_function(get_end_movie_override(), &end_movie_hook);
     hook_function(get_eng_filter_time_override(), &eng_filter_time_hook);
+    hook_function(get_reset_tone_mapping_override(), &reset_tone_mapping_hook);
 
     hook_function(get_snd_paint_chans_override(), &snd_mix_chans_hook);
 
