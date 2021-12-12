@@ -364,6 +364,8 @@ s64 tm_last_frame_time;
 
 s32 recording_state;
 
+bool enable_autostop;
+
 // Velo is restricted to the movement based games.
 // This is done in order to increase reach for games, such as Source 2013 mods which may modify client.dll (otherwise every mod may need tailored setup).
 // We assume that those games only want the capture part of SVR.
@@ -724,14 +726,25 @@ void update_recording_state()
 
     if (state == SIGNON_STATE_NONE)
     {
+        // Autostop.
         if (recording_state == RECORD_STATE_POSSIBLE)
         {
-            recording_state = RECORD_STATE_STOPPED;
+            if (enable_autostop)
+            {
+                recording_state = RECORD_STATE_STOPPED;
+            }
+
+            else
+            {
+                // Wait until we connect again.
+                recording_state = RECORD_STATE_WAITING;
+            }
         }
     }
 
     else if (state == SIGNON_STATE_FULL)
     {
+        // Autostart.
         if (recording_state == RECORD_STATE_WAITING)
         {
             recording_state = RECORD_STATE_POSSIBLE;
@@ -1584,6 +1597,17 @@ DWORD WINAPI standalone_init_async(void* param)
         svr_log("Not all libraries loaded in time\n");
         standalone_error("Mismatch between game version and supported SVR version. Ensure you are using the latest version of SVR and upload your SVR_LOG.txt.");
         return 1;
+    }
+
+    auto start_args = GetCommandLineA();
+
+    enable_autostop = true;
+
+    // Doesn't belong in a profile so here it is.
+    if (strstr(start_args, "-svrnoautostop"))
+    {
+        svr_log("Autostop is disabled\n");
+        enable_autostop = false;
     }
 
     MH_Initialize();
