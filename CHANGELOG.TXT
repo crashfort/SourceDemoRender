@@ -1,3 +1,20 @@
+Version 37, 12 December 2021
+--------------------------
+
+Supported games in this release:
+* Counter-Strike: Source
+* Counter-Strike: Global Offensive
+* Team Fortress 2
+* Zombie Panic! Source
+* Half-Life 2
+* Source 2013 mods
+* Black Mesa
+
+* Fixed crash in movement games if velo was not enabled and pattern was outdated.
+* Added logging information if a pattern is outdated.
+* Updated patterns for CSGO build 7866056.
+* Added start parameter -svrnoautostop that can be used to disable recording autostop when getting back to the menu. This feature allows you to record multiple demos after each other without the main menu being captured.
+
 Version 36, 17 October 2021
 --------------------------
 
