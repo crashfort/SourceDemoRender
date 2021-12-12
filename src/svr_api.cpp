@@ -282,6 +282,11 @@ void svr_frame()
     proc_frame(svr_d3d11_context, svr_content_srv, svr_content_rtv);
 }
 
+bool svr_is_velo_enabled()
+{
+    return proc_is_velo_enabled();
+}
+
 void svr_give_velocity(float* xyz)
 {
     proc_give_velocity(xyz);

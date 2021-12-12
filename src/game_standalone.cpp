@@ -670,7 +670,7 @@ void do_recording_frame()
         mix_audio_for_one_frame();
     }
 
-    if (can_use_velo())
+    if (svr_is_velo_enabled() && can_use_velo())
     {
         give_player_velo();
     }

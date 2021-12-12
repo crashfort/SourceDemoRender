@@ -2165,6 +2165,11 @@ void proc_give_velocity(float* xyz)
     memcpy(player_velo, xyz, sizeof(float) * 3);
 }
 
+bool proc_is_velo_enabled()
+{
+    return movie_profile.veloc_enabled;
+}
+
 void write_wav_samples()
 {
     s32 buf_size = sizeof(SvrWaveSample) * wav_num_samples;

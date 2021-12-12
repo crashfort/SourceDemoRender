@@ -120,6 +120,10 @@ SVR_API void svr_stop();
 // This must only be called if svr_movie_active returns true.
 SVR_API void svr_frame();
 
+// Returns if velo is enabled in the active profile.
+// Must only be called after svr_start.
+SVR_API bool svr_is_velo_enabled();
+
 // For the velocity extension, call this to give the player xyz velocity so it can be drawn to the encoded video.
 // Must be called before svr_frame.
 SVR_API void svr_give_velocity(float* xyz);
