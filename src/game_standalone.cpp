@@ -32,6 +32,36 @@ DWORD main_thread_id;
 
 // --------------------------------------------------------------------------
 
+BOOL CALLBACK EnumThreadWndProc(HWND hwnd, LPARAM lParam)
+{
+    HWND* out_hwnd = (HWND*)lParam;
+    *out_hwnd = hwnd;
+    return FALSE;
+}
+
+void standalone_error(const char* format, ...)
+{
+    char message[1024];
+
+    va_list va;
+    va_start(va, format);
+    stbsp_vsnprintf(message, 1024, format, va);
+    va_end(va);
+
+    svr_log("!!! ERROR: %s\n", message);
+
+    // MB_TASKMODAL or MB_APPLMODAL flags do not work.
+
+    HWND hwnd = NULL;
+    EnumThreadWindows(main_thread_id, EnumThreadWndProc, (LPARAM)&hwnd);
+
+    MessageBoxA(hwnd, message, "SVR", MB_ICONERROR | MB_OK);
+
+    ExitProcess(1);
+}
+
+// --------------------------------------------------------------------------
+
 s32 query_proc_modules(HANDLE proc, HMODULE* list, s32 size)
 {
     DWORD required_bytes;
@@ -222,7 +252,17 @@ void* find_pattern(void* start, s32 search_length, ScanPattern* pattern)
     return NULL;
 }
 
-void* pattern_scan(const char* module, const char* pattern)
+// A pattern scan with no match will result in NULL.
+void verify_pattern_scan(void* addr, const char* name)
+{
+    if (addr == NULL)
+    {
+        svr_log("Pattern %s had no match\n", name);
+        standalone_error("Mismatch between game version and supported SVR version. Ensure you are using the latest version of SVR and upload your SVR_LOG.txt.");
+    }
+}
+
+void* pattern_scan(const char* module, const char* pattern, const char* name)
 {
     MODULEINFO info;
     GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(module), &info, sizeof(MODULEINFO));
@@ -230,7 +270,9 @@ void* pattern_scan(const char* module, const char* pattern)
     ScanPattern pattern_bytes;
     pattern_bytes_from_string(pattern, &pattern_bytes);
 
-    return find_pattern(info.lpBaseOfDll, info.SizeOfImage, &pattern_bytes);
+    auto ret = find_pattern(info.lpBaseOfDll, info.SizeOfImage, &pattern_bytes);
+    verify_pattern_scan(ret, name);
+    return ret;
 }
 
 void apply_patch(void* target, u8* bytes, s32 num_bytes)
@@ -266,36 +308,6 @@ void* get_export(const char* module, const char* name)
 {
     HMODULE hmodule = GetModuleHandleA(module);
     return GetProcAddress(hmodule, name);
-}
-
-// --------------------------------------------------------------------------
-
-BOOL CALLBACK EnumThreadWndProc(HWND hwnd, LPARAM lParam)
-{
-    HWND* out_hwnd = (HWND*)lParam;
-    *out_hwnd = hwnd;
-    return FALSE;
-}
-
-void standalone_error(const char* format, ...)
-{
-    char message[1024];
-
-    va_list va;
-    va_start(va, format);
-    stbsp_vsnprintf(message, 1024, format, va);
-    va_end(va);
-
-    svr_log("!!! ERROR: %s\n", message);
-
-    // MB_TASKMODAL or MB_APPLMODAL flags do not work.
-
-    HWND hwnd = NULL;
-    EnumThreadWindows(main_thread_id, EnumThreadWndProc, (LPARAM)&hwnd);
-
-    MessageBoxA(hwnd, message, "SVR", MB_ICONERROR | MB_OK);
-
-    ExitProcess(1);
 }
 
 // --------------------------------------------------------------------------
@@ -1082,21 +1094,21 @@ void patch_cvar_restrict()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 58 83 3D");
+            addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 58 83 3D", __FUNCTION__);
             addr += 1;
             break;
         }
 
         case STEAM_GAME_BMS:
         {
-            addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 52 83 3D");
+            addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 52 83 3D", __FUNCTION__);
             addr += 1;
             break;
         }
 
         case STEAM_GAME_CSGO:
         {
-            addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 5D A1 ?? ?? ?? ?? 83 B8");
+            addr = (u8*)pattern_scan("engine.dll", "68 ?? ?? ?? ?? 8B 40 08 FF D0 84 C0 74 5D A1 ?? ?? ?? ?? 83 B8", __FUNCTION__);
             addr += 1;
             break;
         }
@@ -1120,7 +1132,7 @@ IDirect3DDevice9Ex* get_d3d9ex_device()
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
         {
-            u8* addr = (u8*)pattern_scan("shaderapidx9.dll", "A1 ?? ?? ?? ?? 6A 00 56 6A 00 8B 08 6A 15 68 ?? ?? ?? ?? 6A 00 6A 01 6A 01 50 FF 51 5C 85 C0 79 06 C7 06");
+            u8* addr = (u8*)pattern_scan("shaderapidx9.dll", "A1 ?? ?? ?? ?? 6A 00 56 6A 00 8B 08 6A 15 68 ?? ?? ?? ?? 6A 00 6A 01 6A 01 50 FF 51 5C 85 C0 79 06 C7 06", __FUNCTION__);
             addr += 1;
             return **(IDirect3DDevice9Ex***)addr;
         }
@@ -1162,14 +1174,14 @@ void* get_local_player_ptr()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            u8* addr = (u8*)pattern_scan("client.dll", "A3 ?? ?? ?? ?? 68 ?? ?? ?? ?? 8B 01 FF 50 ?? 8B C8 E8");
+            u8* addr = (u8*)pattern_scan("client.dll", "A3 ?? ?? ?? ?? 68 ?? ?? ?? ?? 8B 01 FF 50 ?? 8B C8 E8", __FUNCTION__);
             addr += 1;
             return addr;
         }
 
         case STEAM_GAME_CSGO:
         {
-            u8* addr = (u8*)pattern_scan("client.dll", "8B 35 ?? ?? ?? ?? 85 F6 74 2E 8B 06 8B CE FF 50 28");
+            u8* addr = (u8*)pattern_scan("client.dll", "8B 35 ?? ?? ?? ?? 85 F6 74 2E 8B 06 8B CE FF 50 28", __FUNCTION__);
             addr += 2;
             return addr;
         }
@@ -1214,14 +1226,14 @@ void* get_signon_state_ptr()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            u8* addr = (u8*)pattern_scan("engine.dll", "C7 05 ?? ?? ?? ?? ?? ?? ?? ?? 89 87 ?? ?? ?? ?? 89 87 ?? ?? ?? ?? 8B 45 08");
+            u8* addr = (u8*)pattern_scan("engine.dll", "C7 05 ?? ?? ?? ?? ?? ?? ?? ?? 89 87 ?? ?? ?? ?? 89 87 ?? ?? ?? ?? 8B 45 08", __FUNCTION__);
             addr += 2;
             return addr;
         }
 
         case STEAM_GAME_CSGO:
         {
-            u8* addr = (u8*) pattern_scan("engine.dll", "A1 ?? ?? ?? ?? 33 D2 6A 00 6A 00 33 C9 C7 80");
+            u8* addr = (u8*)pattern_scan("engine.dll", "A1 ?? ?? ?? ?? 33 D2 6A 00 6A 00 33 C9 C7 80", __FUNCTION__);
             addr += 1;
 
             void* client_state = **(void***)addr;
@@ -1248,21 +1260,21 @@ FnOverride get_eng_filter_time_override()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 51 80 3D ?? ?? ?? ?? ?? 56 8B F1 74");
+            ov.target = pattern_scan("engine.dll", "55 8B EC 51 80 3D ?? ?? ?? ?? ?? 56 8B F1 74", __FUNCTION__);
             ov.hook = eng_filter_time_override;
             break;
         }
 
         case STEAM_GAME_BMS:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 10 80 3D ?? ?? ?? ?? ?? 56");
+            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 10 80 3D ?? ?? ?? ?? ?? 56", __FUNCTION__);
             ov.hook = eng_filter_time_override;
             break;
         }
 
         case STEAM_GAME_CSGO:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 0C 80 3D ?? ?? ?? ?? ?? 56");
+            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 0C 80 3D ?? ?? ?? ?? ?? 56", __FUNCTION__);
             ov.hook = eng_filter_time_override2;
             break;
         }
@@ -1285,14 +1297,14 @@ FnOverride get_start_movie_override()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 08 83 3D ?? ?? ?? ?? ?? 0F 85");
+            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 08 83 3D ?? ?? ?? ?? ?? 0F 85", __FUNCTION__);
             ov.hook = start_movie_override;
             break;
         }
 
         case STEAM_GAME_CSGO:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 08 53 56 57 8B 7D 08 8B 1F 83 FB 02 7D 5F");
+            ov.target = pattern_scan("engine.dll", "55 8B EC 83 EC 08 53 56 57 8B 7D 08 8B 1F 83 FB 02 7D 5F", __FUNCTION__);
             ov.hook = start_movie_override;
             break;
         }
@@ -1315,14 +1327,14 @@ FnOverride get_end_movie_override()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            ov.target = pattern_scan("engine.dll", "80 3D ?? ?? ?? ?? ?? 75 0F 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 04 C3 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 C3");
+            ov.target = pattern_scan("engine.dll", "80 3D ?? ?? ?? ?? ?? 75 0F 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 04 C3 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 C3", __FUNCTION__);
             ov.hook = end_movie_override;
             break;
         }
 
         case STEAM_GAME_CSGO:
         {
-            ov.target = pattern_scan("engine.dll", "80 3D ?? ?? ?? ?? ?? 75 0F 68");
+            ov.target = pattern_scan("engine.dll", "80 3D ?? ?? ?? ?? ?? 75 0F 68", __FUNCTION__);
             ov.hook = end_movie_override;
             break;
         }
@@ -1340,12 +1352,12 @@ void* get_get_spec_target_fn()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            return pattern_scan("client.dll", "E8 ?? ?? ?? ?? 85 C0 74 16 8B 10 8B C8 FF 92 ?? ?? ?? ?? 85 C0 74 08 8D 48 08 8B 01 FF 60 24 33 C0 C3");
+            return pattern_scan("client.dll", "E8 ?? ?? ?? ?? 85 C0 74 16 8B 10 8B C8 FF 92 ?? ?? ?? ?? 85 C0 74 08 8D 48 08 8B 01 FF 60 24 33 C0 C3", __FUNCTION__);
         }
 
         case STEAM_GAME_CSGO:
         {
-            return pattern_scan("client.dll", "8B 0D ?? ?? ?? ?? 85 C9 74 14 8B 01 FF 90 ?? ?? ?? ?? 85 C0 74 08 8D 48 08 8B 01 FF 60 28 33 C0 C3");
+            return pattern_scan("client.dll", "8B 0D ?? ?? ?? ?? 85 C9 74 14 8B 01 FF 90 ?? ?? ?? ?? 85 C0 74 08 8D 48 08 8B 01 FF 60 28 33 C0 C3", __FUNCTION__);
         }
 
         default: assert(false);
@@ -1361,12 +1373,12 @@ void* get_get_player_by_index_fn()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            return pattern_scan("client.dll", "55 8B EC 8B 0D ?? ?? ?? ?? 56 FF 75 08 E8 ?? ?? ?? ?? 8B F0 85 F6 74 15 8B 16 8B CE 8B 92 ?? ?? ?? ?? FF D2 84 C0 74 05 8B C6 5E 5D C3 33 C0 5E 5D C3");
+            return pattern_scan("client.dll", "55 8B EC 8B 0D ?? ?? ?? ?? 56 FF 75 08 E8 ?? ?? ?? ?? 8B F0 85 F6 74 15 8B 16 8B CE 8B 92 ?? ?? ?? ?? FF D2 84 C0 74 05 8B C6 5E 5D C3 33 C0 5E 5D C3", __FUNCTION__);
         }
 
         case STEAM_GAME_CSGO:
         {
-            return pattern_scan("client.dll", "83 F9 01 7C ?? A1 ?? ?? ?? ?? 3B 48 ?? 7F ?? 56");
+            return pattern_scan("client.dll", "83 F9 01 7C ?? A1 ?? ?? ?? ?? 3B 48 ?? 7F ?? 56", __FUNCTION__);
         }
 
         default: assert(false);
@@ -1386,21 +1398,21 @@ FnOverride get_snd_paint_chans_override()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 33 DB 89 5D D0 89 5D D4");
+            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 33 DB 89 5D D0 89 5D D4", __FUNCTION__);
             ov.hook = snd_paint_chans_override;
             break;
         }
 
         case STEAM_GAME_BMS:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC C4 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 8B 0D");
+            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC C4 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 8B 0D", __FUNCTION__);
             ov.hook = snd_paint_chans_override;
             break;
         }
 
         case STEAM_GAME_CSGO:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? A0 ?? ?? ?? ?? 53 56 88 45 F4");
+            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? A0 ?? ?? ?? ?? 53 56 88 45 F4", __FUNCTION__);
             ov.hook = snd_paint_chans_override2;
             break;
         }
@@ -1423,7 +1435,7 @@ FnOverride get_snd_tx_stereo_override()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 51 53 56 57 E8 ?? ?? ?? ?? D8 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 0D");
+            ov.target = pattern_scan("engine.dll", "55 8B EC 51 53 56 57 E8 ?? ?? ?? ?? D8 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 0D", __FUNCTION__);
             ov.hook = snd_tx_stereo_override;
             break;
         }
@@ -1443,21 +1455,21 @@ void* get_snd_paint_time_ptr()
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
-            u8* addr = (u8*)pattern_scan("engine.dll", "2B 05 ?? ?? ?? ?? 0F 48 C1 89 45 FC 85 C0");
+            u8* addr = (u8*)pattern_scan("engine.dll", "2B 05 ?? ?? ?? ?? 0F 48 C1 89 45 FC 85 C0", __FUNCTION__);
             addr += 2;
             return addr;
         }
 
         case STEAM_GAME_BMS:
         {
-            u8* addr = (u8*)pattern_scan("engine.dll", "2B 35 ?? ?? ?? ?? 0F 48 F0");
+            u8* addr = (u8*)pattern_scan("engine.dll", "2B 35 ?? ?? ?? ?? 0F 48 F0", __FUNCTION__);
             addr += 2;
             return addr;
         }
 
         case STEAM_GAME_CSGO:
         {
-            u8* addr = (u8*)pattern_scan("engine.dll", "66 0F 13 05 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 68");
+            u8* addr = (u8*)pattern_scan("engine.dll", "66 0F 13 05 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 68", __FUNCTION__);
             addr += 4;
             return addr;
         }
@@ -1476,7 +1488,7 @@ FnOverride get_snd_device_tx_override()
     {
         case STEAM_GAME_CSGO:
         {
-            ov.target = pattern_scan("engine.dll", "53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? A1");
+            ov.target = pattern_scan("engine.dll", "53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? A1", __FUNCTION__);
             ov.hook = snd_device_tx_override;
             break;
         }
@@ -1493,7 +1505,7 @@ void* get_snd_paint_buffer()
     {
         case STEAM_GAME_CSGO:
         {
-            u8* addr = (u8*)pattern_scan("engine.dll", "8B 35 ?? ?? ?? ?? 89 45 F8 A1 ?? ?? ?? ?? 57 8B 3D ?? ?? ?? ?? 89 45 FC");
+            u8* addr = (u8*)pattern_scan("engine.dll", "8B 35 ?? ?? ?? ?? 89 45 F8 A1 ?? ?? ?? ?? 57 8B 3D ?? ?? ?? ?? 89 45 FC", __FUNCTION__);
             addr += 2;
             return addr;
         }
@@ -1507,7 +1519,7 @@ void* get_snd_paint_buffer()
 void create_game_hooks()
 {
     // It's impossible to know whether or not these will actually point to the right thing. We cannot verify it so therefore we don't.
-    // If any turns out to point to the wrong thing, we get a crash. Patterns must be updated in such case. The launcher and logwill say what
+    // If any turns out to point to the wrong thing, we get a crash. Patterns must be updated in such case. The launcher and log will say what
     // build has been started, and we know what build we have been testing against.
 
     gm_d3d9ex_device = get_d3d9ex_device();
@@ -1569,6 +1581,7 @@ DWORD WINAPI standalone_init_async(void* param)
 
     if (!wait_for_game_libs())
     {
+        svr_log("Not all libraries loaded in time\n");
         standalone_error("Mismatch between game version and supported SVR version. Ensure you are using the latest version of SVR and upload your SVR_LOG.txt.");
         return 1;
     }
@@ -1579,7 +1592,7 @@ DWORD WINAPI standalone_init_async(void* param)
 
     if (!svr_init(launcher_data.svr_path, gm_d3d9ex_device))
     {
-        standalone_error("Could not initialize SVR.\nEnsure you are using the latest version of SVR and upload your SVR_LOG.txt.");
+        standalone_error("Could not initialize SVR. Ensure you are using the latest version of SVR and upload your SVR_LOG.txt.");
         return 1;
     }
 
