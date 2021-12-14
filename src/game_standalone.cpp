@@ -465,16 +465,12 @@ void* get_active_player()
 {
     s32 spec = get_spec_target();
 
-    void* player;
+    void* player = get_local_player();
 
     if (spec > 0)
     {
-        player = get_player_by_idx(spec);
-    }
-
-    else
-    {
-        player = get_local_player();
+        auto target = get_player_by_idx(spec);
+        player = (target != 0) ? target : player;
     }
 
     return player;
