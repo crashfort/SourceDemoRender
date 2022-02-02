@@ -96,7 +96,7 @@ const char* GAME_EXE_PATHS[] = {
 // Build versions that have been tested (located in the appmanifest acf).
 s32 GAME_BUILDS[] = {
     6946501, // STEAM_GAME_CSS
-    7866056, // STEAM_GAME_CSGO
+    8128170, // STEAM_GAME_CSGO
     7504322, // STEAM_GAME_TF2
     5972042, // STEAM_GAME_ZPS
     4233294, // STEAM_GAME_HL2
