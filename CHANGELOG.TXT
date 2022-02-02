@@ -1,3 +1,17 @@
+Version 38, 2 February 2022
+---------------------------
+
+Supported games in this release:
+* Counter-Strike: Source
+* Counter-Strike: Global Offensive
+* Team Fortress 2
+* Zombie Panic! Source
+* Half-Life 2
+* Source 2013 mods
+* Black Mesa
+
+* CSGO now uses a new method for capturing player velo.
+
 Version 37, 12 December 2021
 --------------------------
 
