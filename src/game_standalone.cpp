@@ -1370,7 +1370,7 @@ void* get_get_spec_target_fn()
 
         case STEAM_GAME_CSGO:
         {
-            return pattern_scan("client.dll", "55 8B EC 8B 4D 04 8B C1 83 C0 08 8B 0D ?? ?? ?? ?? 85 C9 74 15 8B 01 FF 90 ?? ?? ?? ?? 85 C0 74 09 8D 48 08 8B 01 5D FF 60 28", __FUNCTION__);
+            return pattern_scan("client.dll", "55 8B EC 8B 4D ?? E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 85 C9 74 ?? 8B 01 FF 90 ?? ?? ?? ?? 85 C0 74 ?? 8D 48", __FUNCTION__);
         }
 
         default: assert(false);
