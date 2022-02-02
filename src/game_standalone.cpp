@@ -335,6 +335,7 @@ void* gm_local_player_ptr;
 void* gm_get_spec_target_fn;
 void* gm_get_player_by_index_fn;
 void* gm_snd_paint_time;
+void* gm_local_or_spec_player_fn;
 
 FnHook start_movie_hook;
 FnHook end_movie_hook;
@@ -463,18 +464,29 @@ void* get_local_player()
 // Return local player or spectated player (for mp games).
 void* get_active_player()
 {
-    s32 spec = get_spec_target();
+    void* player = NULL;
 
-    void* player;
-
-    if (spec > 0)
+    if (launcher_data.app_id == STEAM_GAME_CSGO)
     {
-        player = get_player_by_idx(spec);
+        using GmLocalOrSpecTargetFn = void*(__cdecl*)();
+        GmLocalOrSpecTargetFn fn = (GmLocalOrSpecTargetFn)gm_local_or_spec_player_fn;
+        player = fn();
     }
 
     else
     {
-        player = get_local_player();
+        s32 spec = get_spec_target();
+
+        if (spec > 0)
+        {
+            player = get_player_by_idx(spec);
+        }
+
+        // It's possible to be spectating someone without that player having any entity.
+        if (player == NULL)
+        {
+            player = get_local_player();
+        }
     }
 
     return player;
@@ -1180,6 +1192,21 @@ void* get_engine_client_ptr()
     return NULL;
 }
 
+void* get_local_or_spec_target_fn()
+{
+    switch (launcher_data.app_id)
+    {
+        case STEAM_GAME_CSGO:
+        {
+            return pattern_scan("client.dll", "55 8B EC 8B 4D 04 56 57 E8 ?? ?? ?? ?? 8B 35 ?? ?? ?? ?? 85 F6 74 57 8B 06 8B CE", __FUNCTION__);
+        }
+
+        default: assert(false);
+    }
+
+    return NULL;
+}
+
 void* get_local_player_ptr()
 {
     switch (launcher_data.app_id)
@@ -1543,8 +1570,17 @@ void create_game_hooks()
     if (can_use_velo())
     {
         gm_local_player_ptr = get_local_player_ptr();
-        gm_get_spec_target_fn = get_get_spec_target_fn();
-        gm_get_player_by_index_fn = get_get_player_by_index_fn();
+
+        if (launcher_data.app_id == STEAM_GAME_CSGO)
+        {
+            gm_local_or_spec_player_fn = get_local_or_spec_target_fn();
+        }
+
+        else
+        {
+            gm_get_spec_target_fn = get_get_spec_target_fn();
+            gm_get_player_by_index_fn = get_get_player_by_index_fn();
+        }
     }
 
     gm_snd_paint_time = get_snd_paint_time_ptr();
