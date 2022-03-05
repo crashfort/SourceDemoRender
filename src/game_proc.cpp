@@ -1259,12 +1259,34 @@ s32 align_up_to_8(s32 value)
     return (value + 7) & ~7;
 }
 
-// Enable this to save an image of the texture atlas to the working directory. Red and blue will be swapped in the image but
-// that's not the point.
+// Enable this to save an image of the texture atlas to the working directory.
 #define DUMP_VELO_ATLAS 0
 
 #if DUMP_VELO_ATLAS
 #include <stb_image_write.h>
+
+// STB works with RGBA, we only work with BGRA.
+void swap_bgra_rgba(u8* bytes, s32 num)
+{
+    for (s32 i = 0; i < num; i += 4)
+    {
+        u8 t = bytes[i + 0];
+        bytes[i + 0] = bytes[i + 2];
+        bytes[i + 2] = t;
+    }
+}
+
+// Images are stored in straight alpha, but we present them with premultiplied alpha blending.
+static void unpremultiply(u8* bytes, s32 num)
+{
+    for (s32 i = 0; i < num; i += 4)
+    {
+        auto a = bytes[i + 3];
+        bytes[i + 0] /= (a / 255.0f);
+        bytes[i + 1] /= (a / 255.0f);
+        bytes[i + 2] /= (a / 255.0f);
+    }
+}
 
 void dump_velo_font_atlas(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context)
 {
@@ -1299,6 +1321,9 @@ void dump_velo_font_atlas(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11
     }
 
     d3d11_context->Unmap(atlas_dl, 0);
+
+    swap_bgra_rgba(dest, atlas_desc.Width * atlas_desc.Height * 4);
+    unpremultiply(dest, atlas_desc.Width * atlas_desc.Height * 4);
 
     // Dump to working directory (should be next to the exe in standalone).
     stbi_write_png("atlas.png", atlas_desc.Width, atlas_desc.Height, 4, dest, atlas_desc.Width * 4);
@@ -1343,9 +1368,11 @@ bool create_velo_atlas(MovieProfile* p, ID3D11Device* d3d11_device, ID3D11Device
 
     DWRITE_GLYPH_METRICS glyph_metrix[NUM_VELO_NUMBERS];
     font_face->GetDesignGlyphMetrics(glyph_idxs, NUM_VELO_NUMBERS, glyph_metrix, FALSE);
+    // font_face->GetGdiCompatibleGlyphMetrics(font_size_in_dips, 1.0f, NULL, TRUE, glyph_idxs, NUM_VELO_NUMBERS, glyph_metrix, FALSE);
 
     DWRITE_FONT_METRICS font_metrix;
     font_face->GetMetrics(&font_metrix);
+    // font_face->GetGdiCompatibleMetrics(font_size_in_dips, 1.0f, NULL, &font_metrix);
 
     for (s32 i = 0; i < NUM_VELO_NUMBERS; i++)
     {
@@ -1362,10 +1389,10 @@ bool create_velo_atlas(MovieProfile* p, ID3D11Device* d3d11_device, ID3D11Device
         float aw = metrix.advanceWidth * scale;
         float ah = metrix.advanceHeight * scale;
 
-        float origin_x = (float)(l);
-        float origin_y = (float)(t - v);
-        float size_x = (float)(aw - r - l);
-        float size_y = (float)(ah - b - t);
+        float origin_x = l;
+        float origin_y = t - v;
+        float size_x = aw - r - l;
+        float size_y = ah - b - t;
 
         // Adjust for padding and move origin to top left, since the origin of a glyph is in the bottom left.
 
@@ -1492,7 +1519,7 @@ bool create_velo_atlas(MovieProfile* p, ID3D11Device* d3d11_device, ID3D11Device
         velo_atlas_tex->QueryInterface(IID_PPV_ARGS(&atlas_surf));
 
         D2D1_BITMAP_PROPERTIES1 bmp_props = {};
-        bmp_props.pixelFormat = D2D1::PixelFormat(atlas_desc.Format, D2D1_ALPHA_MODE_IGNORE);
+        bmp_props.pixelFormat = D2D1::PixelFormat(atlas_desc.Format, D2D1_ALPHA_MODE_PREMULTIPLIED);
         bmp_props.dpiX = 96;
         bmp_props.dpiY = 96;
         bmp_props.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
@@ -1544,7 +1571,7 @@ bool create_velo_atlas(MovieProfile* p, ID3D11Device* d3d11_device, ID3D11Device
             // 5) Glyph advance as a line.
             //
             // Number 1 can be disabled and the debug code in the text shader can be enabled instead (will fill the background of the glyph).
-            #if 0 && DUMP_VELO_ATLAS
+            #if 0
             d2d1_context->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
             // d2d1_context->DrawRectangle(D2D1::RectF(gob.left, gob.top, gob.right, gob.bottom), bord_brush);
             d2d1_context->DrawRectangle(D2D1::RectF(gib.left, gib.top, gib.right, gib.bottom), bord_brush);
@@ -1811,7 +1838,7 @@ void draw_velo(ID3D11DeviceContext* d3d11_context, ID3D11RenderTargetView* rtv, 
 
     // Enable to clear the game and only show the text.
     #if 0
-    float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    float clear_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     d3d11_context->ClearRenderTargetView(rtv, clear_color);
     #endif
 

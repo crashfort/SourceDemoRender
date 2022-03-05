@@ -34,7 +34,7 @@ float4 main(float2 coord : TEXCOORD0) : SV_TARGET0
     // Useful for debugging.
     // pix.a = 0.5;
 
-    return pix;
+    return float4(pix.r / pix.a, pix.g / pix.a, pix.b / pix.a, pix.a);
 }
 
 #endif
