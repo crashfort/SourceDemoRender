@@ -270,7 +270,7 @@ void* pattern_scan(const char* module, const char* pattern, const char* name)
     ScanPattern pattern_bytes;
     pattern_bytes_from_string(pattern, &pattern_bytes);
 
-    auto ret = find_pattern(info.lpBaseOfDll, info.SizeOfImage, &pattern_bytes);
+    void* ret = find_pattern(info.lpBaseOfDll, info.SizeOfImage, &pattern_bytes);
     verify_pattern_scan(ret, name);
     return ret;
 }
@@ -606,7 +606,6 @@ void give_player_velo()
 {
     void* player = get_active_player();
 
-    // Will be NULL when recording starts in main menu.
     if (player)
     {
         svr_give_velocity(get_player_vel(player));
@@ -950,7 +949,7 @@ void __cdecl start_movie_override(void* args)
 
     s32 used_args = sscanf_s(value_args, "%*s %s %s", movie_name, MAX_PATH - 5, profile, MAX_PATH - 5);
 
-    if (used_args == 0)
+    if (used_args == 0 || used_args == EOF)
     {
         game_console_msg("Usage: startmovie <name> (<optional profile>)\n");
         game_console_msg("Starts to record a movie with an optional profile\n");
@@ -1635,7 +1634,7 @@ DWORD WINAPI standalone_init_async(void* param)
         return 1;
     }
 
-    auto start_args = GetCommandLineA();
+    char* start_args = GetCommandLineA();
 
     enable_autostop = true;
 
