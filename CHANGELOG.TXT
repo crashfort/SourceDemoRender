@@ -1,3 +1,20 @@
+Version 39, 12 March 2022
+---------------------------
+
+Supported games in this release:
+* Counter-Strike: Source
+* Counter-Strike: Global Offensive
+* Team Fortress 2
+* Zombie Panic! Source
+* Half-Life 2
+* Source 2013 mods
+* Black Mesa
+
+* Fixed issue that could cause unwanted border to be added to velo.
+* Fixed issue where the velo text could jump a tiny bit when the first number changes.
+* Added option to disable audio processing that may increase performance in some circumstances.
+* Fixed issue where startmovie usage did not show.
+
 Version 38, 2 February 2022
 ---------------------------
 
