@@ -1792,10 +1792,6 @@ void draw_velo(ID3D11DeviceContext* d3d11_context, ID3D11RenderTargetView* rtv, 
     float scr_pos_x = 0;
     float scr_pos_y = 0;
 
-    // Set the baseline aligment from the first character. Is this how you want to do this? It will make the text jump slightly when the text changes and
-    // the first new character has a different baseline from the previous.
-    scr_pos_y += velo_glyph_infos[glyph_idxs[0]].origin_y;
-
     // Remove the atlas padding so we are positioned at the text origin (bottom left of the first glyph).
     scr_pos_x -= GLYPH_INTERNAL_PADDING / 2.0f;
     scr_pos_y -= GLYPH_INTERNAL_PADDING / 2.0f;
