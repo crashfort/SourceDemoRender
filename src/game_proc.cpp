@@ -1992,9 +1992,12 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         }
     }
 
-    if (!create_audio())
+    if (movie_profile.audio_enabled)
     {
-        goto rfail;
+        if (!create_audio())
+        {
+            goto rfail;
+        }
     }
 
     // We have a controlled environment until the ffmpeg thread is started.
@@ -2193,6 +2196,11 @@ bool proc_is_velo_enabled()
     return movie_profile.veloc_enabled;
 }
 
+bool proc_is_audio_enabled()
+{
+    return movie_profile.audio_enabled;
+}
+
 void write_wav_samples()
 {
     s32 buf_size = sizeof(SvrWaveSample) * wav_num_samples;
@@ -2253,7 +2261,10 @@ void proc_end()
 {
     end_ffmpeg_proc();
 
-    end_audio();
+    if (movie_profile.audio_enabled)
+    {
+        end_audio();
+    }
 
     free_all_dynamic_sw_stuff();
     free_all_dynamic_proc_stuff();

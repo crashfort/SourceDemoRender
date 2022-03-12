@@ -287,6 +287,11 @@ bool svr_is_velo_enabled()
     return proc_is_velo_enabled();
 }
 
+bool svr_is_audio_enabled()
+{
+    return proc_is_audio_enabled();
+}
+
 void svr_give_velocity(float* xyz)
 {
     proc_give_velocity(xyz);

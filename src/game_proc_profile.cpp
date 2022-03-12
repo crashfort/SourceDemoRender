@@ -252,6 +252,7 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
         else if OPT_STR_MAP("velo_font_style", p->veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
         else if OPT_STR_MAP("velo_font_weight", p->veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
         else if OPT_VEC2("velo_align", p->veloc_align)
+        else if OPT_S32("audio_enabled", p->audio_enabled, 0, 1)
     }
 
     svr_free_ini_line(&ini_line);

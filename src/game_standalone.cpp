@@ -557,6 +557,11 @@ void __cdecl snd_paint_chans_override2(s64 end_time, bool is_underwater)
 
 void prepare_and_send_sound(GmSndSample* paint_buf, s32 num_samples)
 {
+    if (!svr_is_audio_enabled())
+    {
+        return;
+    }
+
     SvrWaveSample* buf = (SvrWaveSample*)_alloca(sizeof(SvrWaveSample) * num_samples);
 
     for (s32 i = 0; i < num_samples; i++)
