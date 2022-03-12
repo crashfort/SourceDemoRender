@@ -1244,7 +1244,7 @@ void end_ffmpeg_proc()
 
 s32 to_utf16(const char* value, s32 value_length, wchar* buf, s32 buf_chars)
 {
-    auto length = MultiByteToWideChar(CP_UTF8, 0, value, value_length, buf, buf_chars);
+    s32 length = MultiByteToWideChar(CP_UTF8, 0, value, value_length, buf, buf_chars);
 
     if (length < buf_chars)
     {
@@ -1281,7 +1281,7 @@ static void unpremultiply(u8* bytes, s32 num)
 {
     for (s32 i = 0; i < num; i += 4)
     {
-        auto a = bytes[i + 3];
+        u8 a = bytes[i + 3];
         bytes[i + 0] /= (a / 255.0f);
         bytes[i + 1] /= (a / 255.0f);
         bytes[i + 2] /= (a / 255.0f);
@@ -1429,7 +1429,7 @@ bool create_velo_atlas(MovieProfile* p, ID3D11Device* d3d11_device, ID3D11Device
 
         glyph_info.width = size_x;
         glyph_info.height = size_y;
-        glyph_info.advance_x = aw;
+        glyph_info.advance_x = (s32)aw; // Always round advance down like GDI.
         glyph_info.origin_y = (s32)(origin_y + 0.5f);
     }
 
