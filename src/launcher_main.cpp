@@ -49,6 +49,7 @@ const SteamAppId GAME_APP_IDS[] = {
     STEAM_GAME_CSGO,
     STEAM_GAME_TF2,
     STEAM_GAME_ZPS,
+    STEAM_GAME_EMPIRES,
     STEAM_GAME_HL2,
     STEAM_GAME_BMS,
 };
@@ -59,6 +60,7 @@ const char* GAME_NAMES[] = {
     "Counter-Strike: Global Offensive", // STEAM_GAME_CSGO
     "Team Fortress 2", // STEAM_GAME_TF2
     "Zombie Panic! Source", // STEAM_GAME_ZPS
+    "Empires", // STEAM_GAME_EMPIRES
     "Half-Life 2", // STEAM_GAME_HL2
     "Black Mesa", // STEAM_GAME_BMS
 };
@@ -69,6 +71,7 @@ const char* EXTRA_GAME_ARGS[] = {
     "-game csgo", // STEAM_GAME_CSGO
     "-game tf", // STEAM_GAME_TF2
     "-game zps", // STEAM_GAME_ZPS
+    "-game empires", // STEAM_GAME_EMPIRES
     "-game hl2", // STEAM_GAME_HL2
     "-game bms", // STEAM_GAME_BMS
 };
@@ -79,6 +82,7 @@ const char* GAME_ROOT_DIRS[] = {
     "common\\Counter-Strike Global Offensive\\", // STEAM_GAME_CSGO
     "common\\Team Fortress 2\\", // STEAM_GAME_TF2
     "common\\Zombie Panic Source\\", // STEAM_GAME_ZPS
+    "common\\Empires\\", // STEAM_GAME_EMPIRES
     "common\\Half-Life 2\\", // STEAM_GAME_HL2
     "common\\Black Mesa\\", // STEAM_GAME_BMS
 };
@@ -89,6 +93,7 @@ const char* GAME_EXE_PATHS[] = {
     "csgo.exe", // STEAM_GAME_CSGO
     "hl2.exe", // STEAM_GAME_TF2
     "zps.exe", // STEAM_GAME_ZPS
+    "hl2.exe", // STEAM_GAME_EMPIRES
     "hl2.exe", // STEAM_GAME_HL2
     "bms.exe", // STEAM_GAME_BMS
 };
@@ -99,6 +104,7 @@ s32 GAME_BUILDS[] = {
     8128170, // STEAM_GAME_CSGO
     7504322, // STEAM_GAME_TF2
     5972042, // STEAM_GAME_ZPS
+    8658619, // STEAM_GAME_EMPIRES
     4233294, // STEAM_GAME_HL2
     4522431, // STEAM_GAME_BMS
 };
