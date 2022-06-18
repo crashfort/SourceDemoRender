@@ -377,7 +377,6 @@ bool can_use_velo()
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
-        case STEAM_GAME_EMPIRES:
         {
             return true;
         }
@@ -415,7 +414,6 @@ s32 get_spec_target()
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
-        case STEAM_GAME_EMPIRES:
         {
             using GmGetSpecTargetFn = s32(__cdecl*)();
             GmGetSpecTargetFn fn = (GmGetSpecTargetFn)gm_get_spec_target_fn;
@@ -435,7 +433,6 @@ void* get_player_by_idx(s32 index)
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
-        case STEAM_GAME_EMPIRES:
         {
             using GmPlayerByIdxFn = void*(__cdecl*)(s32 index);
             GmPlayerByIdxFn fn = (GmPlayerByIdxFn)gm_get_player_by_index_fn;
@@ -455,7 +452,6 @@ void* get_local_player()
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
-        case STEAM_GAME_EMPIRES:
         {
             return **(void***)gm_local_player_ptr;
         }
@@ -515,7 +511,6 @@ float* get_player_vel(void* player)
         }
 
         case STEAM_GAME_TF2:
-        case STEAM_GAME_EMPIRES:
         {
             u8* addr = (u8*)player + 348;
             return (float*)addr;
@@ -1229,7 +1224,6 @@ void* get_local_player_ptr()
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
-        case STEAM_GAME_EMPIRES:
         {
             u8* addr = (u8*)pattern_scan("client.dll", "A3 ?? ?? ?? ?? 68 ?? ?? ?? ?? 8B 01 FF 50 ?? 8B C8 E8", __FUNCTION__);
             addr += 1;
@@ -1413,7 +1407,6 @@ void* get_get_spec_target_fn()
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
-        case STEAM_GAME_EMPIRES:
         {
             return pattern_scan("client.dll", "E8 ?? ?? ?? ?? 85 C0 74 16 8B 10 8B C8 FF 92 ?? ?? ?? ?? 85 C0 74 08 8D 48 08 8B 01 FF 60 24 33 C0 C3", __FUNCTION__);
         }
@@ -1435,7 +1428,6 @@ void* get_get_player_by_index_fn()
     {
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
-        case STEAM_GAME_EMPIRES:
         {
             return pattern_scan("client.dll", "55 8B EC 8B 0D ?? ?? ?? ?? 56 FF 75 08 E8 ?? ?? ?? ?? 8B F0 85 F6 74 15 8B 16 8B CE 8B 92 ?? ?? ?? ?? FF D2 84 C0 74 05 8B C6 5E 5D C3 33 C0 5E 5D C3", __FUNCTION__);
         }
