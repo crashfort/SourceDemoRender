@@ -17,6 +17,7 @@ You can use `update.cmd` in the SVR directory to automatically download the late
 | Counter-Strike: Global Offensive | ✔
 | Team Fortress 2                  | ✔
 | Zombie Panic! Source             | ✔
+| Empires                          | ✔
 | Half-Life 2                      | ✔
 | Source 2013 mods                 | ✔
 | Black Mesa                       | ✔
