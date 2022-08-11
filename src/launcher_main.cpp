@@ -955,16 +955,15 @@ void check_hw_caps()
 
     UINT device_create_flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
 
-    // Should be good enough for all the features that we make use of.
+    // Use a lower feature level here than needed (we actually use 12_0) in order to get a better description
+    // of the adapter below, and also to more accurately query the hw caps.
     const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_11_0;
 
     const D3D_FEATURE_LEVEL DEVICE_LEVELS[] = {
         MINIMUM_DEVICE_LEVEL
     };
 
-    D3D_FEATURE_LEVEL created_device_level;
-
-    HRESULT hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, DEVICE_LEVELS, 1, D3D11_SDK_VERSION, &d3d11_device, &created_device_level, &d3d11_context);
+    HRESULT hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, DEVICE_LEVELS, 1, D3D11_SDK_VERSION, &d3d11_device, NULL, &d3d11_context);
 
     if (FAILED(hr))
     {

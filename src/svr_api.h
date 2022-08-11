@@ -73,7 +73,7 @@ SVR_API int svr_dll_version();
 // A reference will be added to the device.
 //
 // If game_device is a ID3D11Device, further resources will be created using it.
-// The device must be created with a feature level greater or equal to D3D_FEATURE_LEVEL_11_0 and also with the flag D3D11_CREATE_DEVICE_BGRA_SUPPORT.
+// The device must be created with a feature level greater or equal to D3D_FEATURE_LEVEL_12_0 and also with the flag D3D11_CREATE_DEVICE_BGRA_SUPPORT.
 //
 // If game_device is a IDirect3DDevice9Ex, then a new D3D11 device will be created, and additional resources will be created using both devices.
 SVR_API bool svr_init(const char* svr_path, IUnknown* game_device);

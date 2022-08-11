@@ -77,9 +77,9 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
         UINT device_flags = svr_d3d11_device->GetCreationFlags();
         UINT device_level = svr_d3d11_device->GetFeatureLevel();
 
-        if (device_level < (UINT)D3D_FEATURE_LEVEL_11_0)
+        if (device_level < (UINT)D3D_FEATURE_LEVEL_12_0)
         {
-            OutputDebugStringA("SVR (svr_init): The game D3D11 device must be created with D3D_FEATURE_LEVEL_11_0 or higher\n");
+            OutputDebugStringA("SVR (svr_init): The game D3D11 device must be created with D3D_FEATURE_LEVEL_12_0 or higher\n");
             goto rfail;
         }
 
@@ -113,7 +113,7 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
         #endif
 
         // Should be good enough for all the features that we make use of.
-        const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_11_0;
+        const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_12_0;
 
         const D3D_FEATURE_LEVEL DEVICE_LEVELS[] = {
             MINIMUM_DEVICE_LEVEL
