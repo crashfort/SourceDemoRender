@@ -33,8 +33,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{E750167E-861F-4CF4-9F5D-20F473129641}</ProjectGuid>
-    <RootNamespace>svr_launcher</RootNamespace>
+    <ProjectGuid>{15E6E706-1D2C-4CDA-8B0F-190818220AFE}</ProjectGuid>
+    <RootNamespace>svr_injector</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -67,14 +67,14 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)build\$(TargetName)-$(PlatformTarget)-$(Configuration)\</IntDir>
-    <TargetName>svr_launcher</TargetName>
+    <TargetName>svr_injector</TargetName>
     <ExcludePath>$(VcpkgRoot);$(ExcludePath)</ExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)build\$(TargetName)-$(PlatformTarget)-$(Configuration)\</IntDir>
-    <TargetName>svr_launcher</TargetName>
+    <TargetName>svr_injector</TargetName>
     <ExcludePath>$(VcpkgRoot);$(ExcludePath)</ExcludePath>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -87,7 +87,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_DEBUG;SVR_32BIT;SVR_LAUNCHER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_DEBUG;SVR_32BIT;SVR_INJECTOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -116,7 +116,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_RELEASE;SVR_32BIT;SVR_LAUNCHER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_RELEASE;SVR_32BIT;SVR_INJECTOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>

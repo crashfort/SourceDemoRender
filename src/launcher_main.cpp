@@ -9,6 +9,8 @@
 #include <VersionHelpers.h>
 #include <stb_sprintf.h>
 #include <d3d11.h>
+#include <Psapi.h>
+#include <WbemIdl.h>
 
 struct FilePathA
 {
@@ -114,6 +116,11 @@ const s32 MAX_STEAM_LIBRARIES = 32;
 bool steam_install_states[NUM_SUPPORTED_GAMES];
 s32 num_installed_games;
 
+// Supported games that are running that can be injected to.
+bool running_games[NUM_SUPPORTED_GAMES];
+HANDLE running_procs[NUM_SUPPORTED_GAMES];
+s32 num_running_games;
+
 // A Steam library can be installed anywhere, we have to iterate over all of them to see where a game is located.
 
 s32 num_steam_libraries;
@@ -121,6 +128,7 @@ FilePathA steam_library_paths[MAX_STEAM_LIBRARIES];
 
 // This is used to remap indexes when selecting games in the menu from games that are installed vs games that are supported.
 s32 steam_index_remaps[NUM_SUPPORTED_GAMES];
+s32 running_index_remaps[NUM_SUPPORTED_GAMES];
 
 // Registry stuff.
 
@@ -153,6 +161,13 @@ struct IpcStructure
 
     // What Steam game we are starting.
     SteamAppId app_id;
+};
+
+// For injection we have to do another step with a remote thread because APC will not be run like at the start of a process.
+struct IpcInjectStructure
+{
+    IpcStructure* param;
+    PAPCFUNC func;
 };
 
 // This is the function that will be injected into the target process.
@@ -224,6 +239,29 @@ const u8 REMOTE_FUNC_BYTES[] =
     0x5d,
     0xc2, 0x04, 0x00,
 };
+
+// The code that will run in the injected process.
+// It is responsible for running REMOTE_FUNC_BYTES.
+const u8 REMOTE_THREAD_FUNC_BYTES[] =
+{
+    0x55,
+    0x8b, 0xec,
+    0x8b, 0x45, 0x08,
+    0xff, 0x30,
+    0x8b, 0x40, 0x04,
+    0xff, 0xd0,
+    0x33, 0xc0,
+    0x5d,
+    0xc2, 0x04, 0x00
+};
+
+// Just call the already generated function in this thread to initialize everything else the same.
+DWORD WINAPI remote_thread_func(LPVOID param)
+{
+    IpcInjectStructure* data = (IpcInjectStructure*)param;
+    data->func((ULONG_PTR)data->param);
+    return 0;
+}
 
 const s32 FULL_ARGS_SIZE = 512;
 
@@ -408,6 +446,97 @@ void find_game_build(s32 game_index, const char* acf_path, s32* build_id)
     svr_log("Build number was not found in appmanifest of game %s\n", GAME_NAMES[game_index]);
 }
 
+void test_game_build_against_known(s32 game_index, s32 build_id)
+{
+    if (build_id > 0)
+    {
+        s32 tested_build_id = GAME_BUILDS[game_index];
+
+        if (build_id != tested_build_id)
+        {
+            launcher_log("-----------------------------\n");
+            launcher_log("WARNING: Mismatch between installed Steam build and tested SVR build. "
+                         "Steam game build is %d and tested build is %d. "
+                         "Problems may occur as this game build has not been tested!\n", build_id, tested_build_id);
+            launcher_log("-----------------------------\n");
+        }
+    }
+}
+
+void allocate_in_remote_process(s32 game_index, HANDLE process, void** remote_func_addr, void** remote_structure_addr)
+{
+    // Allocate a sufficient enough size in the target process.
+    // It needs to be able to contain all function bytes and the structure containing variable length strings.
+    // The virtual memory that we allocated should not be freed as it will be used
+    // as reference for future use within the application itself.
+    void* remote_mem = VirtualAllocEx(process, NULL, 1024, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+
+    if (remote_mem == NULL)
+    {
+        launcher_error("Could not initialize standalone SVR (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
+        TerminateProcess(process, 1);
+    }
+
+    SIZE_T remote_write_pos = 0;
+    SIZE_T remote_written = 0;
+
+    WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, REMOTE_FUNC_BYTES, sizeof(REMOTE_FUNC_BYTES), &remote_written);
+    *remote_func_addr = (void*)((char*)remote_mem + remote_write_pos);
+    remote_write_pos += remote_written;
+
+    // All addresses here must match up in the context of the target process, not our own.
+    // The operating system api functions will always be located in the same address of every
+    // process so those do not have to be adjusted.
+    IpcStructure structure;
+    IpcInjectStructure inject_structure;
+
+    structure.LoadLibraryA = LoadLibraryA;
+    structure.GetProcAddress = GetProcAddress;
+    structure.SetDllDirectoryA = SetDllDirectoryA;
+
+    char GAME_DLL_NAME[] = "svr_game.dll";
+    char INIT_FN_NAME[] = "svr_init_standalone";
+
+    char full_dll_path[MAX_PATH];
+    full_dll_path[0] = 0;
+    StringCchCatA(full_dll_path, MAX_PATH, working_dir);
+    StringCchCatA(full_dll_path, MAX_PATH, "\\");
+    StringCchCatA(full_dll_path, MAX_PATH, GAME_DLL_NAME);
+
+    WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, full_dll_path, strlen(full_dll_path) + 1, &remote_written);
+    structure.library_name = (char*)remote_mem + remote_write_pos;
+    remote_write_pos += remote_written;
+
+    WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, INIT_FN_NAME, SVR_ARRAY_SIZE(INIT_FN_NAME), &remote_written);
+    structure.export_name = (char*)remote_mem + remote_write_pos;
+    remote_write_pos += remote_written;
+
+    WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, working_dir, strlen(working_dir) + 1, &remote_written);
+    structure.svr_path = (char*)remote_mem + remote_write_pos;
+    remote_write_pos += remote_written;
+
+    structure.app_id = GAME_APP_IDS[game_index];
+
+    WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, &structure, sizeof(IpcStructure), &remote_written);
+    *remote_structure_addr = (void*)((char*)remote_mem + remote_write_pos);
+    remote_write_pos += remote_written;
+
+    // Launcher and injector uses different functions and parameters.
+
+    #if SVR_INJECTOR
+    inject_structure.func = (PAPCFUNC)*remote_func_addr;
+    inject_structure.param = (IpcStructure*)*remote_structure_addr;
+
+    WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, &inject_structure, sizeof(IpcStructure), &remote_written);
+    *remote_structure_addr = (void*)((char*)remote_mem + remote_write_pos); // Overwrite structure address.
+    remote_write_pos += remote_written;
+
+    WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, REMOTE_THREAD_FUNC_BYTES, sizeof(REMOTE_THREAD_FUNC_BYTES), &remote_written);
+    *remote_func_addr = (void*)((char*)remote_mem + remote_write_pos); // Overwrite function address.
+    remote_write_pos += remote_written;
+    #endif
+}
+
 s32 start_game(s32 game_index)
 {
     // We don't need the game directory necessarily (mods work differently) since we apply the -game parameter.
@@ -468,19 +597,7 @@ s32 start_game(s32 game_index)
         }
     }
 
-    if (game_build_id > 0)
-    {
-        s32 tested_build_id = GAME_BUILDS[game_index];
-
-        if (game_build_id != tested_build_id)
-        {
-            launcher_log("-----------------------------\n");
-            launcher_log("WARNING: Mismatch between installed Steam build and tested SVR build. "
-                         "Steam game build is %d and tested build is %d. "
-                         "Problems may occur as this game build has not been tested!\n", game_build_id, tested_build_id);
-            launcher_log("-----------------------------\n");
-        }
-    }
+    test_game_build_against_known(game_index, game_build_id);
 
     launcher_log("Starting %s (build %d). If launching doesn't work then make sure any antivirus is disabled\n", GAME_NAMES[game_index], game_build_id);
 
@@ -494,60 +611,15 @@ s32 start_game(s32 game_index)
         launcher_error("Could not start game (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
     }
 
-    // Allocate a sufficient enough size in the target process.
-    // It needs to be able to contain all function bytes and the structure containing variable length strings.
-    // The virtual memory that we allocated should not be freed as it will be used
-    // as reference for future use within the application itself.
-    void* remote_mem = VirtualAllocEx(info.hProcess, NULL, 1024, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-
-    if (remote_mem == NULL)
-    {
-        TerminateProcess(info.hProcess, 1);
-        launcher_error("Could not initialize standalone SVR (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
-    }
-
-    SIZE_T remote_write_pos = 0;
-    SIZE_T remote_written = 0;
-
-    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, REMOTE_FUNC_BYTES, sizeof(REMOTE_FUNC_BYTES), &remote_written);
-    void* remote_func_addr = (void*)((char*)remote_mem + remote_write_pos);
-    remote_write_pos += remote_written;
-
-    // All addresses here must match up in the context of the target process, not our own.
-    // The operating system api functions will always be located in the same address of every
-    // process so those do not have to be adjusted.
-    IpcStructure structure;
-
-    structure.LoadLibraryA = LoadLibraryA;
-    structure.GetProcAddress = GetProcAddress;
-    structure.SetDllDirectoryA = SetDllDirectoryA;
-
-    char GAME_DLL_NAME[] = "svr_game.dll";
-    char INIT_FN_NAME[] = "svr_init_standalone";
-
-    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, GAME_DLL_NAME, SVR_ARRAY_SIZE(GAME_DLL_NAME), &remote_written);
-    structure.library_name = (char*)remote_mem + remote_write_pos;
-    remote_write_pos += remote_written;
-
-    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, INIT_FN_NAME, SVR_ARRAY_SIZE(INIT_FN_NAME), &remote_written);
-    structure.export_name = (char*)remote_mem + remote_write_pos;
-    remote_write_pos += remote_written;
-
-    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, working_dir, strlen(working_dir) + 1, &remote_written);
-    structure.svr_path = (char*)remote_mem + remote_write_pos;
-    remote_write_pos += remote_written;
-
-    structure.app_id = GAME_APP_IDS[game_index];
-
-    WriteProcessMemory(info.hProcess, (char*)remote_mem + remote_write_pos, &structure, sizeof(IpcStructure), &remote_written);
-    void* remote_structure_addr = (void*)((char*)remote_mem + remote_write_pos);
-    remote_write_pos += remote_written;
+    void* remote_func_addr;
+    void* remote_structure_addr;
+    allocate_in_remote_process(game_index, info.hProcess, &remote_func_addr, &remote_structure_addr);
 
     // Queue up our procedural function to run instantly on the main thread when the process is resumed.
     if (!QueueUserAPC((PAPCFUNC)remote_func_addr, info.hThread, (ULONG_PTR)remote_structure_addr))
     {
-        TerminateProcess(info.hProcess, 1);
         launcher_error("Could not initialize standalone SVR (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
+        TerminateProcess(info.hProcess, 1);
     }
 
     svr_log("Launcher finished, rest of the log is from the game\n");
@@ -571,7 +643,73 @@ s32 start_game(s32 game_index)
     return 0;
 }
 
-s32 show_menu()
+s32 inject_game(s32 game_index)
+{
+    // When injecting we don't have to deal with argument appending stuff.
+
+    HANDLE game_proc = running_procs[game_index];
+
+    char full_exe_path[MAX_PATH];
+    full_exe_path[0] = 0;
+
+    char installed_game_path[MAX_PATH];
+    installed_game_path[0] = 0;
+
+    char game_acf_path[MAX_PATH];
+    game_acf_path[0] = 0;
+
+    find_game_paths(game_index, installed_game_path, game_acf_path);
+
+    s32 game_build_id = 0;
+    find_game_build(game_index, game_acf_path, &game_build_id);
+
+    test_game_build_against_known(game_index, game_build_id);
+
+    launcher_log("Injecting into %s (build %d). If injecting doesn't work then make sure any antivirus is disabled\n", GAME_NAMES[game_index], game_build_id);
+
+    void* remote_func_addr;
+    void* remote_structure_addr;
+    allocate_in_remote_process(game_index, game_proc, &remote_func_addr, &remote_structure_addr);
+
+    svr_log("Injector finished, rest of the log is from the game\n");
+    svr_log("---------------------------------------------------\n");
+
+    // Need to close the file so the game can open it.
+    svr_shutdown_log();
+
+    CreateRemoteThread(game_proc, NULL, 0, (LPTHREAD_START_ROUTINE)remote_func_addr, remote_structure_addr, 0, NULL);
+
+    return 0;
+}
+
+s32 get_choice_from_user(s32 min, s32 max)
+{
+    s32 selection = -1;
+
+    while (selection == -1)
+    {
+        char buf[4];
+        char* res = fgets(buf, 4, stdin);
+
+        if (res == NULL)
+        {
+            // Can get here from Ctrl+C.
+            return -1;
+        }
+
+        selection = strtol(buf, NULL, 10);
+
+        if (selection <= min || selection > max)
+        {
+            selection = -1;
+            continue;
+        }
+    }
+
+    return selection - 1; // Numbers displayed are 1 based.
+}
+
+s32 show_menu_for_launcher()
 {
     launcher_log("Installed games:\n");
 
@@ -586,35 +724,51 @@ s32 show_menu()
         }
     }
 
-    s32 max_usable_games = j;
-    s32 selection = -1;
-
     printf("\nSelect which game to start: ");
 
-    while (selection == -1)
+    s32 max_usable_games = j;
+    s32 selection = get_choice_from_user(0, max_usable_games);
+
+    if (selection < 0)
     {
-        char buf[4];
-        char* res = fgets(buf, 4, stdin);
-
-        if (res == NULL)
-        {
-            // Can get here from Ctrl+C.
-            return 1;
-        }
-
-        selection = strtol(buf, NULL, 10);
-
-        if (selection <= 0 || selection > max_usable_games)
-        {
-            selection = -1;
-            continue;
-        }
+        return 1;
     }
 
     // Need to remap from the installed games to the supported games.
-    s32 game_index = steam_index_remaps[selection - 1];
+    s32 game_index = steam_index_remaps[selection];
 
     return start_game(game_index);
+}
+
+s32 show_menu_for_injector()
+{
+    launcher_log("Running games:\n");
+
+    s32 j = 0;
+    for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
+    {
+        // Show indexes for the installed games, not the supported games.
+        if (running_games[i])
+        {
+            launcher_log("[%d] %s\n", j + 1, GAME_NAMES[i]);
+            j++;
+        }
+    }
+
+    printf("\nSelect which game to inject to: ");
+
+    s32 max_usable_games = j;
+    s32 selection = get_choice_from_user(0, max_usable_games);
+
+    if (selection < 0)
+    {
+        return 1;
+    }
+
+    // Need to remap from the installed games to the supported games.
+    s32 game_index = running_index_remaps[selection];
+
+    return inject_game(game_index);
 }
 
 s32 autostart_game(SteamAppId app_id)
@@ -947,6 +1101,148 @@ void find_installed_supported_games()
     }
 }
 
+bool is_process_we_care_about(DWORD pid, s32* the_game_this_is, HANDLE* the_proc)
+{
+    bool ret = false;
+    HANDLE proc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE, FALSE, pid);
+
+    if (proc == NULL)
+    {
+        return ret;
+    }
+
+    char exe_name[MAX_PATH];
+    GetProcessImageFileNameA(proc, exe_name, MAX_PATH);
+
+    for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
+    {
+        // Not enough to check for the exe, as a lot of games will just have hl2.exe and we need to get uniques.
+        if (strstr(exe_name, GAME_ROOT_DIRS[i]))
+        {
+            *the_game_this_is = i;
+            *the_proc = proc;
+            ret = true;
+            break;
+        }
+    }
+
+    if (!ret)
+    {
+        CloseHandle(proc);
+    }
+
+    return ret;
+}
+
+// We use WMI for getting process command lines just because I assume it is safer. You can get this information too by reading the process memory
+// but maybe should not do that with VAC potentially running in the process.
+
+IWbemLocator* wbem_locator = NULL;
+IWbemServices* wbem_service = NULL;
+
+// Init this once because it is used later for every running game.
+void init_crap_wmi_stuff()
+{
+    CoInitialize(NULL);
+    CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL);
+    CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wbem_locator));
+
+    wbem_locator->ConnectServer(L"ROOT\\CIMV2", NULL, NULL, 0, NULL, 0, 0, &wbem_service);
+
+    CoSetProxyBlanket(wbem_service, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
+}
+
+// We only want to be injecting into insecure games.
+bool is_game_running_insecure(DWORD pid)
+{
+    bool ret = false;
+
+    wchar query[256];
+    StringCchPrintfW(query, SVR_ARRAY_SIZE(query), L"SELECT CommandLine FROM Win32_Process WHERE ProcessId = %lu", pid);
+
+    IEnumWbemClassObject* enumerator = NULL;
+    wbem_service->ExecQuery(L"WQL", query, WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &enumerator);
+
+    IWbemClassObject* class_obj = NULL;
+    ULONG enum_ret = 0;
+
+    while (enumerator)
+    {
+        enumerator->Next(WBEM_INFINITE, 1, &class_obj, &enum_ret);
+
+        if (enum_ret == 0)
+        {
+            break;
+        }
+
+        VARIANT res_variant;
+        VariantInit(&res_variant);
+
+        class_obj->Get(L"CommandLine", 0, &res_variant, 0, 0);
+
+        if (res_variant.vt == VT_BSTR)
+        {
+            if (wcsstr(res_variant.bstrVal, L"-insecure"))
+            {
+                ret = true;
+            }
+        }
+
+        VariantClear(&res_variant);
+
+        if (ret)
+        {
+            break;
+        }
+    }
+
+    enumerator->Release();
+    class_obj->Release();
+
+    return ret;
+}
+
+void find_running_supported_games()
+{
+    DWORD pids[1024];
+    DWORD actual_size = 0;
+    EnumProcesses(pids, sizeof(pids), &actual_size);
+
+    s32 num_procs = actual_size / sizeof(DWORD);
+
+    for (s32 i = 0; i < num_procs; i++)
+    {
+        if (pids[i] == 0)
+        {
+            continue;
+        }
+
+        s32 game_this_is;
+        HANDLE game_proc;
+
+        if (!is_process_we_care_about(pids[i], &game_this_is, &game_proc))
+        {
+            continue;
+        }
+
+        if (!is_game_running_insecure(pids[i]))
+        {
+            CloseHandle(game_proc);
+            continue;
+        }
+
+        running_games[game_this_is] = true;
+        running_procs[game_this_is] = game_proc;
+        running_index_remaps[num_installed_games] = game_this_is;
+        num_running_games++;
+    }
+
+    if (num_running_games == 0)
+    {
+        launcher_error("There are no supported running games to inject to. Games must be running in insecure mode to be listed here");
+    }
+}
+
 // We cannot store this result so it has to be done every start.
 void check_hw_caps()
 {
@@ -1017,6 +1313,12 @@ int main(int argc, char** argv)
     return 0;
     #endif
 
+    // Enable this to generate the machine code for remote_thread_func (see comments at remote_func).
+    #if 0
+    CreateThread(NULL, 0, remote_thread_func, NULL, 0, NULL);
+    return 0;
+    #endif
+
     GetCurrentDirectoryA(MAX_PATH, working_dir);
 
     // For standalone mode, the launcher creates the log file that the game then appends to.
@@ -1043,12 +1345,15 @@ int main(int argc, char** argv)
     check_hw_caps();
     #endif
 
+    // We want to find Steam stuff when injecting too so we can get the same information out of the game.
+
     find_steam_path();
     find_installed_supported_games();
     find_steam_libraries();
 
     svr_log("Found %d games in %d Steam libraries\n", num_installed_games, num_steam_libraries);
 
+    #ifdef SVR_LAUNCHER
     // We delay finding which Steam library a game is in until a game has been chosen.
 
     // Autostarting a game works by giving the app id.
@@ -1064,5 +1369,14 @@ int main(int argc, char** argv)
         return autostart_game(app_id);
     }
 
-    return show_menu();
+    return show_menu_for_launcher();
+    #endif
+
+    #ifdef SVR_INJECTOR
+    init_crap_wmi_stuff();
+    find_running_supported_games();
+    return show_menu_for_injector();
+    #endif
+
+    return 0;
 }
