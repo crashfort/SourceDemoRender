@@ -10,6 +10,7 @@
 #include <Psapi.h>
 #include <stb_sprintf.h>
 #include <malloc.h>
+#include <TlHelp32.h>
 
 // Entrypoint for standalone SVR. Reverse engineered code to use the SVR API from unsupported games.
 //
@@ -1673,11 +1674,52 @@ DWORD WINAPI standalone_init_async(void* param)
 }
 
 // Called when launching by the standalone launcher. This is before the process has started, and there are no game libraries loaded here.
-extern "C" __declspec(dllexport) void svr_init_standalone(SvrGameInitData* init_data)
+extern "C" __declspec(dllexport) void svr_init_from_launcher(SvrGameInitData* init_data)
 {
     launcher_data = *init_data;
     main_thread_id = GetCurrentThreadId();
 
     // Init needs to be done async because we need to wait for the libraries to load while the game loads as normal.
     CreateThread(NULL, 0, standalone_init_async, NULL, 0, NULL);
+}
+
+DWORD find_main_thread_id()
+{
+    DWORD ret = 0;
+    DWORD pid = GetCurrentProcessId();
+
+    THREADENTRY32 entry;
+    entry.dwSize = sizeof(THREADENTRY32);
+
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
+
+    Thread32First(snap, &entry);
+
+    do
+    {
+        if (entry.th32OwnerProcessID == pid)
+        {
+            GUITHREADINFO gui_thread_info;
+            gui_thread_info.cbSize = sizeof(GUITHREADINFO);
+
+            if (GetGUIThreadInfo(entry.th32ThreadID, &gui_thread_info))
+            {
+                ret = entry.th32ThreadID;
+                break;
+            }
+        }
+    }
+    while (Thread32Next(snap, &entry));
+
+    CloseHandle(snap);
+    return ret;
+}
+
+// Called by the injector after the game has started. Most libraries are loaded here.
+extern "C" __declspec(dllexport) void svr_init_from_injector(SvrGameInitData* init_data)
+{
+    launcher_data = *init_data;
+    main_thread_id = find_main_thread_id();
+
+    standalone_init_async(NULL); // We are already in a thread, so call directly.
 }

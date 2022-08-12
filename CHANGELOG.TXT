@@ -1,3 +1,8 @@
+Version 40,
+---------------------------
+
+* Added SVR injector to inject into running games at your own risk. The injector will only find games that are running in insecure mode.
+
 Version 39, 12 March 2022
 ---------------------------
 

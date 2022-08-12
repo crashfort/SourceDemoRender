@@ -30,7 +30,7 @@ using wchar = wchar_t;
 // Should be same type from Steam API.
 using SteamAppId = u32;
 
-// Used by launcher and injector as parameter for svr_init_standalone in svr_game.dll.
+// Used by launcher and injector as parameter for the init exports in svr_game.dll (see bottom of game_standalone.cpp).
 struct SvrGameInitData
 {
     const char* svr_path;

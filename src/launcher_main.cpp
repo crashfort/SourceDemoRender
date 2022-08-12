@@ -189,7 +189,7 @@ VOID CALLBACK remote_func(ULONG_PTR param)
     // Add our resource path as searchable to resolve library dependencies.
     data->SetDllDirectoryA(data->svr_path);
 
-    // We need to call svr_init_standalone in svr_game.dll.
+    // We need to call the right export in svr_game.dll.
 
     HMODULE module = data->LoadLibraryA(data->library_name);
     InitFuncType init_func = (InitFuncType)data->GetProcAddress(module, data->export_name);
@@ -473,8 +473,10 @@ void allocate_in_remote_process(s32 game_index, HANDLE process, void** remote_fu
 
     if (remote_mem == NULL)
     {
-        launcher_error("Could not initialize standalone SVR (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
+        DWORD code = GetLastError();
         TerminateProcess(process, 1);
+        svr_log("VirtualAllocEx failed with code %lu\n", code);
+        launcher_error("Could not initialize standalone SVR. If you use an antivirus, add exception or disable.");
     }
 
     SIZE_T remote_write_pos = 0;
@@ -494,20 +496,24 @@ void allocate_in_remote_process(s32 game_index, HANDLE process, void** remote_fu
     structure.GetProcAddress = GetProcAddress;
     structure.SetDllDirectoryA = SetDllDirectoryA;
 
-    char GAME_DLL_NAME[] = "svr_game.dll";
-    char INIT_FN_NAME[] = "svr_init_standalone";
+    const char* game_dll_name = "svr_game.dll";
+    const char* init_fn_name = "svr_init_from_launcher";
+
+    #ifdef SVR_INJECTOR
+    init_fn_name = "svr_init_from_injector";
+    #endif
 
     char full_dll_path[MAX_PATH];
     full_dll_path[0] = 0;
     StringCchCatA(full_dll_path, MAX_PATH, working_dir);
     StringCchCatA(full_dll_path, MAX_PATH, "\\");
-    StringCchCatA(full_dll_path, MAX_PATH, GAME_DLL_NAME);
+    StringCchCatA(full_dll_path, MAX_PATH, game_dll_name);
 
     WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, full_dll_path, strlen(full_dll_path) + 1, &remote_written);
     structure.library_name = (char*)remote_mem + remote_write_pos;
     remote_write_pos += remote_written;
 
-    WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, INIT_FN_NAME, SVR_ARRAY_SIZE(INIT_FN_NAME), &remote_written);
+    WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, init_fn_name, strlen(init_fn_name) + 1, &remote_written);
     structure.export_name = (char*)remote_mem + remote_write_pos;
     remote_write_pos += remote_written;
 
@@ -608,7 +614,8 @@ s32 start_game(s32 game_index)
 
     if (!CreateProcessA(full_exe_path, full_args, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &start_info, &info))
     {
-        launcher_error("Could not start game (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
+        svr_log("CreateProcessA failed with code %lu\n", GetLastError());
+        launcher_error("Could not initialize standalone SVR. If you use an antivirus, add exception or disable.");
     }
 
     void* remote_func_addr;
@@ -618,8 +625,10 @@ s32 start_game(s32 game_index)
     // Queue up our procedural function to run instantly on the main thread when the process is resumed.
     if (!QueueUserAPC((PAPCFUNC)remote_func_addr, info.hThread, (ULONG_PTR)remote_structure_addr))
     {
-        launcher_error("Could not initialize standalone SVR (code %lu). If you use an antivirus, add exception or disable.", GetLastError());
+        DWORD code = GetLastError();
         TerminateProcess(info.hProcess, 1);
+        svr_log("QueueUserAPC failed with code %lu\n", code);
+        launcher_error("Could not initialize standalone SVR. If you use an antivirus, add exception or disable.");
     }
 
     svr_log("Launcher finished, rest of the log is from the game\n");
@@ -671,13 +680,31 @@ s32 inject_game(s32 game_index)
     void* remote_structure_addr;
     allocate_in_remote_process(game_index, game_proc, &remote_func_addr, &remote_structure_addr);
 
+    HANDLE remote_thread = CreateRemoteThread(game_proc, NULL, 0, (LPTHREAD_START_ROUTINE)remote_func_addr, remote_structure_addr, CREATE_SUSPENDED, NULL);
+
+    if (remote_thread == NULL)
+    {
+        svr_log("CreateRemoteThread failed with code %lu\n", GetLastError());
+        launcher_error("Could not inject into game. If you use an antivirus, add exception or disable.");
+    }
+
     svr_log("Injector finished, rest of the log is from the game\n");
     svr_log("---------------------------------------------------\n");
 
     // Need to close the file so the game can open it.
     svr_shutdown_log();
 
-    CreateRemoteThread(game_proc, NULL, 0, (LPTHREAD_START_ROUTINE)remote_func_addr, remote_structure_addr, 0, NULL);
+    // Let the injection actually start now.
+    // You want to place a breakpoint on this line when debugging the game!
+    // When this breakpoint is hit, attach to the game process and then continue this process.
+    ResumeThread(remote_thread);
+
+    CloseHandle(remote_thread);
+
+    // We don't have to wait here since we don't print to the launcher console from the game anymore.
+    // WaitForSingleObject(game_proc, INFINITE);
+
+    CloseHandle(game_proc);
 
     return 0;
 }
@@ -1083,21 +1110,7 @@ void find_installed_supported_games()
 
     if (num_installed_games == 0)
     {
-        char message[1024];
-        message[0] = 0;
-        StringCchCatA(message, 1024, "None of the supported games are installed on Steam. These are the supported games:\n\n");
-
-        for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
-        {
-            StringCchCatA(message, 1024, GAME_NAMES[i]);
-
-            if (i != NUM_SUPPORTED_GAMES)
-            {
-                StringCchCatA(message, 1024, "\n");
-            }
-        }
-
-        launcher_error(message);
+        launcher_error("None of the supported games are installed on Steam.");
     }
 }
 
@@ -1163,11 +1176,10 @@ bool is_game_running_insecure(DWORD pid)
     IEnumWbemClassObject* enumerator = NULL;
     wbem_service->ExecQuery(L"WQL", query, WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &enumerator);
 
-    IWbemClassObject* class_obj = NULL;
-    ULONG enum_ret = 0;
-
-    while (enumerator)
+    while (true)
     {
+        IWbemClassObject* class_obj = NULL;
+        ULONG enum_ret = 0;
         enumerator->Next(WBEM_INFINITE, 1, &class_obj, &enum_ret);
 
         if (enum_ret == 0)
@@ -1188,6 +1200,8 @@ bool is_game_running_insecure(DWORD pid)
             }
         }
 
+        class_obj->Release();
+
         VariantClear(&res_variant);
 
         if (ret)
@@ -1197,7 +1211,6 @@ bool is_game_running_insecure(DWORD pid)
     }
 
     enumerator->Release();
-    class_obj->Release();
 
     return ret;
 }
@@ -1239,7 +1252,7 @@ void find_running_supported_games()
 
     if (num_running_games == 0)
     {
-        launcher_error("There are no supported running games to inject to. Games must be running in insecure mode to be listed here");
+        launcher_error("There are no supported running games to inject to. Games must be running in insecure mode to be listed here.");
     }
 }
 
@@ -1263,7 +1276,8 @@ void check_hw_caps()
 
     if (FAILED(hr))
     {
-        launcher_error("HW support could not be queried (%#x). Is there a graphics adapter in the system?", hr);
+        svr_log("D3D11CreateDevice failed with code %#x\n", hr);
+        launcher_error("HW support could not be queried. Is there a graphics adapter in the system?");
     }
 
     IDXGIDevice* dxgi_device;
