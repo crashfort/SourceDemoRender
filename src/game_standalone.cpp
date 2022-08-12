@@ -391,6 +391,7 @@ void client_command(const char* cmd)
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_HL2:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
@@ -723,6 +724,7 @@ void update_recording_state()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_HL2:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
@@ -909,6 +911,7 @@ const char* get_cmd_args(void* args)
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_HL2:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
@@ -1087,6 +1090,7 @@ bool wait_for_game_libs()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_HL2:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
@@ -1120,6 +1124,7 @@ void patch_cvar_restrict()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_HL2:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1156,6 +1161,7 @@ IDirect3DDevice9Ex* get_d3d9ex_device()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_HL2:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
@@ -1178,6 +1184,7 @@ void* get_engine_client_ptr()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_HL2:
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
@@ -1242,6 +1249,7 @@ void* get_engine_client_exec_cmd_fn(void* engine_client_ptr)
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_HL2:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1267,6 +1275,7 @@ void* get_signon_state_ptr()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1302,6 +1311,7 @@ FnOverride get_eng_filter_time_override()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
@@ -1338,6 +1348,7 @@ FnOverride get_start_movie_override()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1368,6 +1379,7 @@ FnOverride get_end_movie_override()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1440,6 +1452,7 @@ FnOverride get_snd_paint_chans_override()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
@@ -1476,6 +1489,7 @@ FnOverride get_snd_tx_stereo_override()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1497,6 +1511,7 @@ void* get_snd_paint_time_ptr()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_EMPIRES:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
