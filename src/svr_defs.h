@@ -1,7 +1,7 @@
 #pragma once
 #include "svr_common.h"
 
-const s32 SVR_VERSION = 38;
+const s32 SVR_VERSION = 40;
 
 // Steam app ids of the games we support.
 const SteamAppId STEAM_GAME_HL2 = 220;
