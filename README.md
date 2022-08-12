@@ -25,7 +25,7 @@ You can use `update.cmd` in the SVR directory to automatically download the late
 Any DirectX 11 (Direct3D 11.3) compatible graphics adapter with minimum of Windows 10 1909 is required. Hardware feature support verification will occur when starting the launcher.
 
 ## Startup
-Use `svr_launcher.exe` to start SVR. The launcher will scan the installed Steam games in your system. The supported games will be listed and can be started. The launch parameters will be read from Steam so Steam must be started. If you don't want to use the launch parameters from Steam, you can create a file called `svr_launch_params.ini` in the same folder as the launcher and insert a format like this (one line per game):
+Use `svr_launcher.exe` or `svr_injector.exe` to start SVR. The launcher will scan the installed Steam games in your system. The supported games will be listed and can be started. The launch parameters will be read from Steam so Steam must be started. If you don't want to use the launch parameters from Steam, you can create a file called `svr_launch_params.ini` in the same folder as the launcher and insert a format like this (one line per game):
 
 ```ini
 240=-width 2560 -height 1440
@@ -43,6 +43,8 @@ The following launch parameters are always used: ``-steam -insecure +sv_lan 1 -c
 
 When using `svr_launcher.exe` you are starting the standalone SVR, which modifies existing games to add SVR support. SVR stores the game build which it was tested and known to work on. In case a game updates, SVR may stop working and this will be printed to `SVR_LOG.TXT`.
 
+When using `svr_injector.exe` you can start SVR in an already running game. The injector will only list the supported games that are running in insecure mode. **This is an unsupported method as there is no compatibility with interoperability between different applications. You may get unexpected results or crashes.** When injecting you will not be able to specify the launch parameters.
+
 ## Recording
 Once in game, you can use the `startmovie` console command to start recording a movie and `endmovie` to stop. The `startmovie` command takes 1 or 2 parameters in this format: `startmovie <name> (<profile>)`. The *name* is the filename of the movie which will be located in `data/`. **If the name does not contain an extension (container), mp4 will automatically be selected.**. The *profile* is an optional parameter that decides which settings this movie will use. If not specified, the default profile is used (see Profiles below about profiles).
 
@@ -58,7 +60,7 @@ The execution order of the cfgs is as follows: `svr_movie_start.cfg` > `svr_movi
 If something is not working properly, please find the `SVR_LOG.TXT` file in the `data/` directory of SVR and explain what you were doing and upload it to [Discord](https://discord.gg/5t8D68c).
 
 ## Interoperability with other programs
-Due to the nature of reverse engineering games, it cannot be trusted that direct interoperability (with ReShade or HLAE for example) will work because at the risk of collision.
+Due to the nature of reverse engineering games, it cannot be trusted that direct interoperability (with ReShade or HLAE for example) will work because at the risk of collision. You can use `svr_injector.exe` at your own risk, but this is unsupported.
 
 ## Profiles
 All recording settings are loaded from profiles which are located in `data/profiles`. The default profile is called `default.ini` and is the profile that will be used in case none is specified when starting a movie. These profiles are shared across all games. The settings of a profile is described below. All profiles are written in a simple INI format.
