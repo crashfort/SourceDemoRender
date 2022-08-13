@@ -19,8 +19,11 @@ You can use `update.cmd` in the SVR directory to automatically download the late
 | Zombie Panic! Source             | ✔
 | Empires                          | ✔
 | Half-Life 2                      | ✔
-| Source 2013 mods                 | ✔
+| Half-Life 2: Deathmatch          | ✔
+| Source 2013 SP mods              | ✔
+| Synergy                          | ✔
 | Black Mesa                       | ✔
+| Hunt Down The Freeman            | ✔
 
 ## Prerequisites
 Any DirectX 11 (Direct3D 11.3) compatible graphics adapter with minimum of Windows 10 1909 is required. Hardware feature support verification will occur when starting the launcher.
@@ -34,7 +37,7 @@ Use `svr_launcher.exe` or `svr_injector.exe` to start SVR. The launcher will sca
 
 Left of the equal sign is Steam app id and everything to the right are the parameters to add.
 
-It's possible to launch Source 2013 mods using this file by using the 220 app id (Half-Life 2) with a custom `-game` parameter. If a custom game parameter is used, the one specified by SVR will not be used. Do it like this:
+It's possible to launch Source 2013 SP mods using this file by using the 220 app id (Half-Life 2) with a custom `-game` parameter. If a custom game parameter is used, the one specified by SVR will not be used. Do it like this:
 
 ```ini
 220=-game <mod_name>

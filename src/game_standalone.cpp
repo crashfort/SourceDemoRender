@@ -392,7 +392,10 @@ void client_command(const char* cmd)
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
@@ -725,7 +728,10 @@ void update_recording_state()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -912,7 +918,10 @@ const char* get_cmd_args(void* args)
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
@@ -1091,7 +1100,10 @@ bool wait_for_game_libs()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
@@ -1125,7 +1137,10 @@ void patch_cvar_restrict()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
@@ -1162,7 +1177,10 @@ IDirect3DDevice9Ex* get_d3d9ex_device()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
@@ -1185,7 +1203,10 @@ void* get_engine_client_ptr()
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_CSS:
         case STEAM_GAME_CSGO:
         case STEAM_GAME_TF2:
@@ -1250,7 +1271,10 @@ void* get_engine_client_exec_cmd_fn(void* engine_client_ptr)
     {
         case STEAM_GAME_ZPS:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
@@ -1274,8 +1298,11 @@ void* get_signon_state_ptr()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1310,8 +1337,11 @@ FnOverride get_eng_filter_time_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
@@ -1347,8 +1377,11 @@ FnOverride get_start_movie_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1378,8 +1411,11 @@ FnOverride get_end_movie_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1451,12 +1487,21 @@ FnOverride get_snd_paint_chans_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_HL2DM:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
             ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 33 DB 89 5D D0 89 5D D4", __FUNCTION__);
+            ov.hook = snd_paint_chans_override;
+            break;
+        }
+
+        case STEAM_GAME_HDTF:
+        {
+            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 33 DB 89 5D C8 89 5D CC", __FUNCTION__);
             ov.hook = snd_paint_chans_override;
             break;
         }
@@ -1488,8 +1533,11 @@ FnOverride get_snd_tx_stereo_override()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_BMS:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
@@ -1510,8 +1558,11 @@ void* get_snd_paint_time_ptr()
     switch (launcher_data.app_id)
     {
         case STEAM_GAME_ZPS:
+        case STEAM_GAME_SYNERGY:
         case STEAM_GAME_HL2:
         case STEAM_GAME_EMPIRES:
+        case STEAM_GAME_HL2DM:
+        case STEAM_GAME_HDTF:
         case STEAM_GAME_CSS:
         case STEAM_GAME_TF2:
         {
