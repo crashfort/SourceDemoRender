@@ -52,8 +52,11 @@ const SteamAppId GAME_APP_IDS[] = {
     STEAM_GAME_TF2,
     STEAM_GAME_ZPS,
     STEAM_GAME_EMPIRES,
+    STEAM_GAME_SYNERGY,
     STEAM_GAME_HL2,
+    STEAM_GAME_HL2DM,
     STEAM_GAME_BMS,
+    STEAM_GAME_HDTF,
 };
 
 // Display names shown on Steam.
@@ -63,8 +66,11 @@ const char* GAME_NAMES[] = {
     "Team Fortress 2", // STEAM_GAME_TF2
     "Zombie Panic! Source", // STEAM_GAME_ZPS
     "Empires", // STEAM_GAME_EMPIRES
+    "Synergy", // STEAM_GAME_SYNERGY
     "Half-Life 2", // STEAM_GAME_HL2
+    "Half-Life 2: Deathmatch", // STEAM_GAME_HL2DM
     "Black Mesa", // STEAM_GAME_BMS
+    "Hunt Down The Freeman", // STEAM_GAME_HDTF
 };
 
 // Extra stuff to put in the start args.
@@ -74,8 +80,11 @@ const char* EXTRA_GAME_ARGS[] = {
     "-game tf", // STEAM_GAME_TF2
     "-game zps", // STEAM_GAME_ZPS
     "-game empires", // STEAM_GAME_EMPIRES
+    "-game synergy", // STEAM_GAME_SYNERGY
     "-game hl2", // STEAM_GAME_HL2
+    "-game hl2mp", // STEAM_GAME_HL2DM
     "-game bms", // STEAM_GAME_BMS
+    "-game hdtf", // STEAM_GAME_HDTF
 };
 
 // Paths to append to each Steam library.
@@ -85,8 +94,11 @@ const char* GAME_ROOT_DIRS[] = {
     "common\\Team Fortress 2\\", // STEAM_GAME_TF2
     "common\\Zombie Panic Source\\", // STEAM_GAME_ZPS
     "common\\Empires\\", // STEAM_GAME_EMPIRES
+    "common\\Synergy\\", // STEAM_GAME_SYNERGY
     "common\\Half-Life 2\\", // STEAM_GAME_HL2
+    "common\\Half-Life 2 Deathmatch\\", // STEAM_GAME_HL2DM
     "common\\Black Mesa\\", // STEAM_GAME_BMS
+    "common\\Hunt Down The Freeman\\", // STEAM_GAME_HDTF
 };
 
 // Where to find the executable built up from the Steam library path plus the game root directory (above).
@@ -96,8 +108,11 @@ const char* GAME_EXE_PATHS[] = {
     "hl2.exe", // STEAM_GAME_TF2
     "zps.exe", // STEAM_GAME_ZPS
     "hl2.exe", // STEAM_GAME_EMPIRES
+    "synergy.exe", // STEAM_GAME_SYNERGY
     "hl2.exe", // STEAM_GAME_HL2
+    "hl2.exe", // STEAM_GAME_HL2DM
     "bms.exe", // STEAM_GAME_BMS
+    "hdtf.exe", // STEAM_GAME_HDTF
 };
 
 // Build versions that have been tested (located in the appmanifest acf).
@@ -107,8 +122,11 @@ s32 GAME_BUILDS[] = {
     7504322, // STEAM_GAME_TF2
     5972042, // STEAM_GAME_ZPS
     8658619, // STEAM_GAME_EMPIRES
+    791804, // STEAM_GAME_SYNERGY
     4233294, // STEAM_GAME_HL2
+    6935373, // STEAM_GAME_HL2DM
     4522431, // STEAM_GAME_BMS
+    2604730, // STEAM_GAME_HDTF
 };
 
 const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(GAME_APP_IDS);
