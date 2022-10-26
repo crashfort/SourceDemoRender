@@ -1,7 +1,23 @@
-Version 40,
+Version 40, 26 October 2022
 ---------------------------
 
+Supported games in this release:
+* Counter-Strike: Source
+* Counter-Strike: Global Offensive
+* Team Fortress 2
+* Zombie Panic! Source
+* Half-Life 2
+* Source 2013 mods
+* Black Mesa
+* Half-Life 2: Deathmatch
+* Synergy
+* Hunt Down The Freeman
+* Empires
+
 * Added SVR injector to inject into running games at your own risk. The injector will only find games that are running in insecure mode.
+* Fixed sound address in latest CSGO update (@SmileyAG)
+* New games added (@SmileyAG, @Neoony)
+* Updated FFmpeg binaries to 5.1.2
 
 Version 39, 12 March 2022
 ---------------------------
