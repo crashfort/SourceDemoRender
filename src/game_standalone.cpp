@@ -1515,7 +1515,7 @@ FnOverride get_snd_paint_chans_override()
 
         case STEAM_GAME_CSGO:
         {
-            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? A0 ?? ?? ?? ?? 53 56 88 45 F4", __FUNCTION__);
+            ov.target = pattern_scan("engine.dll", "55 8B EC 81 EC ?? ?? ?? ?? A0 ?? ?? ?? ?? 53 56 88 45 ?? A1", __FUNCTION__);
             ov.hook = snd_paint_chans_override2;
             break;
         }
