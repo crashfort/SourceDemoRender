@@ -1530,8 +1530,8 @@ bool create_velo_atlas(MovieProfile* p, ID3D11Device* d3d11_device, ID3D11Device
         s32* p_font_color = p->veloc_font_color;
         s32* p_bord_color = p->veloc_font_border_color;
 
-        D2D1_COLOR_F font_color = D2D1::ColorF(p_font_color[0] / 255.0f, p_font_color[1] / 255.0f, p_font_color[2] / 255.0f);
-        D2D1_COLOR_F bord_color = D2D1::ColorF(p_bord_color[0] / 255.0f, p_bord_color[1] / 255.0f, p_bord_color[2] / 255.0f);
+        D2D1_COLOR_F font_color = D2D1::ColorF(p_font_color[0] / 255.0f, p_font_color[1] / 255.0f, p_font_color[2] / 255.0f, p_font_color[3] / 255.0f);
+        D2D1_COLOR_F bord_color = D2D1::ColorF(p_bord_color[0] / 255.0f, p_bord_color[1] / 255.0f, p_bord_color[2] / 255.0f, p_bord_color[3] / 255.0f);
 
         ID2D1SolidColorBrush* font_brush;
         ID2D1SolidColorBrush* bord_brush;
