@@ -30,6 +30,3 @@ fxc shaders\tex2vid.hlsl %CS_FXCOPTS% /D AV_PIX_FMT_NV21=1 /D AVCOL_SPC_BT709=1 
 fxc shaders\tex2vid.hlsl %CS_FXCOPTS% /D AV_PIX_FMT_BGR0=1 /D AVCOL_SPC_RGB=1 /Fo %OUTDIR%\b44000e74095a254ef98a2cdfcbaf015ab6c295e
 
 fxc shaders\motion_sample.hlsl %CS_FXCOPTS% /Fo %OUTDIR%\c52620855f15b2c47b8ca24b890850a90fdc7017
-
-fxc shaders\text.hlsl %VS_FXCOPTS% /D TEXT_VS /Fo %OUTDIR%\34e7f561dcf7ccdd3b8f1568ebdbf4299b54f07d
-fxc shaders\text.hlsl %PS_FXCOPTS% /D TEXT_PS /Fo %OUTDIR%\d19a7c625d575aa72a98c63451e97e38c16112af

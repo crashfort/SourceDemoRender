@@ -224,7 +224,7 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         svr_d3d11_device->CreateRenderTargetView(svr_content_tex, NULL, &svr_content_rtv);
     }
 
-    if (!proc_start(svr_d3d11_device, svr_d3d11_context, movie_name, movie_profile, svr_content_srv))
+    if (!proc_start(svr_d3d11_device, svr_d3d11_context, movie_name, movie_profile, svr_content_rtv))
     {
         goto rfail;
     }

@@ -3,8 +3,6 @@
 
 [Discord](https://discord.gg/5t8D68c)
 
-[Video editor for SVR content](https://movisum.com/) ([Discord](https://discord.gg/U5c9FREeuw))
-
 Source Video Render (SVR, formely SDR) can be used to record movies for the Source engine with way higher performance than the built in `startmovie` command. SVR does not have video effects - if you need video effects, see [HLAE](https://www.advancedfx.org/).
 
 SVR can record faster than realtime for normal videos (a 3 minute video can be recorded in 42 seconds). Videos can also be created with high quality motion blur (this is a slower process).

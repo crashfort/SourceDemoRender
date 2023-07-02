@@ -75,72 +75,14 @@ s32 wav_num_samples;
 // -------------------------------------------------
 // Velo state.
 
-struct VeloUv
-{
-    float u;
-    float v;
-};
-
-// Must be synchronized with VeloVtx in text.hlsl.
-struct VeloVtx
-{
-    VeloUv uv;
-    XMFLOAT2 pos;
-};
-
-struct VeloGlyphDrawInfo
-{
-    float advance_x;
-    float origin_y;
-    float width;
-    float height;
-};
-
-struct VeloGlyphUvs
-{
-    VeloUv uvs[4];
-};
-
-const char VELO_NUMBERS[] = "0123456789";
-const s32 NUM_VELO_NUMBERS = SVR_ARRAY_SIZE(VELO_NUMBERS) - 1;
-
-const s32 NUM_VELO_VERTICES = 256;
-const s32 MAX_VELO_LENGTH = NUM_VELO_VERTICES / 4;
-
 ID2D1Factory1* d2d1_factory;
 ID2D1Device* d2d1_device;
 ID2D1DeviceContext* d2d1_context;
 IDWriteFactory* dwrite_factory;
+ID2D1SolidColorBrush* d2d1_solid_brush;
 
-ID3D11SamplerState* velo_text_ss;
-ID3D11BlendState* velo_text_bs;
-ID3D11Buffer* velo_text_sb;
-ID3D11ShaderResourceView* velo_text_sb_srv;
-ID3D11VertexShader* velo_text_vs;
-ID3D11PixelShader* velo_text_ps;
-
-ID3D11Texture2D* velo_atlas_tex;
-ID3D11ShaderResourceView* velo_atlas_tex_srv;
-ID3D11RenderTargetView* velo_atlas_tex_rtv;
-
-VeloGlyphDrawInfo velo_glyph_infos[NUM_VELO_NUMBERS];
-VeloGlyphUvs velo_glyph_uvs[NUM_VELO_NUMBERS];
-
-// Rectangles for each glyph including the padding.
-D2D1_RECT_F velo_outer_glyph_bounds[NUM_VELO_NUMBERS];
-
-// Rectangles for each glyph without the padding.
-D2D1_RECT_F velo_inner_glyph_bounds[NUM_VELO_NUMBERS];
-
-// rectangles for each glyph without padding and width of the advance.
-D2D1_RECT_F velo_advance_glyph_bounds[NUM_VELO_NUMBERS];
-
-// The atlas only contains numbers.
-s32 remap_to_velo_index(char c)
-{
-    assert((c >= '0') && (c <= '9'));
-    return c - '0';
-}
+IDWriteFontFace* velo_font_face;
+ID2D1Bitmap1* velo_rtv_ref; // Not a real texture, but a reference to the used render target.
 
 // Incoming externally.
 float player_velo[3];
@@ -837,27 +779,6 @@ bool create_shaders(ID3D11Device* d3d11_device)
         goto rfail;
     }
 
-    hr = d3d11_device->CreateVertexShader(file_mem, shader_size, NULL, &velo_text_vs);
-
-    if (FAILED(hr))
-    {
-        svr_log("Could not create text vertex shader (%#x\n", hr);
-        goto rfail;
-    }
-
-    if (!load_one_shader("d19a7c625d575aa72a98c63451e97e38c16112af", file_mem, SHADER_MEM_SIZE, &shader_size))
-    {
-        goto rfail;
-    }
-
-    hr = d3d11_device->CreatePixelShader(file_mem, shader_size, NULL, &velo_text_ps);
-
-    if (FAILED(hr))
-    {
-        svr_log("Could not create text pixel shader (%#x\n", hr);
-        goto rfail;
-    }
-
     ret = true;
     goto rexit;
 
@@ -878,13 +799,7 @@ void free_all_static_proc_stuff()
     svr_maybe_release(&d2d1_device);
     svr_maybe_release(&d2d1_context);
     svr_maybe_release(&dwrite_factory);
-
-    svr_maybe_release(&velo_text_ss);
-    svr_maybe_release(&velo_text_bs);
-    svr_maybe_release(&velo_text_sb);
-    svr_maybe_release(&velo_text_sb_srv);
-    svr_maybe_release(&velo_text_vs);
-    svr_maybe_release(&velo_text_ps);
+    svr_maybe_release(&d2d1_solid_brush);
 
     free(wav_buf);
     wav_buf = NULL;
@@ -897,69 +812,14 @@ void free_all_dynamic_proc_stuff()
     svr_maybe_release(&work_tex_srv);
     svr_maybe_release(&work_tex_uav);
 
-    svr_maybe_release(&velo_atlas_tex);
-    svr_maybe_release(&velo_atlas_tex_srv);
-    svr_maybe_release(&velo_atlas_tex_rtv);
+    svr_maybe_release(&velo_rtv_ref);
+    svr_maybe_release(&velo_font_face);
 
     if (wav_f)
     {
         CloseHandle(wav_f);
         wav_f = NULL;
     }
-}
-
-bool init_velo(ID3D11Device* d3d11_device)
-{
-    bool ret = false;
-
-    D3D11_SAMPLER_DESC ss_desc = {};
-    ss_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    ss_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    ss_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    ss_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    ss_desc.MaxAnisotropy = 1;
-    ss_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    ss_desc.MaxLOD = D3D11_FLOAT32_MAX;
-
-    d3d11_device->CreateSamplerState(&ss_desc, &velo_text_ss);
-
-    D3D11_BLEND_DESC bs_desc = {};
-    D3D11_RENDER_TARGET_BLEND_DESC& target = bs_desc.RenderTarget[0];
-    target.BlendEnable = TRUE;
-    target.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-    target.SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-    target.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-    target.DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-    target.BlendOp = D3D11_BLEND_OP_ADD;
-    target.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    target.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-    d3d11_device->CreateBlendState(&bs_desc, &velo_text_bs);
-
-    D3D11_BUFFER_DESC sb_desc = {};
-    sb_desc.ByteWidth = sizeof(VeloVtx) * NUM_VELO_VERTICES;
-    sb_desc.Usage = D3D11_USAGE_DYNAMIC;
-    sb_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    sb_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    sb_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-    sb_desc.StructureByteStride = sizeof(VeloVtx);
-
-    HRESULT hr = d3d11_device->CreateBuffer(&sb_desc, NULL, &velo_text_sb);
-
-    if (FAILED(hr))
-    {
-        svr_log("Could not create velo vertex buffer (%#x)\n", hr);
-        goto rfail;
-    }
-
-    d3d11_device->CreateShaderResourceView(velo_text_sb, NULL, &velo_text_sb_srv);
-
-    ret = true;
-    goto rexit;
-
-rfail:
-rexit:
-    return ret;
 }
 
 bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
@@ -1007,13 +867,10 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
         goto rfail;
     }
 
+    d2d1_context->CreateSolidColorBrush({}, &d2d1_solid_brush);
+
     // Useful for debugging issues with velo rasterization.
     // d2d1_context->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-
-    if (!init_velo(d3d11_device))
-    {
-        goto rfail;
-    }
 
     mosample_cb_desc.ByteWidth = sizeof(MosampleCb);
     mosample_cb_desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -1254,389 +1111,6 @@ s32 to_utf16(const char* value, s32 value_length, wchar* buf, s32 buf_chars)
     return length;
 }
 
-s32 align_up_to_8(s32 value)
-{
-    return (value + 7) & ~7;
-}
-
-// Enable this to save an image of the texture atlas to the working directory.
-#define DUMP_VELO_ATLAS 0
-
-#if DUMP_VELO_ATLAS
-#include <stb_image_write.h>
-
-// STB works with RGBA, we only work with BGRA.
-void swap_bgra_rgba(u8* bytes, s32 num)
-{
-    for (s32 i = 0; i < num; i += 4)
-    {
-        u8 t = bytes[i + 0];
-        bytes[i + 0] = bytes[i + 2];
-        bytes[i + 2] = t;
-    }
-}
-
-// Images are stored in straight alpha, but we present them with premultiplied alpha blending.
-static void unpremultiply(u8* bytes, s32 num)
-{
-    for (s32 i = 0; i < num; i += 4)
-    {
-        u8 a = bytes[i + 3];
-        bytes[i + 0] /= (a / 255.0f);
-        bytes[i + 1] /= (a / 255.0f);
-        bytes[i + 2] /= (a / 255.0f);
-    }
-}
-
-void dump_velo_font_atlas(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context)
-{
-    D3D11_TEXTURE2D_DESC atlas_desc;
-    velo_atlas_tex->GetDesc(&atlas_desc);
-
-    // If we are dumping the atlas we have to create a destination CPU texture to copy to.
-    atlas_desc.Usage = D3D11_USAGE_STAGING;
-    atlas_desc.BindFlags = 0;
-    atlas_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-
-    ID3D11Texture2D* atlas_dl;
-    d3d11_device->CreateTexture2D(&atlas_desc, NULL, &atlas_dl);
-
-    d3d11_context->CopyResource(atlas_dl, velo_atlas_tex);
-
-    D3D11_MAPPED_SUBRESOURCE dl_map;
-
-    d3d11_context->Map(atlas_dl, 0, D3D11_MAP_READ, 0, &dl_map);
-
-    u8* dest = (u8*)malloc(atlas_desc.Width * atlas_desc.Height * 4);
-
-    u8* source_ptr = (u8*)dl_map.pData;
-    u8* dest_ptr = (u8*)dest;
-
-    for (UINT j = 0; j < atlas_desc.Height; j++)
-    {
-        memcpy(dest_ptr, source_ptr, atlas_desc.Width * 4);
-
-        source_ptr += dl_map.RowPitch;
-        dest_ptr += atlas_desc.Width * 4;
-    }
-
-    d3d11_context->Unmap(atlas_dl, 0);
-
-    swap_bgra_rgba(dest, atlas_desc.Width * atlas_desc.Height * 4);
-    unpremultiply(dest, atlas_desc.Width * atlas_desc.Height * 4);
-
-    // Dump to working directory (should be next to the exe in standalone).
-    stbi_write_png("atlas.png", atlas_desc.Width, atlas_desc.Height, 4, dest, atlas_desc.Width * 4);
-
-    free(dest);
-    atlas_dl->Release();
-}
-#endif
-
-// We add dumb padding to each glyph because we cannot get exact bounds for a glyph.
-// This wastes atlas space but doesn't matter for the layout. We don't want any part of the glyph to be cut off on any side.
-// This is only used for the atlas. Useful to increase when debugging the text building and the visualizing debug drawing.
-const float GLYPH_INTERNAL_PADDING = 16.0f;
-const float HALF_GLYPH_INTERNAL_PADDING = GLYPH_INTERNAL_PADDING / 2.0f;
-
-bool create_velo_atlas(MovieProfile* p, ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, IDWriteFontFace* font_face)
-{
-    bool ret = false;
-
-    float font_size_in_dips = ((float)p->veloc_font_size / 72.0f) * 96.0f;
-
-    // Rasterize every number we need and then we draw those as quads. We don't need advanced features like kerning with just numbers.
-    // We do this because D2D1 is amazingly slow since it rasterizes every character every call, and has no caching whatsoever, and slows down the frame time too much for stupid simple velo text.
-    // For the velo border it needs to trace every character rasterize them again which is even slower!
-    // Drawing ourselves allows us to not use D2D1 later which is a blessing, and do the sensible and easy thing which is just drawing quads.
-    // We rasterize the numbers here, and then also gather some information about it such as the width advance to draw our text later.
-
-    // Outlines to text is added inwards, so the size of the glyph doesn't change. This is good because when we rasterize the glyphs
-    // it will take up the same space whether or not it has an outline.
-
-    UINT32 code_points[NUM_VELO_NUMBERS];
-    UINT16 glyph_idxs[NUM_VELO_NUMBERS];
-
-    for (s32 i = 0; i < NUM_VELO_NUMBERS; i++)
-    {
-        code_points[i] = VELO_NUMBERS[i];
-    }
-
-    font_face->GetGlyphIndicesW(code_points, NUM_VELO_NUMBERS, glyph_idxs);
-
-    ID2D1Geometry* geoms[NUM_VELO_NUMBERS];
-
-    DWRITE_GLYPH_METRICS glyph_metrix[NUM_VELO_NUMBERS];
-    font_face->GetDesignGlyphMetrics(glyph_idxs, NUM_VELO_NUMBERS, glyph_metrix, FALSE);
-    // font_face->GetGdiCompatibleGlyphMetrics(font_size_in_dips, 1.0f, NULL, TRUE, glyph_idxs, NUM_VELO_NUMBERS, glyph_metrix, FALSE);
-
-    DWRITE_FONT_METRICS font_metrix;
-    font_face->GetMetrics(&font_metrix);
-    // font_face->GetGdiCompatibleMetrics(font_size_in_dips, 1.0f, NULL, &font_metrix);
-
-    for (s32 i = 0; i < NUM_VELO_NUMBERS; i++)
-    {
-        VeloGlyphDrawInfo& glyph_info = velo_glyph_infos[i];
-        DWRITE_GLYPH_METRICS& metrix = glyph_metrix[i];
-
-        float scale = font_size_in_dips / (float)font_metrix.designUnitsPerEm;
-
-        float l = metrix.leftSideBearing * scale;
-        float t = metrix.topSideBearing * scale;
-        float r = metrix.rightSideBearing * scale;
-        float b = metrix.bottomSideBearing * scale;
-        float v = metrix.verticalOriginY * scale;
-        float aw = metrix.advanceWidth * scale;
-        float ah = metrix.advanceHeight * scale;
-
-        float origin_x = l;
-        float origin_y = t - v;
-        float size_x = aw - r - l;
-        float size_y = ah - b - t;
-
-        // Adjust for padding and move origin to top left, since the origin of a glyph is in the bottom left.
-
-        origin_x += HALF_GLYPH_INTERNAL_PADDING;
-        origin_y -= HALF_GLYPH_INTERNAL_PADDING;
-        size_x += GLYPH_INTERNAL_PADDING;
-        size_y += GLYPH_INTERNAL_PADDING;
-        origin_y += size_y;
-
-        // Glyph outer bounds.
-        D2D1_RECT_F gob;
-        gob.left = (s32)(origin_x + 0.5f);
-        gob.top = (s32)(origin_y + 0.5f);
-        gob.right = origin_x + size_x;
-        gob.bottom = origin_y + size_y;
-
-        // Glyph inner bounds.
-        D2D1_RECT_F gib;
-        gib.left = gob.left + HALF_GLYPH_INTERNAL_PADDING;
-        gib.top = gob.top + HALF_GLYPH_INTERNAL_PADDING;
-        gib.right = gob.right - HALF_GLYPH_INTERNAL_PADDING;
-        gib.bottom = gob.bottom - HALF_GLYPH_INTERNAL_PADDING;
-
-        // Glyph advance bounds.
-        D2D1_RECT_F gab;
-        gab.left = gib.left;
-        gab.top = gib.top;
-        gab.right = gib.left + aw;
-        gab.bottom = gib.bottom;
-
-        velo_outer_glyph_bounds[i] = gob;
-        velo_inner_glyph_bounds[i] = gib;
-        velo_advance_glyph_bounds[i] = gab;
-
-        glyph_info.width = size_x;
-        glyph_info.height = size_y;
-        glyph_info.advance_x = (s32)aw; // Always round advance down like GDI.
-        glyph_info.origin_y = (s32)(origin_y + 0.5f);
-    }
-
-    // Now when we know the size of each glyph, we can map out their location in the atlas and rasterize them.
-    // We could use the better IDWriteGlyphRunAnalysis to rasterize the glyphs, but then we wouldn't have a good
-    // basis for adding an outline, as we don't have the vector curves. So we use Direct2D and its special access to DirectWrite
-    // data that we don't have in order to add an outline to the glyphs. The glyphs will still occupy the same rectangle so the packing still works fine.
-    // All packing is done horizontally only because we only have 10 glyphs (the numbers 0 to 9).
-
-    for (s32 i = 0; i < NUM_VELO_NUMBERS; i++)
-    {
-        VeloGlyphDrawInfo& glyph_info = velo_glyph_infos[i];
-
-        ID2D1PathGeometry* geom;
-        d2d1_factory->CreatePathGeometry(&geom);
-
-        ID2D1GeometrySink* sink;
-        geom->Open(&sink);
-
-        font_face->GetGlyphRunOutline(font_size_in_dips, &glyph_idxs[i], NULL, NULL, 1, FALSE, FALSE, sink);
-
-        sink->Close();
-        sink->Release();
-
-        // The origin of a glyph is in the bottom left.
-        // See https://docs.microsoft.com/en-us/windows/win32/directwrite/glyphs-and-glyph-runs#glyph-metrics
-
-        // Geometry cannot be moved so we have to recreate the geometry in another interface! Direct2D sucks!
-        // We want the glyph to have its origin in the top left.
-
-        D2D1_MATRIX_3X2_F trans = D2D1::Matrix3x2F::Translation(GLYPH_INTERNAL_PADDING, glyph_info.height);
-
-        ID2D1TransformedGeometry* trans_geom;
-        d2d1_factory->CreateTransformedGeometry(geom, &trans, &trans_geom);
-
-        geoms[i] = trans_geom;
-
-        geom->Release();
-    }
-
-    // Figure out the size of the atlas now and create it.
-    s32 rt_width = 0;
-    s32 rt_height = 0;
-
-    for (s32 i = 0; i < NUM_VELO_NUMBERS; i++)
-    {
-        // Need to account for padding between chars.
-
-        VeloGlyphDrawInfo& glyph_info = velo_glyph_infos[i];
-        rt_width += glyph_info.width + GLYPH_INTERNAL_PADDING;
-        rt_height = svr_max(rt_height, (s32)(glyph_info.height + GLYPH_INTERNAL_PADDING));
-    }
-
-    rt_width = align_up_to_8(rt_width);
-    rt_height = align_up_to_8(rt_height);
-
-    D3D11_TEXTURE2D_DESC atlas_desc = {};
-    atlas_desc.Width = rt_width;
-    atlas_desc.Height = rt_height;
-    atlas_desc.MipLevels = 1;
-    atlas_desc.ArraySize = 1;
-    atlas_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    atlas_desc.SampleDesc.Count = 1;
-    atlas_desc.Usage = D3D11_USAGE_DEFAULT;
-    atlas_desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-    atlas_desc.CPUAccessFlags = 0;
-
-    HRESULT hr = d3d11_device->CreateTexture2D(&atlas_desc, NULL, &velo_atlas_tex);
-
-    if (FAILED(hr))
-    {
-        svr_log("Could not create velo font atlas (%#x)\n", hr);
-        goto rfail;
-    }
-
-    d3d11_device->CreateShaderResourceView(velo_atlas_tex, NULL, &velo_atlas_tex_srv);
-    d3d11_device->CreateRenderTargetView(velo_atlas_tex, NULL, &velo_atlas_tex_rtv);
-
-    {
-        // The texture might be reused internally by D3D11 so we have to clear it.
-        float clear_color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        d3d11_context->ClearRenderTargetView(velo_atlas_tex_rtv, clear_color);
-
-        // To rasterize the glyphs with Direct2D we have to point a Direct2D render target to the atlas texture.
-
-        IDXGISurface* atlas_surf;
-        velo_atlas_tex->QueryInterface(IID_PPV_ARGS(&atlas_surf));
-
-        D2D1_BITMAP_PROPERTIES1 bmp_props = {};
-        bmp_props.pixelFormat = D2D1::PixelFormat(atlas_desc.Format, D2D1_ALPHA_MODE_PREMULTIPLIED);
-        bmp_props.dpiX = 96;
-        bmp_props.dpiY = 96;
-        bmp_props.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
-
-        ID2D1Bitmap1* bmp_rt;
-        hr = d2d1_context->CreateBitmapFromDxgiSurface(atlas_surf, &bmp_props, &bmp_rt);
-
-        s32* p_font_color = p->veloc_font_color;
-        s32* p_bord_color = p->veloc_font_border_color;
-
-        D2D1_COLOR_F font_color = D2D1::ColorF(p_font_color[0] / 255.0f, p_font_color[1] / 255.0f, p_font_color[2] / 255.0f);
-        D2D1_COLOR_F bord_color = D2D1::ColorF(p_bord_color[0] / 255.0f, p_bord_color[1] / 255.0f, p_bord_color[2] / 255.0f);
-
-        ID2D1SolidColorBrush* font_brush;
-        ID2D1SolidColorBrush* bord_brush;
-
-        d2d1_context->CreateSolidColorBrush(font_color, &font_brush);
-        d2d1_context->CreateSolidColorBrush(bord_color, &bord_brush);
-
-        // Lay out all glyphs and rasterize them in the atlas.
-
-        D2D1_MATRIX_3X2_F mat = D2D1::Matrix3x2F::Identity();
-
-        d2d1_context->SetTarget(bmp_rt);
-        d2d1_context->BeginDraw();
-
-        for (s32 i = 0; i < NUM_VELO_NUMBERS; i++)
-        {
-            ID2D1Geometry* geom = geoms[i];
-            D2D1_RECT_F& gob = velo_outer_glyph_bounds[i];
-            D2D1_RECT_F& gib = velo_inner_glyph_bounds[i];
-            D2D1_RECT_F& gab = velo_advance_glyph_bounds[i];
-            VeloGlyphDrawInfo& glyph_info = velo_glyph_infos[i];
-
-            d2d1_context->SetTransform(&mat);
-
-            d2d1_context->FillGeometry(geom, font_brush);
-
-            if (p->veloc_font_border_size)
-            {
-                d2d1_context->DrawGeometry(geom, bord_brush, p->veloc_font_border_size);
-            }
-
-            // Enable this to show debug stuff in the atlas. This will show the following things:
-            // 1) Outer glyph rectangle that each glyph occupies (includes the internal padding).
-            // 2) Inner glyph rectangle that each glyph occupies (without the padding).
-            // 3) Vertical center.
-            // 4) Horizontal center.
-            // 5) Glyph advance as a line.
-            //
-            // Number 1 can be disabled and the debug code in the text shader can be enabled instead (will fill the background of the glyph).
-            #if 0
-            d2d1_context->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-            // d2d1_context->DrawRectangle(D2D1::RectF(gob.left, gob.top, gob.right, gob.bottom), bord_brush);
-            d2d1_context->DrawRectangle(D2D1::RectF(gib.left, gib.top, gib.right, gib.bottom), bord_brush);
-            d2d1_context->DrawLine(D2D1::Point2F(gob.left, gob.top + (glyph_info.height / 2.0f)), D2D1::Point2F(gob.right, gob.top + (glyph_info.height / 2.0f)), bord_brush);
-            d2d1_context->DrawLine(D2D1::Point2F(gob.left + (glyph_info.width / 2.0f), gob.top), D2D1::Point2F(gob.left + (glyph_info.width / 2.0f), gob.bottom), bord_brush);
-            d2d1_context->DrawLine(D2D1::Point2F(gab.left, gab.bottom + (HALF_GLYPH_INTERNAL_PADDING / 2)), D2D1::Point2F(gab.right, gab.bottom + (HALF_GLYPH_INTERNAL_PADDING / 2)), bord_brush);
-            d2d1_context->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-            #endif
-
-            // Update the local bounds of the glyph rects to absolute bounds so we can create uvs below.
-            gob.left += mat.dx;
-            gob.right += mat.dx;
-
-            gib.left += mat.dx;
-            gib.right += mat.dx;
-
-            gab.left += mat.dx;
-            gab.right += mat.dx;
-
-            // Need to account for padding between chars.
-            mat.dx += (s32)(glyph_info.width + GLYPH_INTERNAL_PADDING + 0.5f);
-        }
-
-        d2d1_context->EndDraw();
-        d2d1_context->SetTarget(NULL);
-
-        // We have now rasterized every glyph and know their location in the atlas.
-        // Create the UV coordinates for every glyph here so we can just copy them over when drawing the text.
-
-        for (s32 i = 0; i < NUM_VELO_NUMBERS; i++)
-        {
-            // UVs should be relative to the outer bounds.
-
-            D2D1_RECT_F& gob = velo_outer_glyph_bounds[i];
-            VeloGlyphUvs& glyph_uvs = velo_glyph_uvs[i];
-
-            glyph_uvs.uvs[0] = VeloUv { (float)gob.left / (float)rt_width, (float)gob.top / (float)rt_height };
-            glyph_uvs.uvs[1] = VeloUv { (float)gob.right / (float)rt_width, (float)gob.top / (float)rt_height };
-            glyph_uvs.uvs[2] = VeloUv { (float)gob.left / (float)rt_width, (float)gob.bottom / (float)rt_height };
-            glyph_uvs.uvs[3] = VeloUv { (float)gob.right / (float)rt_width, (float)gob.bottom / (float)rt_height };
-        }
-
-        #if DUMP_VELO_ATLAS
-        dump_velo_font_atlas(d3d11_device, d3d11_context);
-        #endif
-
-        atlas_surf->Release();
-        font_brush->Release();
-        bord_brush->Release();
-        bmp_rt->Release();
-    }
-
-    ret = true;
-    goto rexit;
-
-rfail:
-rexit:
-    for (s32 i = 0; i < NUM_VELO_NUMBERS; i++)
-    {
-        svr_maybe_release(&geoms[i]);
-    }
-
-    return ret;
-}
-
 // Try to find the font in the system.
 bool create_velo_font_face(MovieProfile* p, IDWriteFontFace** font_face)
 {
@@ -1686,19 +1160,31 @@ rexit:
     return ret;
 }
 
-// Creates a font atlas of all numbers with the given font stuff in the profile.
-bool create_velo(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context)
+bool create_velo(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, ID3D11RenderTargetView* used_rtv)
 {
     bool ret = false;
-    IDWriteFontFace* font_face = NULL;
+    HRESULT hr;
 
-    if (!create_velo_font_face(&movie_profile, &font_face))
+    if (!create_velo_font_face(&movie_profile, &velo_font_face))
     {
         goto rfail;
     }
 
-    if (!create_velo_atlas(&movie_profile, d3d11_device, d3d11_context, font_face))
+    ID3D11Resource* content_tex_res;
+    used_rtv->GetResource(&content_tex_res);
+
+    ID3D11Texture2D* content_tex;
+    content_tex_res->QueryInterface(IID_PPV_ARGS(&content_tex));
+
+    IDXGISurface* content_surface;
+    content_tex->QueryInterface(IID_PPV_ARGS(&content_surface));
+
+    // Create passthrough reference to the used render target. This is not a real texture.
+    hr = d2d1_context->CreateBitmapFromDxgiSurface(content_surface, NULL, &velo_rtv_ref);
+
+    if (FAILED(hr))
     {
+        svr_log("ERROR: Could not create SRV passthrough (%#x)\n", hr);
         goto rfail;
     }
 
@@ -1707,152 +1193,121 @@ bool create_velo(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context)
 
 rfail:
 rexit:
-    svr_maybe_release(&font_face);
+    content_tex_res->Release();
+    content_tex->Release();
+    content_surface->Release();
+
     return ret;
 }
 
-void draw_velo(ID3D11DeviceContext* d3d11_context, ID3D11RenderTargetView* rtv, const char* text, s32 text_len)
+#define ALLOCA(T) (T*)_alloca(sizeof(T))
+#define ALLOCA_NUM(T, NUM) (T*)_alloca(sizeof(T) * NUM)
+
+D2D1_COLOR_F fill_d2d1_color(s32* color)
 {
-    assert(text_len < MAX_VELO_LENGTH);
+    D2D1_COLOR_F ret;
+    ret.r = color[0] / 255.0f;
+    ret.g = color[1] / 255.0f;
+    ret.b = color[2] / 255.0f;
+    ret.a = color[3] / 255.0f;
+    return ret;
+}
 
-    // Generate the vertices for the text.
+D2D1_POINT_2F fill_d2d1_pt(XMINT2 p)
+{
+    return D2D1::Point2F(p.x, p.y);
+}
 
-    s32 num_verts = text_len * 4;
+void draw_velo(const wchar* text, XMINT2 pos)
+{
+    s32 text_length = wcslen(text);
 
-    float glyph_pos_x = 0.0f;
-    float glyph_pos_y = 0.0f;
+    d2d1_context->BeginDraw();
+    d2d1_context->SetTarget(velo_rtv_ref);
 
-    u8* glyph_idxs = (u8*)_alloca(sizeof(u8) * text_len);
-    VeloVtx* vtxs = (VeloVtx*)_alloca(sizeof(VeloVtx) * num_verts);
+    UINT32* cps = ALLOCA_NUM(UINT32, text_length);
+    UINT16* idxs = ALLOCA_NUM(UINT16, text_length);
+    FLOAT* advances = ALLOCA_NUM(FLOAT, text_length);
+    DWRITE_GLYPH_METRICS* glyph_metrix = ALLOCA_NUM(DWRITE_GLYPH_METRICS, text_length);
 
-    for (s32 i = 0; i < text_len; i++)
+    for (s32 i = 0; i < text_length; i++)
     {
-        glyph_idxs[i] = remap_to_velo_index(text[i]);
+        cps[i] = text[i];
     }
 
-    for (s32 i = 0; i < text_len; i++)
-    {
-        u8 glyph_idx = glyph_idxs[i];
-        VeloGlyphUvs& glyph_uvs = velo_glyph_uvs[glyph_idx];
-        s32 start_vertex_idx = i * 4;
+    velo_font_face->GetGlyphIndicesW(cps, text_length, idxs);
+    velo_font_face->GetDesignGlyphMetrics(idxs, text_length, glyph_metrix, FALSE);
 
-        for (s32 j = 0; j < 4; j++)
-        {
-            memcpy(&vtxs[start_vertex_idx + j].uv, &glyph_uvs.uvs[j], sizeof(VeloUv));
-        }
+    DWRITE_FONT_METRICS font_metrix;
+    velo_font_face->GetMetrics(&font_metrix);
+
+    float scale = (float)movie_profile.veloc_font_size / (float)font_metrix.designUnitsPerEm;
+
+    // Emulation of tabular font feature where every number is monospaced.
+    // For the full feature, the font itself also changes its shaping for the glyphs to be wider, but that is not important.
+    // This also prevents the text from jittering when it changes during the centering logic. Typically caused by the 1 character sometimes being thinner than other characters.
+    UINT32 tab_cp = L'0';
+
+    UINT16 tab_idx;
+    DWRITE_GLYPH_METRICS tab_metrix;
+
+    velo_font_face->GetGlyphIndicesW(&tab_cp, 1, &tab_idx);
+    velo_font_face->GetDesignGlyphMetrics(&tab_idx, 1, &tab_metrix, FALSE);
+
+    for (s32 i = 0; i < text_length; i++)
+    {
+        float aw = tab_metrix.advanceWidth * scale;
+        advances[i] = aw;
     }
 
-    for (s32 i = 0; i < text_len; i++)
+    // Base horizontal positioning from the center.
+    // Vertical positioning is done from the baseline.
+
+    float w = 0.0f;
+
+    for (s32 i = 0; i < text_length; i++)
     {
-        u8 glyph_idx = glyph_idxs[i];
-        VeloGlyphDrawInfo& glyph_info = velo_glyph_infos[glyph_idx];
-        s32 start_vertex_idx = i * 4;
-
-        VeloVtx& v0 = vtxs[start_vertex_idx + 0];
-        VeloVtx& v1 = vtxs[start_vertex_idx + 1];
-        VeloVtx& v2 = vtxs[start_vertex_idx + 2];
-        VeloVtx& v3 = vtxs[start_vertex_idx + 3];
-
-        // Adjust for baseline.
-        glyph_pos_y = -glyph_info.origin_y;
-
-        v0.pos = XMFLOAT2 { glyph_pos_x, glyph_pos_y + glyph_info.height };
-        v1.pos = XMFLOAT2 { glyph_pos_x + glyph_info.width, glyph_pos_y + glyph_info.height };
-        v2.pos = XMFLOAT2 { glyph_pos_x, glyph_pos_y };
-        v3.pos = XMFLOAT2 { glyph_pos_x + glyph_info.width, glyph_pos_y };
-
-        glyph_pos_x += glyph_info.advance_x;
+        w += advances[i];
     }
 
-    // Find the draw bounds.
+    s32 real_w = (s32)ceilf(w);
 
-    float draw_width = 0.0f;
+    s32 shift_x = real_w / 2;
+    pos.x -= shift_x;
 
-    for (s32 i = 0; i < text_len; i++)
+    DWRITE_GLYPH_RUN run = {};
+    run.fontFace = velo_font_face;
+    run.fontEmSize = movie_profile.veloc_font_size;
+    run.glyphCount = text_length;
+    run.glyphIndices = idxs;
+    run.glyphAdvances = advances;
+
+    ID2D1PathGeometry* geom;
+    d2d1_factory->CreatePathGeometry(&geom);
+
+    ID2D1GeometrySink* sink;
+    geom->Open(&sink);
+
+    velo_font_face->GetGlyphRunOutline(movie_profile.veloc_font_size, idxs, advances, NULL, text_length, FALSE, FALSE, sink);
+
+    sink->Close();
+
+    d2d1_context->SetTransform(D2D1::Matrix3x2F::Translation(pos.x, pos.y));
+
+    d2d1_solid_brush->SetColor(fill_d2d1_color(movie_profile.veloc_font_color));
+    d2d1_context->FillGeometry(geom, d2d1_solid_brush);
+
+    if (movie_profile.veloc_font_border_size > 0)
     {
-        u8 glyph_idx = glyph_idxs[i];
-        VeloGlyphDrawInfo& glyph_info = velo_glyph_infos[glyph_idx];
-
-        if (i != text_len - 1)
-        {
-            draw_width += glyph_info.advance_x;
-        }
-
-        else
-        {
-            D2D1_RECT_F& gib = velo_inner_glyph_bounds[i];
-            draw_width += gib.right - gib.left;
-        }
+        d2d1_solid_brush->SetColor(fill_d2d1_color(movie_profile.veloc_font_border_color));
+        d2d1_context->DrawGeometry(geom, d2d1_solid_brush, movie_profile.veloc_font_border_size);
     }
 
-    // Use the draw width center and vertical baseline as the origin for placement.
+    geom->Release();
+    sink->Release();
 
-    float shift_x = (movie_width - draw_width) / 2.0f;
-
-    float scr_pos_x = 0;
-    float scr_pos_y = 0;
-
-    // Remove the atlas padding so we are positioned at the text origin (bottom left of the first glyph).
-    scr_pos_x -= GLYPH_INTERNAL_PADDING / 2.0f;
-    scr_pos_y -= GLYPH_INTERNAL_PADDING / 2.0f;
-
-    scr_pos_x += shift_x;
-    scr_pos_x -= movie_width / 2.0f;
-
-    // Align to profile.
-    scr_pos_x += ((float)movie_profile.veloc_align[0] / 200.0f) * movie_width;
-    scr_pos_y -= ((float)movie_profile.veloc_align[1] / 200.0f) * movie_height;
-
-    XMMATRIX proj = XMMatrixOrthographicRH(movie_width, movie_height, -1.0f, 1.0f);
-    XMMATRIX view = XMMatrixTranslation(scr_pos_x, scr_pos_y, 0.0f);
-    XMMATRIX mat = XMMatrixMultiply(view, proj);
-
-    // We transform the vertices here and the vertex shader just passes them along.
-
-    for (s32 i = 0; i < num_verts; i++)
-    {
-        VeloVtx& vtx = vtxs[i];
-        XMVECTOR pos = XMLoadFloat2(&vtx.pos);
-        XMVECTOR trans_pos = XMVector2Transform(pos, mat);
-        XMStoreFloat2(&vtx.pos, trans_pos);
-    }
-
-    // Upload the vertices and draw.
-
-    D3D11_MAPPED_SUBRESOURCE vtx_map;
-    HRESULT hr = d3d11_context->Map(velo_text_sb, 0, D3D11_MAP_WRITE_DISCARD, 0, &vtx_map);
-    memcpy(vtx_map.pData, vtxs, sizeof(VeloVtx) * num_verts);
-    d3d11_context->Unmap(velo_text_sb, 0);
-
-    D3D11_VIEWPORT viewport;
-    viewport.TopLeftX = 0.0f;
-    viewport.TopLeftY = 0.0f;
-    viewport.Width = movie_width;
-    viewport.Height = movie_height;
-    viewport.MinDepth = D3D11_MIN_DEPTH;
-    viewport.MaxDepth = D3D11_MAX_DEPTH;
-
-    // Enable to clear the game and only show the text.
-    #if 0
-    float clear_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    d3d11_context->ClearRenderTargetView(rtv, clear_color);
-    #endif
-
-    d3d11_context->IASetInputLayout(NULL);
-    d3d11_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-    d3d11_context->VSSetShader(velo_text_vs, NULL, 0);
-    d3d11_context->VSSetShaderResources(0, 1, &velo_text_sb_srv);
-    d3d11_context->RSSetViewports(1, &viewport);
-    d3d11_context->PSSetShader(velo_text_ps, NULL, 0);
-    d3d11_context->PSSetShaderResources(0, 1, &velo_atlas_tex_srv);
-    d3d11_context->PSSetSamplers(0, 1, &velo_text_ss);
-    d3d11_context->OMSetRenderTargets(1, &rtv, NULL);
-    d3d11_context->OMSetBlendState(velo_text_bs, NULL, 0xFFFFFFFF);
-
-    d3d11_context->Draw(num_verts, 0);
-
-    ID3D11RenderTargetView* null_rtv = NULL;
-    d3d11_context->OMSetRenderTargets(1, &null_rtv, NULL);
+    d2d1_context->EndDraw();
+    d2d1_context->SetTarget(NULL);
 }
 
 bool create_audio()
@@ -1909,11 +1364,12 @@ bool create_audio()
     return true;
 }
 
-bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, const char* dest, const char* profile, ID3D11ShaderResourceView* game_content_srv)
+bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, const char* dest, const char* profile, ID3D11RenderTargetView* game_content_rtv)
 {
     bool ret = false;
-
     HRESULT hr;
+
+    ID3D11RenderTargetView* used_rtv = game_content_rtv;
 
     if (*profile == 0)
     {
@@ -1933,7 +1389,7 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     }
 
     ID3D11Resource* content_tex_res;
-    game_content_srv->GetResource(&content_tex_res);
+    game_content_rtv->GetResource(&content_tex_res);
 
     ID3D11Texture2D* content_tex;
     content_tex_res->QueryInterface(IID_PPV_ARGS(&content_tex));
@@ -1982,11 +1438,13 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         d3d11_device->CreateShaderResourceView(work_tex, NULL, &work_tex_srv);
         d3d11_device->CreateRenderTargetView(work_tex, NULL, &work_tex_rtv);
         d3d11_device->CreateUnorderedAccessView(work_tex, NULL, &work_tex_uav);
+
+        used_rtv = work_tex_rtv;
     }
 
     if (movie_profile.veloc_enabled)
     {
-        if (!create_velo(d3d11_device, d3d11_context))
+        if (!create_velo(d3d11_device, d3d11_context, used_rtv))
         {
             goto rfail;
         }
@@ -2101,18 +1559,29 @@ void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView*
     d3d11_context->CSSetUnorderedAccessViews(0, 1, &null_uav, NULL);
 }
 
+// Percentage alignments based from the center of the screen.
+XMINT2 get_velo_pos()
+{
+    s32 scr_pos_x = movie_width / 2;
+    s32 scr_pos_y = movie_height / 2;
+
+    scr_pos_x += (movie_profile.veloc_align[0] / 200.0f) * movie_width;
+    scr_pos_y += (movie_profile.veloc_align[1] / 200.0f) * movie_height;
+
+    return XMINT2(scr_pos_x, scr_pos_y);
+}
+
 void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv, ID3D11RenderTargetView* rtv)
 {
     if (movie_profile.veloc_enabled)
     {
         // We only deal with XY velo.
-        float vel = sqrt(player_velo[0] * player_velo[0] + player_velo[1] * player_velo[1]);
-        s32 real_vel = (s32)(vel + 0.5f);
+        s32 vel = (s32)(sqrt(player_velo[0] * player_velo[0] + player_velo[1] * player_velo[1]) + 0.5f);
 
-        char buf[MAX_VELO_LENGTH];
-        s32 len = stbsp_snprintf(buf, MAX_VELO_LENGTH, "%d", real_vel);
+        wchar buf[128];
+        StringCchPrintfW(buf, 128, L"%d", vel);
 
-        draw_velo(d3d11_context, rtv, buf, len);
+        draw_velo(buf, get_velo_pos());
     }
 
     convert_pixel_formats(d3d11_context, srv);
