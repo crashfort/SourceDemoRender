@@ -1162,6 +1162,8 @@ void patch_cvar_restrict()
             addr += 1;
             break;
         }
+
+        default: assert(false);
     }
 
     if (addr)
