@@ -774,11 +774,6 @@ bool create_shaders(ID3D11Device* d3d11_device)
         goto rfail;
     }
 
-    if (!load_one_shader("34e7f561dcf7ccdd3b8f1568ebdbf4299b54f07d", file_mem, SHADER_MEM_SIZE, &shader_size))
-    {
-        goto rfail;
-    }
-
     ret = true;
     goto rexit;
 
