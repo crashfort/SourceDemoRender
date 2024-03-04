@@ -45,91 +45,30 @@ __declspec(noreturn) void launcher_error(const char* format, ...)
     ExitProcess(1);
 }
 
-// These are the supported games.
-const SteamAppId GAME_APP_IDS[] = {
-    STEAM_GAME_CSS,
-    STEAM_GAME_CSGO,
-    STEAM_GAME_TF2,
-    STEAM_GAME_ZPS,
-    STEAM_GAME_EMPIRES,
-    STEAM_GAME_SYNERGY,
-    STEAM_GAME_HL2,
-    STEAM_GAME_HL2DM,
-    STEAM_GAME_BMS,
-    STEAM_GAME_HDTF,
+struct SupportedGame
+{
+    SteamAppId app_id;
+    const char* name; // Display name shown on Steam.
+    const char* extra_args; // Extra stuff to put in the start args.
+    const char* root_dir; // Paths to append to each Steam library.
+    const char* exe_name; // Where to find the executable built up from the Steam library path plus the game root directory (above).
+    s32 build_id; // Build versions that have been tested (located in the appmanifest acf).
 };
 
-// Display names shown on Steam.
-const char* GAME_NAMES[] = {
-    "Counter-Strike: Source", // STEAM_GAME_CSS
-    "Counter-Strike: Global Offensive", // STEAM_GAME_CSGO
-    "Team Fortress 2", // STEAM_GAME_TF2
-    "Zombie Panic! Source", // STEAM_GAME_ZPS
-    "Empires", // STEAM_GAME_EMPIRES
-    "Synergy", // STEAM_GAME_SYNERGY
-    "Half-Life 2", // STEAM_GAME_HL2
-    "Half-Life 2: Deathmatch", // STEAM_GAME_HL2DM
-    "Black Mesa", // STEAM_GAME_BMS
-    "Hunt Down The Freeman", // STEAM_GAME_HDTF
+SupportedGame SUPPORTED_GAMES[] = {
+    SupportedGame { STEAM_GAME_CSS, "Counter-Strike: Source", "-game cstrike", "common\\Counter-Strike Source\\", "hl2.exe", 6946501 },
+    SupportedGame { STEAM_GAME_CSGO, "Counter-Strike: Global Offensive", "-game csgo", "common\\Counter-Strike Global Offensive\\", "csgo.exe", 8128170 },
+    SupportedGame { STEAM_GAME_TF2, "Team Fortress 2", "-game tf", "common\\Team Fortress 2\\", "hl2.exe", 7504322 },
+    SupportedGame { STEAM_GAME_ZPS, "Zombie Panic! Source", "-game zps", "common\\Zombie Panic Source\\", "zps.exe", 5972042 },
+    SupportedGame { STEAM_GAME_EMPIRES, "Empires", "-game empires", "common\\Empires\\", "hl2.exe", 8658619 },
+    SupportedGame { STEAM_GAME_SYNERGY, "Synergy", "-game synergy", "common\\Synergy\\", "synergy.exe", 791804 },
+    SupportedGame { STEAM_GAME_HL2, "Half-Life 2", "-game hl2", "common\\Half-Life 2\\", "hl2.exe", 4233294 },
+    SupportedGame { STEAM_GAME_HL2DM, "Half-Life 2: Deathmatch", "-game hl2mp", "common\\Half-Life 2 Deathmatch\\", "hl2.exe", 6935373 },
+    SupportedGame { STEAM_GAME_BMS, "Black Mesa", "-game bms", "common\\Black Mesa\\", "bms.exe", 4522431 },
+    SupportedGame { STEAM_GAME_HDTF, "Hunt Down The Freeman", "-game hdtf", "common\\Hunt Down The Freeman\\", "hdtf.exe", 2604730 },
 };
 
-// Extra stuff to put in the start args.
-const char* EXTRA_GAME_ARGS[] = {
-    "-game cstrike", // STEAM_GAME_CSS
-    "-game csgo", // STEAM_GAME_CSGO
-    "-game tf", // STEAM_GAME_TF2
-    "-game zps", // STEAM_GAME_ZPS
-    "-game empires", // STEAM_GAME_EMPIRES
-    "-game synergy", // STEAM_GAME_SYNERGY
-    "-game hl2", // STEAM_GAME_HL2
-    "-game hl2mp", // STEAM_GAME_HL2DM
-    "-game bms", // STEAM_GAME_BMS
-    "-game hdtf", // STEAM_GAME_HDTF
-};
-
-// Paths to append to each Steam library.
-const char* GAME_ROOT_DIRS[] = {
-    "common\\Counter-Strike Source\\", // STEAM_GAME_CSS
-    "common\\Counter-Strike Global Offensive\\", // STEAM_GAME_CSGO
-    "common\\Team Fortress 2\\", // STEAM_GAME_TF2
-    "common\\Zombie Panic Source\\", // STEAM_GAME_ZPS
-    "common\\Empires\\", // STEAM_GAME_EMPIRES
-    "common\\Synergy\\", // STEAM_GAME_SYNERGY
-    "common\\Half-Life 2\\", // STEAM_GAME_HL2
-    "common\\Half-Life 2 Deathmatch\\", // STEAM_GAME_HL2DM
-    "common\\Black Mesa\\", // STEAM_GAME_BMS
-    "common\\Hunt Down The Freeman\\", // STEAM_GAME_HDTF
-};
-
-// Where to find the executable built up from the Steam library path plus the game root directory (above).
-const char* GAME_EXE_PATHS[] = {
-    "hl2.exe", // STEAM_GAME_CSS
-    "csgo.exe", // STEAM_GAME_CSGO
-    "hl2.exe", // STEAM_GAME_TF2
-    "zps.exe", // STEAM_GAME_ZPS
-    "hl2.exe", // STEAM_GAME_EMPIRES
-    "synergy.exe", // STEAM_GAME_SYNERGY
-    "hl2.exe", // STEAM_GAME_HL2
-    "hl2.exe", // STEAM_GAME_HL2DM
-    "bms.exe", // STEAM_GAME_BMS
-    "hdtf.exe", // STEAM_GAME_HDTF
-};
-
-// Build versions that have been tested (located in the appmanifest acf).
-s32 GAME_BUILDS[] = {
-    6946501, // STEAM_GAME_CSS
-    8128170, // STEAM_GAME_CSGO
-    7504322, // STEAM_GAME_TF2
-    5972042, // STEAM_GAME_ZPS
-    8658619, // STEAM_GAME_EMPIRES
-    791804, // STEAM_GAME_SYNERGY
-    4233294, // STEAM_GAME_HL2
-    6935373, // STEAM_GAME_HL2DM
-    4522431, // STEAM_GAME_BMS
-    2604730, // STEAM_GAME_HDTF
-};
-
-const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(GAME_APP_IDS);
+const s32 NUM_SUPPORTED_GAMES = SVR_ARRAY_SIZE(SUPPORTED_GAMES);
 
 // Base arguments that every game will have.
 const char* BASE_GAME_ARGS = "-steam -insecure +sv_lan 1 -console -novid";
@@ -289,7 +228,7 @@ DWORD WINAPI remote_thread_func(LPVOID param)
 
 const s32 FULL_ARGS_SIZE = 512;
 
-bool append_custom_launch_params(s32 game_index, char* out_buf)
+bool append_custom_launch_params(SupportedGame* game, char* out_buf)
 {
     SvrIniMem ini_mem;
 
@@ -302,7 +241,7 @@ bool append_custom_launch_params(s32 game_index, char* out_buf)
     SvrIniTokenType ini_token_type;
 
     char buf[64];
-    StringCchPrintfA(buf, 64, "%u", GAME_APP_IDS[game_index]);
+    StringCchPrintfA(buf, 64, "%u", game->app_id);
 
     while (svr_read_ini(&ini_mem, &ini_line, &ini_token_type))
     {
@@ -330,7 +269,7 @@ bool append_custom_launch_params(s32 game_index, char* out_buf)
 }
 
 // Use the launch parameters from Steam if we can.
-bool append_steam_launch_params(s32 game_index, char* out_buf)
+bool append_steam_launch_params(SupportedGame* game, char* out_buf)
 {
     char full_vdf_path[MAX_PATH];
     full_vdf_path[0] = 0;
@@ -357,7 +296,7 @@ bool append_steam_launch_params(s32 game_index, char* out_buf)
 
     s32 depth = 0;
 
-    StringCchPrintfA(buf, 64, "%u", GAME_APP_IDS[game_index]);
+    StringCchPrintfA(buf, 64, "%u", game->app_id);
 
     while (svr_read_vdf(&vdf_mem, &vdf_line, &vdf_token_type))
     {
@@ -387,14 +326,14 @@ bool append_steam_launch_params(s32 game_index, char* out_buf)
         }
     }
 
-    launcher_log("Steam launch parameters for %s could not be found\n", GAME_NAMES[game_index]);
+    launcher_log("Steam launch parameters for %s could not be found\n", game->name);
     return false;
 }
 
-void find_game_paths(s32 game_index, char* game_path, char* acf_path)
+void find_game_paths(SupportedGame* game, char* game_path, char* acf_path)
 {
     char buf[64];
-    StringCchPrintfA(buf, 64, "%u", GAME_APP_IDS[game_index]);
+    StringCchPrintfA(buf, 64, "%u", game->app_id);
 
     for (s32 i = 0; i < num_steam_libraries; i++)
     {
@@ -414,7 +353,7 @@ void find_game_paths(s32 game_index, char* game_path, char* acf_path)
         if (GetFileAttributesExA(id_file_path, GetFileExInfoStandard, &attr))
         {
             StringCchCatA(game_path, MAX_PATH, lib.path);
-            StringCchCatA(game_path, MAX_PATH, GAME_ROOT_DIRS[game_index]);
+            StringCchCatA(game_path, MAX_PATH, game->root_dir);
 
             StringCchCopyA(acf_path, MAX_PATH, id_file_path);
             return;
@@ -422,16 +361,16 @@ void find_game_paths(s32 game_index, char* game_path, char* acf_path)
     }
 
     // Cannot happen unless Steam is installed wrong in which case it wouldn't work anyway.
-    launcher_error("Game %s was not found in any Steam library. Steam may be installed wrong.", GAME_NAMES[game_index]);
+    launcher_error("Game %s was not found in any Steam library. Steam may be installed wrong.", game->name);
 }
 
-void find_game_build(s32 game_index, const char* acf_path, s32* build_id)
+void find_game_build(SupportedGame* game, const char* acf_path, s32* build_id)
 {
     SvrVdfMem vdf_mem;
 
     if (!svr_open_vdf_read(acf_path, &vdf_mem))
     {
-        launcher_log("Could not open appmanifest of game %s (%lu)\n", GAME_NAMES[game_index], GetLastError());
+        launcher_log("Could not open appmanifest of game %s (%lu)\n", game->name, GetLastError());
         return;
     }
 
@@ -467,27 +406,25 @@ void find_game_build(s32 game_index, const char* acf_path, s32* build_id)
         }
     }
 
-    svr_log("Build number was not found in appmanifest of game %s\n", GAME_NAMES[game_index]);
+    svr_log("Build number was not found in appmanifest of game %s\n", game->name);
 }
 
-void test_game_build_against_known(s32 game_index, s32 build_id)
+void test_game_build_against_known(SupportedGame* game, s32 build_id)
 {
     if (build_id > 0)
     {
-        s32 tested_build_id = GAME_BUILDS[game_index];
-
-        if (build_id != tested_build_id)
+        if (build_id != game->build_id)
         {
             launcher_log("-----------------------------\n");
             launcher_log("WARNING: Mismatch between installed Steam build and tested SVR build. "
                          "Steam game build is %d and tested build is %d. "
-                         "Problems may occur as this game build has not been tested!\n", build_id, tested_build_id);
+                         "Problems may occur as this game build has not been tested!\n", build_id, game->build_id);
             launcher_log("-----------------------------\n");
         }
     }
 }
 
-void allocate_in_remote_process(s32 game_index, HANDLE process, void** remote_func_addr, void** remote_structure_addr)
+void allocate_in_remote_process(SupportedGame* game, HANDLE process, void** remote_func_addr, void** remote_structure_addr)
 {
     // Allocate a sufficient enough size in the target process.
     // It needs to be able to contain all function bytes and the structure containing variable length strings.
@@ -545,7 +482,7 @@ void allocate_in_remote_process(s32 game_index, HANDLE process, void** remote_fu
     structure.svr_path = (char*)remote_mem + remote_write_pos;
     remote_write_pos += remote_written;
 
-    structure.app_id = GAME_APP_IDS[game_index];
+    structure.app_id = game->app_id;
 
     WriteProcessMemory(process, (char*)remote_mem + remote_write_pos, &structure, sizeof(IpcStructure), &remote_written);
     *remote_structure_addr = (void*)((char*)remote_mem + remote_write_pos);
@@ -567,7 +504,7 @@ void allocate_in_remote_process(s32 game_index, HANDLE process, void** remote_fu
     #endif
 }
 
-s32 start_game(s32 game_index)
+s32 start_game(SupportedGame* game)
 {
     // We don't need the game directory necessarily (mods work differently) since we apply the -game parameter.
     // All known Source games will use SetCurrentDirectory to the mod (game) directory anyway.
@@ -581,13 +518,13 @@ s32 start_game(s32 game_index)
     char game_acf_path[MAX_PATH];
     game_acf_path[0] = 0;
 
-    find_game_paths(game_index, installed_game_path, game_acf_path);
+    find_game_paths(game, installed_game_path, game_acf_path);
 
     s32 game_build_id = 0;
-    find_game_build(game_index, game_acf_path, &game_build_id);
+    find_game_build(game, game_acf_path, &game_build_id);
 
     StringCchCatA(full_exe_path, MAX_PATH, installed_game_path);
-    StringCchCatA(full_exe_path, MAX_PATH, GAME_EXE_PATHS[game_index]);
+    StringCchCatA(full_exe_path, MAX_PATH, game->exe_name);
 
     char full_args[FULL_ARGS_SIZE];
     full_args[0] = 0;
@@ -596,9 +533,9 @@ s32 start_game(s32 game_index)
 
     // Prioritize custom args over Steam.
 
-    if (!append_custom_launch_params(game_index, full_args))
+    if (!append_custom_launch_params(game, full_args))
     {
-        append_steam_launch_params(game_index, full_args);
+        append_steam_launch_params(game, full_args);
     }
 
     // Use the written game arg if the user params don't specify it.
@@ -608,7 +545,7 @@ s32 start_game(s32 game_index)
     if (custom_game_arg == NULL)
     {
         StringCchCatA(full_args, FULL_ARGS_SIZE, " ");
-        StringCchCatA(full_args, FULL_ARGS_SIZE, EXTRA_GAME_ARGS[game_index]);
+        StringCchCatA(full_args, FULL_ARGS_SIZE, game->extra_args);
     }
 
     else
@@ -627,9 +564,9 @@ s32 start_game(s32 game_index)
         }
     }
 
-    test_game_build_against_known(game_index, game_build_id);
+    test_game_build_against_known(game, game_build_id);
 
-    launcher_log("Starting %s (build %d). If launching doesn't work then make sure any antivirus is disabled\n", GAME_NAMES[game_index], game_build_id);
+    launcher_log("Starting %s (build %d). If launching doesn't work then make sure any antivirus is disabled\n", game->name, game_build_id);
 
     STARTUPINFOA start_info = {};
     start_info.cb = sizeof(STARTUPINFOA);
@@ -644,7 +581,7 @@ s32 start_game(s32 game_index)
 
     void* remote_func_addr;
     void* remote_structure_addr;
-    allocate_in_remote_process(game_index, info.hProcess, &remote_func_addr, &remote_structure_addr);
+    allocate_in_remote_process(game, info.hProcess, &remote_func_addr, &remote_structure_addr);
 
     // Queue up our procedural function to run instantly on the main thread when the process is resumed.
     if (!QueueUserAPC((PAPCFUNC)remote_func_addr, info.hThread, (ULONG_PTR)remote_structure_addr))
@@ -676,11 +613,9 @@ s32 start_game(s32 game_index)
     return 0;
 }
 
-s32 inject_game(s32 game_index)
+s32 inject_game(SupportedGame* game, HANDLE game_proc)
 {
     // When injecting we don't have to deal with argument appending stuff.
-
-    HANDLE game_proc = running_procs[game_index];
 
     char full_exe_path[MAX_PATH];
     full_exe_path[0] = 0;
@@ -691,18 +626,18 @@ s32 inject_game(s32 game_index)
     char game_acf_path[MAX_PATH];
     game_acf_path[0] = 0;
 
-    find_game_paths(game_index, installed_game_path, game_acf_path);
+    find_game_paths(game, installed_game_path, game_acf_path);
 
     s32 game_build_id = 0;
-    find_game_build(game_index, game_acf_path, &game_build_id);
+    find_game_build(game, game_acf_path, &game_build_id);
 
-    test_game_build_against_known(game_index, game_build_id);
+    test_game_build_against_known(game, game_build_id);
 
-    launcher_log("Injecting into %s (build %d). If injecting doesn't work then make sure any antivirus is disabled\n", GAME_NAMES[game_index], game_build_id);
+    launcher_log("Injecting into %s (build %d). If injecting doesn't work then make sure any antivirus is disabled\n", game->name, game_build_id);
 
     void* remote_func_addr;
     void* remote_structure_addr;
-    allocate_in_remote_process(game_index, game_proc, &remote_func_addr, &remote_structure_addr);
+    allocate_in_remote_process(game, game_proc, &remote_func_addr, &remote_structure_addr);
 
     HANDLE remote_thread = CreateRemoteThread(game_proc, NULL, 0, (LPTHREAD_START_ROUTINE)remote_func_addr, remote_structure_addr, CREATE_SUSPENDED, NULL);
 
@@ -765,12 +700,15 @@ s32 show_menu_for_launcher()
     launcher_log("Installed games:\n");
 
     s32 j = 0;
+
     for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
     {
+        SupportedGame* game = &SUPPORTED_GAMES[i];
+
         // Show indexes for the installed games, not the supported games.
         if (steam_install_states[i])
         {
-            launcher_log("[%d] %s\n", j + 1, GAME_NAMES[i]);
+            launcher_log("[%d] %s\n", j + 1, game->name);
             j++;
         }
     }
@@ -788,7 +726,9 @@ s32 show_menu_for_launcher()
     // Need to remap from the installed games to the supported games.
     s32 game_index = steam_index_remaps[selection];
 
-    return start_game(game_index);
+    SupportedGame* game = &SUPPORTED_GAMES[game_index];
+
+    return start_game(game);
 }
 
 s32 show_menu_for_injector()
@@ -798,10 +738,12 @@ s32 show_menu_for_injector()
     s32 j = 0;
     for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
     {
+        SupportedGame* game = &SUPPORTED_GAMES[i];
+
         // Show indexes for the installed games, not the supported games.
         if (running_games[i])
         {
-            launcher_log("[%d] %s\n", j + 1, GAME_NAMES[i]);
+            launcher_log("[%d] %s\n", j + 1, game->name);
             j++;
         }
     }
@@ -819,7 +761,10 @@ s32 show_menu_for_injector()
     // Need to remap from the installed games to the supported games.
     s32 game_index = running_index_remaps[selection];
 
-    return inject_game(game_index);
+    SupportedGame* game = &SUPPORTED_GAMES[game_index];
+    HANDLE game_proc = running_procs[game_index];
+
+    return inject_game(game, game_proc);
 }
 
 s32 autostart_game(SteamAppId app_id)
@@ -828,9 +773,11 @@ s32 autostart_game(SteamAppId app_id)
 
     for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
     {
+        SupportedGame* game = &SUPPORTED_GAMES[i];
+
         if (steam_install_states[i])
         {
-            if (app_id == GAME_APP_IDS[i])
+            if (app_id == game->app_id)
             {
                 game_index = i;
                 break;
@@ -849,7 +796,9 @@ s32 autostart_game(SteamAppId app_id)
 
         for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
         {
-            if (app_id == GAME_APP_IDS[i])
+            SupportedGame* game = &SUPPORTED_GAMES[i];
+
+            if (app_id == game->app_id)
             {
                 flags |= SUPPORTED;
 
@@ -876,7 +825,9 @@ s32 autostart_game(SteamAppId app_id)
         }
     }
 
-    return start_game(game_index);
+    SupportedGame* game = &SUPPORTED_GAMES[game_index];
+
+    return start_game(game);
 }
 
 void show_windows_version()
@@ -1101,8 +1052,10 @@ void find_installed_supported_games()
 
     for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
     {
+        SupportedGame* game = &SUPPORTED_GAMES[i];
+
         char buf[64];
-        StringCchPrintfA(buf, 64, "%u", GAME_APP_IDS[i]);
+        StringCchPrintfA(buf, 64, "%u", game->app_id);
 
         HKEY game_hkey;
 
@@ -1153,8 +1106,10 @@ bool is_process_we_care_about(DWORD pid, s32* the_game_this_is, HANDLE* the_proc
 
     for (s32 i = 0; i < NUM_SUPPORTED_GAMES; i++)
     {
+        SupportedGame* game = &SUPPORTED_GAMES[i];
+
         // Not enough to check for the exe, as a lot of games will just have hl2.exe and we need to get uniques.
-        if (strstr(exe_name, GAME_ROOT_DIRS[i]))
+        if (strstr(exe_name, game->root_dir))
         {
             *the_game_this_is = i;
             *the_proc = proc;
