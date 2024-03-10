@@ -18,3 +18,4 @@ fxc shaders\tex2vid.hlsl %CS_FXCOPTS% /D AV_PIX_FMT_NV12=1 /D AVCOL_SPC_BT470BG=
 fxc shaders\tex2vid.hlsl %CS_FXCOPTS% /D AV_PIX_FMT_YUV422P=1 /D AVCOL_SPC_BT470BG=1 /Fo %OUTDIR%\convert_yuv422
 
 fxc shaders\motion_sample.hlsl %CS_FXCOPTS% /Fo %OUTDIR%\mosample
+fxc shaders\motion_sample_interm.hlsl %CS_FXCOPTS% /Fo %OUTDIR%\mosample_interm

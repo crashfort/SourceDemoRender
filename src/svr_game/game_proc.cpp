@@ -26,12 +26,17 @@ char svr_resource_path[MAX_PATH];
 // -------------------------------------------------
 // Graphics state.
 
-// High precision texture used for the result of mosample (need to be 32 bits per channel).
+// High precision texture used for the result of mosample (need to be 32 bits per component, total 128 bits per pixel).
 
 ID3D11Texture2D* work_tex;
 ID3D11RenderTargetView* work_tex_rtv;
 ID3D11ShaderResourceView* work_tex_srv;
 ID3D11UnorderedAccessView* work_tex_uav;
+
+// Intermediate texture needed for texture sharing.
+// High precision textures are not allowed to be shared, so we need to downsample the result of the mosample.
+ID3D11Texture2D* work_tex_interm;
+ID3D11UnorderedAccessView* work_tex_interm_uav;
 
 // -------------------------------------------------
 // Velo state.
@@ -57,6 +62,7 @@ __declspec(align(16)) struct MosampleCb
 };
 
 ID3D11ComputeShader* mosample_cs;
+ID3D11ComputeShader* mosample_interm_cs;
 
 // Constains the mosample weight.
 ID3D11Buffer* mosample_cb;
@@ -356,7 +362,7 @@ void end_encoder()
     send_event_to_encoder(ENCODER_EVENT_STOP);
 }
 
-bool send_frame_to_encoder(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv)
+bool send_frame_to_encoder(ID3D11DeviceContext* d3d11_context)
 {
     bool ret = false;
 
@@ -471,22 +477,41 @@ bool load_one_shader(const char* name, void* buf, s32 buf_size, DWORD* shader_si
     return true;
 }
 
-bool create_a_cs_shader(const char* name, void* file_mem, s32 file_mem_size, ID3D11Device* d3d11_device, ID3D11ComputeShader** cs)
+bool create_shaders(ID3D11Device* d3d11_device)
 {
+    const s32 SHADER_MEM_SIZE = 8192;
+
     bool ret = false;
     DWORD shader_size;
     HRESULT hr;
 
-    if (!load_one_shader(name, file_mem, file_mem_size, &shader_size))
+    void* file_mem = malloc(SHADER_MEM_SIZE);
+
+    // Pixel format conversion shaders are only used in SW encoding.
+
+    if (!load_one_shader("mosample", file_mem, SHADER_MEM_SIZE, &shader_size))
     {
         goto rfail;
     }
 
-    hr = d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, cs);
+    hr = d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &mosample_cs);
 
     if (FAILED(hr))
     {
-        svr_log("ERROR: Could not create shader %s (%#x)", name, hr);
+        svr_log("Could not create mosample shader (%#x\n", hr);
+        goto rfail;
+    }
+
+    if (!load_one_shader("mosample_interm", file_mem, SHADER_MEM_SIZE, &shader_size))
+    {
+        goto rfail;
+    }
+
+    hr = d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &mosample_interm_cs);
+
+    if (FAILED(hr))
+    {
+        svr_log("Could not create mosample interm shader (%#x\n", hr);
         goto rfail;
     }
 
@@ -496,12 +521,15 @@ bool create_a_cs_shader(const char* name, void* file_mem, s32 file_mem_size, ID3
 rfail:
 
 rexit:
+    free(file_mem);
+
     return ret;
 }
 
 void free_all_static_proc_stuff()
 {
     svr_maybe_release(&mosample_cs);
+    svr_maybe_release(&mosample_interm_cs);
     svr_maybe_release(&mosample_cb);
 
     svr_maybe_release(&d2d1_factory);
@@ -519,6 +547,8 @@ void free_all_dynamic_proc_stuff()
     svr_maybe_release(&work_tex_rtv);
     svr_maybe_release(&work_tex_srv);
     svr_maybe_release(&work_tex_uav);
+    svr_maybe_release(&work_tex_interm);
+    svr_maybe_release(&work_tex_interm_uav);
 
     svr_maybe_release(&velo_rtv_ref);
     svr_maybe_release(&velo_font_face);
@@ -587,6 +617,11 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
     if (FAILED(hr))
     {
         svr_log("ERROR: Could not create mosample constant buffer (%#x)\n", hr);
+        goto rfail;
+    }
+
+    if (!create_shaders(d3d11_device))
+    {
         goto rfail;
     }
 
@@ -821,6 +856,7 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     HRESULT hr;
 
     ID3D11RenderTargetView* used_rtv = game_content_rtv;
+    void* used_shared_handle = game_content_tex_h;
 
     if (*profile == 0)
     {
@@ -885,6 +921,18 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         d3d11_device->CreateRenderTargetView(work_tex, NULL, &work_tex_rtv);
         d3d11_device->CreateUnorderedAccessView(work_tex, NULL, &work_tex_uav);
 
+        work_tex_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        work_tex_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_RENDER_TARGET; // Must have these flags for sharing textures!
+        work_tex_desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+
+        hr = d3d11_device->CreateTexture2D(&work_tex_desc, NULL, &work_tex_interm);
+        d3d11_device->CreateUnorderedAccessView(work_tex_interm, NULL, &work_tex_interm_uav);
+
+        IDXGIResource* dxgi_res;
+        work_tex_interm->QueryInterface(IID_PPV_ARGS(&dxgi_res));
+        dxgi_res->GetSharedHandle(&used_shared_handle); // Share this handle to svr_encoder.
+        dxgi_res->Release();
+
         used_rtv = work_tex_rtv;
     }
 
@@ -904,7 +952,7 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         mosample_remainder_step = (1.0f / sps) / (1.0f / movie_profile.movie_fps);
     }
 
-    if (!start_encoder(game_content_tex_h))
+    if (!start_encoder(used_shared_handle))
     {
         goto rfail;
     }
@@ -932,7 +980,6 @@ void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView*
 
     d3d11_context->CSSetShader(mosample_cs, NULL, 0);
     d3d11_context->CSSetShaderResources(0, 1, &game_content_srv);
-
     d3d11_context->CSSetConstantBuffers(0, 1, &mosample_cb);
     d3d11_context->CSSetUnorderedAccessViews(0, 1, &work_tex_uav, NULL);
 
@@ -961,6 +1008,21 @@ SvrVec2I get_velo_pos()
     return SvrVec2I { scr_pos_x, scr_pos_y };
 }
 
+void copy_mosample_to_interm(ID3D11DeviceContext* d3d11_context)
+{
+    d3d11_context->CSSetShader(mosample_interm_cs, NULL, 0);
+    d3d11_context->CSSetShaderResources(0, 1, &work_tex_srv);
+    d3d11_context->CSSetUnorderedAccessViews(0, 1, &work_tex_interm_uav, NULL);
+
+    d3d11_context->Dispatch(calc_cs_thread_groups(movie_width), calc_cs_thread_groups(movie_height), 1);
+
+    ID3D11ShaderResourceView* null_srv = NULL;
+    ID3D11UnorderedAccessView* null_uav = NULL;
+
+    d3d11_context->CSSetShaderResources(0, 1, &null_srv);
+    d3d11_context->CSSetUnorderedAccessViews(0, 1, &null_uav, NULL);
+}
+
 void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv, ID3D11RenderTargetView* rtv)
 {
     if (movie_profile.veloc_enabled)
@@ -974,7 +1036,13 @@ void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResource
         draw_velo(buf, get_velo_pos()); // Will draw to the texture of srv and rtv, but that is not apparent.
     }
 
-    send_frame_to_encoder(d3d11_context, srv);
+    // Must do an additional step here to update the shared texture from the high resolution work texture.
+    if (movie_profile.mosample_enabled)
+    {
+        copy_mosample_to_interm(d3d11_context);
+    }
+
+    send_frame_to_encoder(d3d11_context);
 }
 
 void mosample_game_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv)
