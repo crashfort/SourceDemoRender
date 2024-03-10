@@ -14,8 +14,8 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\deps\stb\stb_image_write.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\deps\stb\stb_sprintf.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\deps\stb\stb_image_write.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\deps\stb\stb_sprintf.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_atom.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_common.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_ini.cpp" />
@@ -25,8 +25,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_vdf.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\deps\stb\stb_image_write.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\deps\stb\stb_sprintf.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\deps\stb\stb_image_write.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\deps\stb\stb_sprintf.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)encoder_shared.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_atom.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_common.h" />
