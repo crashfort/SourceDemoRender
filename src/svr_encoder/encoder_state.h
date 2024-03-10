@@ -137,7 +137,7 @@ struct EncoderState
     bool render_receive_audio();
     void render_flush_audio_fifo();
     void render_submit_audio_fifo();
-    void render_encode_frame_from_audio_fifo(AVFrame* frame, s32 num_samples);
+    void render_encode_frame_from_audio_fifo(s32 num_samples);
     void render_encode_video_frame(AVFrame* frame);
     void render_encode_audio_frame(AVFrame* frame);
     void render_encode_frame(AVCodecContext* ctx, AVStream* stream, AVFrame* frame, AVMediaType type);

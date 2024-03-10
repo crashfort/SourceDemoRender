@@ -677,7 +677,7 @@ bool EncoderState::render_receive_audio()
     audio_convert_to_codec_samples();
 
     // Must submit everything in the fifo so things don't start drifting away.
-    // It's possible that this doesn't do anything in case there aren't enough samples to cover the needed frame size
+    // It's possible that this doesn't do anything in case there aren't enough samples to cover the needed frame size.
     render_submit_audio_fifo();
 
     ret = true;
@@ -699,8 +699,7 @@ void EncoderState::render_flush_audio_fifo()
     while (num_remaining > 0)
     {
         s32 num_samples = svr_min(num_remaining, render_audio_frame_size); // Ok for the last submit to have less samples than the frame size.
-        AVFrame* frame = render_get_new_audio_frame();
-        render_encode_frame_from_audio_fifo(frame, num_samples);
+        render_encode_frame_from_audio_fifo(num_samples);
         num_remaining -= num_samples;
     }
 }
@@ -714,15 +713,16 @@ void EncoderState::render_submit_audio_fifo()
 
     while (num_remaining >= render_audio_frame_size)
     {
-        AVFrame* frame = render_get_new_audio_frame();
-        render_encode_frame_from_audio_fifo(frame, render_audio_frame_size); // Every submission must have the same size in this case.
+        render_encode_frame_from_audio_fifo(render_audio_frame_size); // Every submission must have the same size in this case.
         num_remaining -= render_audio_frame_size;
     }
 }
 
 // Common code for render_submit_audio_fifo and render_flush_audio_fifo.
-void EncoderState::render_encode_frame_from_audio_fifo(AVFrame* frame, s32 num_samples)
+void EncoderState::render_encode_frame_from_audio_fifo(s32 num_samples)
 {
+    AVFrame* frame = render_get_new_audio_frame();
+
     audio_copy_samples_to_frame(frame, num_samples);
 
     frame->pts = render_audio_pts;
