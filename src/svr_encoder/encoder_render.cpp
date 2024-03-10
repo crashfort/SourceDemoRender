@@ -11,8 +11,36 @@ const RenderAudioInfo RENDER_AUDIO_INFOS[] = {
     RenderAudioInfo { "aac", "aac", AV_SAMPLE_FMT_FLTP, NULL },
 };
 
+DWORD CALLBACK render_frame_thread_proc(LPVOID param)
+{
+    SetThreadDescription(GetCurrentThread(), L"RENDER FRAME THREAD");
+
+    EncoderState* encoder_ptr = (EncoderState*)param;
+    encoder_ptr->render_frame_proc();
+
+    return 0; // Not used.
+}
+
+DWORD CALLBACK render_packet_thread_proc(LPVOID param)
+{
+    SetThreadDescription(GetCurrentThread(), L"RENDER PACKET THREAD");
+
+    EncoderState* encoder_ptr = (EncoderState*)param;
+    encoder_ptr->render_packet_proc();
+
+    return 0; // Not used.
+}
+
 bool EncoderState::render_init()
 {
+    render_frame_queue.init(RENDER_QUEUED_FRAMES);
+    render_packet_queue.init(RENDER_QUEUED_PACKETS);
+    render_recycled_video_frames.init(RENDER_QUEUED_FRAMES);
+    render_recycled_audio_frames.init(RENDER_QUEUED_FRAMES);
+
+    render_frame_wake_event_h = CreateEventA(NULL, FALSE, FALSE, NULL);
+    render_packet_wake_event_h = CreateEventA(NULL, FALSE, FALSE, NULL);
+
     return true;
 }
 
@@ -50,6 +78,13 @@ bool EncoderState::render_start()
         goto rfail;
     }
 
+    // Be extra sure that these events are not triggered, so the threads enter a waiting state.
+    ResetEvent(render_frame_wake_event_h);
+    ResetEvent(render_packet_wake_event_h);
+
+    render_frame_thread_h = CreateThread(NULL, 0, render_frame_thread_proc, this, 0, NULL);
+    render_packet_thread_h = CreateThread(NULL, 0, render_packet_thread_proc, this, 0, NULL);
+
     render_started = true;
 
     ret = true;
@@ -63,20 +98,36 @@ rexit:
 
 void EncoderState::render_free_static()
 {
+    if (render_frame_wake_event_h)
+    {
+        CloseHandle(render_frame_wake_event_h);
+        render_frame_wake_event_h = NULL;
+    }
+
+    if (render_packet_wake_event_h)
+    {
+        CloseHandle(render_packet_wake_event_h);
+        render_packet_wake_event_h = NULL;
+    }
+
+    render_frame_queue.free();
+    render_packet_queue.free();
+    render_recycled_video_frames.free();
+    render_recycled_audio_frames.free();
 }
 
 void EncoderState::render_free_dynamic()
 {
     if (render_started)
     {
-        // Flush out all of the remaining samples in the audio fifo.
+        // Flush out all of the remaining samples in the audio fifo for encode.
 
         if (movie_params.use_audio)
         {
             render_flush_audio_fifo();
         }
 
-        // Flush the encoders.
+        // Send flushes to frame thread.
 
         if (render_video_ctx)
         {
@@ -88,7 +139,21 @@ void EncoderState::render_free_dynamic()
             render_encode_audio_frame(NULL);
         }
 
-        av_interleaved_write_frame(render_output_context, NULL);
+        WaitForSingleObject(render_frame_thread_h, INFINITE); // Wait for frame thread to finish.
+
+        // Flush the packet thread.
+
+        AVPacket* flush_packet = NULL;
+        render_packet_queue.push(&flush_packet);
+        SetEvent(render_packet_wake_event_h); // Notify packet thread.
+
+        WaitForSingleObject(render_packet_thread_h, INFINITE); // Wait for packet thread to finish.
+
+        CloseHandle(render_frame_thread_h);
+        render_frame_thread_h = NULL;
+
+        CloseHandle(render_packet_thread_h);
+        render_packet_thread_h = NULL;
 
         av_write_trailer(render_output_context); // Can only be written if avformat_write_header was called.
     }
@@ -104,9 +169,6 @@ void EncoderState::render_free_dynamic()
     avcodec_free_context(&render_video_ctx);
     avcodec_free_context(&render_audio_ctx);
 
-    av_frame_free(&render_video_frame);
-    av_frame_free(&render_audio_frame);
-
     render_video_stream = NULL;
     render_audio_stream = NULL;
 
@@ -116,6 +178,131 @@ void EncoderState::render_free_dynamic()
 
     render_video_pts = 0;
     render_audio_pts = 0;
+}
+
+// In frame thread.
+void EncoderState::render_frame_proc()
+{
+    bool run = true;
+
+    while (run)
+    {
+        WaitForSingleObject(render_frame_wake_event_h, INFINITE);
+
+        RenderFrameThreadInput input = {};
+
+        while (render_frame_queue.pull(&input))
+        {
+            if (input.frame == NULL)
+            {
+                run = false; // Stop on flush frame.
+            }
+
+            s32 res = avcodec_send_frame(input.ctx, input.frame);
+
+            // Recycle frames.
+            // We don't want to allocate big frames if we don't have to.
+            // Flush frame must not be reused.
+            if (input.frame)
+            {
+                if (input.type == AVMEDIA_TYPE_VIDEO)
+                {
+                    render_recycled_video_frames.push(&input.frame);
+                }
+
+                if (input.type == AVMEDIA_TYPE_AUDIO)
+                {
+                    render_recycled_audio_frames.push(&input.frame);
+                }
+            }
+
+            if (res < 0)
+            {
+                error("ERROR: Could not send raw frame to encoder (%d)\n", res);
+                goto rfail;
+            }
+
+            while (res == 0)
+            {
+                AVPacket* packet = av_packet_alloc();
+
+                res = avcodec_receive_packet(input.ctx, packet);
+
+                // This will return AVERROR(EAGAIN) when we need to send more data.
+                // This will return AVERROR_EOF when we are sending a flush frame.
+                if (res == AVERROR(EAGAIN) || res == AVERROR_EOF)
+                {
+                    // TODO Should not allocate and then free the packet like this.
+                    av_packet_free(&packet);
+                    break;
+                }
+
+                if (res < 0)
+                {
+                    error("ERROR: Could not receive packet from encoder (%d)\n", res);
+                    av_packet_free(&packet);
+                    goto rfail;
+                }
+
+                if (res == 0)
+                {
+                    packet->pts = av_rescale_q(packet->pts, input.ctx->time_base, input.stream->time_base);
+                    packet->dts = av_rescale_q(packet->dts, input.ctx->time_base, input.stream->time_base);
+                    packet->duration = av_rescale_q(packet->duration, input.ctx->time_base, input.stream->time_base);
+                    packet->stream_index = input.stream->index;
+
+                    // Send to packet thread.
+                    render_packet_queue.push(&packet);
+                    SetEvent(render_packet_wake_event_h); // Notify packet thread.
+                }
+            }
+        }
+    }
+
+    goto rexit;
+
+rfail:
+
+rexit:
+    return;
+}
+
+// In packet thread.
+void EncoderState::render_packet_proc()
+{
+    bool run = true;
+
+    while (run)
+    {
+        WaitForSingleObject(render_packet_wake_event_h, INFINITE);
+
+        AVPacket* packet = NULL;
+
+        while (render_packet_queue.pull(&packet))
+        {
+            if (packet == NULL)
+            {
+                run = false; // Stop on flush packet.
+            }
+
+            s32 res = av_interleaved_write_frame(render_output_context, packet);
+
+            av_packet_free(&packet);
+
+            if (res < 0)
+            {
+                error("ERROR: Could not write encoded packet to container (%d)\n", res);
+                goto rfail;
+            }
+        }
+    }
+
+    goto rexit;
+
+rfail:
+
+rexit:
+    return;
 }
 
 // Find the structure matching the configuration in the movie profile.
@@ -260,6 +447,8 @@ bool EncoderState::render_init_video()
         render_video_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
+    render_video_ctx->thread_count = 0; // Use all threads.
+
     if (render_video_info->setup)
     {
         (this->*render_video_info->setup)();
@@ -273,25 +462,11 @@ bool EncoderState::render_init_video()
         goto rfail;
     }
 
-    render_video_frame = av_frame_alloc();
+    // Preallocate some frames.
 
-    if (render_video_frame == NULL)
+    for (s32 i = 0; i < 8; i++)
     {
-        error("ERROR: Could not create render video encode frame\n");
-        goto rfail;
-    }
-
-    render_video_frame->format = render_video_ctx->pix_fmt;
-    render_video_frame->width = render_video_ctx->width;
-    render_video_frame->height = render_video_ctx->height;
-
-    // Allocate buffers for frame.
-    res = av_frame_get_buffer(render_video_frame, 0);
-
-    if (res < 0)
-    {
-        error("ERROR: Could not allocate render video encode frame\n");
-        goto rfail;
+        render_get_new_video_frame();
     }
 
     res = avcodec_parameters_from_context(render_video_stream->codecpar, render_video_ctx);
@@ -373,6 +548,8 @@ bool EncoderState::render_init_audio()
         render_audio_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
+    render_audio_ctx->thread_count = 0; // Use all threads.
+
     if (render_audio_info->setup)
     {
         (this->*render_audio_info->setup)();
@@ -397,27 +574,13 @@ bool EncoderState::render_init_audio()
         render_audio_frame_size = render_audio_ctx->frame_size;
     }
 
-    render_audio_frame = av_frame_alloc();
-
-    if (render_audio_frame == NULL)
-    {
-        error("ERROR: Could not create render audio encode frame\n");
-        goto rfail;
-    }
-
-    render_audio_frame->format = render_audio_ctx->sample_fmt;
-    render_audio_frame->ch_layout = render_audio_ctx->ch_layout;
-    render_audio_frame->sample_rate = render_audio_ctx->sample_rate;
-    render_audio_frame->nb_samples = render_audio_frame_size; // All submitted audio frames will have this amount of samples, except the last.
     render_audio_ctx->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
 
-    // Allocate buffers for frame.
-    res = av_frame_get_buffer(render_audio_frame, 0);
+    // Preallocate some frames.
 
-    if (res < 0)
+    for (s32 i = 0; i < 8; i++)
     {
-        error("ERROR: Could not allocate render audio encode frame\n");
-        goto rfail;
+        render_get_new_audio_frame();
     }
 
     res = avcodec_parameters_from_context(render_audio_stream->codecpar, render_audio_ctx);
@@ -439,123 +602,135 @@ rexit:
 }
 
 // The shared game texture has been updated at this point.
-bool EncoderState::render_receive_video()
+void EncoderState::render_receive_video()
 {
     assert(render_started);
 
-    bool ret = false;
+    AVFrame* frame = render_get_new_video_frame();
 
-    vid_convert_to_codec_textures(render_video_frame);
+    vid_convert_to_codec_textures(frame);
 
-    render_video_frame->pts = render_video_pts;
+    frame->pts = render_video_pts;
 
-    if (!render_encode_video_frame(render_video_frame))
-    {
-        goto rfail;
-    }
+    render_encode_video_frame(frame);
 
     render_video_pts++;
-
-    ret = true;
-    goto rexit;
-
-rfail:
-
-rexit:
-    return ret;
 }
 
 // The shared audio samples have been updated at this point.
-bool EncoderState::render_receive_audio()
+void EncoderState::render_receive_audio()
 {
     assert(render_started);
     assert(movie_params.use_audio);
     assert(shared_mem_ptr->waiting_audio_samples > 0);
-
-    bool ret = false;
 
     audio_convert_to_codec_samples();
 
     // Must submit everything in the fifo so things don't start drifting away.
     // It's possible that this doesn't do anything in case there aren't enough samples to cover the needed frame size
     render_submit_audio_fifo();
-
-    ret = true;
-    goto rexit;
-
-rfail:
-
-rexit:
-    return ret;
 }
 
 // Some encoders need a fixed amount of samples every iteration (except the last).
 // We may be getting less samples from the game, so we have to queue the samples up until we have enough to submit.
 // Call this when rendering is stopping to submit the slack.
-bool EncoderState::render_flush_audio_fifo()
+void EncoderState::render_flush_audio_fifo()
 {
-    bool ret = false;
-
     s32 num_remaining = audio_num_queued_samples();
 
     while (num_remaining > 0)
     {
         s32 num_samples = svr_min(num_remaining, render_audio_frame_size); // Ok for the last submit to have less samples than the frame size.
-        render_encode_frame_from_audio_fifo(num_samples);
+        AVFrame* frame = render_get_new_audio_frame();
+        render_encode_frame_from_audio_fifo(frame, num_samples);
         num_remaining -= num_samples;
     }
-
-    ret = true;
-    goto rexit;
-
-rfail:
-
-rexit:
-    return ret;
 }
 
 // Some encoders need a fixed amount of samples every iteration (except the last).
 // We may be getting less samples from the game, so we have to queue the samples up until we have enough to submit.
 // Call this during rendering to submit all possible audio frames.
-bool EncoderState::render_submit_audio_fifo()
+void EncoderState::render_submit_audio_fifo()
 {
-    bool ret = false;
-
     s32 num_remaining = audio_num_queued_samples();
 
     while (num_remaining >= render_audio_frame_size)
     {
-        render_encode_frame_from_audio_fifo(render_audio_frame_size); // Every submission must have the same size in this case.
+        AVFrame* frame = render_get_new_audio_frame();
+        render_encode_frame_from_audio_fifo(frame, render_audio_frame_size); // Every submission must have the same size in this case.
         num_remaining -= render_audio_frame_size;
     }
-
-    ret = true;
-    goto rexit;
-
-rfail:
-
-rexit:
-    return ret;
 }
 
 // Common code for render_submit_audio_fifo and render_flush_audio_fifo.
-bool EncoderState::render_encode_frame_from_audio_fifo(s32 num_samples)
+void EncoderState::render_encode_frame_from_audio_fifo(AVFrame* frame, s32 num_samples)
 {
-    bool ret = false;
+    audio_copy_samples_to_frame(frame, num_samples);
 
-    audio_copy_samples_to_frame(render_audio_frame, num_samples);
-
-    render_audio_frame->pts = render_audio_pts;
-    render_audio_frame->nb_samples = num_samples;
+    frame->pts = render_audio_pts;
+    frame->nb_samples = num_samples;
     render_audio_pts += num_samples;
 
-    if (!render_encode_audio_frame(render_audio_frame))
+    render_encode_audio_frame(frame);
+}
+
+void EncoderState::render_encode_video_frame(AVFrame* frame)
+{
+    render_encode_frame(render_video_ctx, render_video_stream, frame, AVMEDIA_TYPE_VIDEO);
+}
+
+void EncoderState::render_encode_audio_frame(AVFrame* frame)
+{
+    render_encode_frame(render_audio_ctx, render_audio_stream, frame, AVMEDIA_TYPE_AUDIO);
+}
+
+void EncoderState::render_encode_frame(AVCodecContext* ctx, AVStream* stream, AVFrame* frame, AVMediaType type)
+{
+    // Send to frame thread.
+
+    RenderFrameThreadInput input = {};
+    input.ctx = ctx;
+    input.frame = frame;
+    input.stream = stream;
+    input.type = type;
+
+    render_frame_queue.push(&input);
+
+    SetEvent(render_frame_wake_event_h); // Notify frame thread.
+}
+
+AVFrame* EncoderState::render_get_new_video_frame()
+{
+    AVFrame* ret = NULL;
+    s32 res;
+
+    // Fast and good if we can reuse.
+    if (render_recycled_video_frames.pull(&ret))
     {
-        // Nothing to do in this case, just drop everything.
+        return ret;
+    }
+
+    ret = av_frame_alloc();
+
+    if (ret == NULL)
+    {
+        error("ERROR: Could not create render video encode frame\n");
         goto rfail;
     }
 
-    ret = true;
+    ret->format = render_video_ctx->pix_fmt;
+    ret->width = render_video_ctx->width;
+    ret->height = render_video_ctx->height;
+
+    // Allocate buffers for frame.
+    res = av_frame_get_buffer(ret, 0);
+
+    if (res < 0)
+    {
+        error("ERROR: Could not allocate render video encode frame\n");
+        goto rfail;
+    }
+
     goto rexit;
 
 rfail:
@@ -564,76 +739,39 @@ rexit:
     return ret;
 }
 
-bool EncoderState::render_encode_video_frame(AVFrame* frame)
+AVFrame* EncoderState::render_get_new_audio_frame()
 {
-    return render_encode_frame(render_video_ctx, render_video_stream, frame);
-}
-
-bool EncoderState::render_encode_audio_frame(AVFrame* frame)
-{
-    return render_encode_frame(render_audio_ctx, render_audio_stream, frame);
-}
-
-bool EncoderState::render_encode_frame(AVCodecContext* ctx, AVStream* stream, AVFrame* frame)
-{
-    bool ret = false;
+    AVFrame* ret = NULL;
     s32 res;
 
-    const auto test = AVERROR(EINVAL);
-
-    res = avcodec_send_frame(ctx, frame);
-
-    if (res < 0)
+    // Fast and good if we can reuse.
+    if (render_recycled_audio_frames.pull(&ret))
     {
-        error("ERROR: Could not send raw frame to encoder (%d)\n", res);
+        return ret;
+    }
+
+    ret = av_frame_alloc();
+
+    if (ret == NULL)
+    {
+        error("ERROR: Could not create render audio encode frame\n");
         goto rfail;
     }
 
-    while (!res)
+    ret->format = render_audio_ctx->sample_fmt;
+    ret->ch_layout = render_audio_ctx->ch_layout;
+    ret->sample_rate = render_audio_ctx->sample_rate;
+    ret->nb_samples = render_audio_frame_size; // All submitted audio frames will have this amount of samples, except the last.
+
+    // Allocate buffers for frame.
+    res = av_frame_get_buffer(ret, 0);
+
+    if (res < 0)
     {
-        AVPacket* packet = av_packet_alloc();
-
-        res = avcodec_receive_packet(ctx, packet);
-
-        // This will return AVERROR(EAGAIN) when we need to send more data.
-        // This will return AVERROR_EOF when we are sending a flush frame.
-        if (res == AVERROR(EAGAIN) || res == AVERROR_EOF)
-        {
-            // TODO Should not allocate and then free the packet like this. Possibly store
-            // a packet and then ref/deref instead.
-            av_packet_free(&packet);
-
-            ret = true;
-            goto rexit;
-        }
-
-        if (res < 0)
-        {
-            error("ERROR: Could not receive packet from encoder (%d)\n", res);
-            av_packet_free(&packet);
-            goto rfail;
-        }
-
-        if (res == 0)
-        {
-            packet->pts = av_rescale_q(packet->pts, ctx->time_base, stream->time_base);
-            packet->dts = av_rescale_q(packet->dts, ctx->time_base, stream->time_base);
-            packet->duration = av_rescale_q(packet->duration, ctx->time_base, stream->time_base);
-            packet->stream_index = stream->index;
-
-            res = av_interleaved_write_frame(render_output_context, packet);
-
-            av_packet_free(&packet);
-
-            if (res < 0)
-            {
-                error("ERROR: Could not write encoded packet to container (%d)\n", res);
-                goto rfail;
-            }
-        }
+        error("ERROR: Could not allocate render audio encode frame\n");
+        goto rfail;
     }
 
-    ret = true;
     goto rexit;
 
 rfail:

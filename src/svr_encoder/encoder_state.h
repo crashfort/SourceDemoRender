@@ -1,7 +1,7 @@
 #pragma once
 
-const s32 MAX_RENDER_QUEUED_FRAMES = 32; // How many uncompressed AVFrame* to queue up for encoding.
-const s32 MAX_RENDER_QUEUED_PACKETS = 32; // How many compressed AVPacket* to queue up for writing.
+const s32 RENDER_QUEUED_FRAMES = 8192; // How many uncompressed AVFrame* to queue up for encoding.
+const s32 RENDER_QUEUED_PACKETS = 8192; // How many compressed AVPacket* to queue up for writing.
 
 // At most, YUV422 uses 3 planes.
 const s32 VID_MAX_PLANES = 3;
@@ -10,6 +10,14 @@ const s32 AUDIO_MAX_CHANS = 8;
 
 struct RenderVideoInfo;
 struct RenderAudioInfo;
+
+struct RenderFrameThreadInput
+{
+    AVCodecContext* ctx;
+    AVFrame* frame;
+    AVStream* stream;
+    AVMediaType type;
+};
 
 struct EncoderState
 {
@@ -51,17 +59,43 @@ struct EncoderState
     const AVOutputFormat* render_container;
     bool render_started;
 
+    // These threads start when rendering starts, and stop when rendering stops.
+    // This makes it really easy to synchronize when stopping.
+    HANDLE render_frame_thread_h; // Thread used to process uncompressed video frames and audio samples.
+    HANDLE render_packet_thread_h; // Thread used to process encoded packets for writing to the container.
+
+    HANDLE render_frame_wake_event_h; // Event set by the main thread to notify that there are new frames to encode.
+
+    // Event set by the frame thread to notify that there are encoded packets to write.
+    // When rendering stops, this will be set by the main thread instead.
+    HANDLE render_packet_wake_event_h;
+
+    // Uncompressed frames and samples ready to be encoded.
+    // Written to by the main thread, read by the frame thread.
+    SvrAsyncStream<RenderFrameThreadInput> render_frame_queue;
+
+    // Compressed packets ready to be written.
+    // Written to by the frame thread, read by the packet thread.
+    // When rendering stops, this will be written to by the main thread instead.
+    SvrAsyncStream<AVPacket*> render_packet_queue;
+
+    // Video frames that have been encoded.
+    // Written to by the frame thread, read by the main thread.
+    SvrAsyncStream<AVFrame*> render_recycled_video_frames;
+
+    // Audio frames that have been encoded.
+    // Written to by the frame thread, read by the main thread.
+    SvrAsyncStream<AVFrame*> render_recycled_audio_frames;
+
     const RenderVideoInfo* render_video_info;
     AVStream* render_video_stream;
     AVCodecContext* render_video_ctx;
-    AVFrame* render_video_frame; // Frame for encoded data.
     s64 render_video_pts; // Presentation timestamp.
     AVRational render_video_q; // Time base for video. Always based in seconds, so 1/60 for example.
 
     const RenderAudioInfo* render_audio_info;
     AVStream* render_audio_stream;
     AVCodecContext* render_audio_ctx;
-    AVFrame* render_audio_frame; // Frame for encoded data.
     s64 render_audio_pts; // Presentation timestamp.
     s32 render_audio_frame_size; // This is how many samples the encoder needs to get every call (except the last).
     AVRational render_audio_q; // Time base for video. Always based in seconds, so 1/44100 for example.
@@ -70,19 +104,23 @@ struct EncoderState
     bool render_start();
     void render_free_static();
     void render_free_dynamic();
+    void render_frame_proc();
+    void render_packet_proc();
     bool render_setup_video_info();
     bool render_setup_audio_info();
     bool render_init_output_context();
     bool render_init_video();
     bool render_init_audio();
-    bool render_receive_video();
-    bool render_receive_audio();
-    bool render_flush_audio_fifo();
-    bool render_submit_audio_fifo();
-    bool render_encode_frame_from_audio_fifo(s32 num_samples);
-    bool render_encode_video_frame(AVFrame* frame);
-    bool render_encode_audio_frame(AVFrame* frame);
-    bool render_encode_frame(AVCodecContext* ctx, AVStream* stream, AVFrame* frame);
+    void render_receive_video();
+    void render_receive_audio();
+    void render_flush_audio_fifo();
+    void render_submit_audio_fifo();
+    void render_encode_frame_from_audio_fifo(AVFrame* frame, s32 num_samples);
+    void render_encode_video_frame(AVFrame* frame);
+    void render_encode_audio_frame(AVFrame* frame);
+    void render_encode_frame(AVCodecContext* ctx, AVStream* stream, AVFrame* frame, AVMediaType type);
+    AVFrame* render_get_new_video_frame();
+    AVFrame* render_get_new_audio_frame();
     void render_setup_dnxhr();
     void render_setup_libx264();
 

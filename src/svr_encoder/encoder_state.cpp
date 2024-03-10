@@ -95,18 +95,12 @@ void EncoderState::stop_event()
 
 void EncoderState::new_video_frame_event()
 {
-    if (!render_receive_video())
-    {
-        stop_after_dynamic_error();
-    }
+    render_receive_video();
 }
 
 void EncoderState::new_audio_samples_event()
 {
-    if (!render_receive_audio())
-    {
-        stop_after_dynamic_error();
-    }
+    render_receive_audio();
 }
 
 // Event reading from svr_game.

@@ -12,4 +12,6 @@ void EncoderState::render_setup_dnxhr()
     snprintf(buf, SVR_ARRAY_SIZE(buf), "dnxhr_%s", movie_params.dnxhr_profile);
 
     av_opt_set(render_video_ctx->priv_data, "profile", buf, 0);
+
+    render_video_ctx->thread_type = FF_THREAD_SLICE; // Crashes without this.
 }

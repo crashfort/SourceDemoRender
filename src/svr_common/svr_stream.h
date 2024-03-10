@@ -18,6 +18,10 @@ struct SvrAsyncStream
 
     SVR_THREAD_PADDING();
 
+    SvrAtom64 size_;
+
+    SVR_THREAD_PADDING();
+
     T* slots_;
     s32 buffer_capacity;
 
@@ -31,6 +35,15 @@ struct SvrAsyncStream
         slots_ = (T*)malloc(sizeof(T) * capacity);
 
         buffer_capacity = capacity;
+    }
+
+    inline void free()
+    {
+        if (slots_)
+        {
+            ::free(slots_);
+            slots_ = NULL;
+        }
     }
 
     // When every item is going to be readded.
@@ -62,6 +75,7 @@ struct SvrAsyncStream
         slots_[head] = *item;
 
         svr_atom_store(&head_, next_head);
+        svr_atom_add(&size_, 1);
         return true;
     }
 
@@ -87,24 +101,12 @@ struct SvrAsyncStream
         }
 
         svr_atom_store(&tail_, next_tail);
+        svr_atom_sub(&size_, 1);
         return true;
     }
 
-    inline s32 read_buffer_health()
+    inline s32 size()
     {
-        s32 diff = svr_atom_load(&head_) - svr_atom_load(&tail_);
-
-        if (diff < 0)
-        {
-            diff += buffer_capacity;
-        }
-
-        return diff;
-    }
-
-    inline bool is_buffer_full()
-    {
-        // The read and write ends cannot be the same (as then it would be empty).
-        return read_buffer_health() == buffer_capacity - 1;
+        return svr_atom_load(&size_);
     }
 };
