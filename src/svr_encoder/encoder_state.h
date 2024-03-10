@@ -77,6 +77,9 @@ struct EncoderState
     bool render_init_audio();
     bool render_receive_video();
     bool render_receive_audio();
+    bool render_flush_audio_fifo();
+    bool render_submit_audio_fifo();
+    bool render_encode_frame_from_audio_fifo(s32 num_samples);
     bool render_encode_video_frame(AVFrame* frame);
     bool render_encode_audio_frame(AVFrame* frame);
     bool render_encode_frame(AVCodecContext* ctx, AVStream* stream, AVFrame* frame);
@@ -140,7 +143,6 @@ struct EncoderState
     bool audio_create_resampler();
     bool audio_create_fifo();
     void audio_convert_to_codec_samples();
-    bool audio_have_enough_samples_to_encode();
     void audio_copy_samples_to_frame(AVFrame* dest_frame, s32 num_samples);
     s32 audio_num_queued_samples();
 };

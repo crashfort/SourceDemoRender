@@ -73,31 +73,10 @@ void EncoderState::render_free_dynamic()
 
         if (movie_params.use_audio)
         {
-            s32 num_remaining = audio_num_queued_samples();
-
-            while (num_remaining > 0)
-            {
-                s32 num_samples = svr_min(num_remaining, render_audio_frame_size);
-                audio_copy_samples_to_frame(render_audio_frame, num_samples);
-
-                render_audio_frame->pts = render_audio_pts;
-                render_audio_frame->nb_samples = num_samples;
-                render_audio_pts += num_samples;
-
-                if (!render_encode_audio_frame(render_audio_frame))
-                {
-                    // Nothing to do in this case, just drop everything.
-                    break;
-                }
-
-                num_remaining -= num_samples;
-            }
+            render_flush_audio_fifo();
         }
 
-        // Flush the encoders if we don't have any error.
-        // We cannot flush if we have errors because doing so would try and write additional packets to the container.
-        // Writing even more would just make things worse, so instead bail and make a functional media file of what we've
-        // already written, skipping the trailing packets.
+        // Flush the encoders.
 
         if (render_video_ctx)
         {
@@ -497,20 +476,82 @@ bool EncoderState::render_receive_audio()
 
     audio_convert_to_codec_samples();
 
-    if (!audio_have_enough_samples_to_encode())
+    // Must submit everything in the fifo so things don't start drifting away.
+    // It's possible that this doesn't do anything in case there aren't enough samples to cover the needed frame size
+    render_submit_audio_fifo();
+
+    ret = true;
+    goto rexit;
+
+rfail:
+
+rexit:
+    return ret;
+}
+
+// Some encoders need a fixed amount of samples every iteration (except the last).
+// We may be getting less samples from the game, so we have to queue the samples up until we have enough to submit.
+// Call this when rendering is stopping to submit the slack.
+bool EncoderState::render_flush_audio_fifo()
+{
+    bool ret = false;
+
+    s32 num_remaining = audio_num_queued_samples();
+
+    while (num_remaining > 0)
     {
-        ret = true;
-        goto rexit;
+        s32 num_samples = svr_min(num_remaining, render_audio_frame_size); // Ok for the last submit to have less samples than the frame size.
+        render_encode_frame_from_audio_fifo(num_samples);
+        num_remaining -= num_samples;
     }
 
-    audio_copy_samples_to_frame(render_audio_frame, render_audio_frame_size);
+    ret = true;
+    goto rexit;
+
+rfail:
+
+rexit:
+    return ret;
+}
+
+// Some encoders need a fixed amount of samples every iteration (except the last).
+// We may be getting less samples from the game, so we have to queue the samples up until we have enough to submit.
+// Call this during rendering to submit all possible audio frames.
+bool EncoderState::render_submit_audio_fifo()
+{
+    bool ret = false;
+
+    s32 num_remaining = audio_num_queued_samples();
+
+    while (num_remaining >= render_audio_frame_size)
+    {
+        render_encode_frame_from_audio_fifo(render_audio_frame_size); // Every submission must have the same size in this case.
+        num_remaining -= render_audio_frame_size;
+    }
+
+    ret = true;
+    goto rexit;
+
+rfail:
+
+rexit:
+    return ret;
+}
+
+// Common code for render_submit_audio_fifo and render_flush_audio_fifo.
+bool EncoderState::render_encode_frame_from_audio_fifo(s32 num_samples)
+{
+    bool ret = false;
+
+    audio_copy_samples_to_frame(render_audio_frame, num_samples);
 
     render_audio_frame->pts = render_audio_pts;
-    render_audio_frame->nb_samples = render_audio_frame_size;
-    render_audio_pts += render_audio_frame_size;
+    render_audio_frame->nb_samples = num_samples;
+    render_audio_pts += num_samples;
 
     if (!render_encode_audio_frame(render_audio_frame))
     {
+        // Nothing to do in this case, just drop everything.
         goto rfail;
     }
 
