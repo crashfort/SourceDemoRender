@@ -1,5 +1,6 @@
 #include "game_proc.h"
 #include "game_shared.h"
+#include "encoder_shared.h"
 #include <d3d11.h>
 #include <strsafe.h>
 #include <dwrite.h>
@@ -8,38 +9,15 @@
 #include <assert.h>
 #include <intrin.h>
 #include "svr_prof.h"
-#include "svr_stream.h"
-#include "svr_sem.h"
 #include "game_proc_profile.h"
 #include <stb_sprintf.h>
 #include "svr_api.h"
 #include <Shlwapi.h>
-#include <DirectXMath.h>
-
-using namespace DirectX;
+#include <math.h>
+#include <float.h>
 
 // Don't use fatal process ending errors in here as this is used both in standalone and in integration.
 // It is only standalone SVR that can do fatal processs ending errors.
-
-// Must be a power of 2.
-const s32 NUM_BUFFERED_DL_TEXS = 2;
-
-// Rotation of CPU textures to download to.
-struct CpuTexDl
-{
-    ID3D11Texture2D* texs[NUM_BUFFERED_DL_TEXS];
-    s32 i;
-
-    ID3D11Texture2D* get_current()
-    {
-        return texs[i];
-    }
-
-    void advance()
-    {
-        i = (i + 1) & (NUM_BUFFERED_DL_TEXS - 1);
-    }
-};
 
 // -------------------------------------------------
 
@@ -54,23 +32,6 @@ ID3D11Texture2D* work_tex;
 ID3D11RenderTargetView* work_tex_rtv;
 ID3D11ShaderResourceView* work_tex_srv;
 ID3D11UnorderedAccessView* work_tex_uav;
-
-// -------------------------------------------------
-// Audio state.
-
-// We write wav for now because writing multiple streams over a single pipe is weird. Will be looked into later.
-
-const s32 WAV_BUFFERED_SAMPLES = 32768;
-
-HANDLE wav_f;
-DWORD wav_data_length;
-DWORD wav_file_length;
-DWORD wav_header_pos;
-DWORD wav_data_pos;
-
-// Only write out samples when we have enough.
-SvrWaveSample* wav_buf;
-s32 wav_num_samples;
 
 // -------------------------------------------------
 // Velo state.
@@ -127,45 +88,340 @@ SvrProf mosample_prof;
 MovieProfile movie_profile;
 
 // -------------------------------------------------
-// FFmpeg process communication.
+// Encoder state.
 
-struct ThreadPipeData
+HANDLE encoder_proc;
+HANDLE encoder_shared_mem_h;
+HANDLE game_wake_event_h;
+HANDLE encoder_wake_event_h;
+EncoderSharedMem* encoder_shared_ptr;
+void* encoder_audio_buffer;
+
+// -------------------------------------------------
+
+bool start_encoder_process()
 {
-    u8* ptr;
-    s32 size;
-};
+    bool ret = false;
 
-// We write data to the ffmpeg process through this pipe.
-// It is redirected to their stdin.
-HANDLE ffmpeg_write_pipe;
+    char full_args[1024];
+    full_args[0] = 0;
 
-HANDLE ffmpeg_proc;
+    // Put the handle to the shared memory as a parameter, we can pass the rest in there.
+    // All handles are 32-bit, so this is safe for the 64-bit svr_encoder too.
+    StringCchCatA(full_args, SVR_ARRAY_SIZE(full_args), svr_va("\"%s\\svr_encoder.exe\"", svr_resource_path));
+    StringCchCatA(full_args, SVR_ARRAY_SIZE(full_args), " ");
+    StringCchCatA(full_args, SVR_ARRAY_SIZE(full_args), svr_va("%u", (u32)encoder_shared_mem_h));
 
-// How many completed buffers we keep in memory waiting to be sent to ffmpeg.
-const s32 MAX_BUFFERED_SEND_BUFS = 8;
+    STARTUPINFOA start_info = {};
+    start_info.cb = sizeof(STARTUPINFOA);
 
-// The buffers that are sent to the ffmpeg process.
-// For SW encoding these buffers are uncompressed frames of equal size.
-ThreadPipeData ffmpeg_send_bufs[MAX_BUFFERED_SEND_BUFS];
+    PROCESS_INFORMATION proc_info;
 
-HANDLE ffmpeg_thread;
+    // Working directory for the encoder process should be in the SVR directory.
+    // Need to inherit handles so we can pass the shared memory handle as a parameter.
+    if (!CreateProcessA(NULL, full_args, NULL, NULL, TRUE, CREATE_NO_WINDOW | CREATE_SUSPENDED, NULL, svr_resource_path, &start_info, &proc_info))
+    {
+        svr_log("ERROR: Could not create encoder process (%lu)\n", GetLastError());
+        goto rfail;
+    }
 
-// Queues and semaphores for communicating between the threads.
+    // Let the process actually start now.
+    // You want to place a breakpoint on this line when debugging svr_encoder!
+    // When this breakpoint is hit, attach to the svr_encoder process and then continue this process.
+    ResumeThread(proc_info.hThread);
 
-SvrAsyncStream<ThreadPipeData> ffmpeg_write_queue;
-SvrAsyncStream<ThreadPipeData> ffmpeg_read_queue;
+    encoder_proc = proc_info.hProcess;
+    CloseHandle(proc_info.hThread);
 
-// Semaphore that is signalled when there are frames to send to ffmpeg (pulls from ffmpeg_write_queue).
-// This is incremented by the game thread when it has added a downloaded frame to the write queue.
-SvrSemaphore ffmpeg_write_sem;
+    ret = true;
+    goto rexit;
 
-// Semaphore that is signalled when there are frames available to download into (pulls from ffmpeg_read_queue).
-// This is incremented by the ffmpeg thread when it has sent a frame to the ffmpeg process.
-SvrSemaphore ffmpeg_read_sem;
+rfail:
 
-bool has_ffmpeg_proc_exited()
+rexit:
+    return ret;
+}
+
+bool create_encoder_shared_mem()
 {
-    return WaitForSingleObject(ffmpeg_proc, 0) == WAIT_TIMEOUT;
+    bool ret = false;
+
+    SECURITY_ATTRIBUTES sa = {};
+    sa.bInheritHandle = TRUE; // Allow encoder process to use this handle too.
+
+    s32 mem_size = sizeof(EncoderSharedMem);
+    mem_size += sizeof(SvrWaveSample) * ENCODER_MAX_SAMPLES; // Space for audio buffer.
+
+    // Create shared memory handle without a name. The handle will be passed as a parameter to the encoder process
+    // and it will open in that way, since we use inherited handles.
+    encoder_shared_mem_h = CreateFileMappingA(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, mem_size, NULL);
+
+    if (encoder_shared_mem_h == NULL)
+    {
+        svr_log("ERROR: Could not create encoder shared memory (%lu)\n", GetLastError());
+        goto rfail;
+    }
+
+    encoder_shared_ptr = (EncoderSharedMem*)MapViewOfFile(encoder_shared_mem_h, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
+
+    // This can't fail in this case, but check anyway I guess.
+    if (encoder_shared_ptr == NULL)
+    {
+        svr_log("ERROR: Could not view encoder shared memory (%lu)\n", GetLastError());
+        goto rfail;
+    }
+
+    // These must be auto reset events so there are no race conditions!
+    game_wake_event_h = CreateEventA(&sa, FALSE, FALSE, NULL);
+    encoder_wake_event_h = CreateEventA(&sa, FALSE, FALSE, NULL);
+
+    memset(encoder_shared_ptr, 0, mem_size); // Put to known state.
+
+    // Fill some initial data. The encoder process will need these right away.
+    // Also build the messy offsets because we are mixing 32-bit and 64-bit.
+
+    encoder_shared_ptr->game_pid = GetCurrentProcessId();
+    encoder_shared_ptr->game_wake_event_h = (u32)game_wake_event_h;
+    encoder_shared_ptr->encoder_wake_event_h = (u32)encoder_wake_event_h;
+
+    s32 offset = 0;
+
+    offset += sizeof(EncoderSharedMem);
+    encoder_shared_ptr->audio_buffer_offset = offset;
+
+    encoder_audio_buffer = (u8*)encoder_shared_ptr + encoder_shared_ptr->audio_buffer_offset;
+
+    ret = true;
+    goto rexit;
+
+rfail:
+
+rexit:
+    return ret;
+}
+
+bool init_encoder()
+{
+    // The shared memory handle must be created before the encoder process.
+    if (!create_encoder_shared_mem())
+    {
+        return false;
+    }
+
+    // Start the encoder process early.
+    // The process will always be ready and when movie starts we will notify it that we will send data to it.
+    if (!start_encoder_process())
+    {
+        return false;
+    }
+
+    game_log("Started encoder process\n");
+
+    return true;
+}
+
+void free_static_encoder()
+{
+    if (encoder_proc)
+    {
+        CloseHandle(encoder_proc);
+        encoder_proc = NULL;
+    }
+
+    if (encoder_shared_mem_h)
+    {
+        CloseHandle(encoder_shared_mem_h);
+        encoder_shared_mem_h = NULL;
+        encoder_audio_buffer = NULL;
+    }
+
+    if (encoder_shared_ptr)
+    {
+        UnmapViewOfFile(encoder_shared_ptr);
+        encoder_shared_ptr = NULL;
+    }
+
+    if (game_wake_event_h)
+    {
+        CloseHandle(game_wake_event_h);
+        game_wake_event_h = NULL;
+    }
+
+    if (encoder_wake_event_h)
+    {
+        CloseHandle(encoder_wake_event_h);
+        encoder_wake_event_h = NULL;
+    }
+}
+
+void free_dynamic_encoder()
+{
+}
+
+// Call this to resume svr_encoder from a known state.
+// You want to call this after you have changed something in the shared memory.
+// The variable event_type will be read by svr_encoder once it resumes.
+//
+// Check the enum for what events can fail. If an event can fail you need to handle it properly by
+// checking the return value of this function.
+bool send_event_to_encoder(EncoderSharedEvent event)
+{
+    encoder_shared_ptr->event_type = event;
+
+    SetEvent(encoder_wake_event_h); // Let svr_encoder wake up and handle the event.
+
+    // Block the calling thread until the event has been processed by svr_encoder.
+    // We need to do this to ensure the audio and video data access doesn't suffer from any race condition.
+    // All the event handling is short and fast so this is a very short wait.
+    // When this returns, svr_encoder will be paused and in a known state waiting to be woken up again.
+    // This call also makes synchronization easier in svr_game.
+
+    HANDLE handles[] = {
+        encoder_proc,
+        game_wake_event_h,
+    };
+
+    DWORD waited = WaitForMultipleObjects(SVR_ARRAY_SIZE(handles), handles, FALSE, INFINITE);
+    HANDLE waited_h = handles[waited - WAIT_OBJECT_0];
+
+    // Encoder exited or crashed or something.
+    if (waited_h == encoder_proc)
+    {
+        game_log("Encoder exited or crashed\n");
+        return false;
+    }
+
+    if (waited_h == game_wake_event_h)
+    {
+        if (encoder_shared_ptr->error)
+        {
+            // Any error in svr_encoder is written to its log.
+            // We also want to log the error in the console and in our log.
+            game_log(encoder_shared_ptr->error_message);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool start_encoder(HANDLE game_content_tex_h)
+{
+    bool ret = false;
+
+    // Set movie parameters to svr_encoder.
+    // Audio parameters are fixed in Source so they cannot be changed, just better to have those constants in here.
+
+    EncoderSharedMovieParams* params = &encoder_shared_ptr->movie_params;
+
+    params->video_fps = movie_profile.movie_fps;
+    params->video_width = movie_width;
+    params->video_height = movie_height;
+    params->audio_channels = 2;
+    params->audio_hz = 44100;
+    params->audio_bits = 16;
+    params->x264_crf = movie_profile.sw_x264_crf;
+    params->x264_intra = movie_profile.sw_x264_intra;
+    params->use_audio = movie_profile.audio_enabled;
+
+    svr_copy_string(movie_path, params->dest_file, SVR_ARRAY_SIZE(params->dest_file));
+    svr_copy_string(movie_profile.sw_encoder, params->video_encoder, SVR_ARRAY_SIZE(params->video_encoder));
+    svr_copy_string(movie_profile.sw_x264_preset, params->x264_preset, SVR_ARRAY_SIZE(params->x264_preset));
+    svr_copy_string(movie_profile.sw_dnxhr_profile, params->dnxhr_profile, SVR_ARRAY_SIZE(params->dnxhr_profile));
+    svr_copy_string("aac", params->audio_encoder, SVR_ARRAY_SIZE(params->audio_encoder));
+
+    encoder_shared_ptr->waiting_audio_samples = 0;
+    encoder_shared_ptr->game_texture_h = (u32)game_content_tex_h;
+
+    encoder_shared_ptr->error = 0;
+    encoder_shared_ptr->error_message[0] = 0;
+
+    // Now wake svr_encoder up and let it wait for new data.
+    if (!send_event_to_encoder(ENCODER_EVENT_START))
+    {
+        goto rfail;
+    }
+
+    ret = true;
+    goto rexit;
+
+rfail:
+
+rexit:
+    return ret;
+}
+
+void end_encoder()
+{
+    send_event_to_encoder(ENCODER_EVENT_STOP);
+}
+
+bool send_frame_to_encoder(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv)
+{
+    bool ret = false;
+
+    // Flush must unfortunately be called when working across processes in order to update
+    // the texture in the other process.
+    d3d11_context->Flush();
+
+    if (!send_event_to_encoder(ENCODER_EVENT_NEW_VIDEO))
+    {
+        goto rfail;
+    }
+
+    ret = true;
+    goto rexit;
+
+rfail:
+
+rexit:
+    return ret;
+}
+
+bool send_audio_to_encoder(SvrWaveSample* samples, s32 num_samples)
+{
+    bool ret = false;
+
+    // Don't think this can happen, but let's handle this case anyway because we don't actually know
+    // how many samples we can get here at most. Typically though the number of samples will be low (512 or 1024).
+    if (num_samples > ENCODER_MAX_SAMPLES)
+    {
+        // Fragment the writes in case we get too many.
+        while (num_samples > 0)
+        {
+            s32 samples_to_write = svr_min(num_samples, ENCODER_MAX_SAMPLES);
+
+            memcpy(encoder_audio_buffer, samples, sizeof(SvrWaveSample) * samples_to_write);
+            encoder_shared_ptr->waiting_audio_samples = samples_to_write;
+
+            if (!send_event_to_encoder(ENCODER_EVENT_NEW_AUDIO))
+            {
+                goto rfail;
+            }
+
+            num_samples -= samples_to_write;
+        }
+    }
+
+    // Easiest and usual case when everything fits as it shuld.
+    else
+    {
+        memcpy(encoder_audio_buffer, samples, sizeof(SvrWaveSample) * num_samples);
+        encoder_shared_ptr->waiting_audio_samples = num_samples;
+
+        if (!send_event_to_encoder(ENCODER_EVENT_NEW_AUDIO))
+        {
+            goto rfail;
+        }
+    }
+
+    ret = true;
+    goto rexit;
+
+rfail:
+
+rexit:
+    return ret;
 }
 
 // -------------------------------------------------
@@ -191,496 +447,6 @@ s32 calc_cs_thread_groups(s32 input)
 }
 
 // -------------------------------------------------
-// SW encoding.
-
-struct PxConvText
-{
-    const char* format;
-    const char* color_space;
-};
-
-enum PxConv
-{
-    PXCONV_YUV420_601 = 0,
-    PXCONV_YUV444_601,
-    PXCONV_NV12_601,
-    PXCONV_NV21_601,
-
-    PXCONV_YUV420_709,
-    PXCONV_YUV444_709,
-    PXCONV_NV12_709,
-    PXCONV_NV21_709,
-
-    PXCONV_BGR0,
-
-    NUM_PXCONVS,
-};
-
-// Up to 3 planes used for YUV video.
-ID3D11Texture2D* pxconv_texs[3];
-ID3D11UnorderedAccessView* pxconv_uavs[3];
-ID3D11ComputeShader* pxconv_cs[NUM_PXCONVS];
-
-CpuTexDl pxconv_dls[3];
-
-UINT pxconv_pitches[3];
-UINT pxconv_widths[3];
-UINT pxconv_heights[3];
-
-s32 used_pxconv_planes;
-s32 pxconv_plane_sizes[3];
-s32 pxconv_total_plane_sizes;
-
-PxConv movie_pxconv;
-
-// All the pxconv arrays are synchronized!
-
-// Names of compiled shaders.
-const char* PXCONV_SHADER_NAMES[] = {
-    "80789c65c37c6acbf800e0a12e18e0fd4950065b",
-    "cf005a5b5fc239779f3cf1e19cf2dab33e503ffc",
-    "2a3229bd1f9d4785c87bc7913995d82dc4e09572",
-    "58c00ca9b019bbba2dca15ec4c4c9c494ae7d842",
-
-    "38668b40da377284241635b07e22215c204eb137",
-    "659f7e14fec1e7018a590c5a01d8169be881438a",
-    "b9978bbddaf801c44f71f8efa9f5b715ada90000",
-    "5d5924a1a56d4d450743e939d571d04a82209673",
-
-    "b44000e74095a254ef98a2cdfcbaf015ab6c295e",
-};
-
-// Names for ini.
-PxConvText PXCONV_INI_TEXT_TABLE[] = {
-    PxConvText { "yuv420", "601" },
-    PxConvText { "yuv444", "601" },
-    PxConvText { "nv12", "601" },
-    PxConvText { "nv21", "601" },
-
-    PxConvText { "yuv420", "709" },
-    PxConvText { "yuv444", "709" },
-    PxConvText { "nv12", "709" },
-    PxConvText { "nv21", "709" },
-
-    PxConvText { "bgr0", "rgb" },
-};
-
-// Names for ffmpeg.
-PxConvText PXCONV_FFMPEG_TEXT_TABLE[] = {
-    PxConvText { "yuv420p", "bt470bg" },
-    PxConvText { "yuv444p", "bt470bg" },
-    PxConvText { "nv12", "bt470bg" },
-    PxConvText { "nv21", "bt470bg" },
-
-    PxConvText { "yuv420p", "bt709" },
-    PxConvText { "yuv444p", "bt709" },
-    PxConvText { "nv12", "bt709" },
-    PxConvText { "nv21", "bt709" },
-
-    PxConvText { "bgr0", NULL },
-};
-
-// How many planes that are used in a pixel format.
-s32 calc_format_planes(PxConv pxconv)
-{
-    switch (pxconv)
-    {
-        case PXCONV_YUV420_601:
-        case PXCONV_YUV444_601:
-        case PXCONV_YUV420_709:
-        case PXCONV_YUV444_709:
-        {
-            return 3;
-        }
-
-        case PXCONV_NV12_601:
-        case PXCONV_NV21_601:
-        case PXCONV_NV12_709:
-        case PXCONV_NV21_709:
-        {
-            return 2;
-        }
-
-        case PXCONV_BGR0:
-        {
-            return 1;
-        }
-    }
-
-    assert(false);
-    return 0;
-}
-
-UINT calc_bytes_pitch(DXGI_FORMAT format)
-{
-    switch (format)
-    {
-        case DXGI_FORMAT_R8_UINT: return 1;
-        case DXGI_FORMAT_R8G8_UINT: return 2;
-        case DXGI_FORMAT_R8G8B8A8_UINT: return 4;
-        case DXGI_FORMAT_R32G32B32A32_FLOAT: return 16;
-    }
-
-    assert(false);
-    return 0;
-}
-
-// Retrieves the size of a plane in a pixel format.
-void calc_plane_dims(PxConv pxconv, s32 width, s32 height, s32 plane, s32* out_width, s32* out_height)
-{
-    // Height and width chroma shifts for each plane dimension (luma is ignored, so set to 0).
-
-    const s32 YUV420_SHIFTS[3] = { 0, 1, 1 };
-    const s32 NV_SHIFTS[2] = { 0, 1 };
-
-    switch (pxconv)
-    {
-        case PXCONV_YUV420_601:
-        case PXCONV_YUV420_709:
-        {
-            assert(plane < 3);
-
-            *out_width = width >> YUV420_SHIFTS[plane];
-            *out_height = height >> YUV420_SHIFTS[plane];
-            break;
-        }
-
-        case PXCONV_NV12_601:
-        case PXCONV_NV21_601:
-        case PXCONV_NV12_709:
-        case PXCONV_NV21_709:
-        {
-            assert(plane < 2);
-
-            *out_width = width >> NV_SHIFTS[plane];
-            *out_height = height >> NV_SHIFTS[plane];
-            break;
-        }
-
-        case PXCONV_YUV444_601:
-        case PXCONV_YUV444_709:
-        {
-            assert(plane < 3);
-
-            *out_width = width;
-            *out_height = height;
-            break;
-        }
-
-        case PXCONV_BGR0:
-        {
-            assert(plane < 1);
-
-            *out_width = width;
-            *out_height = height;
-            break;
-        }
-
-        default:
-        {
-            assert(false);
-            break;
-        }
-    }
-}
-
-// Put textures into system memory.
-// The system memory destination msut be big enough to hold all textures.
-void download_textures(ID3D11DeviceContext* d3d11_context, ID3D11Texture2D** gpu_texes, CpuTexDl* cpu_texes, s32 num_texes, void* dest, s32 size)
-{
-    // Need to copy the textures into readable memory.
-
-    for (s32 i = 0; i < num_texes; i++)
-    {
-        d3d11_context->CopyResource(cpu_texes[i].get_current(), gpu_texes[i]);
-    }
-
-    D3D11_MAPPED_SUBRESOURCE* maps = (D3D11_MAPPED_SUBRESOURCE*)_alloca(sizeof(D3D11_MAPPED_SUBRESOURCE) * num_texes);
-    void** map_datas = (void**)_alloca(sizeof(void*) * num_texes);
-    UINT* row_pitches = (UINT*)_alloca(sizeof(UINT) * num_texes);
-
-    // Mapping will take between 400 and 1500 us on average, not much to do about that. Probably has to do with waiting for CopyResource above to finish.
-    // We cannot use D3D11_MAP_FLAG_DO_NOT_WAIT here (and advance the cpu texture queue) because of the CopyResource call above which
-    // may not have finished yet.
-
-    for (s32 i = 0; i < num_texes; i++)
-    {
-        d3d11_context->Map(cpu_texes[i].get_current(), 0, D3D11_MAP_READ, 0, &maps[i]);
-    }
-
-    for (s32 i = 0; i < num_texes; i++)
-    {
-        map_datas[i] = maps[i].pData;
-        row_pitches[i] = maps[i].RowPitch;
-    }
-
-    // From MSDN:
-    // The runtime might assign values to RowPitch and DepthPitch that are larger than anticipated
-    // because there might be padding between rows and depth.
-
-    // Mapped data will be aligned to 16 bytes.
-
-    // This will take around 300 us for 1920x1080 YUV420.
-
-    s32 offset = 0;
-
-    for (s32 i = 0; i < num_texes; i++)
-    {
-        u8* source_ptr = (u8*)map_datas[i];
-        u8* dest_ptr = (u8*)dest + offset;
-
-        for (UINT j = 0; j < pxconv_heights[i]; j++)
-        {
-            memcpy(dest_ptr, source_ptr, pxconv_pitches[i]);
-
-            source_ptr += row_pitches[i];
-            dest_ptr += pxconv_pitches[i];
-        }
-
-        offset += pxconv_pitches[i] * pxconv_heights[i];
-    }
-
-    for (s32 i = 0; i < num_texes; i++)
-    {
-        d3d11_context->Unmap(cpu_texes[i].get_current(), 0);
-    }
-
-    for (s32 i = 0; i < num_texes; i++)
-    {
-        cpu_texes[i].advance();
-    }
-}
-
-void free_all_static_sw_stuff()
-{
-    for (s32 i = 0; i < NUM_PXCONVS; i++)
-    {
-        svr_maybe_release(&pxconv_cs[i]);
-    }
-}
-
-void free_all_dynamic_sw_stuff()
-{
-    for (s32 i = 0; i < used_pxconv_planes; i++)
-    {
-        svr_maybe_release(&pxconv_texs[i]);
-        svr_maybe_release(&pxconv_uavs[i]);
-
-        for (s32 j = 0; j < NUM_BUFFERED_DL_TEXS; j++)
-        {
-            svr_maybe_release(&pxconv_dls[i].texs[j]);
-        }
-    }
-
-    for (s32 i = 0; i < MAX_BUFFERED_SEND_BUFS; i++)
-    {
-        ThreadPipeData& pipe_data = ffmpeg_send_bufs[i];
-
-        if (pipe_data.ptr)
-        {
-            free(pipe_data.ptr);
-        }
-
-        pipe_data = {};
-    }
-}
-
-// Put texture into video format.
-void convert_pixel_formats(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* source_srv)
-{
-    d3d11_context->CSSetShader(pxconv_cs[movie_pxconv], NULL, 0);
-    d3d11_context->CSSetShaderResources(0, 1, &source_srv);
-    d3d11_context->CSSetUnorderedAccessViews(0, used_pxconv_planes, pxconv_uavs, NULL);
-
-    d3d11_context->Dispatch(calc_cs_thread_groups(movie_width), calc_cs_thread_groups(movie_height), 1);
-
-    ID3D11ShaderResourceView* null_srvs[] = { NULL };
-    ID3D11UnorderedAccessView* null_uavs[] = { NULL };
-
-    d3d11_context->CSSetShaderResources(0, 1, null_srvs);
-    d3d11_context->CSSetUnorderedAccessViews(0, 1, null_uavs, NULL);
-}
-
-bool create_pxconv_textures(ID3D11Device* d3d11_device, DXGI_FORMAT* formats)
-{
-    bool ret = false;
-    HRESULT hr;
-
-    PxConvText& text = PXCONV_INI_TEXT_TABLE[movie_pxconv];
-
-    for (s32 i = 0; i < used_pxconv_planes; i++)
-    {
-        s32 dims[2];
-        calc_plane_dims(movie_pxconv, movie_width, movie_height, i, &dims[0], &dims[1]);
-
-        D3D11_TEXTURE2D_DESC tex_desc = {};
-        tex_desc.Width = dims[0];
-        tex_desc.Height = dims[1];
-        tex_desc.MipLevels = 1;
-        tex_desc.ArraySize = 1;
-        tex_desc.Format = formats[i];
-        tex_desc.SampleDesc.Count = 1;
-        tex_desc.Usage = D3D11_USAGE_DEFAULT;
-        tex_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-        tex_desc.CPUAccessFlags = 0;
-
-        hr = d3d11_device->CreateTexture2D(&tex_desc, NULL, &pxconv_texs[i]);
-
-        if (FAILED(hr))
-        {
-            svr_log("ERROR: Could not create SWENC texture %d for PXCONV %s+%s (%#x)\n", i, text.format, text.color_space, hr);
-            goto rfail;
-        }
-
-        d3d11_device->CreateUnorderedAccessView(pxconv_texs[i], NULL, &pxconv_uavs[i]);
-
-        tex_desc.Usage = D3D11_USAGE_STAGING;
-        tex_desc.BindFlags = 0;
-        tex_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-
-        for (s32 j = 0; j < NUM_BUFFERED_DL_TEXS; j++)
-        {
-            hr = d3d11_device->CreateTexture2D(&tex_desc, NULL, &pxconv_dls[i].texs[j]);
-
-            if (FAILED(hr))
-            {
-                svr_log("ERROR: Could not create SWENC CPU texture %d (rotation %d) for PXCONV %s+%s (%#x)\n", i, j, text.format, text.color_space, hr);
-                goto rfail;
-            }
-        }
-    }
-
-    ret = true;
-    goto rexit;
-
-rfail:
-
-rexit:
-    return ret;
-}
-
-bool start_with_sw(ID3D11Device* d3d11_device)
-{
-    bool ret = false;
-
-    // We don't allow the pixel format and color space to be selectable anymore, but we will keep the support in for now.
-
-    if (!strcmp(movie_profile.sw_encoder, "libx264"))
-    {
-        movie_pxconv = PXCONV_NV12_601;
-    }
-
-    else if (!strcmp(movie_profile.sw_encoder, "libx264rgb"))
-    {
-        movie_pxconv = PXCONV_BGR0;
-    }
-
-    used_pxconv_planes = calc_format_planes(movie_pxconv);
-
-    DXGI_FORMAT formats[3];
-
-    switch (movie_pxconv)
-    {
-        case PXCONV_YUV420_601:
-        case PXCONV_YUV420_709:
-        case PXCONV_YUV444_601:
-        case PXCONV_YUV444_709:
-        {
-            formats[0] = DXGI_FORMAT_R8_UINT;
-            formats[1] = DXGI_FORMAT_R8_UINT;
-            formats[2] = DXGI_FORMAT_R8_UINT;
-            break;
-        }
-
-        case PXCONV_NV12_601:
-        case PXCONV_NV21_601:
-        case PXCONV_NV12_709:
-        case PXCONV_NV21_709:
-        {
-            formats[0] = DXGI_FORMAT_R8_UINT;
-            formats[1] = DXGI_FORMAT_R8G8_UINT;
-            break;
-        }
-
-        case PXCONV_BGR0:
-        {
-            // RGB only has one plane.
-            formats[0] = DXGI_FORMAT_R8G8B8A8_UINT;
-            break;
-        }
-    }
-
-    if (!create_pxconv_textures(d3d11_device, formats))
-    {
-        goto rfail;
-    }
-
-    for (s32 i = 0; i < used_pxconv_planes; i++)
-    {
-        D3D11_TEXTURE2D_DESC tex_desc;
-        pxconv_texs[i]->GetDesc(&tex_desc);
-
-        pxconv_plane_sizes[i] = calc_bytes_pitch(tex_desc.Format) * tex_desc.Width * tex_desc.Height;
-        pxconv_widths[i] = tex_desc.Width;
-        pxconv_heights[i] = tex_desc.Height;
-        pxconv_pitches[i] = calc_bytes_pitch(tex_desc.Format) * tex_desc.Width;
-    }
-
-    // Combined size of all planes.
-    pxconv_total_plane_sizes = 0;
-
-    for (s32 i = 0; i < used_pxconv_planes; i++)
-    {
-        pxconv_total_plane_sizes += pxconv_plane_sizes[i];
-    }
-
-    ret = true;
-    goto rexit;
-
-rfail:
-
-rexit:
-    return ret;
-}
-
-// -------------------------------------------------
-
-// This thread will write data to the ffmpeg process.
-// Writing to the pipe is real slow and we want to buffer up a few to send which it can work on.
-DWORD WINAPI ffmpeg_thread_proc(LPVOID lpParameter)
-{
-    while (true)
-    {
-        svr_sem_wait(&ffmpeg_write_sem);
-
-        ThreadPipeData pipe_data;
-        bool res1 = ffmpeg_write_queue.pull(&pipe_data);
-        assert(res1);
-
-        if (pipe_data.ptr == NULL)
-        {
-            return 0;
-        }
-
-        // This will not return until the data has been read by the remote process.
-        // Writing with pipes is very inconsistent and can wary with several milliseconds.
-        // It has been tested to use overlapped I/O with completion routines but that was also too inconsistent and way too complicated.
-        // For SW encoding this will take about 300 - 6000 us (always sending the same size).
-
-        // There is some issue with writing with pipes that if it starts off slower than it should be, then it will forever be slow until the computer restarts.
-        // Therefore it is useful to measure this.
-
-        svr_start_prof(&write_prof);
-        WriteFile(ffmpeg_write_pipe, pipe_data.ptr, pipe_data.size, NULL, NULL);
-        svr_end_prof(&write_prof);
-
-        ffmpeg_read_queue.push(&pipe_data);
-
-        svr_sem_release(&ffmpeg_read_sem);
-    }
-
-    return 0;
-}
 
 bool load_one_shader(const char* name, void* buf, s32 buf_size, DWORD* shader_size)
 {
@@ -733,58 +499,6 @@ rexit:
     return ret;
 }
 
-bool create_shaders(ID3D11Device* d3d11_device)
-{
-    const s32 SHADER_MEM_SIZE = 8192;
-
-    bool ret = false;
-    DWORD shader_size;
-    HRESULT hr;
-
-    void* file_mem = malloc(SHADER_MEM_SIZE);
-
-    // Pixel format conversion shaders are only used in SW encoding.
-
-    for (s32 i = 0; i < NUM_PXCONVS; i++)
-    {
-        if (!load_one_shader(PXCONV_SHADER_NAMES[i], file_mem, SHADER_MEM_SIZE, &shader_size))
-        {
-            goto rfail;
-        }
-
-        hr = d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &pxconv_cs[i]);
-
-        if (FAILED(hr))
-        {
-            svr_log("Could not create pxconv shader %d (%#x)\n", i, hr);
-            goto rfail;
-        }
-    }
-
-    if (!load_one_shader("c52620855f15b2c47b8ca24b890850a90fdc7017", file_mem, SHADER_MEM_SIZE, &shader_size))
-    {
-        goto rfail;
-    }
-
-    hr = d3d11_device->CreateComputeShader(file_mem, shader_size, NULL, &mosample_cs);
-
-    if (FAILED(hr))
-    {
-        svr_log("Could not create mosample shader (%#x\n", hr);
-        goto rfail;
-    }
-
-    ret = true;
-    goto rexit;
-
-rfail:
-
-rexit:
-    free(file_mem);
-
-    return ret;
-}
-
 void free_all_static_proc_stuff()
 {
     svr_maybe_release(&mosample_cs);
@@ -796,8 +510,7 @@ void free_all_static_proc_stuff()
     svr_maybe_release(&dwrite_factory);
     svr_maybe_release(&d2d1_solid_brush);
 
-    free(wav_buf);
-    wav_buf = NULL;
+    free_static_encoder();
 }
 
 void free_all_dynamic_proc_stuff()
@@ -810,11 +523,7 @@ void free_all_dynamic_proc_stuff()
     svr_maybe_release(&velo_rtv_ref);
     svr_maybe_release(&velo_font_face);
 
-    if (wav_f)
-    {
-        CloseHandle(wav_f);
-        wav_f = NULL;
-    }
+    free_dynamic_encoder();
 }
 
 bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
@@ -881,15 +590,10 @@ bool proc_init(const char* svr_path, ID3D11Device* d3d11_device)
         goto rfail;
     }
 
-    if (!create_shaders(d3d11_device))
+    if (!init_encoder())
     {
         goto rfail;
     }
-
-    ffmpeg_write_queue.init(MAX_BUFFERED_SEND_BUFS);
-    ffmpeg_read_queue.init(MAX_BUFFERED_SEND_BUFS);
-
-    wav_buf = (SvrWaveSample*)_aligned_malloc(sizeof(SvrWaveSample) * WAV_BUFFERED_SAMPLES, 16);
 
     ret = true;
     goto rexit;
@@ -901,197 +605,6 @@ rexit:
     dxgi_device->Release();
 
     return ret;
-}
-
-void build_ffmpeg_process_args(char* full_args, s32 full_args_size)
-{
-    const s32 ARGS_BUF_SIZE = 128;
-
-    char buf[ARGS_BUF_SIZE];
-
-    StringCchCatA(full_args, full_args_size, "-hide_banner");
-
-    #if 1
-    StringCchCatA(full_args, full_args_size, " -loglevel quiet");
-    #else
-    StringCchCatA(full_args, full_args_size, " -loglevel debug");
-    #endif
-
-    // Parameters below here is regarding the input (the stuff we are sending).
-
-    PxConvText& pxconv_text = PXCONV_FFMPEG_TEXT_TABLE[movie_pxconv];
-
-    // We are sending uncompressed frames.
-    StringCchCatA(full_args, full_args_size, " -f rawvideo -vcodec rawvideo");
-
-    // Pixel format that goes through the pipe.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -pix_fmt %s", pxconv_text.format);
-    StringCchCatA(full_args, full_args_size, buf);
-
-    // Video size.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -s %dx%d", movie_width, movie_height);
-    StringCchCatA(full_args, full_args_size, buf);
-
-    // Input frame rate.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -r %d", movie_profile.movie_fps);
-    StringCchCatA(full_args, full_args_size, buf);
-
-    // Overwrite existing, and read from stdin.
-    StringCchCatA(full_args, full_args_size, " -y -i -");
-
-    // Parameters below here is regarding the output (the stuff that will be written to the file).
-
-    // Number of encoding threads, or 0 for auto.
-    // We used to allow this to be configured, its intended purpose was for game multiprocessing (opening multiple games) but
-    // there are too many problems in the Source engine that we cannot control. It leads to many buggy and weird scenarios (like animations not playing or demos jumping).
-    StringCchCatA(full_args, full_args_size, " -threads 0");
-
-    // Output video codec.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -vcodec %s", movie_profile.sw_encoder);
-    StringCchCatA(full_args, full_args_size, buf);
-
-    if (pxconv_text.color_space)
-    {
-        // Output video color space (only for YUV).
-        StringCchPrintfA(buf, ARGS_BUF_SIZE, " -colorspace %s", pxconv_text.color_space);
-        StringCchCatA(full_args, full_args_size, buf);
-    }
-
-    // Output video framerate.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -framerate %d", movie_profile.movie_fps);
-    StringCchCatA(full_args, full_args_size, buf);
-
-    // Output quality factor.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -crf %d", movie_profile.sw_crf);
-    StringCchCatA(full_args, full_args_size, buf);
-
-    // Output x264 preset.
-    StringCchPrintfA(buf, ARGS_BUF_SIZE, " -preset %s", movie_profile.sw_x264_preset);
-    StringCchCatA(full_args, full_args_size, buf);
-
-    if (movie_profile.sw_x264_intra)
-    {
-        StringCchCatA(full_args, full_args_size, " -x264-params keyint=1");
-    }
-
-    // The path can be specified as relative here because we set the working directory of the ffmpeg process
-    // to the SVR directory.
-
-    StringCchCatA(full_args, full_args_size, " \"");
-    StringCchCatA(full_args, full_args_size, movie_path);
-    StringCchCatA(full_args, full_args_size, "\"");
-}
-
-// We start a separate process for two reasons:
-// 1) Source is a 32-bit engine, and it was common to run out of memory in games such as CSGO that uses a lot of memory.
-// 2) The ffmpeg API is horrible to work with with an incredible amount of pitfalls that will grant you a media that is slighly incorrect
-//    and there is no reliable documentation.
-// Data is sent to this process through a pipe that we create.
-// For SW encoding we send uncompressed frames which are then encoded and muxed in the ffmpeg process.
-bool start_ffmpeg_proc()
-{
-    const s32 FULL_ARGS_SIZE = 1024;
-
-    bool ret = false;
-
-    STARTUPINFOA start_info = {};
-    DWORD create_flags = 0;
-
-    char full_args[FULL_ARGS_SIZE];
-    full_args[0] = 0;
-
-    HANDLE read_h = NULL;
-    HANDLE write_h = NULL;
-
-    SECURITY_ATTRIBUTES sa;
-    PROCESS_INFORMATION proc_info;
-
-    char full_ffmpeg_path[MAX_PATH];
-
-    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-    sa.lpSecurityDescriptor = NULL;
-    sa.bInheritHandle = TRUE;
-
-    if (!CreatePipe(&read_h, &write_h, &sa, 4 * 1024))
-    {
-        svr_log("ERROR: Could not create ffmpeg process pipes (%lu)\n", GetLastError());
-        goto rfail;
-    }
-
-    // Since we start the ffmpeg process with inherited handles, it would try to inherit the writing endpoint of this pipe too.
-    // We have to remove the inheritance of this pipe. Otherwise it's never able to exit.
-    SetHandleInformation(write_h, HANDLE_FLAG_INHERIT, 0);
-
-    #if 1
-    create_flags |= CREATE_NO_WINDOW;
-    #endif
-
-    // Working directory for the FFmpeg process should be in the SVR directory.
-
-    full_ffmpeg_path[0] = 0;
-    StringCchCatA(full_ffmpeg_path, MAX_PATH, svr_resource_path);
-    StringCchCatA(full_ffmpeg_path, MAX_PATH, "\\ffmpeg.exe");
-
-    start_info.cb = sizeof(STARTUPINFOA);
-    start_info.hStdInput = read_h;
-    start_info.dwFlags |= STARTF_USESTDHANDLES;
-
-    build_ffmpeg_process_args(full_args, FULL_ARGS_SIZE);
-
-    if (!CreateProcessA(full_ffmpeg_path, full_args, NULL, NULL, TRUE, create_flags, NULL, svr_resource_path, &start_info, &proc_info))
-    {
-        svr_log("ERROR: Could not create ffmpeg process (%lu)\n", GetLastError());
-        goto rfail;
-    }
-
-    ffmpeg_proc = proc_info.hProcess;
-    CloseHandle(proc_info.hThread);
-
-    ffmpeg_write_pipe = write_h;
-
-    ret = true;
-    goto rexit;
-
-rfail:
-    if (write_h) CloseHandle(write_h);
-
-rexit:
-    if (read_h) CloseHandle(read_h);
-
-    return ret;
-}
-
-void end_ffmpeg_proc()
-{
-    svr_sem_wait(&ffmpeg_read_sem);
-
-    ThreadPipeData pipe_data;
-    pipe_data.ptr = NULL;
-    pipe_data.size = 0;
-
-    ffmpeg_write_queue.push(&pipe_data);
-
-    svr_sem_release(&ffmpeg_write_sem);
-
-    WaitForSingleObject(ffmpeg_thread, INFINITE);
-
-    CloseHandle(ffmpeg_thread);
-    ffmpeg_thread = NULL;
-
-    // Both queues should not be updated anymore at this point so they should be the same when observed.
-    // Since we exit with a sentinel value, the semaphores will be out of sync from the queues but they are reinit on movie start.
-    assert(ffmpeg_write_queue.read_buffer_health() == 0);
-    assert(ffmpeg_read_queue.read_buffer_health() == MAX_BUFFERED_SEND_BUFS);
-
-    // Close our end of the pipe.
-    // This will mark the completion of the stream, and the process will finish its work.
-    CloseHandle(ffmpeg_write_pipe);
-    ffmpeg_write_pipe = NULL;
-
-    WaitForSingleObject(ffmpeg_proc, INFINITE);
-
-    CloseHandle(ffmpeg_proc);
-    ffmpeg_proc = NULL;
 }
 
 s32 to_utf16(const char* value, s32 value_length, wchar* buf, s32 buf_chars)
@@ -1195,9 +708,6 @@ rexit:
     return ret;
 }
 
-#define ALLOCA(T) (T*)_alloca(sizeof(T))
-#define ALLOCA_NUM(T, NUM) (T*)_alloca(sizeof(T) * NUM)
-
 D2D1_COLOR_F fill_d2d1_color(s32* color)
 {
     D2D1_COLOR_F ret;
@@ -1208,22 +718,22 @@ D2D1_COLOR_F fill_d2d1_color(s32* color)
     return ret;
 }
 
-D2D1_POINT_2F fill_d2d1_pt(XMINT2 p)
+D2D1_POINT_2F fill_d2d1_pt(SvrVec2I p)
 {
     return D2D1::Point2F(p.x, p.y);
 }
 
-void draw_velo(const wchar* text, XMINT2 pos)
+void draw_velo(const wchar* text, SvrVec2I pos)
 {
     s32 text_length = wcslen(text);
 
     d2d1_context->BeginDraw();
     d2d1_context->SetTarget(velo_rtv_ref);
 
-    UINT32* cps = ALLOCA_NUM(UINT32, text_length);
-    UINT16* idxs = ALLOCA_NUM(UINT16, text_length);
-    FLOAT* advances = ALLOCA_NUM(FLOAT, text_length);
-    DWRITE_GLYPH_METRICS* glyph_metrix = ALLOCA_NUM(DWRITE_GLYPH_METRICS, text_length);
+    UINT32* cps = SVR_ALLOCA_NUM(UINT32, text_length);
+    UINT16* idxs = SVR_ALLOCA_NUM(UINT16, text_length);
+    FLOAT* advances = SVR_ALLOCA_NUM(FLOAT, text_length);
+    DWRITE_GLYPH_METRICS* glyph_metrix = SVR_ALLOCA_NUM(DWRITE_GLYPH_METRICS, text_length);
 
     for (s32 i = 0; i < text_length; i++)
     {
@@ -1305,61 +815,7 @@ void draw_velo(const wchar* text, XMINT2 pos)
     d2d1_context->SetTarget(NULL);
 }
 
-bool create_audio()
-{
-    char wav_path[MAX_PATH];
-    StringCchCopyA(wav_path, MAX_PATH, movie_path);
-    PathRenameExtensionA(wav_path, ".wav");
-
-    wav_f = CreateFileA(wav_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (wav_f == INVALID_HANDLE_VALUE)
-    {
-        game_log("Could not create wave file %s (%lu)\n", wav_path, GetLastError());
-        return false;
-    }
-
-    const DWORD RIFF = MAKEFOURCC('R', 'I', 'F', 'F');
-    const DWORD WAVE = MAKEFOURCC('W', 'A', 'V', 'E');
-    const DWORD FMT_ = MAKEFOURCC('f', 'm', 't', ' ');
-    const DWORD DATA = MAKEFOURCC('d', 'a', 't', 'a');
-
-    const DWORD WAV_PLACEHOLDER = 0;
-
-    WriteFile(wav_f, &RIFF, sizeof(DWORD), NULL, NULL);
-    wav_header_pos = SetFilePointer(wav_f, 0, NULL, FILE_CURRENT);
-    WriteFile(wav_f, &WAV_PLACEHOLDER, sizeof(DWORD), NULL, NULL);
-
-    WriteFile(wav_f, &WAVE, sizeof(DWORD), NULL, NULL);
-
-    WORD channels = 2;
-    WORD sample_rate = 44100;
-    WORD sample_bits = 16;
-
-    WAVEFORMATEX wfx = {};
-    wfx.wFormatTag = WAVE_FORMAT_PCM;
-    wfx.nChannels = channels;
-    wfx.nSamplesPerSec = sample_rate;
-    wfx.wBitsPerSample = sample_bits;
-    wfx.nBlockAlign = wfx.nChannels * (wfx.wBitsPerSample / 8);
-    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
-
-    DWORD wfx_size = sizeof(WAVEFORMATEX);
-
-    WriteFile(wav_f, &FMT_, sizeof(DWORD), NULL, NULL);
-    WriteFile(wav_f, &wfx_size, sizeof(DWORD), NULL, NULL);
-    WriteFile(wav_f, &wfx, sizeof(WAVEFORMATEX), NULL, NULL);
-
-    WriteFile(wav_f, &DATA, sizeof(DWORD), NULL, NULL);
-    wav_data_pos = SetFilePointer(wav_f, 0, NULL, FILE_CURRENT);
-    WriteFile(wav_f, &WAV_PLACEHOLDER, sizeof(DWORD), NULL, NULL);
-
-    wav_file_length = SetFilePointer(wav_f, 0, NULL, FILE_CURRENT);
-
-    return true;
-}
-
-bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, const char* dest, const char* profile, ID3D11RenderTargetView* game_content_rtv)
+bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, const char* dest, const char* profile, ID3D11RenderTargetView* game_content_rtv, void* game_content_tex_h)
 {
     bool ret = false;
     HRESULT hr;
@@ -1404,11 +860,6 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     CreateDirectoryA(movie_path, NULL);
     StringCchCatA(movie_path, MAX_PATH, dest);
 
-    if (!start_with_sw(d3d11_device))
-    {
-        goto rfail;
-    }
-
     if (movie_profile.mosample_enabled)
     {
         D3D11_TEXTURE2D_DESC work_tex_desc = {};
@@ -1445,40 +896,6 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         }
     }
 
-    if (movie_profile.audio_enabled)
-    {
-        if (!create_audio())
-        {
-            goto rfail;
-        }
-    }
-
-    // We have a controlled environment until the ffmpeg thread is started.
-    // Set the semaphore and queues to known states.
-
-    svr_sem_init(&ffmpeg_write_sem, 0, MAX_BUFFERED_SEND_BUFS);
-    svr_sem_init(&ffmpeg_read_sem, MAX_BUFFERED_SEND_BUFS, MAX_BUFFERED_SEND_BUFS);
-
-    // Need to overwrite with new data.
-    ffmpeg_read_queue.reset();
-    ffmpeg_write_queue.reset();
-
-    // Each buffer contains 1 uncompressed frame.
-
-    for (s32 i = 0; i < MAX_BUFFERED_SEND_BUFS; i++)
-    {
-        ThreadPipeData pipe_data;
-        pipe_data.ptr = (u8*)malloc(pxconv_total_plane_sizes);
-        pipe_data.size = pxconv_total_plane_sizes;
-
-        ffmpeg_send_bufs[i] = pipe_data;
-    }
-
-    for (s32 i = 0; i < MAX_BUFFERED_SEND_BUFS; i++)
-    {
-        ffmpeg_read_queue.push(&ffmpeg_send_bufs[i]);
-    }
-
     if (movie_profile.mosample_enabled)
     {
         mosample_remainder = 0.0f;
@@ -1487,14 +904,10 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         mosample_remainder_step = (1.0f / sps) / (1.0f / movie_profile.movie_fps);
     }
 
-    if (!start_ffmpeg_proc())
+    if (!start_encoder(game_content_tex_h))
     {
         goto rfail;
     }
-
-    _ReadWriteBarrier();
-
-    ffmpeg_thread = CreateThread(NULL, 0, ffmpeg_thread_proc, NULL, 0, NULL);
 
     ret = true;
     goto rexit;
@@ -1504,24 +917,6 @@ rfail:
 
 rexit:
     return ret;
-}
-
-// For SW encoding, send uncompressed frame over pipe.
-void send_converted_video_frame_to_ffmpeg(ID3D11DeviceContext* d3d11_context)
-{
-    svr_sem_wait(&ffmpeg_read_sem);
-
-    ThreadPipeData pipe_data;
-    bool res1 = ffmpeg_read_queue.pull(&pipe_data);
-    assert(res1);
-
-    svr_start_prof(&dl_prof);
-    download_textures(d3d11_context, pxconv_texs, pxconv_dls, used_pxconv_planes, pipe_data.ptr, pipe_data.size);
-    svr_end_prof(&dl_prof);
-
-    ffmpeg_write_queue.push(&pipe_data);
-
-    svr_sem_release(&ffmpeg_write_sem);
 }
 
 void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv, float weight)
@@ -1555,7 +950,7 @@ void motion_sample(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView*
 }
 
 // Percentage alignments based from the center of the screen.
-XMINT2 get_velo_pos()
+SvrVec2I get_velo_pos()
 {
     s32 scr_pos_x = movie_width / 2;
     s32 scr_pos_y = movie_height / 2;
@@ -1563,7 +958,7 @@ XMINT2 get_velo_pos()
     scr_pos_x += (movie_profile.veloc_align[0] / 200.0f) * movie_width;
     scr_pos_y += (movie_profile.veloc_align[1] / 200.0f) * movie_height;
 
-    return XMINT2(scr_pos_x, scr_pos_y);
+    return SvrVec2I { scr_pos_x, scr_pos_y };
 }
 
 void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* srv, ID3D11RenderTargetView* rtv)
@@ -1571,16 +966,15 @@ void encode_video_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResource
     if (movie_profile.veloc_enabled)
     {
         // We only deal with XY velo.
-        s32 vel = (s32)(sqrt(player_velo[0] * player_velo[0] + player_velo[1] * player_velo[1]) + 0.5f);
+        s32 vel = (s32)(sqrtf(player_velo[0] * player_velo[0] + player_velo[1] * player_velo[1]) + 0.5f);
 
         wchar buf[128];
         StringCchPrintfW(buf, 128, L"%d", vel);
 
-        draw_velo(buf, get_velo_pos());
+        draw_velo(buf, get_velo_pos()); // Will draw to the texture of srv and rtv, but that is not apparent.
     }
 
-    convert_pixel_formats(d3d11_context, srv);
-    send_converted_video_frame_to_ffmpeg(d3d11_context);
+    send_frame_to_encoder(d3d11_context, srv);
 }
 
 void mosample_game_frame(ID3D11DeviceContext* d3d11_context, ID3D11ShaderResourceView* game_content_srv)
@@ -1665,27 +1059,9 @@ bool proc_is_audio_enabled()
     return movie_profile.audio_enabled;
 }
 
-void write_wav_samples()
-{
-    s32 buf_size = sizeof(SvrWaveSample) * wav_num_samples;
-
-    wav_data_length += buf_size;
-    wav_file_length += buf_size;
-
-    WriteFile(wav_f, wav_buf, buf_size, NULL, NULL);
-
-    wav_num_samples = 0;
-}
-
 void proc_give_audio(SvrWaveSample* samples, s32 num_samples)
 {
-    if (wav_num_samples + num_samples >= WAV_BUFFERED_SAMPLES)
-    {
-        write_wav_samples();
-    }
-
-    memcpy(wav_buf + wav_num_samples, samples, sizeof(SvrWaveSample) * num_samples);
-    wav_num_samples += num_samples;
+    send_audio_to_encoder(samples, num_samples);
 }
 
 void show_total_prof(const char* name, SvrProf* prof)
@@ -1701,36 +1077,10 @@ void show_prof(const char* name, SvrProf* prof)
     }
 }
 
-void end_audio()
-{
-    if (wav_num_samples > 0)
-    {
-        write_wav_samples();
-    }
-
-    SetFilePointer(wav_f, wav_header_pos, NULL, FILE_BEGIN);
-    WriteFile(wav_f, &wav_file_length, sizeof(DWORD), NULL, NULL);
-
-    SetFilePointer(wav_f, wav_data_pos, NULL, FILE_BEGIN);
-    WriteFile(wav_f, &wav_data_length, sizeof(DWORD), NULL, NULL);
-
-    wav_data_length = 0;
-    wav_file_length = 0;
-    wav_header_pos = 0;
-    wav_data_pos = 0;
-    wav_num_samples = 0;
-}
-
 void proc_end()
 {
-    end_ffmpeg_proc();
+    end_encoder();
 
-    if (movie_profile.audio_enabled)
-    {
-        end_audio();
-    }
-
-    free_all_dynamic_sw_stuff();
     free_all_dynamic_proc_stuff();
 
     #if SVR_PROF

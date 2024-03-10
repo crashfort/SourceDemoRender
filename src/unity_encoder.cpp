@@ -1,0 +1,8 @@
+#include "encoder_priv.h"
+#include "encoder_main.cpp"
+#include "encoder_state.cpp"
+#include "encoder_audio.cpp"
+#include "encoder_video.cpp"
+#include "encoder_render.cpp"
+#include "encoder_dnxhr.cpp"
+#include "encoder_libx264.cpp"

@@ -50,10 +50,10 @@ const char* COLORSPACE_TABLE[] = {
     "rgb",
 };
 
-// Names for ini and ffmpeg.
+// Names for ini.
 const char* ENCODER_TABLE[] = {
     "libx264",
-    "libx264rgb",
+    "dnxhr",
 };
 
 // Names for ini and ffmpeg.
@@ -68,6 +68,13 @@ const char* ENCODER_PRESET_TABLE[] = {
     "slower",
     "veryslow",
     "placebo",
+};
+
+// Names for ini.
+const char* DNXHR_PROFILE_TABLE[] = {
+    "lb",
+    "sq",
+    "hq",
 };
 
 s32 atoi_in_range(SvrIniLine* line, s32 min, s32 max)
@@ -236,10 +243,11 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
     while (svr_read_ini(&ini_mem, &ini_line, &ini_token_type))
     {
         if OPT_S32("video_fps", p->movie_fps, 1, 1000)
-        else if OPT_STR_LIST("video_encoder", p->sw_encoder, ENCODER_TABLE, "libx264")
-        else if OPT_S32("video_x264_crf", p->sw_crf, 0, 52)
+        else if OPT_STR_LIST("video_encoder", p->sw_encoder, ENCODER_TABLE, "dnxhr")
+        else if OPT_S32("video_x264_crf", p->sw_x264_crf, 0, 52)
         else if OPT_STR_LIST("video_x264_preset", p->sw_x264_preset, ENCODER_PRESET_TABLE, "veryfast")
         else if OPT_S32("video_x264_intra", p->sw_x264_intra, 0, 1)
+        else if OPT_STR_LIST("video_dnxhr_profile", p->sw_dnxhr_profile, DNXHR_PROFILE_TABLE, "hq")
         else if OPT_S32("motion_blur_enabled", p->mosample_enabled, 0, 1)
         else if OPT_S32("motion_blur_fps_mult", p->mosample_mult, 2, INT32_MAX)
         else if OPT_FLOAT("motion_blur_exposure", p->mosample_exposure, 0.0f, 1.0f)

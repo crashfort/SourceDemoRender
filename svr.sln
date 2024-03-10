@@ -3,11 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31410.414
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_game", "src\svr_game.vcxproj", "{0B116E75-C1CC-409B-A50A-274DC2D4CB41}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_launcher", "src\svr_launcher.vcxproj", "{E750167E-861F-4CF4-9F5D-20F473129641}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_injector", "src\svr_injector.vcxproj", "{15E6E706-1D2C-4CDA-8B0F-190818220AFE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_game", "src\svr_game.vcxproj", "{0B116E75-C1CC-409B-A50A-274DC2D4CB41}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_encoder", "src\svr_encoder.vcxproj", "{C31C1B41-95E7-45C6-A16F-F86A81F13D9F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_common", "src\svr_common.vcxitems", "{63A2BF65-3F7C-4FF1-B15A-2DD0BE4D4DAD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,23 +17,29 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0B116E75-C1CC-409B-A50A-274DC2D4CB41}.Debug|x86.ActiveCfg = Debug|Win32
-		{0B116E75-C1CC-409B-A50A-274DC2D4CB41}.Debug|x86.Build.0 = Debug|Win32
-		{0B116E75-C1CC-409B-A50A-274DC2D4CB41}.Release|x86.ActiveCfg = Release|Win32
-		{0B116E75-C1CC-409B-A50A-274DC2D4CB41}.Release|x86.Build.0 = Release|Win32
 		{E750167E-861F-4CF4-9F5D-20F473129641}.Debug|x86.ActiveCfg = Debug|Win32
 		{E750167E-861F-4CF4-9F5D-20F473129641}.Debug|x86.Build.0 = Debug|Win32
 		{E750167E-861F-4CF4-9F5D-20F473129641}.Release|x86.ActiveCfg = Release|Win32
 		{E750167E-861F-4CF4-9F5D-20F473129641}.Release|x86.Build.0 = Release|Win32
-		{15E6E706-1D2C-4CDA-8B0F-190818220AFE}.Debug|x86.ActiveCfg = Debug|Win32
-		{15E6E706-1D2C-4CDA-8B0F-190818220AFE}.Debug|x86.Build.0 = Debug|Win32
-		{15E6E706-1D2C-4CDA-8B0F-190818220AFE}.Release|x86.ActiveCfg = Release|Win32
-		{15E6E706-1D2C-4CDA-8B0F-190818220AFE}.Release|x86.Build.0 = Release|Win32
+		{0B116E75-C1CC-409B-A50A-274DC2D4CB41}.Debug|x86.ActiveCfg = Debug|Win32
+		{0B116E75-C1CC-409B-A50A-274DC2D4CB41}.Debug|x86.Build.0 = Debug|Win32
+		{0B116E75-C1CC-409B-A50A-274DC2D4CB41}.Release|x86.ActiveCfg = Release|Win32
+		{0B116E75-C1CC-409B-A50A-274DC2D4CB41}.Release|x86.Build.0 = Release|Win32
+		{C31C1B41-95E7-45C6-A16F-F86A81F13D9F}.Debug|x86.ActiveCfg = Debug|x64
+		{C31C1B41-95E7-45C6-A16F-F86A81F13D9F}.Debug|x86.Build.0 = Debug|x64
+		{C31C1B41-95E7-45C6-A16F-F86A81F13D9F}.Release|x86.ActiveCfg = Release|x64
+		{C31C1B41-95E7-45C6-A16F-F86A81F13D9F}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A259E5C4-19A4-456A-A266-E6F6E481A317}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		src\svr_common.vcxitems*{0b116e75-c1cc-409b-a50a-274dc2d4cb41}*SharedItemsImports = 4
+		src\svr_common.vcxitems*{63a2bf65-3f7c-4ff1-b15a-2dd0be4d4dad}*SharedItemsImports = 9
+		src\svr_common.vcxitems*{c31c1b41-95e7-45c6-a16f-f86a81f13d9f}*SharedItemsImports = 4
+		src\svr_common.vcxitems*{e750167e-861f-4cf4-9f5d-20f473129641}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal

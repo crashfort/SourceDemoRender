@@ -11,32 +11,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\deps\stb\stb_image_write.cpp" />
-    <ClCompile Include="..\deps\stb\stb_sprintf.cpp" />
     <ClCompile Include="game_proc_profile.cpp" />
-    <ClCompile Include="svr_atom.cpp" />
-    <ClCompile Include="svr_logging.cpp" />
     <ClCompile Include="game_proc.cpp" />
     <ClCompile Include="game_standalone.cpp" />
     <ClCompile Include="game_shared.cpp" />
-    <ClCompile Include="svr_ini.cpp" />
     <ClCompile Include="svr_api.cpp" />
-    <ClCompile Include="svr_prof.cpp" />
-    <ClCompile Include="svr_sem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_proc_profile.h" />
-    <ClInclude Include="svr_atom.h" />
-    <ClInclude Include="svr_common.h" />
-    <ClInclude Include="svr_defs.h" />
-    <ClInclude Include="svr_logging.h" />
     <ClInclude Include="game_proc.h" />
     <ClInclude Include="game_shared.h" />
-    <ClInclude Include="svr_ini.h" />
     <ClInclude Include="svr_api.h" />
-    <ClInclude Include="svr_prof.h" />
-    <ClInclude Include="svr_sem.h" />
-    <ClInclude Include="svr_stream.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -63,6 +48,7 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
+    <Import Project="svr_common.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -101,7 +87,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)deps\minhook\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)deps\minhook\include;$(SolutionDir)src\svr_common</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <OpenMPSupport>false</OpenMPSupport>
       <EnableModules>false</EnableModules>
@@ -137,7 +123,7 @@
       <EnableModules>false</EnableModules>
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)deps\minhook\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)deps\minhook\include;$(SolutionDir)src\svr_common</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
       <BuildStlModules>false</BuildStlModules>
     </ClCompile>

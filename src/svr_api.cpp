@@ -22,6 +22,7 @@ IDirect3DSurface9* svr_d3d9ex_share_surf;
 ID3D11Texture2D* svr_content_tex;
 ID3D11ShaderResourceView* svr_content_srv;
 ID3D11RenderTargetView* svr_content_rtv;
+HANDLE svr_content_tex_h;
 
 // -------------------------------------------------
 
@@ -177,12 +178,17 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
     if (svr_content_srv)
     {
         ID3D11Resource* game_tex_res;
-
         svr_content_srv->GetResource(&game_tex_res);
 
         game_tex_res->QueryInterface(IID_PPV_ARGS(&svr_content_tex));
 
+        IDXGIResource* dxgi_res;
+        game_tex_res->QueryInterface(IID_PPV_ARGS(&dxgi_res));
+
         game_tex_res->Release();
+
+        dxgi_res->GetSharedHandle(&svr_content_tex_h);
+        dxgi_res->Release();
 
         D3D11_TEXTURE2D_DESC tex_desc;
         svr_content_tex->GetDesc(&tex_desc);
@@ -190,6 +196,12 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         if (!(tex_desc.BindFlags & D3D11_BIND_RENDER_TARGET))
         {
             OutputDebugStringA("SVR (svr_start): The passed game texture must be created with D3D11_BIND_RENDER_TARGET\n");
+            goto rfail;
+        }
+
+        if (!(tex_desc.MiscFlags & D3D11_RESOURCE_MISC_SHARED))
+        {
+            OutputDebugStringA("SVR (svr_start): The passed game texture must be created with D3D11_RESOURCE_MISC_SHARED\n");
             goto rfail;
         }
 
@@ -222,9 +234,11 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         svr_d3d11_device->OpenSharedResource(d3d9ex_share_h, IID_PPV_ARGS(&svr_content_tex));
         svr_d3d11_device->CreateShaderResourceView(svr_content_tex, NULL, &svr_content_srv);
         svr_d3d11_device->CreateRenderTargetView(svr_content_tex, NULL, &svr_content_rtv);
+
+        svr_content_tex_h = d3d9ex_share_h;
     }
 
-    if (!proc_start(svr_d3d11_device, svr_d3d11_context, movie_name, movie_profile, svr_content_rtv))
+    if (!proc_start(svr_d3d11_device, svr_d3d11_context, movie_name, movie_profile, svr_content_rtv, svr_content_tex_h))
     {
         goto rfail;
     }

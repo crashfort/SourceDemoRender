@@ -37,15 +37,15 @@ struct SvrAsyncStream
     // The environment must be controlled and known for this to be called.
     inline void reset()
     {
-        svr_atom_set(&head_, 0);
-        svr_atom_set(&tail_, 0);
+        svr_atom_store(&head_, 0);
+        svr_atom_store(&tail_, 0);
     }
 
     // Mem is not copied! Mem is only referenced!
     // Returns false if the buffer appears full.
     inline bool push(T* item)
     {
-        s32 head = svr_atom_read(&head_);
+        s32 head = svr_atom_load(&head_);
         s32 next_head = head + 1;
 
         if (next_head == buffer_capacity)
@@ -69,7 +69,7 @@ struct SvrAsyncStream
     // Returns true if there was something.
     inline bool pull(T* item)
     {
-        s32 tail = svr_atom_read(&tail_);
+        s32 tail = svr_atom_load(&tail_);
 
         if (svr_atom_load(&head_) == tail)
         {

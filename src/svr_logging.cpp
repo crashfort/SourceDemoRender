@@ -7,11 +7,15 @@
 // File logging stuff.
 
 HANDLE log_file_handle;
+SRWLOCK log_lock;
 
 void log_function(const char* text, s32 length)
 {
     assert(log_file_handle);
+
+    AcquireSRWLockExclusive(&log_lock);
     WriteFile(log_file_handle, text, length, NULL, NULL);
+    ReleaseSRWLockExclusive(&log_lock);
 }
 
 void svr_init_log(const char* log_file_path, bool append)
