@@ -4,6 +4,8 @@ bool EncoderState::init(HANDLE in_shared_mem_h)
 {
     bool ret = false;
 
+    main_thread_id = GetCurrentThreadId();
+
     shared_mem_h = in_shared_mem_h;
 
     // At this point, the shared memory will already have some data already filled in.
@@ -95,12 +97,18 @@ void EncoderState::stop_event()
 
 void EncoderState::new_video_frame_event()
 {
-    render_receive_video();
+    if (!render_receive_video())
+    {
+        stop_after_dynamic_error();
+    }
 }
 
 void EncoderState::new_audio_samples_event()
 {
-    render_receive_audio();
+    if (!render_receive_audio())
+    {
+        stop_after_dynamic_error();
+    }
 }
 
 // Event reading from svr_game.
@@ -225,6 +233,9 @@ void EncoderState::free_dynamic()
 
 void EncoderState::error(const char* format, ...)
 {
+    // Must only be called by the main thread because the shared memory can only be written by the main thread.
+    assert(GetCurrentThreadId() == main_thread_id);
+
     // Set this early so we don't try to flush the encoders or something.
     // If we have an error then we must stop right now, and not try to process any more data.
     render_started = false;

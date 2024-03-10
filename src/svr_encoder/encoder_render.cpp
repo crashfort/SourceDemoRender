@@ -78,6 +78,13 @@ bool EncoderState::render_start()
         goto rfail;
     }
 
+    // Threads are ok at the start.
+    svr_atom_store(&render_frame_thread_status, 1);
+    svr_atom_store(&render_packet_thread_status, 1);
+
+    render_frame_thread_message[0] = 0;
+    render_packet_thread_message[0] = 0;
+
     // Be extra sure that these events are not triggered, so the threads enter a waiting state.
     ResetEvent(render_frame_wake_event_h);
     ResetEvent(render_packet_wake_event_h);
@@ -218,7 +225,7 @@ void EncoderState::render_frame_proc()
 
             if (res < 0)
             {
-                error("ERROR: Could not send raw frame to encoder (%d)\n", res);
+                SVR_SNPRINTF(render_frame_thread_message, "ERROR: Could not send raw frame to encoder (%d)\n", res);
                 goto rfail;
             }
 
@@ -239,7 +246,7 @@ void EncoderState::render_frame_proc()
 
                 if (res < 0)
                 {
-                    error("ERROR: Could not receive packet from encoder (%d)\n", res);
+                    SVR_SNPRINTF(render_frame_thread_message, "ERROR: Could not receive packet from encoder (%d)\n", res);
                     av_packet_free(&packet);
                     goto rfail;
                 }
@@ -262,6 +269,7 @@ void EncoderState::render_frame_proc()
     goto rexit;
 
 rfail:
+    svr_atom_store(&render_frame_thread_status, 0);
 
 rexit:
     return;
@@ -291,7 +299,7 @@ void EncoderState::render_packet_proc()
 
             if (res < 0)
             {
-                error("ERROR: Could not write encoded packet to container (%d)\n", res);
+                SVR_SNPRINTF(render_packet_thread_message, "ERROR: Could not write encoded packet to container (%d)\n", res);
                 goto rfail;
             }
         }
@@ -300,6 +308,7 @@ void EncoderState::render_packet_proc()
     goto rexit;
 
 rfail:
+    svr_atom_store(&render_packet_thread_status, 0);
 
 rexit:
     return;
@@ -601,10 +610,36 @@ rexit:
     return ret;
 }
 
+bool EncoderState::render_check_thread_errors()
+{
+    // Frame thread broke. Nothing more can be submitted.
+    if (svr_atom_load(&render_frame_thread_status) == 0)
+    {
+        error(render_frame_thread_message);
+        return true;
+    }
+
+    // Packet thread broke. Nothing more can be submitted.
+    if (svr_atom_load(&render_packet_thread_status) == 0)
+    {
+        error(render_packet_thread_message);
+        return true;
+    }
+
+    return false;
+}
+
 // The shared game texture has been updated at this point.
-void EncoderState::render_receive_video()
+bool EncoderState::render_receive_video()
 {
     assert(render_started);
+
+    bool ret = false;
+
+    if (render_check_thread_errors())
+    {
+        goto rfail;
+    }
 
     AVFrame* frame = render_get_new_video_frame();
 
@@ -615,20 +650,43 @@ void EncoderState::render_receive_video()
     render_encode_video_frame(frame);
 
     render_video_pts++;
+
+    ret = true;
+    goto rexit;
+
+rfail:
+
+rexit:
+    return ret;
 }
 
 // The shared audio samples have been updated at this point.
-void EncoderState::render_receive_audio()
+bool EncoderState::render_receive_audio()
 {
     assert(render_started);
     assert(movie_params.use_audio);
     assert(shared_mem_ptr->waiting_audio_samples > 0);
+
+    bool ret = false;
+
+    if (render_check_thread_errors())
+    {
+        goto rfail;
+    }
 
     audio_convert_to_codec_samples();
 
     // Must submit everything in the fifo so things don't start drifting away.
     // It's possible that this doesn't do anything in case there aren't enough samples to cover the needed frame size
     render_submit_audio_fifo();
+
+    ret = true;
+    goto rexit;
+
+rfail:
+
+rexit:
+    return ret;
 }
 
 // Some encoders need a fixed amount of samples every iteration (except the last).

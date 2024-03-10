@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <malloc.h>
+#include <stdio.h>
 
 using s8 = int8_t;
 using u8 = uint8_t;
@@ -30,6 +31,9 @@ using wchar = wchar_t;
 
 #define SVR_ALLOCA(T) (T*)_alloca(sizeof(T))
 #define SVR_ALLOCA_NUM(T, NUM) (T*)_alloca(sizeof(T) * NUM)
+
+// Format to buffer with size restriction.
+#define SVR_SNPRINTF(BUF, FORMAT, ...) snprintf((BUF), SVR_ARRAY_SIZE((BUF)), FORMAT, __VA_ARGS__)
 
 // Should be same type from Steam API.
 using SteamAppId = u32;

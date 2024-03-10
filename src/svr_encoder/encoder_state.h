@@ -33,6 +33,8 @@ struct EncoderState
     HANDLE game_texture_h;
     void* shared_audio_buffer; // Where svr_game will put the audio samples.
 
+    DWORD main_thread_id;
+
     EncoderSharedMovieParams movie_params; // Copied from the shared memory on movie start.
 
     bool init(HANDLE in_shared_mem_h);
@@ -48,6 +50,7 @@ struct EncoderState
 
     // Use this on any error.
     // Prints to our log and also copies to shared memory where it is displayed in the game console and game log.
+    // This can only be used by the main thread!
     void error(const char* format, ...);
 
     void stop_after_dynamic_error();
@@ -69,6 +72,24 @@ struct EncoderState
     // Event set by the frame thread to notify that there are encoded packets to write.
     // When rendering stops, this will be set by the main thread instead.
     HANDLE render_packet_wake_event_h;
+
+    SVR_THREAD_PADDING();
+
+    SvrAtom32 render_frame_thread_status; // Will be set to 0 by frame thread if it failed. Message will be in render_frame_thread_message.
+
+    SVR_THREAD_PADDING();
+
+    SvrAtom32 render_packet_thread_status; // Will be set to 0 by packet thread if it failed. Message will be in render_packet_thread_message.
+
+    SVR_THREAD_PADDING();
+
+    char render_frame_thread_message[256]; // Error message for the frame thread.
+
+    SVR_THREAD_PADDING();
+
+    char render_packet_thread_message[256]; // Error message for the packet thread.
+
+    SVR_THREAD_PADDING();
 
     // Uncompressed frames and samples ready to be encoded.
     // Written to by the main thread, read by the frame thread.
@@ -111,8 +132,9 @@ struct EncoderState
     bool render_init_output_context();
     bool render_init_video();
     bool render_init_audio();
-    void render_receive_video();
-    void render_receive_audio();
+    bool render_check_thread_errors();
+    bool render_receive_video();
+    bool render_receive_audio();
     void render_flush_audio_fifo();
     void render_submit_audio_fifo();
     void render_encode_frame_from_audio_fifo(AVFrame* frame, s32 num_samples);
