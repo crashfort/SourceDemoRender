@@ -187,6 +187,8 @@ void EncoderState::render_free_dynamic()
 
     render_video_pts = 0;
     render_audio_pts = 0;
+
+    render_free_recycled_frames();
 }
 
 // In frame thread.
@@ -844,4 +846,20 @@ rfail:
 
 rexit:
     return ret;
+}
+
+// Free the allocated buffers in the recycled audio and video frames.
+void EncoderState::render_free_recycled_frames()
+{
+    AVFrame* frame = NULL;
+
+    while (render_recycled_video_frames.pull(&frame))
+    {
+        av_frame_free(&frame);
+    }
+
+    while (render_recycled_audio_frames.pull(&frame))
+    {
+        av_frame_free(&frame);
+    }
 }

@@ -140,6 +140,7 @@ struct EncoderState
     void render_encode_frame(AVCodecContext* ctx, AVStream* stream, AVFrame* frame, AVMediaType type);
     AVFrame* render_get_new_video_frame();
     AVFrame* render_get_new_audio_frame();
+    void render_free_recycled_frames();
     void render_setup_dnxhr();
     void render_setup_libx264();
 
