@@ -112,14 +112,11 @@ struct EncoderState
     AVStream* render_video_stream;
     AVCodecContext* render_video_ctx;
     s64 render_video_pts; // Presentation timestamp.
-    AVRational render_video_q; // Time base for video. Always based in seconds, so 1/60 for example.
 
     const RenderAudioInfo* render_audio_info;
     AVStream* render_audio_stream;
     AVCodecContext* render_audio_ctx;
     s64 render_audio_pts; // Presentation timestamp.
-    s32 render_audio_frame_size; // This is how many samples the encoder needs to get every call (except the last).
-    AVRational render_audio_q; // Time base for video. Always based in seconds, so 1/44100 for example.
 
     bool render_init();
     bool render_start();
@@ -187,7 +184,8 @@ struct EncoderState
 
     SwrContext* audio_swr;
 
-    s32 audio_hz; // Input and output will use the same.
+    s32 audio_input_hz;
+    s32 audio_output_hz;
     AVSampleFormat audio_input_format; // Sample format we get from svr_game.
     s32 audio_num_channels; // Input and output use the same.
 
@@ -223,6 +221,10 @@ struct RenderAudioInfo
     const char* profile_name; // Name as written in the movie profile.
     const char* codec_name; // Name in ffmpeg.
     AVSampleFormat sample_format; // An encoder may support several sample formats, so we select the one we like the most.
+
+    // An encoder may support several sample rates, so we select the one we like the most.
+    // Set to 0 to use the same as the input.
+    s32 hz;
 
     // Set state according to the movie profile.
     // This is called before the codec is opened.

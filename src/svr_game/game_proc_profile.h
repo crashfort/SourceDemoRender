@@ -5,14 +5,15 @@ const s32 MAX_VELOC_FONT_NAME = 128;
 
 struct MovieProfile
 {
-    s32 movie_fps;
-
-    // SW encoding:
-    const char* sw_encoder;
-    s32 sw_x264_crf;
-    const char* sw_x264_preset;
-    s32 sw_x264_intra;
-    const char* sw_dnxhr_profile;
+    // Movie encoding:
+    s32 video_fps;
+    const char* video_encoder;
+    s32 video_x264_crf;
+    const char* video_x264_preset;
+    s32 video_x264_intra;
+    const char* video_dnxhr_profile;
+    s32 audio_enabled;
+    const char* audio_encoder;
 
     // Mosample:
     s32 mosample_enabled;
@@ -29,9 +30,6 @@ struct MovieProfile
     enum DWRITE_FONT_STYLE veloc_font_style;
     enum DWRITE_FONT_WEIGHT veloc_font_weight;
     s32 veloc_align[2];
-
-    // Audio:
-    s32 audio_enabled;
 };
 
 bool read_profile(const char* full_profile_path, MovieProfile* p);

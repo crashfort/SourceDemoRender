@@ -8,7 +8,7 @@ const RenderVideoInfo RENDER_VIDEO_INFOS[] = {
 };
 
 const RenderAudioInfo RENDER_AUDIO_INFOS[] = {
-    RenderAudioInfo { "aac", "aac", AV_SAMPLE_FMT_FLTP, NULL },
+    RenderAudioInfo { "aac", "aac_mf", AV_SAMPLE_FMT_S16, 0, NULL },
 };
 
 DWORD CALLBACK render_frame_thread_proc(LPVOID param)
@@ -63,7 +63,6 @@ bool EncoderState::render_start()
 
     if (movie_params.use_audio)
     {
-        // Audio codec not able to be selected yet.
         if (!render_init_audio())
         {
             goto rfail;
@@ -399,12 +398,13 @@ bool EncoderState::render_init_video()
     bool ret = false;
     s32 res;
 
-    render_video_q = av_make_q(1, movie_params.video_fps);
-
     if (!render_setup_video_info())
     {
         goto rfail;
     }
+
+    // Time base for video. Always based in seconds, so 1/60 for example.
+    AVRational video_q = av_make_q(1, movie_params.video_fps);
 
     const AVCodec* codec = avcodec_find_encoder_by_name(render_video_info->codec_name);
 
@@ -444,7 +444,7 @@ bool EncoderState::render_init_video()
     render_video_ctx->bit_rate = 0;
     render_video_ctx->width = movie_params.video_width;
     render_video_ctx->height = movie_params.video_height;
-    render_video_ctx->time_base = render_video_q;
+    render_video_ctx->time_base = video_q;
     render_video_ctx->pix_fmt = render_video_info->pixel_format;
     render_video_ctx->color_range = AVCOL_RANGE_MPEG;
 
@@ -500,12 +500,21 @@ bool EncoderState::render_init_audio()
     bool ret = false;
     s32 res;
 
-    render_audio_q = av_make_q(1, movie_params.audio_hz);
-
     if (!render_setup_audio_info())
     {
         goto rfail;
     }
+
+    s32 hz = movie_params.audio_hz;
+
+    // Set from encoder if it requires a set sample rate.
+    if (render_audio_info->hz != 0)
+    {
+        hz = render_audio_info->hz;
+    }
+
+    // Time base for video. Always based in seconds, so 1/44100 for example.
+    AVRational audio_q = av_make_q(1, hz);
 
     const AVCodec* codec = avcodec_find_encoder_by_name(render_audio_info->codec_name);
 
@@ -546,9 +555,9 @@ bool EncoderState::render_init_audio()
     av_channel_layout_default(&channel_layout, movie_params.audio_channels);
 
     render_audio_ctx->sample_fmt = render_audio_info->sample_format;
-    render_audio_ctx->sample_rate = render_audio_q.den;
+    render_audio_ctx->sample_rate = audio_q.den;
     render_audio_ctx->ch_layout = channel_layout;
-    render_audio_ctx->time_base = render_audio_q;
+    render_audio_ctx->time_base = audio_q;
 
     render_audio_stream->time_base = render_audio_ctx->time_base;
 
@@ -558,6 +567,7 @@ bool EncoderState::render_init_audio()
     }
 
     render_audio_ctx->thread_count = 0; // Use all threads.
+    render_audio_ctx->bit_rate = 256 * 1000;
 
     if (render_audio_info->setup)
     {
@@ -575,12 +585,7 @@ bool EncoderState::render_init_audio()
     // In case the encoder doesn't report how many samples it wants, just pick a number of samples that we want.
     if (codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE)
     {
-        render_audio_frame_size = 512;
-    }
-
-    else
-    {
-        render_audio_frame_size = render_audio_ctx->frame_size;
+        render_audio_ctx->frame_size = 512;
     }
 
     render_audio_ctx->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
@@ -698,7 +703,7 @@ void EncoderState::render_flush_audio_fifo()
 
     while (num_remaining > 0)
     {
-        s32 num_samples = svr_min(num_remaining, render_audio_frame_size); // Ok for the last submit to have less samples than the frame size.
+        s32 num_samples = svr_min(num_remaining, render_audio_ctx->frame_size); // Ok for the last submit to have less samples than the frame size.
         render_encode_frame_from_audio_fifo(num_samples);
         num_remaining -= num_samples;
     }
@@ -711,10 +716,10 @@ void EncoderState::render_submit_audio_fifo()
 {
     s32 num_remaining = audio_num_queued_samples();
 
-    while (num_remaining >= render_audio_frame_size)
+    while (num_remaining >= render_audio_ctx->frame_size)
     {
-        render_encode_frame_from_audio_fifo(render_audio_frame_size); // Every submission must have the same size in this case.
-        num_remaining -= render_audio_frame_size;
+        render_encode_frame_from_audio_fifo(render_audio_ctx->frame_size); // Every submission must have the same size in this case.
+        num_remaining -= render_audio_ctx->frame_size;
     }
 }
 
@@ -819,7 +824,7 @@ AVFrame* EncoderState::render_get_new_audio_frame()
     ret->format = render_audio_ctx->sample_fmt;
     ret->ch_layout = render_audio_ctx->ch_layout;
     ret->sample_rate = render_audio_ctx->sample_rate;
-    ret->nb_samples = render_audio_frame_size; // All submitted audio frames will have this amount of samples, except the last.
+    ret->nb_samples = render_audio_ctx->frame_size; // All submitted audio frames will have this amount of samples, except the last.
 
     // Allocate buffers for frame.
     res = av_frame_get_buffer(ret, 0);

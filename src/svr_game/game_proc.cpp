@@ -304,6 +304,7 @@ bool send_event_to_encoder(EncoderSharedEvent event)
             // Any error in svr_encoder is written to its log.
             // We also want to log the error in the console and in our log.
             game_log(encoder_shared_ptr->error_message);
+            game_log("See ENCODER_LOG.txt for more information\n");
             return false;
         }
     }
@@ -320,21 +321,21 @@ bool start_encoder(HANDLE game_content_tex_h)
 
     EncoderSharedMovieParams* params = &encoder_shared_ptr->movie_params;
 
-    params->video_fps = movie_profile.movie_fps;
+    params->video_fps = movie_profile.video_fps;
     params->video_width = movie_width;
     params->video_height = movie_height;
     params->audio_channels = 2;
     params->audio_hz = 44100;
     params->audio_bits = 16;
-    params->x264_crf = movie_profile.sw_x264_crf;
-    params->x264_intra = movie_profile.sw_x264_intra;
+    params->x264_crf = movie_profile.video_x264_crf;
+    params->x264_intra = movie_profile.video_x264_intra;
     params->use_audio = movie_profile.audio_enabled;
 
     svr_copy_string(movie_path, params->dest_file, SVR_ARRAY_SIZE(params->dest_file));
-    svr_copy_string(movie_profile.sw_encoder, params->video_encoder, SVR_ARRAY_SIZE(params->video_encoder));
-    svr_copy_string(movie_profile.sw_x264_preset, params->x264_preset, SVR_ARRAY_SIZE(params->x264_preset));
-    svr_copy_string(movie_profile.sw_dnxhr_profile, params->dnxhr_profile, SVR_ARRAY_SIZE(params->dnxhr_profile));
-    svr_copy_string("aac", params->audio_encoder, SVR_ARRAY_SIZE(params->audio_encoder));
+    svr_copy_string(movie_profile.video_encoder, params->video_encoder, SVR_ARRAY_SIZE(params->video_encoder));
+    svr_copy_string(movie_profile.video_x264_preset, params->x264_preset, SVR_ARRAY_SIZE(params->x264_preset));
+    svr_copy_string(movie_profile.video_dnxhr_profile, params->dnxhr_profile, SVR_ARRAY_SIZE(params->dnxhr_profile));
+    svr_copy_string(movie_profile.audio_encoder, params->audio_encoder, SVR_ARRAY_SIZE(params->audio_encoder));
 
     encoder_shared_ptr->waiting_audio_samples = 0;
     encoder_shared_ptr->game_texture_h = (u32)game_content_tex_h;
@@ -921,6 +922,10 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
         d3d11_device->CreateRenderTargetView(work_tex, NULL, &work_tex_rtv);
         d3d11_device->CreateUnorderedAccessView(work_tex, NULL, &work_tex_uav);
 
+        // The work texture may get reused between renderings, so we must clear it.
+        float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        d3d11_context->ClearRenderTargetView(work_tex_rtv, clear_color);
+
         work_tex_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
         work_tex_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_RENDER_TARGET; // Must have these flags for sharing textures!
         work_tex_desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
@@ -948,8 +953,8 @@ bool proc_start(ID3D11Device* d3d11_device, ID3D11DeviceContext* d3d11_context, 
     {
         mosample_remainder = 0.0f;
 
-        s32 sps = movie_profile.movie_fps * movie_profile.mosample_mult;
-        mosample_remainder_step = (1.0f / sps) / (1.0f / movie_profile.movie_fps);
+        s32 sps = movie_profile.video_fps * movie_profile.mosample_mult;
+        mosample_remainder_step = (1.0f / sps) / (1.0f / movie_profile.video_fps);
     }
 
     if (!start_encoder(used_shared_handle))
@@ -1168,8 +1173,8 @@ s32 proc_get_game_rate()
 {
     if (movie_profile.mosample_enabled)
     {
-        return movie_profile.movie_fps * movie_profile.mosample_mult;
+        return movie_profile.video_fps * movie_profile.mosample_mult;
     }
 
-    return movie_profile.movie_fps;
+    return movie_profile.video_fps;
 }

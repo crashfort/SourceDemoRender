@@ -51,9 +51,13 @@ const char* COLORSPACE_TABLE[] = {
 };
 
 // Names for ini.
-const char* ENCODER_TABLE[] = {
+const char* VIDEO_ENCODER_TABLE[] = {
     "libx264",
     "dnxhr",
+};
+
+const char* AUDIO_ENCODER_TABLE[] = {
+    "aac",
 };
 
 // Names for ini and ffmpeg.
@@ -242,12 +246,14 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
 
     while (svr_read_ini(&ini_mem, &ini_line, &ini_token_type))
     {
-        if OPT_S32("video_fps", p->movie_fps, 1, 1000)
-        else if OPT_STR_LIST("video_encoder", p->sw_encoder, ENCODER_TABLE, "dnxhr")
-        else if OPT_S32("video_x264_crf", p->sw_x264_crf, 0, 52)
-        else if OPT_STR_LIST("video_x264_preset", p->sw_x264_preset, ENCODER_PRESET_TABLE, "veryfast")
-        else if OPT_S32("video_x264_intra", p->sw_x264_intra, 0, 1)
-        else if OPT_STR_LIST("video_dnxhr_profile", p->sw_dnxhr_profile, DNXHR_PROFILE_TABLE, "hq")
+        if OPT_S32("video_fps", p->video_fps, 1, 1000)
+        else if OPT_STR_LIST("video_encoder", p->video_encoder, VIDEO_ENCODER_TABLE, "dnxhr")
+        else if OPT_S32("video_x264_crf", p->video_x264_crf, 0, 52)
+        else if OPT_STR_LIST("video_x264_preset", p->video_x264_preset, ENCODER_PRESET_TABLE, "veryfast")
+        else if OPT_S32("video_x264_intra", p->video_x264_intra, 0, 1)
+        else if OPT_STR_LIST("video_dnxhr_profile", p->video_dnxhr_profile, DNXHR_PROFILE_TABLE, "hq")
+        else if OPT_S32("audio_enabled", p->audio_enabled, 0, 1)
+        else if OPT_STR_LIST("audio_encoder", p->audio_encoder, AUDIO_ENCODER_TABLE, "aac")
         else if OPT_S32("motion_blur_enabled", p->mosample_enabled, 0, 1)
         else if OPT_S32("motion_blur_fps_mult", p->mosample_mult, 2, INT32_MAX)
         else if OPT_FLOAT("motion_blur_exposure", p->mosample_exposure, 0.0f, 1.0f)
@@ -260,7 +266,6 @@ bool read_profile(const char* full_profile_path, MovieProfile* p)
         else if OPT_STR_MAP("velo_font_style", p->veloc_font_style, FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL)
         else if OPT_STR_MAP("velo_font_weight", p->veloc_font_weight, FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_BOLD)
         else if OPT_VEC2("velo_align", p->veloc_align)
-        else if OPT_S32("audio_enabled", p->audio_enabled, 0, 1)
     }
 
     svr_free_ini_line(&ini_line);

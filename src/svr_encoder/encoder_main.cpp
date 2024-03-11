@@ -11,20 +11,24 @@ void av_log_callback(void* avcl, int level, const char* fmt, va_list vl)
         return;
     }
 
-    // Some messages from FFmpeg will not end with a newline. We require that every message ends with a newline.
-    if (!svr_ends_with(fmt, "\n"))
-    {
-        char buf[4096];
-        vsnprintf(buf, SVR_ARRAY_SIZE(buf), fmt, vl);
+    char buf[4096];
+    vsnprintf(buf, SVR_ARRAY_SIZE(buf), fmt, vl);
 
-        svr_log("ffmpeg: %s\n", buf);
-        OutputDebugStringA(svr_va("ffmpeg: %s\n", buf));
+    const char* format = NULL;
+
+    // Some messages from FFmpeg will not end with a newline. We require that every message ends with a newline.
+    if (!svr_ends_with(buf, "\n"))
+    {
+        format = "ffmpeg: %s\n";
     }
 
     else
     {
-        svr_log_v(fmt, vl);
+        format = "ffmpeg: %s";
     }
+
+    svr_log(format, buf);
+    OutputDebugStringA(svr_va(format, buf));
 }
 
 int main(int argc, char** argv)

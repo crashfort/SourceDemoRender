@@ -55,7 +55,15 @@ bool EncoderState::audio_create_resampler()
     bool ret = false;
     s32 res;
 
-    audio_hz = movie_params.audio_hz;
+    audio_input_hz = movie_params.audio_hz;
+    audio_output_hz = movie_params.audio_hz;
+
+    // Set from encoder if it requires a set sample rate.
+    if (render_audio_info->hz != 0)
+    {
+        audio_output_hz = render_audio_info->hz;
+    }
+
     audio_num_channels = movie_params.audio_channels;
 
     AVChannelLayout channel_layout;
@@ -83,7 +91,7 @@ bool EncoderState::audio_create_resampler()
         audio_output_buffers[i] = NULL;
     }
 
-    res = swr_alloc_set_opts2(&audio_swr, &channel_layout, render_audio_info->sample_format, audio_hz, &channel_layout, audio_input_format, audio_hz, 0, NULL);
+    res = swr_alloc_set_opts2(&audio_swr, &channel_layout, render_audio_info->sample_format, audio_output_hz, &channel_layout, audio_input_format, audio_input_hz, 0, NULL);
 
     if (res < 0)
     {
@@ -113,7 +121,7 @@ bool EncoderState::audio_create_fifo()
 {
     bool ret = false;
 
-    audio_fifo = av_audio_fifo_alloc(render_audio_info->sample_format, audio_num_channels, render_audio_frame_size * 2);
+    audio_fifo = av_audio_fifo_alloc(render_audio_info->sample_format, audio_num_channels, render_audio_ctx->frame_size * 2);
 
     if (audio_fifo == NULL)
     {
@@ -142,10 +150,10 @@ void EncoderState::audio_convert_to_codec_samples()
     // change in the curve where the interpolation breaks. If no resampling is needed (if the sample rate matches what we want)
     // then there will not be any queued samples.
     // We must always fill at least one paint buffer. If we end up getting more samples than anticipated, then those will be stored in the channel.
-    s64 delay = swr_get_delay(audio_swr, audio_hz);
+    s64 delay = swr_get_delay(audio_swr, audio_input_hz);
 
     // Don't use more than necessary here, because we should not be receiving tons of more samples than we need.
-    s64 estimated = av_rescale_rnd(delay + (int64_t)num_waiting, audio_hz, audio_hz, AV_ROUND_UP);
+    s64 estimated = av_rescale_rnd(delay + (int64_t)num_waiting, audio_output_hz, audio_input_hz, AV_ROUND_UP);
 
     // Grow buffer.
     if (estimated > audio_output_size)
