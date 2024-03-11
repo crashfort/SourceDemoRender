@@ -69,11 +69,13 @@ bool EncoderState::audio_create_resampler()
     AVChannelLayout channel_layout;
     av_channel_layout_default(&channel_layout, movie_params.audio_channels);
 
+    AVSampleFormat input_format; // Sample format we get from svr_game.
+
     switch (movie_params.audio_bits)
     {
         case 16:
         {
-            audio_input_format = AV_SAMPLE_FMT_S16;
+            input_format = AV_SAMPLE_FMT_S16;
             break;
         }
 
@@ -91,7 +93,7 @@ bool EncoderState::audio_create_resampler()
         audio_output_buffers[i] = NULL;
     }
 
-    res = swr_alloc_set_opts2(&audio_swr, &channel_layout, render_audio_info->sample_format, audio_output_hz, &channel_layout, audio_input_format, audio_input_hz, 0, NULL);
+    res = swr_alloc_set_opts2(&audio_swr, &channel_layout, render_audio_info->sample_format, audio_output_hz, &channel_layout, input_format, audio_input_hz, 0, NULL);
 
     if (res < 0)
     {

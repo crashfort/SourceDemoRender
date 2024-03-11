@@ -187,7 +187,6 @@ struct EncoderState
 
     s32 audio_input_hz;
     s32 audio_output_hz;
-    AVSampleFormat audio_input_format; // Sample format we get from svr_game.
     s32 audio_num_channels; // Input and output use the same.
 
     u8* audio_output_buffers[AUDIO_MAX_CHANS];
