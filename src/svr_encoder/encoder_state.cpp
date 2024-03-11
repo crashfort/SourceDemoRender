@@ -72,13 +72,23 @@ void EncoderState::start_event()
         goto rfail;
     }
 
-    if (!audio_start())
+    if (movie_params.use_audio)
     {
-        goto rfail;
+        if (!audio_start())
+        {
+            goto rfail;
+        }
     }
 
-    svr_log("Using video encoder %s\n", render_video_info->profile_name);
-    svr_log("Using audio encoder %s\n", render_audio_info->profile_name);
+    if (render_video_info)
+    {
+        svr_log("Using video encoder %s\n", render_video_info->profile_name);
+    }
+
+    if (render_audio_info)
+    {
+        svr_log("Using audio encoder %s\n", render_audio_info->profile_name);
+    }
 
     goto rexit;
 

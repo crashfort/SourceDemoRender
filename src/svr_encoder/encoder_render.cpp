@@ -178,6 +178,9 @@ void EncoderState::render_free_dynamic()
     render_video_stream = NULL;
     render_audio_stream = NULL;
 
+    render_video_info = NULL;
+    render_audio_info = NULL;
+
     render_container = NULL;
 
     render_started = false;
