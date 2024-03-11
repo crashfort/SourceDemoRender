@@ -207,20 +207,18 @@ void make_vec2(SvrIniLine* line, s32* target)
 
 void make_color(SvrIniLine* line, s32* target)
 {
-    s32 ret = sscanf(line->value, "%d %d %d", &target[0], &target[1], &target[2]);
+    s32 ret = sscanf(line->value, "%d %d %d %d", &target[0], &target[1], &target[2], &target[3]);
 
     svr_clamp(&target[0], 0, 255);
     svr_clamp(&target[1], 0, 255);
     svr_clamp(&target[2], 0, 255);
+    svr_clamp(&target[3], 0, 255);
 
-    if (ret != 3)
+    if (ret != 4)
     {
-        memset(target, 255, sizeof(s32) * 3);
-        svr_log("Option %s has incorrect formatting. It should be a color in the format of 255 255 255 (RGB). Setting to 255 255 255\n", line->title);
+        memset(target, 255, sizeof(s32) * 4);
+        svr_log("Option %s has incorrect formatting. It should be a color in the format of 255 255 255 255 (RGBA). Setting to 255 255 255 255\n", line->title);
     }
-
-    // Always opaque.
-    target[3] = 255;
 }
 
 bool read_profile(const char* full_profile_path, MovieProfile* p)
