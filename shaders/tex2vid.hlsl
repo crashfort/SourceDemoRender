@@ -13,7 +13,7 @@ uint3 convert_rgb_to_yuv(float3 rgb)
 {
     rgb = rgb * 255.0f;
 
-    uint3 ret = uint3(0, 0, 0);
+    uint3 ret;
 
     #if AVCOL_SPC_BT709
     ret.x = 16  + (rgb.x * +0.212600) + (rgb.y * +0.715200) + (rgb.z * +0.072200);
@@ -23,13 +23,6 @@ uint3 convert_rgb_to_yuv(float3 rgb)
     ret.x = 16  + (rgb.x * +0.299000) + (rgb.y * +0.587000) + (rgb.z * +0.114000);
     ret.y = 128 + (rgb.x * -0.168736) + (rgb.y * -0.331264) + (rgb.z * +0.500000);
     ret.z = 128 + (rgb.x * +0.500000) + (rgb.y * -0.418688) + (rgb.z * -0.081312);
-    #endif
-
-    // Resolve partial range by adding 16.0 / 255.0 and dividing by 255.0 / 219.0.
-    // We don't do this as we don't specify a color range.
-    #if 0
-    rgb += 0.062745;
-    rgb /= 1.164383;
     #endif
 
     return ret;
@@ -43,102 +36,60 @@ float4 average_nearby_for_yuv(uint3 dtid)
 
     float4 base = input_texture.Load(dtid);
 
-    float4 topright;
-    float4 botleft;
-    float4 botright;
+    float4 top_right;
+    float4 bot_left;
+    float4 bot_right;
 
     if (dtid.x + 1 < width)
     {
-        topright = input_texture.Load(dtid, int2(1, 0));
+        top_right = input_texture.Load(dtid, int2(1, 0));
     }
 
     else
     {
-        topright = base;
+        top_right = base;
     }
 
     if (dtid.y + 1 < height)
     {
-        botleft = input_texture.Load(dtid, int2(0, 1));
+        bot_left = input_texture.Load(dtid, int2(0, 1));
     }
 
     else
     {
-        botleft = base;
+        bot_left = base;
     }
 
     if (dtid.x + 1 < width && dtid.y + 1 < height)
     {
-        botright = input_texture.Load(dtid, int2(1, 1));
+        bot_right = input_texture.Load(dtid, int2(1, 1));
     }
 
     else
     {
         if (dtid.x + 1 < width)
         {
-            botright = topright;
+            bot_right = top_right;
         }
 
         else if (dtid.y + 1 < height)
         {
-            botright = botleft;
+            bot_right = bot_left;
         }
 
         else
         {
-            botright = base;
+            bot_right = base;
         }
     }
 
-    return (base + topright + botleft + botright) / 4.0;
+    return (base + top_right + bot_left + bot_right) / 4.0;
 }
-
-// --------------------------------------------------------------------------------------------------------------------
-
-#if AV_PIX_FMT_YUV420P
-
-// The first plane is as large as the source material.
-// The second and third planes are half in size.
-
-RWTexture2D<uint> output_texture_y : register(u0);
-RWTexture2D<uint> output_texture_u : register(u1);
-RWTexture2D<uint> output_texture_v : register(u2);
-
-void proc(uint3 dtid)
-{
-    float4 pix = average_nearby_for_yuv(dtid);
-    uint3 yuv = convert_rgb_to_yuv(pix.xyz);
-    output_texture_y[dtid.xy] = yuv.x;
-    output_texture_u[dtid.xy >> 1] = yuv.y;
-    output_texture_v[dtid.xy >> 1] = yuv.z;
-}
-
-#endif
-
-// --------------------------------------------------------------------------------------------------------------------
-
-#if AV_PIX_FMT_YUV444P
-
-// All planes are of equal size to the source material.
-
-RWTexture2D<uint> output_texture_y : register(u0);
-RWTexture2D<uint> output_texture_u : register(u1);
-RWTexture2D<uint> output_texture_v : register(u2);
-
-void proc(uint3 dtid)
-{
-    float4 pix = input_texture[dtid.xy];
-    uint3 yuv = convert_rgb_to_yuv(pix.xyz);
-    output_texture_y[dtid.xy] = yuv.x;
-    output_texture_u[dtid.xy] = yuv.y;
-    output_texture_v[dtid.xy] = yuv.z;
-}
-
-#endif
 
 // --------------------------------------------------------------------------------------------------------------------
 
 #if AV_PIX_FMT_NV12
+// Used by H264.
 
 // The first plane is as large as the source material.
 // The second plane is half the size and has U and V interleaved.
@@ -158,37 +109,23 @@ void proc(uint3 dtid)
 
 // --------------------------------------------------------------------------------------------------------------------
 
-#if AV_PIX_FMT_NV21
+#if AV_PIX_FMT_YUV422P
 
 // The first plane is as large as the source material.
-// The second plane is half the size and has U and V interleaved.
-// This is different from NV12 in that U and V are switched.
+// The second and third planes are half in size horizontally.
+// Used by dnxhr.
 
 RWTexture2D<uint> output_texture_y : register(u0);
-RWTexture2D<uint2> output_texture_vu : register(u1);
+RWTexture2D<uint> output_texture_u : register(u1);
+RWTexture2D<uint> output_texture_v : register(u2);
 
 void proc(uint3 dtid)
 {
     float4 pix = average_nearby_for_yuv(dtid);
     uint3 yuv = convert_rgb_to_yuv(pix.xyz);
     output_texture_y[dtid.xy] = yuv.x;
-    output_texture_vu[dtid.xy >> 1] = uint2(yuv.zy);
-}
-
-#endif
-
-// --------------------------------------------------------------------------------------------------------------------
-
-#if AV_PIX_FMT_BGR0
-
-// Data is packed in BGRX in a single plane. We have to swizzle it around and also multiply by 255.
-
-RWTexture2D<uint4> output_texture_rgb : register(u0);
-
-void proc(uint3 dtid)
-{
-    float4 pix = input_texture.Load(dtid);
-    output_texture_rgb[dtid.xy] = uint4(float4(pix.zyx, 1) * 255.0);
+    output_texture_u[int2(dtid.x >> 1, dtid.y)] = yuv.y;
+    output_texture_v[int2(dtid.x >> 1, dtid.y)] = yuv.z;
 }
 
 #endif

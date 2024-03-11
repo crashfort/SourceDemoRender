@@ -986,7 +986,7 @@ void __cdecl start_movie_override(void* args)
     else
     {
         // Only allowed containers that have sufficient encoder support.
-        bool has_valid_name = !strcmpi(movie_ext, ".mp4") || !strcmpi(movie_ext, ".mkv");
+        bool has_valid_name = !strcmpi(movie_ext, ".mp4") || !strcmpi(movie_ext, ".mkv") || !strcmpi(movie_ext, ".mov");
 
         if (!has_valid_name)
         {
@@ -1162,6 +1162,8 @@ void patch_cvar_restrict()
             addr += 1;
             break;
         }
+
+        default: assert(false);
     }
 
     if (addr)
