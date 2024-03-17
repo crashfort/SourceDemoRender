@@ -18,6 +18,15 @@ enum /* ProcVeloAnchor */
     VELO_ANCHOR_RIGHT,
 };
 
+using ProcVeloLength = s32;
+
+enum /* ProcVeloLength */
+{
+    VELO_LENGTH_XY,
+    VELO_LENGTH_XYZ,
+    VELO_LENGTH_Z,
+};
+
 struct MovieProfile
 {
     // Movie options:
@@ -46,6 +55,7 @@ struct MovieProfile
     DWRITE_FONT_WEIGHT velo_font_weight;
     SvrVec2I velo_align;
     ProcVeloAnchor velo_anchor;
+    ProcVeloLength velo_length;
 };
 
 struct ProcState
@@ -125,6 +135,7 @@ struct ProcState
     void velo_draw();
     void velo_give(float* source);
     SvrVec2I velo_get_pos();
+    float velo_get_length();
 
     // -----------------------------------------------
     // Motion blur state:

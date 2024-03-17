@@ -24,6 +24,7 @@ Supported games in this release:
 * Added velo text opacity.
 * Added velo_anchor option which allows to set the text expansion direction.
 * Velo is now by default in the lower left with an anchor of left.
+* Added velo_length option which allows to set the axes of velocity to show.
 
 Version 40, 26 October 2022
 ---------------------------

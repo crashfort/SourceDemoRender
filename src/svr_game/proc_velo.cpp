@@ -139,10 +139,11 @@ void ProcState::velo_end()
 
 void ProcState::velo_draw()
 {
-    s32 vel = (s32)(sqrtf(velo_vector[0] * velo_vector[0] + velo_vector[1] * velo_vector[1]) + 0.5f);
+    float length = velo_get_length();
+    s32 speed = (s32)(sqrtf(length) + 0.5f);
 
     char buf[128];
-    s32 text_length = SVR_SNPRINTF(buf, "%d", vel);
+    s32 text_length = SVR_SNPRINTF(buf, "%d", speed);
 
     UINT16* idxs = SVR_ALLOCA_NUM(UINT16, text_length);
     float* advances = SVR_ALLOCA_NUM(float, text_length);
@@ -247,4 +248,32 @@ SvrVec2I ProcState::velo_get_pos()
     scr_pos_y += (movie_profile.velo_align.y / 200.0f) * movie_height;
 
     return SvrVec2I { scr_pos_x, scr_pos_y };
+}
+
+float ProcState::velo_get_length()
+{
+    float length = 0.0f;
+
+    switch (movie_profile.velo_length)
+    {
+        case VELO_LENGTH_XY:
+        {
+            length = velo_vector[0] * velo_vector[0] + velo_vector[1] * velo_vector[1];
+            break;
+        }
+
+        case VELO_LENGTH_XYZ:
+        {
+            length = velo_vector[0] * velo_vector[0] + velo_vector[1] * velo_vector[1] + velo_vector[2] * velo_vector[2];
+            break;
+        }
+        
+        case VELO_LENGTH_Z:
+        {
+            length = velo_vector[2] * velo_vector[2];
+            break;
+        }
+    }
+
+    return length;
 }
