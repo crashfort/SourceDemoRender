@@ -75,7 +75,7 @@ bool EncoderState::audio_create_resampler()
     {
         case 16:
         {
-            input_format = AV_SAMPLE_FMT_S16;
+            input_format = AV_SAMPLE_FMT_S16; // Interleaved samples.
             break;
         }
 

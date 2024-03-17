@@ -93,7 +93,7 @@ void EncoderState::start_event()
     goto rexit;
 
 rfail:
-    stop_after_dynamic_error();
+    free_dynamic();
 
 rexit:
     return;
@@ -110,7 +110,7 @@ void EncoderState::new_video_frame_event()
 {
     if (!render_receive_video())
     {
-        stop_after_dynamic_error();
+        free_dynamic();
     }
 }
 
@@ -118,7 +118,7 @@ void EncoderState::new_audio_samples_event()
 {
     if (!render_receive_audio())
     {
-        stop_after_dynamic_error();
+        free_dynamic();
     }
 }
 
@@ -251,23 +251,12 @@ void EncoderState::error(const char* format, ...)
     // If we have an error then we must stop right now, and not try to process any more data.
     render_started = false;
 
-    char buf[1024];
-
     va_list va;
     va_start(va, format);
-
-    s32 count = SVR_VSNPRINTF(buf, format, va);
-
-    SVR_COPY_STRING(buf, shared_mem_ptr->error_message);
-
+    SVR_VSNPRINTF(shared_mem_ptr->error_message, format, va);
     va_end(va);
-}
 
-void EncoderState::stop_after_dynamic_error()
-{
     // Set error which svr_game will read after we return.
     // Error message has been written to the shared memory through the error function.
     shared_mem_ptr->error = 1;
-
-    free_dynamic();
 }

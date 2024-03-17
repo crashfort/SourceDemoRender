@@ -53,8 +53,6 @@ struct EncoderState
     // This can only be used by the main thread!
     void error(const char* format, ...);
 
-    void stop_after_dynamic_error();
-
     // -----------------------------------------------
     // Render state:
 

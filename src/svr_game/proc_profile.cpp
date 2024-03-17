@@ -140,8 +140,8 @@ bool ProcState::movie_load_profile(const char* profile_path)
     movie_profile.velo_font_style = (DWRITE_FONT_STYLE)OPT_STR_MAP(ini_root, "velo_font_style", VELO_FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL);
     movie_profile.velo_font_weight = (DWRITE_FONT_WEIGHT)OPT_STR_MAP(ini_root, "velo_font_weight", VELO_FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_NORMAL);
     movie_profile.velo_align = OPT_VEC2(ini_root, "velo_align", SvrVec2I { 0, 80 });
-    movie_profile.velo_anchor = (ProcVeloAnchor)OPT_STR_MAP(ini_root, "velo_anchor", VELO_ANCHOR_TABLE, VELO_ANCHOR_CENTER);
-    movie_profile.velo_length = (ProcVeloAnchor)OPT_STR_MAP(ini_root, "velo_length", VELO_LENGTH_TABLE, VELO_LENGTH_XY);
+    movie_profile.velo_anchor = OPT_STR_MAP(ini_root, "velo_anchor", VELO_ANCHOR_TABLE, VELO_ANCHOR_CENTER);
+    movie_profile.velo_length = OPT_STR_MAP(ini_root, "velo_length", VELO_LENGTH_TABLE, VELO_LENGTH_XY);
 
     ret = true;
     goto rexit;
