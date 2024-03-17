@@ -9,6 +9,15 @@ struct ProcGameTexture
     ID3D11RenderTargetView* rtv; // Only used for direct pass when mosample is disabled.
 };
 
+using ProcVeloAnchor = s32;
+
+enum /* ProcVeloAnchor */
+{
+    VELO_ANCHOR_LEFT,
+    VELO_ANCHOR_CENTER,
+    VELO_ANCHOR_RIGHT,
+};
+
 struct MovieProfile
 {
     // Movie options:
@@ -36,6 +45,7 @@ struct MovieProfile
     DWRITE_FONT_STYLE velo_font_style;
     DWRITE_FONT_WEIGHT velo_font_weight;
     SvrVec2I velo_align;
+    ProcVeloAnchor velo_anchor;
 };
 
 struct ProcState

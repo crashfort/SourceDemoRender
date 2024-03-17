@@ -174,7 +174,16 @@ void ProcState::velo_draw()
     s32 shift_x = real_w / 2;
 
     SvrVec2I pos = velo_draw_pos;
-    pos.x -= shift_x;
+
+    if (movie_profile.velo_anchor == VELO_ANCHOR_CENTER)
+    {
+        pos.x -= shift_x;
+    }
+
+    if (movie_profile.velo_anchor == VELO_ANCHOR_RIGHT)
+    {
+        pos.x -= real_w;
+    }
 
     vid_d2d1_context->BeginDraw();
     vid_d2d1_context->SetTarget(encoder_d2d1_share_tex);

@@ -25,6 +25,13 @@ OptStrIntMapping VELO_FONT_STYLE_TABLE[] = {
 };
 
 // Names for ini.
+OptStrIntMapping VELO_ANCHOR_TABLE[] = {
+    OptStrIntMapping { "left", VELO_ANCHOR_LEFT },
+    OptStrIntMapping { "center", VELO_ANCHOR_CENTER },
+    OptStrIntMapping { "right", VELO_ANCHOR_RIGHT },
+};
+
+// Names for ini.
 // Should be synchronized with encoder_render.cpp.
 const char* VIDEO_ENCODER_TABLE[] = {
     "libx264",
@@ -126,6 +133,7 @@ bool ProcState::movie_load_profile(const char* profile_path)
     movie_profile.velo_font_style = (DWRITE_FONT_STYLE)OPT_STR_MAP(ini_root, "velo_font_style", VELO_FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL);
     movie_profile.velo_font_weight = (DWRITE_FONT_WEIGHT)OPT_STR_MAP(ini_root, "velo_font_weight", VELO_FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_NORMAL);
     movie_profile.velo_align = OPT_VEC2(ini_root, "velo_align", SvrVec2I { 0, 80 });
+    movie_profile.velo_anchor = (ProcVeloAnchor)OPT_STR_MAP(ini_root, "velo_anchor", VELO_ANCHOR_TABLE, VELO_ANCHOR_CENTER);
 
     ret = true;
     goto rexit;
