@@ -1,3 +1,30 @@
+Version 41, 26 October 2022
+---------------------------
+
+Supported games in this release:
+* Counter-Strike: Source
+* Counter-Strike: Global Offensive
+* Team Fortress 2
+* Zombie Panic! Source
+* Half-Life 2
+* Source 2013 mods
+* Black Mesa
+* Half-Life 2: Deathmatch
+* Synergy
+* Hunt Down The Freeman
+* Empires
+
+* Added a 64-bit external process that encodes the data from SVR. This comes with a small performance boost, but also allows audio and video to be embedded in the same file.
+* Added an option to use the DNxHR video encoder. This codec works a lot better in video editors, and also has slightly better color information through YUV422 over NV12.
+* Changed the default video encoder to use DNxHR.
+* Added an option to select the audio encoder to use. At the moment there is only AAC.
+* Added an option to use the YUV444 format with x264, selectable through the libx264_444 video encoder in the profile.
+* Velo text is now using the tabulate font feature which means text will not jitter for fonts that use varying number widths. This would typically happen with the number 1 which can be thinner in some fonts, causing the text to jitter in width.
+* Changed the default velo font format to a better default.
+* Added velo text opacity.
+* Added velo_anchor option which allows to set the text expansion direction.
+* Velo is now by default in the lower left with an anchor of left.
+
 Version 40, 26 October 2022
 ---------------------------
 
