@@ -132,6 +132,27 @@ void proc(uint3 dtid)
 
 // --------------------------------------------------------------------------------------------------------------------
 
+#if AV_PIX_FMT_YUV444P
+
+// Every plane is as big as the source material.
+
+RWTexture2D<uint> output_texture_y : register(u0);
+RWTexture2D<uint> output_texture_u : register(u1);
+RWTexture2D<uint> output_texture_v : register(u2);
+
+void proc(uint3 dtid)
+{
+    float4 pix = average_nearby_for_yuv(dtid);
+    uint3 yuv = convert_rgb_to_yuv(pix.xyz);
+    output_texture_y[dtid.xy] = yuv.x;
+    output_texture_u[dtid.xy] = yuv.y;
+    output_texture_v[dtid.xy] = yuv.z;
+}
+
+#endif
+
+// --------------------------------------------------------------------------------------------------------------------
+
 // This must be synchronized with the compute shader Dispatch call in CPU code!
 [numthreads(8, 8, 1)]
 void main(uint3 dtid : SV_DispatchThreadID)

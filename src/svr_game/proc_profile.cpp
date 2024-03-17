@@ -42,6 +42,7 @@ OptStrIntMapping VELO_LENGTH_TABLE[] = {
 // Should be synchronized with encoder_render.cpp.
 const char* VIDEO_ENCODER_TABLE[] = {
     "libx264",
+    "libx264_444",
     "dnxhr",
 };
 

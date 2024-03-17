@@ -77,6 +77,11 @@ bool EncoderState::vid_create_shaders()
         goto rfail;
     }
 
+    if (!vid_create_shader("convert_yuv444", (void**)&vid_yuv444_cs, D3D11_COMPUTE_SHADER))
+    {
+        goto rfail;
+    }
+
     ret = true;
     goto rexit;
 
@@ -94,6 +99,7 @@ void EncoderState::vid_free_static()
 
     svr_maybe_release(&vid_nv12_cs);
     svr_maybe_release(&vid_yuv422_cs);
+    svr_maybe_release(&vid_yuv444_cs);
 }
 
 void EncoderState::vid_free_dynamic()
@@ -263,6 +269,17 @@ void EncoderState::vid_create_conversion_texs()
             plane_descs[0] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 0, 0 };
             plane_descs[1] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 1, 0 };
             plane_descs[2] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 1, 0 };
+            break;
+        }
+
+        case AV_PIX_FMT_YUV444P:
+        {
+            vid_conversion_cs = vid_yuv444_cs;
+            vid_num_planes = 3;
+
+            plane_descs[0] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 0, 0 };
+            plane_descs[1] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 0, 0 };
+            plane_descs[2] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 0, 0 };
             break;
         }
 

@@ -6,6 +6,7 @@
 const RenderVideoInfo RENDER_VIDEO_INFOS[] = {
     RenderVideoInfo { "dnxhr", "dnxhd", AV_PIX_FMT_YUV422P, &EncoderState::render_setup_dnxhr },
     RenderVideoInfo { "libx264", "libx264", AV_PIX_FMT_NV12, &EncoderState::render_setup_libx264 },
+    RenderVideoInfo { "libx264_444", "libx264", AV_PIX_FMT_YUV444P, &EncoderState::render_setup_libx264 },
 };
 
 // Should be synchronized with proc_profile.cpp.

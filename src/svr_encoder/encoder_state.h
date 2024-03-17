@@ -159,6 +159,7 @@ struct EncoderState
 
     ID3D11ComputeShader* vid_nv12_cs;
     ID3D11ComputeShader* vid_yuv422_cs;
+    ID3D11ComputeShader* vid_yuv444_cs;
 
     // Destination textures that are in the correct pixel format.
     // These textures have the actual data that can be encoded.
