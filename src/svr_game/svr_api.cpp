@@ -17,7 +17,6 @@ IDirect3DSurface9* svr_d3d9ex_share_surf;
 // Destination texture that we work with (Both D3D11 and D3D9Ex).
 ID3D11Texture2D* svr_content_tex;
 ID3D11ShaderResourceView* svr_content_srv;
-ID3D11RenderTargetView* svr_content_rtv;
 
 // -------------------------------------------------
 
@@ -54,7 +53,6 @@ void free_all_dynamic_svr_stuff()
     svr_maybe_release(&svr_d3d9ex_share_surf);
     svr_maybe_release(&svr_content_tex);
     svr_maybe_release(&svr_content_srv);
-    svr_maybe_release(&svr_content_rtv);
 }
 
 bool svr_init(const char* svr_path, IUnknown* game_device)
@@ -190,8 +188,6 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
             OutputDebugStringA("SVR (svr_start): The passed game texture must be created with D3D11_BIND_RENDER_TARGET\n");
             goto rfail;
         }
-
-        svr_d3d11_device->CreateRenderTargetView(svr_content_tex, NULL, &svr_content_rtv);
     }
 
     // We are a D3D9Ex game.
@@ -219,13 +215,11 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
 
         svr_d3d11_device->OpenSharedResource(d3d9ex_share_h, IID_PPV_ARGS(&svr_content_tex));
         svr_d3d11_device->CreateShaderResourceView(svr_content_tex, NULL, &svr_content_srv);
-        svr_d3d11_device->CreateRenderTargetView(svr_content_tex, NULL, &svr_content_rtv);
     }
 
     ProcGameTexture game_texture = {};
     game_texture.tex = svr_content_tex;
     game_texture.srv = svr_content_srv;
-    game_texture.rtv = svr_content_rtv;
 
     if (!proc_state.start(movie_name, movie_profile, &game_texture))
     {

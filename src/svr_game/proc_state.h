@@ -6,7 +6,6 @@ struct ProcGameTexture
 {
     ID3D11Texture2D* tex;
     ID3D11ShaderResourceView* srv;
-    ID3D11RenderTargetView* rtv; // Only used for direct pass when mosample is disabled.
 };
 
 using ProcVeloAnchor = s32;
