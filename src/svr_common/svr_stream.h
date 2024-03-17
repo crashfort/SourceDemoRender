@@ -1,7 +1,7 @@
 #pragma once
 #include "svr_common.h"
 #include "svr_atom.h"
-#include <malloc.h>
+#include "svr_alloc.h"
 
 // This is based on https://github.com/rigtorp/SPSCQueue by Erik Rigtorp!
 // Safe for 1 thread to push and for 1 thread to pull.
@@ -28,7 +28,7 @@ struct SvrAsyncStream
 
         // We don't use mem ranges in SVR so just use a dumb allocation instead for simplicity.
         // Doing it this way removes the pre and post cache region protection but whatever.
-        slots_ = (T*)malloc(sizeof(T) * capacity);
+        slots_ = (T*)svr_alloc(sizeof(T) * capacity);
 
         buffer_capacity = capacity;
     }
@@ -37,7 +37,7 @@ struct SvrAsyncStream
     {
         if (slots_)
         {
-            ::free(slots_);
+            svr_free(slots_);
             slots_ = NULL;
         }
     }

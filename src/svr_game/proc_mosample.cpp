@@ -162,8 +162,7 @@ void ProcState::mosample_end()
 {
 }
 
-// TODO Should be using VS/PS for this instead which is better suited for this kind of operation.
-// Also probably consider to process several frames at once instead of just 1.
+// TODO Probably consider to process several frames at once instead of just 1.
 void ProcState::mosample_process(float weight)
 {
     if (weight != mosample_weight_cache)

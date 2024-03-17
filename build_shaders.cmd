@@ -16,6 +16,5 @@ set OUTDIR=bin\data\shaders
 
 fxc shaders\tex2vid.hlsl %CS_FXCOPTS% /D AV_PIX_FMT_NV12=1 /D AVCOL_SPC_BT470BG=1 /Fo %OUTDIR%\convert_nv12
 fxc shaders\tex2vid.hlsl %CS_FXCOPTS% /D AV_PIX_FMT_YUV422P=1 /D AVCOL_SPC_BT470BG=1 /Fo %OUTDIR%\convert_yuv422
-
 fxc shaders\motion_sample.hlsl %CS_FXCOPTS% /Fo %OUTDIR%\mosample
 fxc shaders\downsample.hlsl %CS_FXCOPTS% /Fo %OUTDIR%\downsample

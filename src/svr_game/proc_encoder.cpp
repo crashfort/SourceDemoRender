@@ -219,11 +219,11 @@ bool ProcState::encoder_set_shared_mem_params()
     params->x264_intra = movie_profile.video_x264_intra;
     params->use_audio = movie_profile.audio_enabled;
 
-    svr_copy_string(movie_path, params->dest_file, SVR_ARRAY_SIZE(params->dest_file));
-    svr_copy_string(movie_profile.video_encoder, params->video_encoder, SVR_ARRAY_SIZE(params->video_encoder));
-    svr_copy_string(movie_profile.video_x264_preset, params->x264_preset, SVR_ARRAY_SIZE(params->x264_preset));
-    svr_copy_string(movie_profile.video_dnxhr_profile, params->dnxhr_profile, SVR_ARRAY_SIZE(params->dnxhr_profile));
-    svr_copy_string(movie_profile.audio_encoder, params->audio_encoder, SVR_ARRAY_SIZE(params->audio_encoder));
+    SVR_COPY_STRING(movie_path, params->dest_file);
+    SVR_COPY_STRING(movie_profile.video_encoder, params->video_encoder);
+    SVR_COPY_STRING(movie_profile.video_x264_preset, params->x264_preset);
+    SVR_COPY_STRING(movie_profile.video_dnxhr_profile, params->dnxhr_profile);
+    SVR_COPY_STRING(movie_profile.audio_encoder, params->audio_encoder);
 
     encoder_shared_ptr->waiting_audio_samples = 0;
     encoder_shared_ptr->game_texture_h = (u32)encoder_share_tex_h;

@@ -3,6 +3,7 @@
 #include "encoder_shared.h"
 #include "svr_log.h"
 #include "svr_stream.h"
+#include "svr_defs.h"
 #include <stdio.h>
 #include <Windows.h>
 #include <d3d11.h>

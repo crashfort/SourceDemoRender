@@ -65,7 +65,7 @@ bool EncoderState::vid_create_shaders()
 {
     bool ret = false;
 
-    vid_shader_mem = malloc(VID_SHADER_SIZE);
+    vid_shader_mem = svr_alloc(VID_SHADER_SIZE);
 
     if (!vid_create_shader("convert_nv12", (void**)&vid_nv12_cs, D3D11_COMPUTE_SHADER))
     {
@@ -83,7 +83,7 @@ bool EncoderState::vid_create_shaders()
 rfail:
 
 rexit:
-    free(vid_shader_mem);
+    svr_free(vid_shader_mem);
     return ret;
 }
 

@@ -1,4 +1,3 @@
-#include "svr_defs.h"
 #include "encoder_priv.h"
 
 EncoderState encoder_state;

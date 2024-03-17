@@ -22,7 +22,7 @@ bool ProcState::vid_init(ID3D11Device* d3d11_device)
         goto rfail;
     }
 
-    vid_shader_mem = malloc(VID_SHADER_SIZE);
+    vid_shader_mem = svr_alloc(VID_SHADER_SIZE);
 
     ret = true;
     goto rexit;
@@ -112,7 +112,7 @@ void ProcState::vid_free_static()
 
     if (vid_shader_mem)
     {
-        free(vid_shader_mem);
+        svr_free(vid_shader_mem);
         vid_shader_mem = NULL;
     }
 }

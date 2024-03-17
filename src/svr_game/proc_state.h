@@ -43,7 +43,7 @@ struct ProcState
     // -----------------------------------------------
     // Program state:
 
-    char svr_resource_path[MAX_PATH];
+    char svr_resource_path[MAX_PATH]; // Does not end with a slash.
 
     ProcGameTexture svr_game_texture; // Texture of the game.
 
