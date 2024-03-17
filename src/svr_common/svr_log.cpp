@@ -1,4 +1,4 @@
-#include "svr_logging.h"  
+#include "svr_log.h"  
 #include "svr_common.h"
 #include <stb_sprintf.h>
 #include <assert.h>
@@ -79,6 +79,6 @@ void svr_log_v(const char* format, va_list va)
     // We don't deal with huge messages and truncate as needed.
 
     char buf[1024];
-    s32 count = stbsp_vsnprintf(buf, 1024, format, va);
+    s32 count = SVR_VSNPRINTF(buf, format, va);
     log_function(buf, count);
 }

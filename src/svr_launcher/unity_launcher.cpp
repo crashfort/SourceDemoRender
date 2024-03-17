@@ -1,0 +1,8 @@
+#include "launcher_priv.h"
+#include "launcher_games.cpp"
+#include "launcher_main.cpp"
+#include "launcher_ipc.cpp"
+#include "launcher_start.cpp"
+#include "launcher_state.cpp"
+#include "launcher_steam.cpp"
+#include "launcher_sys.cpp"

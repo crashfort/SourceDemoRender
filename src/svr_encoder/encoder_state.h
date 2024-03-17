@@ -3,7 +3,7 @@
 const s32 RENDER_QUEUED_FRAMES = 8192; // How many uncompressed AVFrame* to queue up for encoding.
 const s32 RENDER_QUEUED_PACKETS = 8192; // How many compressed AVPacket* to queue up for writing.
 
-// At most, YUV422 uses 3 planes.
+// At most, YUV uses 3 planes.
 const s32 VID_MAX_PLANES = 3;
 
 const s32 AUDIO_MAX_CHANS = 8;
@@ -179,6 +179,7 @@ struct EncoderState
     bool vid_open_game_texture();
     void vid_create_conversion_texs();
     void vid_convert_to_codec_textures(AVFrame* dest_frame);
+    s32 vid_get_num_cs_threads(s32 unit);
 
     // -----------------------------------------------
     // Audio state:

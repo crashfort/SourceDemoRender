@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <malloc.h>
 #include <stdio.h>
+#include "stb_sprintf.h"
 
 using s8 = int8_t;
 using u8 = uint8_t;
@@ -13,7 +14,7 @@ using s64 = int64_t;
 using u64 = uint64_t;
 using wchar = wchar_t;
 
-#define SVR_ARRAY_SIZE(A) (sizeof(A) / sizeof(A[0]))
+#define SVR_ARRAY_SIZE(A) (s32)(sizeof(A) / sizeof(A[0]))
 
 #define SVR_FROM_MB(V) (V / 1024LL / 1024LL)
 
@@ -33,22 +34,23 @@ using wchar = wchar_t;
 #define SVR_ALLOCA_NUM(T, NUM) (T*)_alloca(sizeof(T) * NUM)
 
 // Format to buffer with size restriction.
-#define SVR_SNPRINTF(BUF, FORMAT, ...) snprintf((BUF), SVR_ARRAY_SIZE((BUF)), FORMAT, __VA_ARGS__)
+#define SVR_SNPRINTF(BUF, FORMAT, ...) stbsp_snprintf((BUF), SVR_ARRAY_SIZE((BUF)), FORMAT, __VA_ARGS__)
+#define SVR_VSNPRINTF(BUF, FORMAT, VA) stbsp_vsnprintf((BUF), SVR_ARRAY_SIZE((BUF)), FORMAT, VA)
 
-// Should be same type from Steam API.
-using SteamAppId = u32;
-
-// Used by launcher and injector as parameter for the init exports in svr_game.dll (see bottom of game_standalone.cpp).
-struct SvrGameInitData
-{
-    const char* svr_path;
-    SteamAppId app_id;
-};
+#define SVR_COPY_STRING(SOURCE, DEST) svr_copy_string((SOURCE), (DEST), SVR_ARRAY_SIZE((DEST)))
 
 struct SvrVec2I
 {
     s32 x;
     s32 y;
+};
+
+struct SvrVec4I
+{
+    s32 x;
+    s32 y;
+    s32 z;
+    s32 w;
 };
 
 template <class T>
@@ -96,3 +98,26 @@ const char* svr_va(const char* format, ...);
 
 bool svr_starts_with(const char* str, const char* prefix);
 bool svr_ends_with(const char* str, const char* suffix);
+
+s32 svr_to_utf16(const char* value, s32 value_length, wchar* buf, s32 buf_chars);
+
+bool svr_is_sorted(s32* idxs, s32 num);
+bool svr_are_idxs_unique(s32* idxs, s32 num);
+void svr_check_all_mask(bool* mask, s32 num, bool* all_false, bool* all_true);
+
+char* svr_read_file_as_string(const char* path);
+
+const char* svr_read_line(const char* start, char* dest, s32 dest_size);
+
+s32 svr_is_newline(const char* seq);
+bool svr_is_whitespace(char c);
+const char* svr_advance_until_after_whitespace(const char* text);
+const char* svr_advance_until_whitespace(const char* text);
+const char* svr_advance_until_char(const char* text, char c);
+const char* svr_advance_quote(const char* text);
+const char* svr_advance_string(bool quoted, const char* text);
+const char* svr_extract_string(const char* text, char* dest, s32 dest_size);
+
+void svr_unescape_path(const char* buf, char* dest, s32 dest_size);
+
+bool svr_idx_in_range(s32 idx, s32 size);

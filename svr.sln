@@ -11,6 +11,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_game", "src\svr_game\sv
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_launcher", "src\svr_launcher\svr_launcher.vcxproj", "{E750167E-861F-4CF4-9F5D-20F473129641}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_standalone", "src\svr_standalone\svr_standalone.vcxproj", "{4DE1E027-CAF8-4106-ABEF-1A6885CC82DD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_game_common", "src\svr_game_common\svr_game_common.vcxitems", "{4F6688BD-ABDD-4514-A65C-AE2F4E3EE904}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -29,6 +33,10 @@ Global
 		{E750167E-861F-4CF4-9F5D-20F473129641}.Debug|x86.Build.0 = Debug|Win32
 		{E750167E-861F-4CF4-9F5D-20F473129641}.Release|x86.ActiveCfg = Release|Win32
 		{E750167E-861F-4CF4-9F5D-20F473129641}.Release|x86.Build.0 = Release|Win32
+		{4DE1E027-CAF8-4106-ABEF-1A6885CC82DD}.Debug|x86.ActiveCfg = Debug|Win32
+		{4DE1E027-CAF8-4106-ABEF-1A6885CC82DD}.Debug|x86.Build.0 = Debug|Win32
+		{4DE1E027-CAF8-4106-ABEF-1A6885CC82DD}.Release|x86.ActiveCfg = Release|Win32
+		{4DE1E027-CAF8-4106-ABEF-1A6885CC82DD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -38,6 +46,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		src\svr_common\svr_common.vcxitems*{0b116e75-c1cc-409b-a50a-274dc2d4cb41}*SharedItemsImports = 4
+		src\svr_game_common\svr_game_common.vcxitems*{0b116e75-c1cc-409b-a50a-274dc2d4cb41}*SharedItemsImports = 4
+		src\svr_common\svr_common.vcxitems*{4de1e027-caf8-4106-abef-1a6885cc82dd}*SharedItemsImports = 4
+		src\svr_game_common\svr_game_common.vcxitems*{4de1e027-caf8-4106-abef-1a6885cc82dd}*SharedItemsImports = 4
+		src\svr_game_common\svr_game_common.vcxitems*{4f6688bd-abdd-4514-a65c-ae2f4e3ee904}*SharedItemsImports = 9
 		src\svr_common\svr_common.vcxitems*{63a2bf65-3f7c-4ff1-b15a-2dd0be4d4dad}*SharedItemsImports = 9
 		src\svr_common\svr_common.vcxitems*{c31c1b41-95e7-45c6-a16f-f86a81f13d9f}*SharedItemsImports = 4
 		src\svr_common\svr_common.vcxitems*{e750167e-861f-4cf4-9f5d-20f473129641}*SharedItemsImports = 4

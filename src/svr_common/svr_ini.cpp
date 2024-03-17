@@ -1,206 +1,134 @@
 #include "svr_ini.h"
-#include <Windows.h>
-#include <strsafe.h>
-#include <assert.h>
+#include "svr_alloc.h"
 
-s32 ini_is_newline(const char* seq)
+using SvrIniLineType = s32;
+
+enum /* SvrIniLineType */
 {
-    if (seq[0] == 0)
+    SVR_INI_LINE_NONE,
+    SVR_INI_LINE_KV,
+};
+
+// Fast categorization of a line so we can parse it further.
+SvrIniLineType svr_ini_categorize_line(const char* line)
+{
+    const char* ptr = svr_advance_until_after_whitespace(line);
+
+    if (*ptr == 0)
     {
-        return 0;
+        return SVR_INI_LINE_NONE; // Blanks are no good.
     }
 
-    if (seq[0] == '\n')
+    if (*ptr == '#')
     {
-        return 1;
+        return SVR_INI_LINE_NONE; // Comments are no good.
     }
 
-    if (seq[0] == '\r' && seq[1] != '\n')
+    if (svr_is_newline(ptr))
     {
-        return 0;
+        return SVR_INI_LINE_NONE; // Blanks are no good.
     }
 
-    if (seq[0] == '\r' && seq[1] == '\n')
-    {
-        return 2;
-    }
-
-    return 0;
+    return SVR_INI_LINE_KV;
 }
 
-bool ini_is_whitespace(char c)
+void svr_ini_parse_line(SvrIniSection* priv, const char* line, SvrIniLineType type)
 {
-    return c == ' ' || c == '\t';
-}
+    // At most, one line can have a key and a value.
+    char key_name[512];
+    key_name[0] = 0;
 
-void ini_parse_line(char* line_buf, SvrIniLine* ini_line, SvrIniTokenType* type)
-{
-    const s32 MAX_INI_TOKENS = 3;
+    const char* ptr = svr_advance_until_after_whitespace(line); // Go past indentation.
 
-    char* ptr = line_buf;
-
-    char* tokens[MAX_INI_TOKENS] = { NULL, NULL, NULL };
-    s32 token_index = 0;
-
-    tokens[token_index] = ptr;
-    token_index++;
-
-    for (; *ptr != 0; ptr++)
+    switch (type)
     {
-        // Allowed to use this character on the value side.
-        if (token_index == 1 && *ptr == '#')
+        // Key values have two values.
+        case SVR_INI_LINE_KV:
         {
-            *type = SVR_INI_OTHER;
-            return;
+            const char* next_ptr = svr_advance_until_char(ptr, '='); // Read content.
+            s32 dist = next_ptr - ptr; // Content length.
+            strncat(key_name, ptr, svr_min(dist, SVR_ARRAY_SIZE(key_name) - 1));
+
+            ptr = next_ptr;
+            ptr++; // Go past equal sign.
+
+            ptr = svr_advance_until_after_whitespace(ptr); // Go past blanks.
+
+            auto kv = SVR_ZALLOC(SvrIniKeyValue);
+            kv->key = svr_dup_str(key_name);
+            kv->value = svr_dup_str(ptr);
+
+            priv->kvs.push(kv);
+            break;
+        }
+    }
+}
+
+SvrIniSection* svr_ini_load(const char* path)
+{
+    char* file_mem = svr_read_file_as_string(path);
+
+    if (file_mem == NULL)
+    {
+        return NULL;
+    }
+
+    SvrIniSection* priv = SVR_ZALLOC(SvrIniSection);
+
+    char line[8192];
+
+    const char* prev_str = file_mem;
+
+    while (true)
+    {
+        const char* next_str = svr_read_line(prev_str, line, SVR_ARRAY_SIZE(line));
+
+        SvrIniLineType type = svr_ini_categorize_line(line);
+
+        if (type != SVR_INI_LINE_NONE)
+        {
+            svr_ini_parse_line(priv, line, type);
         }
 
-        else if (*ptr == '=')
+        prev_str = next_str;
+
+        if (*next_str == 0)
         {
-            assert(token_index < MAX_INI_TOKENS);
-
-            tokens[token_index] = ptr + 1;
-            token_index++;
-        }
-    }
-
-    assert(token_index < MAX_INI_TOKENS);
-
-    tokens[token_index] = ptr;
-    token_index++;
-
-    *type = SVR_INI_KV;
-
-    ini_line->title[0] = 0;
-    ini_line->value[0] = 0;
-
-    s32 title_length = (tokens[1] - tokens[0]) - 1;
-    s32 value_length = (tokens[2] - tokens[1]);
-
-    if (title_length == 0)
-    {
-        return;
-    }
-
-    StringCchCopyNA(ini_line->title, SVR_INI_TOKEN_BUF_SIZE, tokens[0], title_length);
-    StringCchCopyNA(ini_line->value, SVR_INI_TOKEN_BUF_SIZE, tokens[1], value_length);
-}
-
-SvrIniLine svr_alloc_ini_line()
-{
-    SvrIniLine ret;
-    ret.title = (char*)malloc(SVR_INI_TOKEN_BUF_SIZE);
-    ret.value = (char*)malloc(SVR_INI_TOKEN_BUF_SIZE);
-
-    return ret;
-}
-
-void svr_free_ini_line(SvrIniLine* line)
-{
-    free(line->title);
-    free(line->value);
-}
-
-bool svr_open_ini_read(const char* path, SvrIniMem* mem)
-{
-    HANDLE h = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (h == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
-
-    bool ret = false;
-
-    LARGE_INTEGER large;
-    GetFileSizeEx(h, &large);
-
-    if (large.HighPart == 0 && large.LowPart < MAXDWORD)
-    {
-        mem->mem = malloc(large.LowPart + 1);
-
-        ReadFile(h, mem->mem, large.LowPart, NULL, NULL);
-
-        mem->mov_str = (char*)mem->mem;
-        mem->mov_str[large.LowPart] = 0;
-        mem->line_buf = (char*)malloc(SVR_INI_LINE_BUF_SIZE);
-
-        ret = true;
-    }
-
-    CloseHandle(h);
-    return ret;
-}
-
-bool svr_read_ini_line(SvrIniMem* mem)
-{
-    if (*mem->mov_str == 0)
-    {
-        return false;
-    }
-
-    char* line_start = mem->mov_str;
-
-    // Skip all blank lines.
-
-    for (; *mem->mov_str != 0;)
-    {
-        if (s32 nl = ini_is_newline(mem->mov_str))
-        {
-            char* line_end = mem->mov_str;
-            s32 line_length = line_end - line_start;
-
-            if (line_length > 0)
-            {
-                StringCchCopyNA(mem->line_buf, SVR_INI_LINE_BUF_SIZE, line_start, line_length); 
-            }
-
-            mem->mov_str += nl;
-            line_start = mem->mov_str;
-
-            if (line_length > 0)
-            {
-                return true;
-            }
-        }
-
-        else
-        {
-            mem->mov_str++;
+            break;
         }
     }
 
-    if (line_start == mem->mov_str)
-    {
-        return false;
-    }
+    svr_free(file_mem);
 
-    char* line_end = mem->mov_str;
-    s32 line_length = line_end - line_start;
-
-    if (line_length > 0)
-    {
-        StringCchCopyNA(mem->line_buf, SVR_INI_LINE_BUF_SIZE, line_start, line_length); 
-    }
-
-    return true;
+    return priv;
 }
 
-bool svr_read_ini(SvrIniMem* mem, SvrIniLine* line, SvrIniTokenType* token_type)
+void svr_ini_free(SvrIniSection* priv)
 {
-    while (svr_read_ini_line(mem))
+    for (s32 i = 0; i < priv->kvs.size; i++)
     {
-        ini_parse_line(mem->line_buf, line, token_type);
+        SvrIniKeyValue* kv = priv->kvs[i];
+        svr_free(kv->key);
+        svr_free(kv->value);
+        svr_free(kv);
+    }
 
-        if (*token_type != SVR_INI_OTHER)
+    priv->kvs.free();
+
+    svr_free(priv);
+}
+
+SvrIniKeyValue* svr_ini_section_find_kv(SvrIniSection* priv, const char* key)
+{
+    for (s32 i = 0; i < priv->kvs.size; i++)
+    {
+        SvrIniKeyValue* kv = priv->kvs[i];
+
+        if (!strcmpi(kv->key, key))
         {
-            return true;
+            return kv;
         }
     }
 
-    return false;
-}
-
-void svr_close_ini(SvrIniMem* mem)
-{
-    free(mem->mem);
+    return NULL;
 }

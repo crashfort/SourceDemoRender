@@ -1,0 +1,5 @@
+* 10 bit output with dnxhr.
+* yuv444 output with x264.
+* use vs/ps path for mosample.
+* more audio encoders.
+* use more destination textures in svr_encoder.

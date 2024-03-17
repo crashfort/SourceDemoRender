@@ -11,17 +11,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="game_proc_profile.cpp" />
-    <ClCompile Include="game_proc.cpp" />
-    <ClCompile Include="game_standalone.cpp" />
-    <ClCompile Include="game_shared.cpp" />
-    <ClCompile Include="svr_api.cpp" />
+    <None Include="proc_encoder.cpp" />
+    <None Include="proc_mosample.cpp" />
+    <None Include="proc_state.cpp" />
+    <None Include="proc_velo.cpp" />
+    <None Include="proc_video.cpp" />
+    <None Include="proc_profile.cpp" />
+    <None Include="proc_profile_opts.cpp" />
+    <None Include="svr_api.cpp" />
+    <ClCompile Include="unity_game.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="game_proc_profile.h" />
-    <ClInclude Include="game_proc.h" />
-    <ClInclude Include="game_shared.h" />
-    <ClInclude Include="svr_api.h" />
+    <ClInclude Include="proc_priv.h" />
+    <ClInclude Include="proc_profile_opts.h" />
+    <ClInclude Include="proc_state.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -49,6 +52,7 @@
   </ImportGroup>
   <ImportGroup Label="Shared">
     <Import Project="..\svr_common\svr_common.vcxitems" Label="Shared" />
+    <Import Project="..\svr_game_common\svr_game_common.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -87,7 +91,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)deps\minhook\include;$(SolutionDir)src\svr_common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)src\svr_common;$(SolutionDir)src\svr_game_common;$(SolutionDir)src\svr_encoder_common</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <OpenMPSupport>false</OpenMPSupport>
       <EnableModules>false</EnableModules>
@@ -100,9 +104,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <StackReserveSize>4194304</StackReserveSize>
-      <StackCommitSize>4096</StackCommitSize>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;$(SolutionDir)deps\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -123,7 +126,7 @@
       <EnableModules>false</EnableModules>
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)deps\minhook\include;$(SolutionDir)src\svr_common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)src\svr_common;$(SolutionDir)src\svr_game_common;$(SolutionDir)src\svr_encoder_common</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
       <BuildStlModules>false</BuildStlModules>
     </ClCompile>
@@ -132,9 +135,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <StackReserveSize>4194304</StackReserveSize>
-      <StackCommitSize>4096</StackCommitSize>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;$(SolutionDir)deps\minhook\build\VC16\lib\Release\libMinHook.x86.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

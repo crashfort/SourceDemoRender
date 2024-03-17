@@ -1,3 +1,4 @@
+#pragma once
 #include "svr_common.h"
 
 // Shared stuff between 32-bit svr_game and 64-bit svr_encoder.

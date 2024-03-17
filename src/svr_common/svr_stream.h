@@ -18,10 +18,6 @@ struct SvrAsyncStream
 
     SVR_THREAD_PADDING();
 
-    SvrAtom64 size_;
-
-    SVR_THREAD_PADDING();
-
     T* slots_;
     s32 buffer_capacity;
 
@@ -75,7 +71,6 @@ struct SvrAsyncStream
         slots_[head] = *item;
 
         svr_atom_store(&head_, next_head);
-        svr_atom_add(&size_, 1);
         return true;
     }
 
@@ -101,12 +96,6 @@ struct SvrAsyncStream
         }
 
         svr_atom_store(&tail_, next_tail);
-        svr_atom_sub(&size_, 1);
         return true;
-    }
-
-    inline s32 size()
-    {
-        return svr_atom_load(&size_);
     }
 };

@@ -1,11 +1,7 @@
-#include "svr_api.h"
-#include "game_proc.h"
-#include <d3d11.h>
-#include <d3d9.h>
-#include "game_shared.h"
+#include "proc_priv.h"
 
 // Used for internal and external SVR.
-// This layer if necessary translates operations from D3D9Ex to D3D11 which game_proc uses and is also the public API.
+// This layer if necessary translates operations from D3D9Ex to D3D11.
 
 // -------------------------------------------------
 
@@ -22,7 +18,10 @@ IDirect3DSurface9* svr_d3d9ex_share_surf;
 ID3D11Texture2D* svr_content_tex;
 ID3D11ShaderResourceView* svr_content_srv;
 ID3D11RenderTargetView* svr_content_rtv;
-HANDLE svr_content_tex_h;
+
+// -------------------------------------------------
+
+ProcState proc_state;
 
 // -------------------------------------------------
 
@@ -62,6 +61,7 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
 {
     bool ret = false;
 
+    // Adds a reference if successful.
     game_device->QueryInterface(IID_PPV_ARGS(&svr_d3d11_device));
     game_device->QueryInterface(IID_PPV_ARGS(&svr_d3d9ex_device));
 
@@ -133,9 +133,9 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
         }
     }
 
-    game_init();
+    game_console_init();
 
-    if (!proc_init(svr_path, svr_d3d11_device))
+    if (!proc_state.init(svr_path, svr_d3d11_device))
     {
         goto rfail;
     }
@@ -177,18 +177,10 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
     // We are a D3D11 game.
     if (svr_content_srv)
     {
-        ID3D11Resource* game_tex_res;
-        svr_content_srv->GetResource(&game_tex_res);
-
-        game_tex_res->QueryInterface(IID_PPV_ARGS(&svr_content_tex));
-
-        IDXGIResource* dxgi_res;
-        game_tex_res->QueryInterface(IID_PPV_ARGS(&dxgi_res));
-
-        game_tex_res->Release();
-
-        dxgi_res->GetSharedHandle(&svr_content_tex_h);
-        dxgi_res->Release();
+        ID3D11Resource* content_res = NULL;
+        svr_content_srv->GetResource(&content_res);
+        content_res->QueryInterface(IID_PPV_ARGS(&svr_content_tex));
+        content_res->Release();
 
         D3D11_TEXTURE2D_DESC tex_desc;
         svr_content_tex->GetDesc(&tex_desc);
@@ -196,12 +188,6 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         if (!(tex_desc.BindFlags & D3D11_BIND_RENDER_TARGET))
         {
             OutputDebugStringA("SVR (svr_start): The passed game texture must be created with D3D11_BIND_RENDER_TARGET\n");
-            goto rfail;
-        }
-
-        if (!(tex_desc.MiscFlags & D3D11_RESOURCE_MISC_SHARED))
-        {
-            OutputDebugStringA("SVR (svr_start): The passed game texture must be created with D3D11_RESOURCE_MISC_SHARED\n");
             goto rfail;
         }
 
@@ -234,11 +220,14 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         svr_d3d11_device->OpenSharedResource(d3d9ex_share_h, IID_PPV_ARGS(&svr_content_tex));
         svr_d3d11_device->CreateShaderResourceView(svr_content_tex, NULL, &svr_content_srv);
         svr_d3d11_device->CreateRenderTargetView(svr_content_tex, NULL, &svr_content_rtv);
-
-        svr_content_tex_h = d3d9ex_share_h;
     }
 
-    if (!proc_start(svr_d3d11_device, svr_d3d11_context, movie_name, movie_profile, svr_content_rtv, svr_content_tex_h))
+    ProcGameTexture game_texture = {};
+    game_texture.tex = svr_content_tex;
+    game_texture.srv = svr_content_srv;
+    game_texture.rtv = svr_content_rtv;
+
+    if (!proc_state.start(movie_name, movie_profile, &game_texture))
     {
         goto rfail;
     }
@@ -263,7 +252,7 @@ int svr_get_game_rate()
         return 0;
     }
 
-    return proc_get_game_rate();
+    return proc_state.get_game_rate();
 }
 
 void svr_stop()
@@ -274,7 +263,7 @@ void svr_stop()
         return;
     }
 
-    proc_end();
+    proc_state.end();
 
     free_all_dynamic_svr_stuff();
 
@@ -293,25 +282,25 @@ void svr_frame()
 
     // The D3D11 texture now contains the game content.
 
-    proc_frame(svr_d3d11_context, svr_content_srv, svr_content_rtv);
+    proc_state.new_video_frame();
 }
 
 bool svr_is_velo_enabled()
 {
-    return proc_is_velo_enabled();
+    return proc_state.is_velo_enabled();
 }
 
 bool svr_is_audio_enabled()
 {
-    return proc_is_audio_enabled();
+    return proc_state.is_audio_enabled();
 }
 
 void svr_give_velocity(float* xyz)
 {
-    proc_give_velocity(xyz);
+    proc_state.velo_give(xyz);
 }
 
 void svr_give_audio(SvrWaveSample* samples, int num_samples)
 {
-    proc_give_audio(samples, num_samples);
+    proc_state.new_audio_samples(samples, num_samples);
 }

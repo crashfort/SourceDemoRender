@@ -6,15 +6,15 @@ setlocal
 mkdir publish_temp\svr
 
 copy /Y ".\bin\svr_game.dll" "publish_temp\svr\"
+copy /Y ".\bin\svr_standalone.dll" "publish_temp\svr\"
 copy /Y ".\bin\svr_launcher.exe" "publish_temp\svr\"
-copy /Y ".\bin\ffmpeg.exe" "publish_temp\svr\"
+copy /Y ".\bin\svr_encoder.exe" "publish_temp\svr\"
 copy /Y ".\bin\avcodec-59.dll" "publish_temp\svr\"
 copy /Y ".\bin\avdevice-59.dll" "publish_temp\svr\"
 copy /Y ".\bin\avfilter-8.dll" "publish_temp\svr\"
 copy /Y ".\bin\avformat-59.dll" "publish_temp\svr\"
 copy /Y ".\bin\avutil-57.dll" "publish_temp\svr\"
 copy /Y ".\bin\postproc-56.dll" "publish_temp\svr\"
-copy /Y ".\bin\swscale-6.dll" "publish_temp\svr\"
 copy /Y ".\bin\swresample-4.dll" "publish_temp\svr\"
 xcopy /Q /E ".\bin\data\" "publish_temp\svr\data\"
 copy /Y ".\update.cmd" "publish_temp\svr\"

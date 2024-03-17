@@ -1,38 +1,43 @@
 #pragma once
 #include "svr_common.h"
+#include "svr_array.h"
 
-// Goes through every relevant line in a vdf.
-
-// How long one line can be in bytes.
-const s32 SVR_VDF_LINE_BUF_SIZE = 32 * 1024;
-
-// How long the title and value can be in bytes.
-const s32 SVR_VDF_TOKEN_BUF_SIZE = 8 * 1024;
-
-struct SvrVdfMem
+struct SvrVdfKeyValue
 {
-    void* mem;
-    char* mov_str;
-    char* line_buf;
-};
-
-struct SvrVdfLine
-{
-    char* title;
+    char* key;
     char* value;
 };
 
-using SvrVdfTokenType = s32;
-const SvrVdfTokenType SVR_VDF_OTHER = 0;
-const SvrVdfTokenType SVR_VDF_GROUP_TITLE = 1;
-const SvrVdfTokenType SVR_VDF_KV = 2;
+struct SvrVdfSection
+{
+    char* name;
+    SvrDynArray<SvrVdfKeyValue*> kvs;
+    SvrDynArray<SvrVdfSection*> sections;
+};
 
-SvrVdfLine svr_alloc_vdf_line();
-void svr_free_vdf_line(SvrVdfLine* line);
+// Load a VDF formatted file from a path.
+SvrVdfSection* svr_vdf_load(const char* path);
 
-bool svr_open_vdf_read(const char* path, SvrVdfMem* mem);
+// Call when no longer needed.
+void svr_vdf_free(SvrVdfSection* priv);
 
-// Call this until it returns false (or break the loop when needed).
-bool svr_read_vdf(SvrVdfMem* mem, SvrVdfLine* line, SvrVdfTokenType* token_type);
+// Checks if a section is the root section.
+bool svr_vdf_section_is_root(SvrVdfSection* section);
 
-void svr_close_vdf(SvrVdfMem* mem);
+// Find a nested section.
+// A control index can be passed in to start searching from a given index.
+// It is allowed to have several sections with the same name, so use the control index
+// to iterate over sections with identical names.
+SvrVdfSection* svr_vdf_section_find_section(SvrVdfSection* priv, const char* name, s32* control_idx);
+
+// Find a keyvalue inside a section.
+// The root section cannot contain keyvalues.
+// Identical keyvalues are not allowed, so there is no control index here.
+SvrVdfKeyValue* svr_vdf_section_find_kv(SvrVdfSection* priv, const char* key);
+
+// Find a keyvalue from a section path.
+// The last key should be the name of a keyvalue, while the previous keys should be the names of sections.
+SvrVdfKeyValue* svr_vdf_section_find_kv_path(SvrVdfSection* priv, const char** keys, s32 num);
+
+// Try to find a key and return the value, or return default if it doesn't exist.
+const char* svr_vdf_section_find_value_or(SvrVdfSection* priv, const char* key, const char* def);

@@ -1,10 +1,8 @@
 #pragma once
 #include "svr_common.h"
-#include "svr_defs.h"
-#include "svr_logging.h"
 #include <stdarg.h>
 
-void game_init();
+void game_console_init();
 
 // Puts to both game console and log file.
 void game_log(const char* format, ...);

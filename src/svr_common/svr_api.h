@@ -43,7 +43,7 @@ struct SvrStartMovieData
     // A reference will be added to this when starting, and released when stopping.
     // This should be a view to the swapchain backbuffer texture.
     // This can be either a ID3D11ShaderResourceView for D3D11 games or IDirect3DSurface9 for D3D9Ex games.
-    // For D3D11 games the source texture must be created with D3D11_BIND_RENDER_TARGET.
+    // For D3D11 games the texture must be created with D3D11_BIND_RENDER_TARGET.
     IUnknown* game_tex_view;
 };
 
@@ -121,10 +121,12 @@ SVR_API void svr_stop();
 SVR_API void svr_frame();
 
 // Returns if velo is enabled in the active profile.
+// You can use this to prevent extra work if it is not needed.
 // Must only be called after svr_start.
 SVR_API bool svr_is_velo_enabled();
 
 // Returns if audio is enabled in the active profile.
+// You can use this to prevent extra work if it is not needed.
 // Must only be called after svr_start.
 SVR_API bool svr_is_audio_enabled();
 

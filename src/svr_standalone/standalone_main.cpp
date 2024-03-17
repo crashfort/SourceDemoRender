@@ -1,16 +1,4 @@
-#include "game_shared.h"
-#include <Windows.h>
-#include <MinHook.h>
-#include <assert.h>
-#include "svr_prof.h"
-#include "svr_api.h"
-#include <strsafe.h>
-#include <Shlwapi.h>
-#include <d3d9.h>
-#include <Psapi.h>
-#include <stb_sprintf.h>
-#include <malloc.h>
-#include <TlHelp32.h>
+#include "standalone_priv.h"
 
 // Entrypoint for standalone SVR. Reverse engineered code to use the SVR API from unsupported games.
 //
@@ -46,7 +34,7 @@ void standalone_error(const char* format, ...)
 
     va_list va;
     va_start(va, format);
-    stbsp_vsnprintf(message, 1024, format, va);
+    SVR_VSNPRINTF(message, format, va);
     va_end(va);
 
     svr_log("!!! ERROR: %s\n", message);
@@ -335,8 +323,8 @@ void* gm_signon_state_ptr;
 void* gm_local_player_ptr;
 void* gm_get_spec_target_fn;
 void* gm_get_player_by_index_fn;
-void* gm_snd_paint_time;
-void* gm_local_or_spec_player_fn;
+void* gm_snd_paint_time_ptr;
+void* gm_local_or_spec_target_fn;
 
 FnHook start_movie_hook;
 FnHook end_movie_hook;
@@ -474,7 +462,7 @@ void* get_active_player()
     if (launcher_data.app_id == STEAM_GAME_CSGO)
     {
         using GmLocalOrSpecTargetFn = void*(__cdecl*)();
-        GmLocalOrSpecTargetFn fn = (GmLocalOrSpecTargetFn)gm_local_or_spec_player_fn;
+        GmLocalOrSpecTargetFn fn = (GmLocalOrSpecTargetFn)gm_local_or_spec_target_fn;
         player = fn();
     }
 
@@ -634,7 +622,7 @@ void mix_audio_for_one_frame()
 {
     // Figure out how many samples we need to process for this frame.
 
-    s32 paint_time = **(s32**)gm_snd_paint_time;
+    s32 paint_time = **(s32**)gm_snd_paint_time_ptr;
 
     float time_ahead_to_mix = 1.0f / (float)svr_get_game_rate();
     float num_frac_samples_to_mix = (time_ahead_to_mix * 44100.0f) + snd_lost_mix_time;
@@ -662,7 +650,7 @@ void mix_audio_for_one_frame2()
 {
     // Figure out how many samples we need to process for this frame.
 
-    s64 paint_time = **(s64**)gm_snd_paint_time;
+    s64 paint_time = **(s64**)gm_snd_paint_time_ptr;
 
     float time_ahead_to_mix = 1.0f / (float)svr_get_game_rate();
     float num_frac_samples_to_mix = (time_ahead_to_mix * 44100.0f) + snd_lost_mix_time;
@@ -902,13 +890,8 @@ rexit:
 // Run all user cfgs for a given event (such as movie start or movie end).
 void run_user_cfgs_for_event(const char* name)
 {
-    char buf[MAX_PATH];
-
-    stbsp_snprintf(buf, MAX_PATH, "svr_movie_%s_user.cfg", name);
-    run_cfg(buf);
-
-    stbsp_snprintf(buf, MAX_PATH, "svr_movie_%s_%u.cfg", name, launcher_data.app_id);
-    run_cfg(buf);
+    run_cfg(svr_va("svr_movie_%s_user.cfg", name));
+    run_cfg(svr_va("svr_movie_%s_%u.cfg", name, launcher_data.app_id));
 }
 
 // Return the full console command args string.
@@ -1646,7 +1629,7 @@ void create_game_hooks()
 
         if (launcher_data.app_id == STEAM_GAME_CSGO)
         {
-            gm_local_or_spec_player_fn = get_local_or_spec_target_fn();
+            gm_local_or_spec_target_fn = get_local_or_spec_target_fn();
         }
 
         else
@@ -1656,7 +1639,7 @@ void create_game_hooks()
         }
     }
 
-    gm_snd_paint_time = get_snd_paint_time_ptr();
+    gm_snd_paint_time_ptr = get_snd_paint_time_ptr();
 
     hook_function(get_start_movie_override(), &start_movie_hook);
     hook_function(get_end_movie_override(), &end_movie_hook);
@@ -1708,6 +1691,8 @@ DWORD WINAPI standalone_init_async(void* param)
         return 1;
     }
 
+    game_console_init();
+
     char* start_args = GetCommandLineA();
 
     enable_autostop = true;
@@ -1749,45 +1734,4 @@ extern "C" __declspec(dllexport) void svr_init_from_launcher(SvrGameInitData* in
 
     // Init needs to be done async because we need to wait for the libraries to load while the game loads as normal.
     CreateThread(NULL, 0, standalone_init_async, NULL, 0, NULL);
-}
-
-DWORD find_main_thread_id()
-{
-    DWORD ret = 0;
-    DWORD pid = GetCurrentProcessId();
-
-    THREADENTRY32 entry;
-    entry.dwSize = sizeof(THREADENTRY32);
-
-    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
-
-    Thread32First(snap, &entry);
-
-    do
-    {
-        if (entry.th32OwnerProcessID == pid)
-        {
-            GUITHREADINFO gui_thread_info;
-            gui_thread_info.cbSize = sizeof(GUITHREADINFO);
-
-            if (GetGUIThreadInfo(entry.th32ThreadID, &gui_thread_info))
-            {
-                ret = entry.th32ThreadID;
-                break;
-            }
-        }
-    }
-    while (Thread32Next(snap, &entry));
-
-    CloseHandle(snap);
-    return ret;
-}
-
-// Called by the injector after the game has started. Most libraries are loaded here.
-extern "C" __declspec(dllexport) void svr_init_from_injector(SvrGameInitData* init_data)
-{
-    launcher_data = *init_data;
-    main_thread_id = find_main_thread_id();
-
-    standalone_init_async(NULL); // We are already in a thread, so call directly.
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+    <Type Name="SvrDynArray&lt;*&gt;">
+        <DisplayString>{{ size={size} capacity={capacity} mem={mem} grow_align={grow_align} }}</DisplayString>
+        <Expand>
+            <Item Name="[size]" ExcludeView="simple">size</Item>
+            <Item Name="[capacity]" ExcludeView="simple">capacity</Item>
+            <ArrayItems>
+                <Size>size</Size>
+                <ValuePointer>mem</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+</AutoVisualizer>

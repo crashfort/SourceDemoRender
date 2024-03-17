@@ -256,7 +256,7 @@ void EncoderState::error(const char* format, ...)
     va_list va;
     va_start(va, format);
 
-    s32 count = vsnprintf(buf, SVR_ARRAY_SIZE(buf), format, va);
+    s32 count = SVR_VSNPRINTF(buf, format, va);
 
     svr_copy_string(buf, shared_mem_ptr->error_message, SVR_ARRAY_SIZE(shared_mem_ptr->error_message));
 

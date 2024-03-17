@@ -12,7 +12,7 @@ void av_log_callback(void* avcl, int level, const char* fmt, va_list vl)
     }
 
     char buf[4096];
-    vsnprintf(buf, SVR_ARRAY_SIZE(buf), fmt, vl);
+    SVR_VSNPRINTF(buf, fmt, vl);
 
     const char* format = NULL;
 
@@ -33,6 +33,10 @@ void av_log_callback(void* avcl, int level, const char* fmt, va_list vl)
 
 int main(int argc, char** argv)
 {
+#ifdef SVR_DEBUG
+    _set_error_mode(_OUT_TO_MSGBOX); // Must be called so we can actually use assert because Microsoft messed it up in console builds.
+#endif
+
     svr_init_log("data\\ENCODER_LOG.txt", false);
 
     if (argc != 2)

@@ -114,10 +114,7 @@ bool EncoderState::vid_load_shader(const char* name)
 {
     bool ret = false;
 
-    char full_shader_path[MAX_PATH];
-    snprintf(full_shader_path, SVR_ARRAY_SIZE(full_shader_path), "data\\shaders\\%s", name);
-
-    HANDLE h = CreateFileA(full_shader_path, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE h = CreateFileA(svr_va("data\\shaders\\%s", name), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (h == INVALID_HANDLE_VALUE)
     {
@@ -234,17 +231,17 @@ rexit:
     return ret;
 }
 
-struct VidPlaneShifts
+struct VidPlaneDesc
 {
-    s32 x;
-    s32 y;
+    DXGI_FORMAT format;
+    s32 shift_x;
+    s32 shift_y;
 };
 
 // Setup state and create the textures in the format that can be sent to the encoder.
 void EncoderState::vid_create_conversion_texs()
 {
-    DXGI_FORMAT plane_formats[VID_MAX_PLANES];
-    VidPlaneShifts plane_shifts[VID_MAX_PLANES];
+    VidPlaneDesc plane_descs[VID_MAX_PLANES];
 
     switch (render_video_info->pixel_format)
     {
@@ -253,10 +250,8 @@ void EncoderState::vid_create_conversion_texs()
             vid_conversion_cs = vid_nv12_cs;
             vid_num_planes = 2;
 
-            plane_shifts[0] = VidPlaneShifts { 0, 0 };
-            plane_shifts[1] = VidPlaneShifts { 1, 1 };
-            plane_formats[0] = DXGI_FORMAT_R8_UINT;
-            plane_formats[1] = DXGI_FORMAT_R8G8_UINT;
+            plane_descs[0] = VidPlaneDesc { DXGI_FORMAT_R8G8_UINT, 0, 0 };
+            plane_descs[1] = VidPlaneDesc { DXGI_FORMAT_R8G8_UINT, 1, 1 };
             break;
         }
 
@@ -265,12 +260,9 @@ void EncoderState::vid_create_conversion_texs()
             vid_conversion_cs = vid_yuv422_cs;
             vid_num_planes = 3;
 
-            plane_shifts[0] = VidPlaneShifts { 0, 0 };
-            plane_shifts[1] = VidPlaneShifts { 1, 0 };
-            plane_shifts[2] = VidPlaneShifts { 1, 0 };
-            plane_formats[0] = DXGI_FORMAT_R8_UINT;
-            plane_formats[1] = DXGI_FORMAT_R8_UINT;
-            plane_formats[2] = DXGI_FORMAT_R8_UINT;
+            plane_descs[0] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 0, 0 };
+            plane_descs[1] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 1, 0 };
+            plane_descs[2] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 1, 0 };
             break;
         }
 
@@ -282,14 +274,14 @@ void EncoderState::vid_create_conversion_texs()
 
     for (s32 i = 0; i < vid_num_planes; i++)
     {
-        VidPlaneShifts* shifts = &plane_shifts[i];
+        VidPlaneDesc* plane_desc = &plane_descs[i];
 
         D3D11_TEXTURE2D_DESC tex_desc = {};
-        tex_desc.Width = movie_params.video_width >> shifts->x;
-        tex_desc.Height = movie_params.video_height >> shifts->y;
+        tex_desc.Width = movie_params.video_width >> plane_desc->shift_x;
+        tex_desc.Height = movie_params.video_height >> plane_desc->shift_y;
         tex_desc.MipLevels = 1;
         tex_desc.ArraySize = 1;
-        tex_desc.Format = plane_formats[i];
+        tex_desc.Format = plane_desc->format;
         tex_desc.SampleDesc.Count = 1;
         tex_desc.Usage = D3D11_USAGE_DEFAULT;
         tex_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
@@ -318,7 +310,7 @@ void EncoderState::vid_convert_to_codec_textures(AVFrame* dest_frame)
     vid_d3d11_context->CSSetShaderResources(0, 1, &vid_game_tex_srv);
     vid_d3d11_context->CSSetUnorderedAccessViews(0, vid_num_planes, vid_converted_uavs, NULL);
 
-    vid_d3d11_context->Dispatch(svr_align32(movie_params.video_width, 8) >> 3, svr_align32(movie_params.video_height, 8) >> 3, 1);
+    vid_d3d11_context->Dispatch(vid_get_num_cs_threads(movie_params.video_width), vid_get_num_cs_threads(movie_params.video_height), 1);
 
     ID3D11ShaderResourceView* null_srvs[] = { NULL };
     ID3D11UnorderedAccessView* null_uavs[] = { NULL };
@@ -360,4 +352,10 @@ void EncoderState::vid_convert_to_codec_textures(AVFrame* dest_frame)
     {
         vid_d3d11_context->Unmap(vid_converted_dl_texs[i], 0);
     }
+}
+
+s32 EncoderState::vid_get_num_cs_threads(s32 unit)
+{
+    // Thread group divisor constant must match the thread count in the compute shaders!
+    return svr_align32(unit, 8) >> 3;
 }

@@ -1,3 +1,5 @@
+// Downsample from 128 bpp to 32 bpp.
+
 Texture2D<float4> source_texture : register(t0);
 RWTexture2D<unorm float4> dest_texture : register(u0);
 
