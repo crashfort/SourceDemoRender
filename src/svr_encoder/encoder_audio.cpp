@@ -86,6 +86,17 @@ bool EncoderState::audio_create_resampler()
         }
     }
 
+    // If the input is matching the output, we can just copy directly over and we don't need to do any of this. Nice!
+
+    if (input_format == render_audio_info->sample_format)
+    {
+        if (audio_input_hz == audio_output_hz)
+        {
+            ret = true;
+            goto rexit;
+        }
+    }
+
     audio_output_size = 0;
 
     for (s32 i = 0; i < AUDIO_MAX_CHANS; i++)
@@ -145,38 +156,52 @@ void EncoderState::audio_convert_to_codec_samples()
 {
     s32 num_waiting = shared_mem_ptr->waiting_audio_samples;
 
-    // The delay are queued samples that are needed when resampling, because the resampling algorithm
-    // requires future samples for interpolation. This may be 16 samples for example, that will be used to interpolate
-    // with future samples we give it. Those samples are accounted for here, so they will not be forgotten about.
-    // This is why you cannot get exact amount of samples back that you give in, as then you would notice the harsh
-    // change in the curve where the interpolation breaks. If no resampling is needed (if the sample rate matches what we want)
-    // then there will not be any queued samples.
-    // We must always fill at least one paint buffer. If we end up getting more samples than anticipated, then those will be stored in the channel.
-    s64 delay = swr_get_delay(audio_swr, audio_input_hz);
+    // Try to avoid extra procesing if we can.
+    // If we have matching input and output parameters, just copy over and return.
 
-    // Don't use more than necessary here, because we should not be receiving tons of more samples than we need.
-    s64 estimated = av_rescale_rnd(delay + (int64_t)num_waiting, audio_output_hz, audio_input_hz, AV_ROUND_UP);
-
-    // Grow buffer.
-    if (estimated > audio_output_size)
+    if (audio_swr)
     {
-        if (audio_output_buffers[0])
+        // The delay are queued samples that are needed when resampling, because the resampling algorithm
+        // requires future samples for interpolation. This may be 16 samples for example, that will be used to interpolate
+        // with future samples we give it. Those samples are accounted for here, so they will not be forgotten about.
+        // This is why you cannot get exact amount of samples back that you give in, as then you would notice the harsh
+        // change in the curve where the interpolation breaks. If no resampling is needed (if the sample rate matches what we want)
+        // then there will not be any queued samples.
+        // We must always fill at least one paint buffer. If we end up getting more samples than anticipated, then those will be stored in the channel.
+        s64 delay = swr_get_delay(audio_swr, audio_input_hz);
+
+        // Don't use more than necessary here, because we should not be receiving tons of more samples than we need.
+        s64 estimated = av_rescale_rnd(delay + (int64_t)num_waiting, audio_output_hz, audio_input_hz, AV_ROUND_UP);
+
+        // Grow buffer.
+        if (estimated > audio_output_size)
         {
-            av_freep(&audio_output_buffers[0]);
+            if (audio_output_buffers[0])
+            {
+                av_freep(&audio_output_buffers[0]);
+            }
+
+            av_samples_alloc(audio_output_buffers, NULL, audio_num_channels, estimated, render_audio_info->sample_format, 0);
+
+            audio_output_size = estimated;
         }
 
-        av_samples_alloc(audio_output_buffers, NULL, audio_num_channels, estimated, render_audio_info->sample_format, 0);
+        // For the first call, we may get less samples than written because during resampling, additional samples
+        // need to be kept for the interpolation. We will call again with the number of samples we are missing to exactly fill out one paint buffer.
+        s32 num_output_samples = swr_convert(audio_swr, audio_output_buffers, audio_output_size, (const uint8_t**)&shared_audio_buffer, num_waiting);
 
-        audio_output_size = estimated;
+        // Some encoders have a restriction that they only work with a fixed amount of samples.
+        // We can get less samples from the game so we have to queue them up and only copy to a frame when we have enough.
+        av_audio_fifo_write(audio_fifo, (void**)audio_output_buffers, num_output_samples);
     }
 
-    // For the first call, we may get less samples than written because during resampling, additional samples
-    // need to be kept for the interpolation. We will call again with the number of samples we are missing to exactly fill out one paint buffer.
-    s32 num_output_samples = swr_convert(audio_swr, audio_output_buffers, audio_output_size, (const uint8_t**)&shared_audio_buffer, num_waiting);
-
-    // Some encoders have a restriction that they only work with a fixed amount of samples.
-    // We can get less samples from the game so we have to queue them up and only copy to a frame when we have enough.
-    av_audio_fifo_write(audio_fifo, (void**)audio_output_buffers, num_output_samples);
+    // Matching parameters, just copy over.
+    else
+    {
+        // Some encoders have a restriction that they only work with a fixed amount of samples.
+        // We can get less samples from the game so we have to queue them up and only copy to a frame when we have enough.
+        av_audio_fifo_write(audio_fifo, (void**)&shared_audio_buffer, num_waiting);
+    }
 }
 
 void EncoderState::audio_copy_samples_to_frame(AVFrame* dest_frame, s32 num_samples)
