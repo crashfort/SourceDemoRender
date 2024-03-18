@@ -468,6 +468,10 @@ void* get_active_player()
 
     else
     {
+        // There is a bug here if you go from a demo with bots to a local game with bots,
+        // where the sticky indexes are still valid so we end up not reading from the local player.
+        // Not sure how to reset the spec target easily without introducing yet more patterns.
+
         s32 spec = get_spec_target();
 
         if (spec > 0)
