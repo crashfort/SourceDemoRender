@@ -1,2 +1,1 @@
-* 10 bit output with dnxhr.
-* more audio encoders.
+* Somehow use apple coreaudio aac encoder.
