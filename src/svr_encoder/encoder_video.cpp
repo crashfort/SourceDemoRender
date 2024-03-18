@@ -112,6 +112,16 @@ void EncoderState::vid_free_dynamic()
         svr_maybe_release(&vid_converted_texs[i]);
     }
 
+    for (s32 i = 0; i < VID_QUEUED_TEXTURES; i++)
+    {
+        VidTextureDownloadInput* inp = &vid_texture_download_queue[i];
+
+        for (s32 j = 0; j < VID_MAX_PLANES; j++)
+        {
+            svr_maybe_release(&inp->dl_texs[j]);
+        }
+    }
+
     vid_conversion_cs = NULL;
     vid_num_planes = 0;
 }
@@ -203,6 +213,9 @@ bool EncoderState::vid_start()
     }
 
     vid_create_conversion_texs();
+
+    render_download_write_idx = 0;
+    render_download_read_idx = 0;
 
     ret = true;
     goto rexit;
@@ -308,20 +321,33 @@ void EncoderState::vid_create_conversion_texs()
 
         vid_d3d11_device->CreateTexture2D(&tex_desc, NULL, &vid_converted_texs[i]);
         vid_d3d11_device->CreateUnorderedAccessView(vid_converted_texs[i], NULL, &vid_converted_uavs[i]);
+    }
 
-        // Also need to create an equivalent texture on the CPU side that we can copy into and then read from.
+    for (s32 i = 0; i < VID_QUEUED_TEXTURES; i++)
+    {
+        VidTextureDownloadInput* input = &vid_texture_download_queue[i];
 
-        tex_desc.Usage = D3D11_USAGE_STAGING;
-        tex_desc.BindFlags = 0;
-        tex_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        for (s32 j = 0; j < vid_num_planes; j++)
+        {
+            ID3D11Texture2D* tex = vid_converted_texs[j];
 
-        vid_d3d11_device->CreateTexture2D(&tex_desc, NULL, &vid_converted_dl_texs[i]);
+            D3D11_TEXTURE2D_DESC tex_desc;
+            tex->GetDesc(&tex_desc);
+
+            // Also need to create an equivalent texture on the CPU side that we can copy into and then read from.
+
+            tex_desc.Usage = D3D11_USAGE_STAGING;
+            tex_desc.BindFlags = 0;
+            tex_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+            vid_d3d11_device->CreateTexture2D(&tex_desc, NULL, &input->dl_texs[j]);
+        }
     }
 }
 
-// Convert pixel formats and then download textures from graphics memory to system memory.
-// At this point these textures are in the correct format ready for encoding.
-void EncoderState::vid_convert_to_codec_textures(AVFrame* dest_frame)
+// Convert pixel formats and push result to be retrieved later.
+// This must be done to not stall too much.
+void EncoderState::vid_push_texture_for_conversion()
 {
     vid_d3d11_context->CSSetShader(vid_conversion_cs, NULL, 0);
     vid_d3d11_context->CSSetShaderResources(0, 1, &vid_game_tex_srv);
@@ -329,22 +355,44 @@ void EncoderState::vid_convert_to_codec_textures(AVFrame* dest_frame)
 
     vid_d3d11_context->Dispatch(vid_get_num_cs_threads(movie_params.video_width), vid_get_num_cs_threads(movie_params.video_height), 1);
 
-    ID3D11ShaderResourceView* null_srvs[] = { NULL };
-    ID3D11UnorderedAccessView* null_uavs[] = { NULL };
+    ID3D11ShaderResourceView* null_srv = NULL;
+    ID3D11UnorderedAccessView* null_uav = NULL;
 
-    vid_d3d11_context->CSSetShaderResources(0, 1, null_srvs);
-    vid_d3d11_context->CSSetUnorderedAccessViews(0, 1, null_uavs, NULL);
+    vid_d3d11_context->CSSetShaderResources(0, 1, &null_srv);
+    vid_d3d11_context->CSSetUnorderedAccessViews(0, 1, &null_uav, NULL);
+
+    s64 wrapped_write_idx = render_download_write_idx & (VID_QUEUED_TEXTURES - 1);
+    VidTextureDownloadInput* input = &vid_texture_download_queue[wrapped_write_idx];
 
     for (s32 i = 0; i < vid_num_planes; i++)
     {
-        vid_d3d11_context->CopyResource(vid_converted_dl_texs[i], vid_converted_texs[i]);
+        vid_d3d11_context->CopyResource(input->dl_texs[i], vid_converted_texs[i]);
     }
+
+    // Must flush because we write to the same textures (vid_converted_texs) every time before copying.
+    // If this is not done, the content of the texture would be overwritten and the last write would win.
+    vid_d3d11_context->Flush();
+
+    render_download_write_idx++;
+}
+
+// Download textures from graphics memory to system memory.
+// At this point these textures are in the correct format ready for encoding.
+// Polling through D3D11_MAP_FLAG_DO_NOT_WAIT is not useful in this case as we do not have any practical
+// frame budget, as we process as fast as possible. This means that the writes would always be significantly ahead
+// of the reads.
+// Instead we just try and separate the writes from the reads through a large gap, in which hopefully the reads do not suffer too much slowdown.
+// We always read from the oldest textures.
+void EncoderState::vid_download_texture_into_frame(AVFrame* dest_frame)
+{
+    s64 wrapped_read_idx = render_download_read_idx & (VID_QUEUED_TEXTURES - 1);
+    VidTextureDownloadInput* input = &vid_texture_download_queue[wrapped_read_idx];
 
     D3D11_MAPPED_SUBRESOURCE maps[VID_MAX_PLANES];
 
     for (s32 i = 0; i < vid_num_planes; i++)
     {
-        vid_d3d11_context->Map(vid_converted_dl_texs[i], 0, D3D11_MAP_READ, 0, &maps[i]);
+        vid_d3d11_context->Map(input->dl_texs[i], 0, D3D11_MAP_READ, 0, &maps[i]);
     }
 
     for (s32 i = 0; i < vid_num_planes; i++)
@@ -367,8 +415,22 @@ void EncoderState::vid_convert_to_codec_textures(AVFrame* dest_frame)
 
     for (s32 i = 0; i < vid_num_planes; i++)
     {
-        vid_d3d11_context->Unmap(vid_converted_dl_texs[i], 0);
+        vid_d3d11_context->Unmap(input->dl_texs[i], 0);
     }
+
+    render_download_read_idx++;
+}
+
+bool EncoderState::vid_can_map_now()
+{
+    s64 dist = render_download_write_idx - render_download_read_idx;
+    return dist > VID_QUEUED_TEXTURES - 2;
+}
+
+bool EncoderState::vid_drain_textures()
+{
+    s64 dist = render_download_write_idx - render_download_read_idx;
+    return dist > 0;
 }
 
 s32 EncoderState::vid_get_num_cs_threads(s32 unit)

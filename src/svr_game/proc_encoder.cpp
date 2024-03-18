@@ -147,9 +147,16 @@ bool ProcState::encoder_start_process()
 
     PROCESS_INFORMATION proc_info;
 
+    DWORD flags = CREATE_SUSPENDED;
+
+    // Allow a window in debug so you can show debug messages easier.
+#ifndef SVR_DEBUG
+    flags |= CREATE_NO_WINDOW;
+#endif
+
     // Working directory for the encoder process should be in the SVR directory.
     // Need to inherit handles so we can pass the shared memory handle as a parameter.
-    if (!CreateProcessA(NULL, full_args, NULL, NULL, TRUE, CREATE_NO_WINDOW | CREATE_SUSPENDED, NULL, svr_resource_path, &start_info, &proc_info))
+    if (!CreateProcessA(NULL, full_args, NULL, NULL, TRUE, flags, NULL, svr_resource_path, &start_info, &proc_info))
     {
         svr_log("ERROR: Could not create encoder process (%lu)\n", GetLastError());
         goto rfail;

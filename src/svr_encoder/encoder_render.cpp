@@ -129,6 +129,13 @@ void EncoderState::render_free_dynamic()
 {
     if (render_started)
     {
+        // Submit any remaining textures for encode.
+
+        while (vid_drain_textures())
+        {
+            render_submit_texture();
+        }
+
         // Flush out all of the remaining samples in the audio fifo for encode.
 
         if (movie_params.use_audio)
@@ -479,13 +486,6 @@ bool EncoderState::render_init_video()
         goto rfail;
     }
 
-    // Preallocate some frames.
-
-    for (s32 i = 0; i < 8; i++)
-    {
-        render_get_new_video_frame();
-    }
-
     res = avcodec_parameters_from_context(render_video_stream->codecpar, render_video_ctx);
 
     if (res < 0)
@@ -598,13 +598,6 @@ bool EncoderState::render_init_audio()
 
     render_audio_ctx->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
 
-    // Preallocate some frames.
-
-    for (s32 i = 0; i < 8; i++)
-    {
-        render_get_new_audio_frame();
-    }
-
     res = avcodec_parameters_from_context(render_audio_stream->codecpar, render_audio_ctx);
 
     if (res < 0)
@@ -654,15 +647,15 @@ bool EncoderState::render_receive_video()
         goto rfail;
     }
 
-    AVFrame* frame = render_get_new_video_frame();
+    // Submit enough textures so there is enough distance between the write head and the read head.
+    // This way we can mitigate the pipeline stalls a bit.
 
-    vid_convert_to_codec_textures(frame);
+    vid_push_texture_for_conversion();
 
-    frame->pts = render_video_pts;
-
-    render_encode_video_frame(frame);
-
-    render_video_pts++;
+    if (vid_can_map_now())
+    {
+        render_submit_texture();
+    }
 
     ret = true;
     goto rexit;
@@ -735,11 +728,11 @@ void EncoderState::render_submit_audio_fifo()
 void EncoderState::render_encode_frame_from_audio_fifo(s32 num_samples)
 {
     AVFrame* frame = render_get_new_audio_frame();
+    frame->pts = render_audio_pts;
+    frame->nb_samples = num_samples;
 
     audio_copy_samples_to_frame(frame, num_samples);
 
-    frame->pts = render_audio_pts;
-    frame->nb_samples = num_samples;
     render_audio_pts += num_samples;
 
     render_encode_audio_frame(frame);
@@ -865,4 +858,15 @@ void EncoderState::render_free_recycled_frames()
     {
         av_frame_free(&frame);
     }
+}
+
+void EncoderState::render_submit_texture()
+{
+    AVFrame* frame = render_get_new_video_frame();
+    frame->pts = render_video_pts;
+
+    vid_download_texture_into_frame(frame);
+    render_encode_video_frame(frame);
+
+    render_video_pts++;
 }

@@ -2,6 +2,7 @@
 
 const s32 RENDER_QUEUED_FRAMES = 8192; // How many uncompressed AVFrame* to queue up for encoding.
 const s32 RENDER_QUEUED_PACKETS = 8192; // How many compressed AVPacket* to queue up for writing.
+const s32 VID_QUEUED_TEXTURES = 256; // How many converted uncompressed frames to store in RAM before encode.
 
 // At most, YUV uses 3 planes.
 const s32 VID_MAX_PLANES = 3;
@@ -17,6 +18,11 @@ struct RenderFrameThreadInput
     AVFrame* frame;
     AVStream* stream;
     AVMediaType type;
+};
+
+struct VidTextureDownloadInput
+{
+    ID3D11Texture2D* dl_texs[VID_MAX_PLANES]; // In system memory.
 };
 
 struct EncoderState
@@ -139,6 +145,8 @@ struct EncoderState
     AVFrame* render_get_new_video_frame();
     AVFrame* render_get_new_audio_frame();
     void render_free_recycled_frames();
+    void render_submit_texture();
+
     void render_setup_dnxhr();
     void render_setup_libx264();
 
@@ -163,9 +171,17 @@ struct EncoderState
 
     // Destination textures that are in the correct pixel format.
     // These textures have the actual data that can be encoded.
-    ID3D11Texture2D* vid_converted_texs[VID_MAX_PLANES]; // In graphics memory.
+    // In order to not stall the pipeline by immediately trying to download the result,
+    // the results are stored in vid_texture_download_queue until the commands have been processed.
+    // Only after some time has passed it is safe to try and download without causing a stall.
+    ID3D11Texture2D* vid_converted_texs[VID_MAX_PLANES];
     ID3D11UnorderedAccessView* vid_converted_uavs[VID_MAX_PLANES];
-    ID3D11Texture2D* vid_converted_dl_texs[VID_MAX_PLANES]; // In system memory.
+
+    VidTextureDownloadInput vid_texture_download_queue[VID_QUEUED_TEXTURES];
+
+    // These indexes get wrapped.
+    s64 render_download_write_idx;
+    s64 render_download_read_idx;
 
     bool vid_init();
     bool vid_create_device();
@@ -177,7 +193,10 @@ struct EncoderState
     bool vid_start();
     bool vid_open_game_texture();
     void vid_create_conversion_texs();
-    void vid_convert_to_codec_textures(AVFrame* dest_frame);
+    void vid_push_texture_for_conversion();
+    void vid_download_texture_into_frame(AVFrame* dest_frame);
+    bool vid_can_map_now();
+    bool vid_drain_textures();
     s32 vid_get_num_cs_threads(s32 unit);
 
     // -----------------------------------------------
