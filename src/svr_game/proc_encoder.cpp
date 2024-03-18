@@ -212,16 +212,15 @@ bool ProcState::encoder_set_shared_mem_params()
     bool ret = false;
 
     // Set movie parameters to svr_encoder.
-    // Audio parameters are fixed in Source so they cannot be changed, just better to have those constants in here.
 
     EncoderSharedMovieParams* params = &encoder_shared_ptr->movie_params;
 
     params->video_fps = movie_profile.video_fps;
     params->video_width = movie_width;
     params->video_height = movie_height;
-    params->audio_channels = 2;
-    params->audio_hz = 44100;
-    params->audio_bits = 16;
+    params->audio_channels = svr_audio_params.audio_channels;
+    params->audio_hz = svr_audio_params.audio_hz;
+    params->audio_bits = svr_audio_params.audio_bits;
     params->x264_crf = movie_profile.video_x264_crf;
     params->x264_intra = movie_profile.video_x264_intra;
     params->use_audio = movie_profile.audio_enabled;

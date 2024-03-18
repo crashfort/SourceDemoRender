@@ -996,8 +996,13 @@ void __cdecl start_movie_override(void* args)
     // The game backbuffer is the first index.
     gm_d3d9ex_device->GetRenderTarget(0, &bb_surf);
 
+    // Audio parameters are fixed in Source so they cannot be changed, just better to have those constants in here.
+
     SvrStartMovieData startmovie_data;
     startmovie_data.game_tex_view = bb_surf;
+    startmovie_data.audio_params.audio_channels = 2;
+    startmovie_data.audio_params.audio_hz = 44100;
+    startmovie_data.audio_params.audio_bits = 16;
 
     if (!svr_start(movie_name, profile, &startmovie_data))
     {

@@ -37,6 +37,13 @@ struct IDirect3DDevice9Ex;
 struct ID3D11ShaderResourceView;
 struct ID3D11Device;
 
+struct SvrAudioParams
+{
+    s32 audio_channels; // Must be 2 for now.
+    s32 audio_hz;
+    s32 audio_bits; // Must be 16 for now.
+};
+
 struct SvrStartMovieData
 {
     // A view to a texture that contains the game content.
@@ -45,6 +52,9 @@ struct SvrStartMovieData
     // This can be either a ID3D11ShaderResourceView for D3D11 games or IDirect3DSurface9 for D3D9Ex games.
     // For D3D11 games the texture must be created with D3D11_BIND_RENDER_TARGET.
     IUnknown* game_tex_view;
+
+    // Audio parameters that are being sent to svr_give_audio.
+    SvrAudioParams audio_params;
 };
 
 struct SvrWaveSample

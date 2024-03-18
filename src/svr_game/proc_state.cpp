@@ -81,11 +81,12 @@ void ProcState::process_finished_shared_tex()
     encoder_send_shared_tex();
 }
 
-bool ProcState::start(const char* dest_file, const char* profile, ProcGameTexture* game_texture)
+bool ProcState::start(const char* dest_file, const char* profile, ProcGameTexture* game_texture, SvrAudioParams* audio_params)
 {
     bool ret = false;
 
     svr_game_texture = *game_texture;
+    svr_audio_params = *audio_params;
 
     // Must load the profile first!
 

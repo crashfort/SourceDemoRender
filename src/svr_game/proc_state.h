@@ -65,9 +65,10 @@ struct ProcState
     char svr_resource_path[MAX_PATH]; // Does not end with a slash.
 
     ProcGameTexture svr_game_texture; // Texture of the game.
+    SvrAudioParams svr_audio_params;
 
     bool init(const char* in_resource_path, ID3D11Device* in_d3d11_device);
-    bool start(const char* dest_file, const char* profile, ProcGameTexture* game_texture);
+    bool start(const char* dest_file, const char* profile, ProcGameTexture* game_texture, SvrAudioParams* audio_params);
     void new_video_frame();
     void new_audio_samples(SvrWaveSample* samples, s32 num_samples);
     bool is_velo_enabled();

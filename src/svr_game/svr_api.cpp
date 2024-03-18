@@ -221,7 +221,7 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
     game_texture.tex = svr_content_tex;
     game_texture.srv = svr_content_srv;
 
-    if (!proc_state.start(movie_name, movie_profile, &game_texture))
+    if (!proc_state.start(movie_name, movie_profile, &game_texture, &movie_data->audio_params))
     {
         goto rfail;
     }
