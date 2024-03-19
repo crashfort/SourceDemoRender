@@ -159,8 +159,8 @@ bool ProcState::encoder_start_process()
 
     DWORD flags = CREATE_SUSPENDED;
 
-    // Allow a window in debug so you can show debug messages easier.
-#ifndef SVR_DEBUG
+    // Allow a window so you can show debug messages easier.
+#if 1
     flags |= CREATE_NO_WINDOW;
 #endif
 
