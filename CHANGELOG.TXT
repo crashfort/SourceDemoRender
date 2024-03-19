@@ -25,6 +25,7 @@ Supported games in this release:
 * Added velo_anchor option which allows to set the text expansion direction.
 * Velo is now by default in the lower left with an anchor of left.
 * Added velo_length option which allows to set the axes of velocity to show.
+* Fixed motion blur blending working in the wrong color space. Blending is now done in the linear color space. Previously blending was done in a non-linear color space which meant some colors would blend together too dark.
 
 Version 40, 26 October 2022
 ---------------------------
