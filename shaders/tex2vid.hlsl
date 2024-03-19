@@ -1,6 +1,9 @@
 // This file is intended to be compiled into many resulting shaders.
 // Purpose of these are to convert the program pixel format to a video pixel format.
 
+#define AVCOL_SPC_BT709 1
+// #define AVCOL_SPC_BT470BG 1
+
 // --------------------------------------------------------------------------------------------------------------------
 
 // Output texture is based in UINT (0 to 255).
@@ -12,6 +15,10 @@ Texture2D<float4> input_texture : register(t0);
 uint3 convert_rgb_to_yuv(float3 rgb)
 {
     rgb = rgb * 255.0f;
+
+    // For meme reasons you appear to need to divide by 255.0 / 219.0.
+    // This number comes from the partial MPEG range. We don't add 16.0 / 255.0 to this.
+    rgb /= 1.164383;
 
     uint3 ret;
 

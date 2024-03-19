@@ -332,7 +332,10 @@ bool EncoderState::render_init_video()
     render_video_ctx->height = movie_params.video_height;
     render_video_ctx->time_base = video_q;
     render_video_ctx->pix_fmt = render_video_info->pixel_format;
+    render_video_ctx->color_primaries = AVCOL_PRI_BT709;
+    render_video_ctx->color_trc = AVCOL_TRC_BT709;
     render_video_ctx->color_range = AVCOL_RANGE_MPEG;
+    render_video_ctx->colorspace = AVCOL_SPC_BT709;
 
     render_video_stream->time_base = render_video_ctx->time_base;
     render_video_stream->avg_frame_rate = av_inv_q(render_video_ctx->time_base);
