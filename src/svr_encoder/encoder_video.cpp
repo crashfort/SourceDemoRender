@@ -42,13 +42,30 @@ bool EncoderState::vid_create_device()
     // Should be good enough for all the features that we make use of.
     const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_12_0;
 
-    D3D_FEATURE_LEVEL created_device_level;
+    ID3D11Device* initial_d3d11_device = NULL;
+    ID3D11DeviceContext* initial_d3d11_context = NULL;
 
-    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, &MINIMUM_DEVICE_LEVEL, 1, D3D11_SDK_VERSION, &vid_d3d11_device, &created_device_level, &vid_d3d11_context);
+    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, &MINIMUM_DEVICE_LEVEL, 1, D3D11_SDK_VERSION, &initial_d3d11_device, NULL, &initial_d3d11_context);
 
     if (FAILED(hr))
     {
         error("ERROR: Could not create D3D11 device (%#x)\n", hr);
+        goto rfail;
+    }
+
+    hr = initial_d3d11_device->QueryInterface(IID_PPV_ARGS(&vid_d3d11_device));
+
+    if (FAILED(hr))
+    {
+        error("ERROR: Could not query for newer D3D11 device features (%#x)\n", hr);
+        goto rfail;
+    }
+
+    hr = initial_d3d11_context->QueryInterface(IID_PPV_ARGS(&vid_d3d11_context));
+
+    if (FAILED(hr))
+    {
+        error("ERROR: Could not query for newer D3D11 device context features (%#x)\n", hr);
         goto rfail;
     }
 
@@ -58,6 +75,8 @@ bool EncoderState::vid_create_device()
 rfail:
 
 rexit:
+    svr_maybe_release(&initial_d3d11_device);
+    svr_maybe_release(&initial_d3d11_context);
     return ret;
 }
 
@@ -104,8 +123,15 @@ void EncoderState::vid_free_static()
 
 void EncoderState::vid_free_dynamic()
 {
+    if (game_texture_h)
+    {
+        CloseHandle(game_texture_h);
+        game_texture_h = NULL;
+    }
+
     svr_maybe_release(&vid_game_tex);
     svr_maybe_release(&vid_game_tex_srv);
+    svr_maybe_release(&vid_game_tex_lock);
 
     for (s32 i = 0; i < VID_MAX_PLANES; i++)
     {
@@ -231,7 +257,7 @@ bool EncoderState::vid_open_game_texture()
     bool ret = false;
     HRESULT hr;
 
-    hr = vid_d3d11_device->OpenSharedResource((HANDLE)shared_mem_ptr->game_texture_h, IID_PPV_ARGS(&vid_game_tex));
+    hr = vid_d3d11_device->OpenSharedResource1((HANDLE)shared_mem_ptr->game_texture_h, IID_PPV_ARGS(&vid_game_tex));
 
     if (FAILED(hr))
     {
@@ -240,6 +266,8 @@ bool EncoderState::vid_open_game_texture()
     }
 
     vid_d3d11_device->CreateShaderResourceView(vid_game_tex, NULL, &vid_game_tex_srv);
+
+    vid_game_tex->QueryInterface(IID_PPV_ARGS(&vid_game_tex_lock));
 
     ret = true;
     goto rexit;
@@ -349,11 +377,15 @@ void EncoderState::vid_create_conversion_texs()
 // This must be done to not stall too much.
 void EncoderState::vid_push_texture_for_conversion()
 {
+    vid_game_tex_lock->AcquireSync(ENCODER_PROC_ID, INFINITE); // Allow us to read now.
+
     vid_d3d11_context->CSSetShader(vid_conversion_cs, NULL, 0);
     vid_d3d11_context->CSSetShaderResources(0, 1, &vid_game_tex_srv);
     vid_d3d11_context->CSSetUnorderedAccessViews(0, vid_num_planes, vid_converted_uavs, NULL);
 
     vid_d3d11_context->Dispatch(vid_get_num_cs_threads(movie_params.video_width), vid_get_num_cs_threads(movie_params.video_height), 1);
+
+    vid_game_tex_lock->ReleaseSync(ENCODER_GAME_ID); // Give back to game.
 
     ID3D11ShaderResourceView* null_srv = NULL;
     ID3D11UnorderedAccessView* null_uav = NULL;

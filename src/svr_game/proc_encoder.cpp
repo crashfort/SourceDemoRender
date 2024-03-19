@@ -68,8 +68,15 @@ void ProcState::encoder_free_dynamic()
     svr_maybe_release(&encoder_share_tex_srv);
     svr_maybe_release(&encoder_share_tex_uav);
     svr_maybe_release(&encoder_share_tex_rtv);
-    encoder_share_tex_h = NULL;
+
+    if (encoder_share_tex_h)
+    {
+        CloseHandle(encoder_share_tex_h);
+        encoder_share_tex_h = NULL;
+    }
+
     svr_maybe_release(&encoder_d2d1_share_tex);
+    svr_maybe_release(&encoder_share_tex_lock);
 }
 
 bool ProcState::encoder_create_shared_mem()
@@ -77,6 +84,7 @@ bool ProcState::encoder_create_shared_mem()
     bool ret = false;
 
     SECURITY_ATTRIBUTES sa = {};
+    sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE; // Allow encoder process to use this handle too.
 
     s32 mem_size = sizeof(EncoderSharedMem);
@@ -198,6 +206,8 @@ bool ProcState::encoder_start()
         goto rfail;
     }
 
+    encoder_share_tex_lock->AcquireSync(ENCODER_GAME_ID, INFINITE); // Set initial owner now.
+
     ret = true;
     goto rexit;
 
@@ -231,8 +241,20 @@ bool ProcState::encoder_set_shared_mem_params()
     SVR_COPY_STRING(movie_profile.video_dnxhr_profile, params->dnxhr_profile);
     SVR_COPY_STRING(movie_profile.audio_encoder, params->audio_encoder);
 
+    // Must duplicate the handle for the encoder to be able to open it.
+    // Doesn't matter if you specify to inherit handles when creating the DXGI handle.
+
+    HANDLE new_handle;
+    BOOL res = DuplicateHandle(GetCurrentProcess(), encoder_share_tex_h, encoder_proc, &new_handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
+
+    if (res == 0)
+    {
+        svr_log("ERROR: Could not duplicate share texture handle (%lu)\n", GetLastError());
+        goto rfail;
+    }
+
     encoder_shared_ptr->waiting_audio_samples = 0;
-    encoder_shared_ptr->game_texture_h = (u32)encoder_share_tex_h;
+    encoder_shared_ptr->game_texture_h = (u32)new_handle; // Transfer to encoder process, so don't close here.
 
     encoder_shared_ptr->error = 0;
     encoder_shared_ptr->error_message[0] = 0;
@@ -266,7 +288,7 @@ bool ProcState::encoder_create_share_textures()
     tex_desc.SampleDesc.Count = 1;
     tex_desc.Usage = D3D11_USAGE_DEFAULT;
     tex_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_RENDER_TARGET; // Must have these flags!
-    tex_desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+    tex_desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
     hr = vid_d3d11_device->CreateTexture2D(&tex_desc, NULL, &encoder_share_tex);
 
@@ -280,10 +302,24 @@ bool ProcState::encoder_create_share_textures()
     vid_d3d11_device->CreateUnorderedAccessView(encoder_share_tex, NULL, &encoder_share_tex_uav);
     vid_d3d11_device->CreateRenderTargetView(encoder_share_tex, NULL, &encoder_share_tex_rtv);
 
-    IDXGIResource* dxgi_res;
-    encoder_share_tex->QueryInterface(IID_PPV_ARGS(&dxgi_res));
-    dxgi_res->GetSharedHandle(&encoder_share_tex_h);
-    dxgi_res->Release();
+    IDXGIResource1* dxgi_res = NULL;
+    hr = encoder_share_tex->QueryInterface(IID_PPV_ARGS(&dxgi_res));
+
+    if (FAILED(hr))
+    {
+        svr_log("ERROR: Could not query for newer D3D11 resource features (%#x)\n", hr);
+        goto rfail;
+    }
+
+    hr = dxgi_res->CreateSharedHandle(NULL, DXGI_SHARED_RESOURCE_READ, NULL, &encoder_share_tex_h);
+
+    if (FAILED(hr))
+    {
+        svr_log("ERROR: Could not create share texture handle (%#x)\n", hr);
+        goto rfail;
+    }
+
+    encoder_share_tex->QueryInterface(IID_PPV_ARGS(&encoder_share_tex_lock));
 
     ret = true;
     goto rexit;
@@ -291,6 +327,7 @@ bool ProcState::encoder_create_share_textures()
 rfail:
 
 rexit:
+    svr_maybe_release(&dxgi_res);
     return ret;
 }
 
@@ -351,9 +388,7 @@ bool ProcState::encoder_send_shared_tex()
 {
     bool ret = false;
 
-    // Flush must unfortunately be called when working across processes in order to update
-    // the texture in the other process.
-    vid_d3d11_context->Flush();
+    encoder_share_tex_lock->ReleaseSync(ENCODER_PROC_ID); // Allow encoder to read.
 
     if (!encoder_send_event(ENCODER_EVENT_NEW_VIDEO))
     {
@@ -366,6 +401,7 @@ bool ProcState::encoder_send_shared_tex()
 rfail:
 
 rexit:
+    encoder_share_tex_lock->AcquireSync(ENCODER_GAME_ID, INFINITE); // Give back to us now.
     return ret;
 }
 

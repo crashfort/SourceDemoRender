@@ -6,7 +6,7 @@
 #include "svr_defs.h"
 #include <stdio.h>
 #include <Windows.h>
-#include <d3d11.h>
+#include <d3d11_1.h>
 #include <d3d11shadertracing.h>
 #include <dxgi.h>
 #include <assert.h>

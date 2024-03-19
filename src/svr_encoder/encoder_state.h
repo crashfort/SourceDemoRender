@@ -153,13 +153,14 @@ struct EncoderState
     // -----------------------------------------------
     // Video state:
 
-    ID3D11Device* vid_d3d11_device;
+    ID3D11Device1* vid_d3d11_device;
     ID3D11DeviceContext* vid_d3d11_context;
     void* vid_shader_mem;
     s32 vid_shader_size;
 
     ID3D11Texture2D* vid_game_tex; // Texture that svr_game updates.
     ID3D11ShaderResourceView* vid_game_tex_srv;
+    IDXGIKeyedMutex* vid_game_tex_lock;
 
     ID3D11ComputeShader* vid_conversion_cs;
     s32 vid_num_planes;

@@ -6,6 +6,7 @@
 #include "encoder_shared.h"
 #include <d3d11.h>
 #include <d3d11shadertracing.h>
+#include <dxgi1_2.h>
 #include <strsafe.h>
 #include <dwrite.h>
 #include <d2d1_1.h>

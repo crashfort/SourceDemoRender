@@ -8,6 +8,11 @@
 
 const s32 ENCODER_MAX_SAMPLES = 4096; // How many samples can be stored at most in the buffer placed at audio_buffer_offset.
 
+// Identifiers used by the DXGI lock for synchronizing with the shared texture.
+// You need to specify which device to give access to, so that's what these are.
+const s32 ENCODER_GAME_ID = 0;
+const s32 ENCODER_PROC_ID = 1;
+
 using EncoderSharedEvent = s32;
 
 enum /* EncoderSharedEvent */

@@ -185,8 +185,9 @@ struct ProcState
     ID3D11UnorderedAccessView* encoder_share_tex_uav;
     ID3D11RenderTargetView* encoder_share_tex_rtv;
     ID3D11ShaderResourceView* encoder_share_tex_srv;
-    HANDLE encoder_share_tex_h; // Not a normal handle. Should not be closed!
+    HANDLE encoder_share_tex_h;
     ID2D1Bitmap1* encoder_d2d1_share_tex; // Not a real texture, but a reference to encoder_share_tex.
+    IDXGIKeyedMutex* encoder_share_tex_lock;
 
     bool encoder_init();
     void encoder_free_static();
