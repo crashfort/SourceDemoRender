@@ -54,13 +54,6 @@ struct SvrVec4I
 };
 
 template <class T>
-inline void svr_clamp(T* v, T min, T max)
-{
-    if (*v < min) *v = min;
-    if (*v > max) *v = max;
-}
-
-template <class T>
 inline T svr_max(T a, T b)
 {
     return a > b ? a : b;
@@ -70,6 +63,13 @@ template <class T>
 inline T svr_min(T a, T b)
 {
     return a < b ? a : b;
+}
+
+template <class T>
+inline void svr_clamp(T* v, T min, T max)
+{
+    // This generates better code than using branches.
+    *v = svr_min(svr_max(*v, min), max);
 }
 
 template <class T>

@@ -178,6 +178,11 @@ struct ProcState
     EncoderSharedMem* encoder_shared_ptr;
     void* encoder_audio_buffer;
 
+    // Fifo of audio samples we need to send to the encoder.
+    // During motion blur capture, the number of samples sent from the game will be very low (like 12).
+    // We should not wake up the encoder and wait for just that little, so queue up a bunch instead and send many.
+    SvrDynArray<SvrWaveSample> encoder_pending_samples;
+
     // Intermediate texture needed for texture sharing.
     // High precision textures are not allowed to be shared, so we need to downsample the result of the mosample to 32 bpp.
     // This texture is the final result from all prior processing, such as motion blur and velo text.
@@ -201,6 +206,9 @@ struct ProcState
     bool encoder_send_event(EncoderSharedEvent event);
     bool encoder_send_shared_tex();
     bool encoder_send_audio_samples(SvrWaveSample* samples, s32 num_samples);
+    void encoder_flush_audio();
+    bool encoder_submit_pending_samples();
+    bool encoder_send_audio_from_pending(s32 num_samples);
     bool encoder_create_d2d1_bitmap();
 
     // -----------------------------------------------

@@ -561,12 +561,15 @@ void prepare_and_send_sound(GmSndSample* paint_buf, s32 num_samples)
 
     SvrWaveSample* buf = (SvrWaveSample*)_alloca(sizeof(SvrWaveSample) * num_samples);
 
+    // TODO Is this needed?
+#if 1
     for (s32 i = 0; i < num_samples; i++)
     {
         GmSndSample* sample = &paint_buf[i];
         svr_clamp(&sample->left, (s32)INT16_MIN, (s32)INT16_MAX);
         svr_clamp(&sample->right, (s32)INT16_MIN, (s32)INT16_MAX);
     }
+#endif
 
     for (s32 i = 0; i < num_samples; i++)
     {
