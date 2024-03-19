@@ -293,7 +293,7 @@ void EncoderState::vid_create_conversion_texs()
             vid_conversion_cs = vid_nv12_cs;
             vid_num_planes = 2;
 
-            plane_descs[0] = VidPlaneDesc { DXGI_FORMAT_R8G8_UINT, 0, 0 };
+            plane_descs[0] = VidPlaneDesc { DXGI_FORMAT_R8_UINT, 0, 0 };
             plane_descs[1] = VidPlaneDesc { DXGI_FORMAT_R8G8_UINT, 1, 1 };
             break;
         }
