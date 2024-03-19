@@ -34,7 +34,11 @@ bool EncoderState::render_start_threads()
 {
     render_frame_thread_h = CreateThread(NULL, 0, render_frame_thread_proc, this, 0, NULL);
     render_packet_thread_h = CreateThread(NULL, 0, render_packet_thread_proc, this, 0, NULL);
-    render_audio_thread_h = CreateThread(NULL, 0, render_audio_thread_proc, this, 0, NULL);
+
+    if (audio_need_conversion())
+    {
+        render_audio_thread_h = CreateThread(NULL, 0, render_audio_thread_proc, this, 0, NULL);
+    }
 
     return true;
 }
@@ -200,13 +204,10 @@ void EncoderState::render_audio_proc()
             if (buffer.mem == NULL)
             {
                 run = false; // Stop on flush buffer.
+                break;
             }
 
-            audio_convert_to_codec_samples(&buffer);
-
-            // Must submit everything in the fifo so things don't start drifting away.
-            // It's possible that this doesn't do anything in case there aren't enough samples to cover the needed frame size.
-            render_submit_audio_fifo();
+            render_give_thread_input(&buffer);
 
             render_recycled_audio_buffers.push(&buffer); // Give back the audio buffer.
         }

@@ -176,6 +176,7 @@ struct EncoderState
     bool render_check_thread_errors();
     bool render_receive_video();
     bool render_receive_audio();
+    void render_give_thread_input(RenderAudioThreadInput* input);
     void render_flush_audio_fifo();
     void render_submit_audio_fifo();
     void render_encode_frame_from_audio_fifo(s32 num_samples);
@@ -266,6 +267,7 @@ struct EncoderState
     void audio_convert_to_codec_samples(RenderAudioThreadInput* buffer);
     void audio_copy_samples_to_frame(AVFrame* dest_frame, s32 num_samples);
     s32 audio_num_queued_samples();
+    bool audio_need_conversion();
 };
 
 struct RenderVideoInfo

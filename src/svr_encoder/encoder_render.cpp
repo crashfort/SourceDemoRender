@@ -120,14 +120,17 @@ void EncoderState::render_free_dynamic()
             render_flush_audio_fifo();
         }
 
-        // Send flush to audio thread.
+        // Send flush to audio thread if we started it.
 
-        RenderAudioThreadInput flush_audio_buf = {};
-        render_audio_queue.push(&flush_audio_buf);
+        if (render_audio_thread_h)
+        {
+            RenderAudioThreadInput flush_audio_buf = {};
+            render_audio_queue.push(&flush_audio_buf);
 
-        SetEvent(render_audio_wake_event_h); // Notify audio thread.
+            SetEvent(render_audio_wake_event_h); // Notify audio thread.
 
-        WaitForSingleObject(render_audio_thread_h, INFINITE); // Wait for audio thread to finish.
+            WaitForSingleObject(render_audio_thread_h, INFINITE); // Wait for audio thread to finish.
+        }
 
         // Send flushes to frame thread.
 
@@ -549,17 +552,29 @@ bool EncoderState::render_receive_audio()
         goto rfail;
     }
 
-    // Copy to a new buffer and pass to the audio thread. The audio thread will convert if needed and pass
-    // to the encoder.
+    // Copy to a new buffer and pass to the audio thread. The audio thread will convert if needed and pass to the encoder.
+    // If we don't need to do anything, just pass it along without going through the thread.
 
-    RenderAudioThreadInput input = render_get_new_audio_buffer(shared_mem_ptr->waiting_audio_samples);
+    if (audio_need_conversion())
+    {
+        RenderAudioThreadInput input = render_get_new_audio_buffer(shared_mem_ptr->waiting_audio_samples);
 
-    s32 size = render_get_audio_buffer_size(shared_mem_ptr->waiting_audio_samples);
-    memcpy(input.mem, shared_audio_buffer, size);
+        s32 size = render_get_audio_buffer_size(shared_mem_ptr->waiting_audio_samples);
+        memcpy(input.mem, shared_audio_buffer, size);
 
-    render_audio_queue.push(&input);
+        render_audio_queue.push(&input);
 
-    SetEvent(render_audio_wake_event_h); // Notify audio thread.
+        SetEvent(render_audio_wake_event_h); // Notify audio thread.
+    }
+
+    else
+    {
+        RenderAudioThreadInput input = {};
+        input.mem = shared_audio_buffer;
+        input.num_samples = shared_mem_ptr->waiting_audio_samples;
+
+        render_give_thread_input(&input);
+    }
 
     ret = true;
     goto rexit;
@@ -568,6 +583,15 @@ rfail:
 
 rexit:
     return ret;
+}
+
+void EncoderState::render_give_thread_input(RenderAudioThreadInput* input)
+{
+    audio_convert_to_codec_samples(input);
+
+    // Must submit everything in the fifo so things don't start drifting away.
+    // It's possible that this doesn't do anything in case there aren't enough samples to cover the needed frame size.
+    render_submit_audio_fifo();
 }
 
 // Some encoders need a fixed amount of samples every iteration (except the last).

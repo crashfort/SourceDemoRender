@@ -158,7 +158,7 @@ void EncoderState::audio_convert_to_codec_samples(RenderAudioThreadInput* buffer
     // Try to avoid extra procesing if we can.
     // If we have matching input and output parameters, just copy over and return.
 
-    if (audio_swr)
+    if (audio_need_conversion())
     {
         // The delay are queued samples that are needed when resampling, because the resampling algorithm
         // requires future samples for interpolation. This may be 16 samples for example, that will be used to interpolate
@@ -213,4 +213,9 @@ s32 EncoderState::audio_num_queued_samples()
 {
     s32 num_samples = av_audio_fifo_size(audio_fifo);
     return num_samples;
+}
+
+bool EncoderState::audio_need_conversion()
+{
+    return audio_swr;
 }
