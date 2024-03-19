@@ -18,6 +18,7 @@
     <None Include="encoder_video.cpp" />
     <None Include="encoder_dnxhr.cpp" />
     <None Include="encoder_libx264.cpp" />
+    <None Include="encoder_render_threads.cpp" />
     <ClCompile Include="unity_encoder.cpp" />
   </ItemGroup>
   <ItemGroup>

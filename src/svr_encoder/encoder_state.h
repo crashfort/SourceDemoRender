@@ -162,6 +162,7 @@ struct EncoderState
 
     bool render_init();
     bool render_start();
+    bool render_start_threads();
     void render_free_static();
     void render_free_dynamic();
     void render_frame_proc();

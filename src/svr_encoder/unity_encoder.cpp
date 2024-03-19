@@ -6,3 +6,4 @@
 #include "encoder_render.cpp"
 #include "encoder_dnxhr.cpp"
 #include "encoder_libx264.cpp"
+#include "encoder_render_threads.cpp"
