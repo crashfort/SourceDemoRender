@@ -211,8 +211,8 @@ void ProcState::velo_draw()
         vid_d2d1_solid_brush->SetColor(vid_fill_d2d1_color(movie_profile.velo_font_border_color));
         vid_d2d1_context->DrawGeometry(geom, vid_d2d1_solid_brush, movie_profile.velo_font_border_size);
 
-        geom->Release();
-        sink->Release();
+        svr_release(geom);
+        svr_release(sink);
     }
 
     // Use more specialized path with no border.

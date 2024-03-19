@@ -25,6 +25,7 @@ using wchar = wchar_t;
 
 // For data separation between threads in the same structure.
 #define SVR_THREAD_PADDING() u8 SVR_CAT(thread_padding_, __LINE__)[SVR_CPU_CACHE_SIZE]
+#define SVR_STRUCT_PADDING(S) u8 SVR_CAT(struct_padding_, __LINE__)[S]
 
 #define SVR_STR_CAT1(X) #X
 #define SVR_STR_CAT(X) SVR_STR_CAT1(X)
@@ -72,12 +73,23 @@ inline void svr_clamp(T* v, T min, T max)
     *v = svr_min(svr_max(*v, min), max);
 }
 
+// Release a COM based object.
+void svr_release(struct IUnknown* p);
+
+// Maybe release a COM based object.
 template <class T>
 inline void svr_maybe_release(T** ptr)
 {
-    if (*ptr) (*ptr)->Release();
+    if (*ptr)
+    {
+        svr_release(*ptr);
+    }
+
     *ptr = NULL;
 }
+
+// Maybe release a HANDLE based object.
+void svr_maybe_close_handle(void** h);
 
 // Aligns up.
 inline s32 svr_align32(s32 value, s32 alignment)

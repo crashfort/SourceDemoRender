@@ -3,6 +3,7 @@
 const s32 RENDER_QUEUED_FRAMES = 8192; // How many uncompressed AVFrame* to queue up for encoding.
 const s32 RENDER_QUEUED_PACKETS = 8192; // How many compressed AVPacket* to queue up for writing.
 const s32 VID_QUEUED_TEXTURES = 256; // How many converted uncompressed frames to store in RAM before encode.
+const s32 RENDER_QUEUED_AUDIO_BUFFERS = 8192; // How many audio buffers to queue up for conversion and encoding.
 
 // At most, YUV uses 3 planes.
 const s32 VID_MAX_PLANES = 3;
@@ -18,6 +19,12 @@ struct RenderFrameThreadInput
     AVFrame* frame;
     AVStream* stream;
     AVMediaType type;
+};
+
+struct RenderAudioThreadInput
+{
+    void* mem; // In the format incoming from svr_game. Capacity is always ENCODER_MAX_SAMPLES.
+    s32 num_samples; // How many samples there actually are.
 };
 
 struct VidTextureDownloadInput
@@ -64,45 +71,28 @@ struct EncoderState
 
     AVFormatContext* render_output_context;
     const AVOutputFormat* render_container;
-    bool render_started;
 
-    // These threads start when rendering starts, and stop when rendering stops.
+    SVR_THREAD_PADDING();
+
+    SvrAtom32 render_started;
+
+    SVR_THREAD_PADDING();
+
+    // The threads start when rendering starts, and stop when rendering stops.
     // This makes it really easy to synchronize when stopping.
+
+    // Frame thread:
+
+    SVR_THREAD_PADDING();
+
     HANDLE render_frame_thread_h; // Thread used to process uncompressed video frames and audio samples.
-    HANDLE render_packet_thread_h; // Thread used to process encoded packets for writing to the container.
 
-    HANDLE render_frame_wake_event_h; // Event set by the main thread to notify that there are new frames to encode.
-
-    // Event set by the frame thread to notify that there are encoded packets to write.
-    // When rendering stops, this will be set by the main thread instead.
-    HANDLE render_packet_wake_event_h;
-
-    SVR_THREAD_PADDING();
-
-    SvrAtom32 render_frame_thread_status; // Will be set to 0 by frame thread if it failed. Message will be in render_frame_thread_message.
-
-    SVR_THREAD_PADDING();
-
-    SvrAtom32 render_packet_thread_status; // Will be set to 0 by packet thread if it failed. Message will be in render_packet_thread_message.
-
-    SVR_THREAD_PADDING();
-
-    char render_frame_thread_message[256]; // Error message for the frame thread.
-
-    SVR_THREAD_PADDING();
-
-    char render_packet_thread_message[256]; // Error message for the packet thread.
-
-    SVR_THREAD_PADDING();
+    // Event set by the main and audio threads to notify that there are new frames to encode.
+    HANDLE render_frame_wake_event_h;
 
     // Uncompressed frames and samples ready to be encoded.
-    // Written to by the main thread, read by the frame thread.
-    SvrAsyncStream<RenderFrameThreadInput> render_frame_queue;
-
-    // Compressed packets ready to be written.
-    // Written to by the frame thread, read by the packet thread.
-    // When rendering stops, this will be written to by the main thread instead.
-    SvrAsyncStream<AVPacket*> render_packet_queue;
+    // Written to by the main and audio threads, read by the frame thread.
+    SvrAsyncQueue<RenderFrameThreadInput> render_frame_queue;
 
     // Video frames that have been encoded.
     // Written to by the frame thread, read by the main thread.
@@ -112,6 +102,49 @@ struct EncoderState
     // Written to by the frame thread, read by the main thread.
     SvrAsyncStream<AVFrame*> render_recycled_audio_frames;
 
+    SvrAtom32 render_frame_thread_status; // Will be set to 0 by frame thread if it failed. Message will be in render_frame_thread_message.
+    char render_frame_thread_message[256]; // Error message for the frame thread.
+
+    // Packet thread:
+
+    SVR_THREAD_PADDING();
+
+    HANDLE render_packet_thread_h; // Thread used to process encoded packets for writing to the container.
+
+    // Event set by the frame thread to notify that there are encoded packets to write.
+    // When rendering stops, this will be set by the main thread instead.
+    HANDLE render_packet_wake_event_h;
+
+    // Compressed packets ready to be written.
+    // Written to by the frame thread, read by the packet thread.
+    // When rendering stops, this will be written to by the main thread instead.
+    SvrAsyncStream<AVPacket*> render_packet_queue;
+
+    SvrAtom32 render_packet_thread_status; // Will be set to 0 by packet thread if it failed. Message will be in render_packet_thread_message.
+    char render_packet_thread_message[256]; // Error message for the packet thread.
+
+    // Audio thread:
+
+    SVR_THREAD_PADDING();
+
+    HANDLE render_audio_thread_h; // Thread used to process incoming audio buffers for conversion and encoding.
+
+    // Event set by the main thread to notify that there are new audio buffers to process.
+    HANDLE render_audio_wake_event_h;
+
+    // Uncompressed audio samples ready to be converted and encoded.
+    // Written to by the main thread, read by the audio thread.
+    SvrAsyncStream<RenderAudioThreadInput> render_audio_queue;
+
+    // Raw audio buffers.
+    // Written to by the audio thread, read by the main thread.
+    SvrAsyncStream<RenderAudioThreadInput> render_recycled_audio_buffers;
+
+    SvrAtom32 render_audio_thread_status; // Will be set to 0 by audio thread if it failed. Message will be in render_audio_thread_message.
+    char render_audio_thread_message[256]; // Error message for the audio thread.
+
+    SVR_THREAD_PADDING();
+
     const RenderVideoInfo* render_video_info;
     AVStream* render_video_stream;
     AVCodecContext* render_video_ctx;
@@ -120,7 +153,12 @@ struct EncoderState
     const RenderAudioInfo* render_audio_info;
     AVStream* render_audio_stream;
     AVCodecContext* render_audio_ctx;
-    s64 render_audio_pts; // Presentation timestamp.
+
+    SVR_THREAD_PADDING();
+
+    s64 render_audio_pts; // Presentation timestamp. Set by the audio thread.
+
+    SVR_THREAD_PADDING();
 
     bool render_init();
     bool render_start();
@@ -128,6 +166,7 @@ struct EncoderState
     void render_free_dynamic();
     void render_frame_proc();
     void render_packet_proc();
+    void render_audio_proc();
     bool render_setup_video_info();
     bool render_setup_audio_info();
     bool render_init_output_context();
@@ -144,7 +183,10 @@ struct EncoderState
     void render_encode_frame(AVCodecContext* ctx, AVStream* stream, AVFrame* frame, AVMediaType type);
     AVFrame* render_get_new_video_frame();
     AVFrame* render_get_new_audio_frame();
-    void render_free_recycled_frames();
+    RenderAudioThreadInput render_get_new_audio_buffer(s32 num_samples);
+    s32 render_get_audio_buffer_size(s32 num_samples);
+    void render_free_recycled_stuff();
+    void render_free_lingering_thread_inputs();
     void render_submit_texture();
 
     void render_setup_dnxhr();
@@ -220,7 +262,7 @@ struct EncoderState
     bool audio_start();
     bool audio_create_resampler();
     bool audio_create_fifo();
-    void audio_convert_to_codec_samples();
+    void audio_convert_to_codec_samples(RenderAudioThreadInput* buffer);
     void audio_copy_samples_to_frame(AVFrame* dest_frame, s32 num_samples);
     s32 audio_num_queued_samples();
 };

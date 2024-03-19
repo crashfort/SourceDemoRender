@@ -19,10 +19,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_alloc.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_api.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_array.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)svr_async_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_atom.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_defs.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_ini.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)svr_locked_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_log.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_prof.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_sem.h" />

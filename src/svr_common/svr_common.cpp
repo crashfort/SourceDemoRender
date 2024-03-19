@@ -6,6 +6,23 @@
 #include <Windows.h>
 #include <assert.h>
 
+// Prefer to use this instead of calling Release yourself since you can use this to see the actual reference count.
+void svr_release(struct IUnknown* p)
+{
+    assert(p);
+    auto n = p->Release();
+    s32 a = 5;
+}
+
+void svr_maybe_close_handle(void** h)
+{
+    if (*h)
+    {
+        CloseHandle(*h);
+        *h = NULL;
+    }
+}
+
 s32 svr_copy_string(const char* source, char* dest, s32 dest_chars)
 {
     s32 len = svr_min(dest_chars - 1, (s32)strlen(source));

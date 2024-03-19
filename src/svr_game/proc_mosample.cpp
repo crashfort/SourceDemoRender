@@ -1,6 +1,6 @@
 #include "proc_priv.h"
 
-__declspec(align(16)) struct MosampleCb
+struct __declspec(align(16)) MosampleCb
 {
     float mosample_weight;
 };

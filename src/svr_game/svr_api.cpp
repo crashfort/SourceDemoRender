@@ -178,7 +178,7 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         ID3D11Resource* content_res = NULL;
         svr_content_srv->GetResource(&content_res);
         content_res->QueryInterface(IID_PPV_ARGS(&svr_content_tex));
-        content_res->Release();
+        svr_release(content_res);
 
         D3D11_TEXTURE2D_DESC tex_desc;
         svr_content_tex->GetDesc(&tex_desc);
@@ -211,7 +211,7 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         }
 
         d3d9ex_share_tex->GetSurfaceLevel(0, &svr_d3d9ex_share_surf);
-        d3d9ex_share_tex->Release();
+        svr_release(d3d9ex_share_tex);
 
         svr_d3d11_device->OpenSharedResource(d3d9ex_share_h, IID_PPV_ARGS(&svr_content_tex));
         svr_d3d11_device->CreateShaderResourceView(svr_content_tex, NULL, &svr_content_srv);

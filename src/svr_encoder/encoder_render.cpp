@@ -34,23 +34,34 @@ DWORD CALLBACK render_packet_thread_proc(LPVOID param)
     return 0; // Not used.
 }
 
+DWORD CALLBACK render_audio_thread_proc(LPVOID param)
+{
+    SetThreadDescription(GetCurrentThread(), L"RENDER AUDIO THREAD");
+
+    EncoderState* encoder_ptr = (EncoderState*)param;
+    encoder_ptr->render_audio_proc();
+
+    return 0; // Not used.
+}
+
 bool EncoderState::render_init()
 {
     render_frame_queue.init(RENDER_QUEUED_FRAMES);
     render_packet_queue.init(RENDER_QUEUED_PACKETS);
+    render_audio_queue.init(RENDER_QUEUED_AUDIO_BUFFERS);
     render_recycled_video_frames.init(RENDER_QUEUED_FRAMES);
     render_recycled_audio_frames.init(RENDER_QUEUED_FRAMES);
+    render_recycled_audio_buffers.init(RENDER_QUEUED_AUDIO_BUFFERS);
 
     render_frame_wake_event_h = CreateEventA(NULL, FALSE, FALSE, NULL);
     render_packet_wake_event_h = CreateEventA(NULL, FALSE, FALSE, NULL);
+    render_audio_wake_event_h = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     return true;
 }
 
 bool EncoderState::render_start()
 {
-    assert(!render_started);
-
     bool ret = false;
     s32 res;
 
@@ -83,18 +94,22 @@ bool EncoderState::render_start()
     // Threads are ok at the start.
     svr_atom_store(&render_frame_thread_status, 1);
     svr_atom_store(&render_packet_thread_status, 1);
+    svr_atom_store(&render_audio_thread_status, 1);
 
     render_frame_thread_message[0] = 0;
     render_packet_thread_message[0] = 0;
+    render_audio_thread_message[0] = 0;
 
     // Be extra sure that these events are not triggered, so the threads enter a waiting state.
     ResetEvent(render_frame_wake_event_h);
     ResetEvent(render_packet_wake_event_h);
+    ResetEvent(render_audio_wake_event_h);
+
+    svr_atom_store(&render_started, 1);
 
     render_frame_thread_h = CreateThread(NULL, 0, render_frame_thread_proc, this, 0, NULL);
     render_packet_thread_h = CreateThread(NULL, 0, render_packet_thread_proc, this, 0, NULL);
-
-    render_started = true;
+    render_audio_thread_h = CreateThread(NULL, 0, render_audio_thread_proc, this, 0, NULL);
 
     ret = true;
     goto rexit;
@@ -107,27 +122,21 @@ rexit:
 
 void EncoderState::render_free_static()
 {
-    if (render_frame_wake_event_h)
-    {
-        CloseHandle(render_frame_wake_event_h);
-        render_frame_wake_event_h = NULL;
-    }
-
-    if (render_packet_wake_event_h)
-    {
-        CloseHandle(render_packet_wake_event_h);
-        render_packet_wake_event_h = NULL;
-    }
+    svr_maybe_close_handle(&render_frame_wake_event_h);
+    svr_maybe_close_handle(&render_packet_wake_event_h);
+    svr_maybe_close_handle(&render_audio_wake_event_h);
 
     render_frame_queue.free();
     render_packet_queue.free();
+    render_audio_queue.free();
     render_recycled_video_frames.free();
     render_recycled_audio_frames.free();
+    render_recycled_audio_buffers.free();
 }
 
 void EncoderState::render_free_dynamic()
 {
-    if (render_started)
+    if (svr_atom_load(&render_started))
     {
         // Submit any remaining textures for encode.
 
@@ -142,6 +151,15 @@ void EncoderState::render_free_dynamic()
         {
             render_flush_audio_fifo();
         }
+
+        // Send flush to audio thread.
+
+        RenderAudioThreadInput flush_audio_buf = {};
+        render_audio_queue.push(&flush_audio_buf);
+
+        SetEvent(render_audio_wake_event_h); // Notify audio thread.
+
+        WaitForSingleObject(render_audio_thread_h, INFINITE); // Wait for audio thread to finish.
 
         // Send flushes to frame thread.
 
@@ -165,13 +183,17 @@ void EncoderState::render_free_dynamic()
 
         WaitForSingleObject(render_packet_thread_h, INFINITE); // Wait for packet thread to finish.
 
-        CloseHandle(render_frame_thread_h);
-        render_frame_thread_h = NULL;
-
-        CloseHandle(render_packet_thread_h);
-        render_packet_thread_h = NULL;
-
         av_write_trailer(render_output_context); // Can only be written if avformat_write_header was called.
+    }
+
+    else
+    {
+        // Wake threads so they can exit (if they even started).
+        // Since render_started is 0, they will immediately exit.
+
+        SetEvent(render_frame_wake_event_h);
+        SetEvent(render_packet_wake_event_h);
+        SetEvent(render_audio_wake_event_h);
     }
 
     if (render_output_context)
@@ -193,12 +215,17 @@ void EncoderState::render_free_dynamic()
 
     render_container = NULL;
 
-    render_started = false;
+    svr_atom_store(&render_started, 0);
 
     render_video_pts = 0;
     render_audio_pts = 0;
 
-    render_free_recycled_frames();
+    render_free_recycled_stuff();
+    render_free_lingering_thread_inputs();
+
+    svr_maybe_close_handle(&render_frame_thread_h);
+    svr_maybe_close_handle(&render_packet_thread_h);
+    svr_maybe_close_handle(&render_audio_thread_h);
 }
 
 // In frame thread.
@@ -209,6 +236,12 @@ void EncoderState::render_frame_proc()
     while (run)
     {
         WaitForSingleObject(render_frame_wake_event_h, INFINITE);
+
+        // Exit thread on external error.
+        if (svr_atom_load(&render_started) == 0)
+        {
+            break;
+        }
 
         RenderFrameThreadInput input = {};
 
@@ -298,6 +331,12 @@ void EncoderState::render_packet_proc()
     {
         WaitForSingleObject(render_packet_wake_event_h, INFINITE);
 
+        // Exit thread on external error.
+        if (svr_atom_load(&render_started) == 0)
+        {
+            break;
+        }
+
         AVPacket* packet = NULL;
 
         while (render_packet_queue.pull(&packet))
@@ -323,6 +362,49 @@ void EncoderState::render_packet_proc()
 
 rfail:
     svr_atom_store(&render_packet_thread_status, 0);
+
+rexit:
+    return;
+}
+
+// In audio thread.
+void EncoderState::render_audio_proc()
+{
+    bool run = true;
+
+    while (run)
+    {
+        WaitForSingleObject(render_audio_wake_event_h, INFINITE);
+
+        // Exit thread on external error.
+        if (svr_atom_load(&render_started) == 0)
+        {
+            break;
+        }
+
+        RenderAudioThreadInput buffer = {};
+
+        while (render_audio_queue.pull(&buffer))
+        {
+            if (buffer.mem == NULL)
+            {
+                run = false; // Stop on flush buffer.
+            }
+
+            audio_convert_to_codec_samples(&buffer);
+
+            // Must submit everything in the fifo so things don't start drifting away.
+            // It's possible that this doesn't do anything in case there aren't enough samples to cover the needed frame size.
+            render_submit_audio_fifo();
+
+            render_recycled_audio_buffers.push(&buffer); // Give back the audio buffer.
+        }
+    }
+
+    goto rexit;
+
+rfail:
+    svr_atom_store(&render_audio_thread_status, 0);
 
 rexit:
     return;
@@ -632,14 +714,19 @@ bool EncoderState::render_check_thread_errors()
         return true;
     }
 
+    // Audio thread broke. Nothing more can be submitted.
+    if (svr_atom_load(&render_audio_thread_status) == 0)
+    {
+        error(render_audio_thread_message);
+        return true;
+    }
+
     return false;
 }
 
 // The shared game texture has been updated at this point.
 bool EncoderState::render_receive_video()
 {
-    assert(render_started);
-
     bool ret = false;
 
     if (render_check_thread_errors())
@@ -669,10 +756,6 @@ rexit:
 // The shared audio samples have been updated at this point.
 bool EncoderState::render_receive_audio()
 {
-    assert(render_started);
-    assert(movie_params.use_audio);
-    assert(shared_mem_ptr->waiting_audio_samples > 0);
-
     bool ret = false;
 
     if (render_check_thread_errors())
@@ -680,11 +763,17 @@ bool EncoderState::render_receive_audio()
         goto rfail;
     }
 
-    audio_convert_to_codec_samples();
+    // Copy to a new buffer and pass to the audio thread. The audio thread will convert if needed and pass
+    // to the encoder.
 
-    // Must submit everything in the fifo so things don't start drifting away.
-    // It's possible that this doesn't do anything in case there aren't enough samples to cover the needed frame size.
-    render_submit_audio_fifo();
+    RenderAudioThreadInput input = render_get_new_audio_buffer(shared_mem_ptr->waiting_audio_samples);
+
+    s32 size = render_get_audio_buffer_size(shared_mem_ptr->waiting_audio_samples);
+    memcpy(input.mem, shared_audio_buffer, size);
+
+    render_audio_queue.push(&input);
+
+    SetEvent(render_audio_wake_event_h); // Notify audio thread.
 
     ret = true;
     goto rexit;
@@ -844,8 +933,34 @@ rexit:
     return ret;
 }
 
-// Free the allocated buffers in the recycled audio and video frames.
-void EncoderState::render_free_recycled_frames()
+RenderAudioThreadInput EncoderState::render_get_new_audio_buffer(s32 num_samples)
+{
+    RenderAudioThreadInput ret = {};
+
+    // Fast and good if we can reuse.
+    if (render_recycled_audio_buffers.pull(&ret))
+    {
+        ret.num_samples = num_samples;
+        return ret;
+    }
+
+    s32 capacity = render_get_audio_buffer_size(ENCODER_MAX_SAMPLES);
+
+    ret.mem = svr_alloc(capacity);
+    ret.num_samples = num_samples;
+
+    return ret;
+}
+
+s32 EncoderState::render_get_audio_buffer_size(s32 num_samples)
+{
+    s32 bytes_per_sample = movie_params.audio_bits >> 3;
+    s32 size = bytes_per_sample * movie_params.audio_channels * num_samples;
+    return size;
+}
+
+// Free the allocated buffers in the recycled stuff.
+void EncoderState::render_free_recycled_stuff()
 {
     AVFrame* frame = NULL;
 
@@ -857,6 +972,39 @@ void EncoderState::render_free_recycled_frames()
     while (render_recycled_audio_frames.pull(&frame))
     {
         av_frame_free(&frame);
+    }
+
+    RenderAudioThreadInput audio_input = {};
+
+    while (render_recycled_audio_buffers.pull(&audio_input))
+    {
+        svr_free(audio_input.mem);
+    }
+}
+
+// Free any lingering objects that got stuck in a thread input queue that could
+// not be processed because some error.
+void EncoderState::render_free_lingering_thread_inputs()
+{
+    RenderAudioThreadInput audio_input = {};
+
+    while (render_audio_queue.pull(&audio_input))
+    {
+        svr_free(audio_input.mem);
+    }
+
+    AVPacket* packet_input = NULL;
+
+    while (render_packet_queue.pull(&packet_input))
+    {
+        av_packet_free(&packet_input);
+    }
+
+    RenderFrameThreadInput frame_input = {};
+
+    while (render_frame_queue.pull(&frame_input))
+    {
+        av_frame_free(&frame_input.frame);
     }
 }
 

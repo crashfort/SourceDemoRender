@@ -123,11 +123,7 @@ void EncoderState::vid_free_static()
 
 void EncoderState::vid_free_dynamic()
 {
-    if (game_texture_h)
-    {
-        CloseHandle(game_texture_h);
-        game_texture_h = NULL;
-    }
+    svr_maybe_close_handle(&game_texture_h);
 
     svr_maybe_release(&vid_game_tex);
     svr_maybe_release(&vid_game_tex_srv);

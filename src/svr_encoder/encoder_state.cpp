@@ -142,7 +142,7 @@ void EncoderState::event_loop()
         // This will exit this process too.
         if (waited_h == game_process)
         {
-            if (render_started)
+            if (svr_atom_load(&render_started))
             {
                 svr_log("Game exited without telling the encoder, ending movie\n");
 
@@ -199,17 +199,8 @@ void EncoderState::event_loop()
 
 void EncoderState::free_static()
 {
-    if (game_process)
-    {
-        CloseHandle(game_process);
-        game_process = NULL;
-    }
-
-    if (shared_mem_h)
-    {
-        CloseHandle(shared_mem_h);
-        shared_mem_h = NULL;
-    }
+    svr_maybe_close_handle(&game_process);
+    svr_maybe_close_handle(&shared_mem_h);
 
     if (shared_mem_ptr)
     {
@@ -218,17 +209,8 @@ void EncoderState::free_static()
         shared_audio_buffer = NULL;
     }
 
-    if (game_wake_event_h)
-    {
-        CloseHandle(game_wake_event_h);
-        game_wake_event_h = NULL;
-    }
-
-    if (encoder_wake_event_h)
-    {
-        CloseHandle(encoder_wake_event_h);
-        encoder_wake_event_h = NULL;
-    }
+    svr_maybe_close_handle(&game_wake_event_h);
+    svr_maybe_close_handle(&encoder_wake_event_h);
 
     render_free_static();
     vid_free_static();
@@ -249,7 +231,7 @@ void EncoderState::error(const char* format, ...)
 
     // Set this early so we don't try to flush the encoders or something.
     // If we have an error then we must stop right now, and not try to process any more data.
-    render_started = false;
+    svr_atom_store(&render_started, 0);
 
     va_list va;
     va_start(va, format);

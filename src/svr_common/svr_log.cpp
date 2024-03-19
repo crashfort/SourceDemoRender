@@ -48,10 +48,7 @@ void svr_init_log(const char* log_file_path, bool append)
 
 void svr_shutdown_log()
 {
-    if (log_file_handle)
-    {
-        CloseHandle(log_file_handle);
-    }
+    svr_maybe_close_handle(&log_file_handle);
 }
 
 // Below log functions not used for integrated SVR, but we may get here still from game_log.

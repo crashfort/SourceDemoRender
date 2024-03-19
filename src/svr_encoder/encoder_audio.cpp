@@ -151,11 +151,10 @@ rexit:
     return ret;
 }
 
-// Copies the converted audio samples into the frame.
-void EncoderState::audio_convert_to_codec_samples()
+// Copies the audio samples into the fifo.
+// The samples get converted if needed.
+void EncoderState::audio_convert_to_codec_samples(RenderAudioThreadInput* buffer)
 {
-    s32 num_waiting = shared_mem_ptr->waiting_audio_samples;
-
     // Try to avoid extra procesing if we can.
     // If we have matching input and output parameters, just copy over and return.
 
@@ -171,7 +170,7 @@ void EncoderState::audio_convert_to_codec_samples()
         s64 delay = swr_get_delay(audio_swr, audio_input_hz);
 
         // Don't use more than necessary here, because we should not be receiving tons of more samples than we need.
-        s64 estimated = av_rescale_rnd(delay + (int64_t)num_waiting, audio_output_hz, audio_input_hz, AV_ROUND_UP);
+        s64 estimated = av_rescale_rnd(delay + (int64_t)buffer->num_samples, audio_output_hz, audio_input_hz, AV_ROUND_UP);
 
         // Grow buffer.
         if (estimated > audio_output_size)
@@ -188,7 +187,7 @@ void EncoderState::audio_convert_to_codec_samples()
 
         // For the first call, we may get less samples than written because during resampling, additional samples
         // need to be kept for the interpolation. We will call again with the number of samples we are missing to exactly fill out one paint buffer.
-        s32 num_output_samples = swr_convert(audio_swr, audio_output_buffers, audio_output_size, (const uint8_t**)&shared_audio_buffer, num_waiting);
+        s32 num_output_samples = swr_convert(audio_swr, audio_output_buffers, audio_output_size, (const uint8_t**)&buffer->mem, buffer->num_samples);
 
         // Some encoders have a restriction that they only work with a fixed amount of samples.
         // We can get less samples from the game so we have to queue them up and only copy to a frame when we have enough.
@@ -200,7 +199,7 @@ void EncoderState::audio_convert_to_codec_samples()
     {
         // Some encoders have a restriction that they only work with a fixed amount of samples.
         // We can get less samples from the game so we have to queue them up and only copy to a frame when we have enough.
-        av_audio_fifo_write(audio_fifo, (void**)&shared_audio_buffer, num_waiting);
+        av_audio_fifo_write(audio_fifo, (void**)&buffer->mem, buffer->num_samples);
     }
 }
 
