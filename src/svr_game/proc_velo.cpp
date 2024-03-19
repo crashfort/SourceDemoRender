@@ -86,17 +86,18 @@ void ProcState::velo_setup_tab_metrix()
     velo_font_face->GetMetrics(&font_metrix);
 
     UINT32 tab_cp = L'0';
-
+    DWRITE_GLYPH_METRICS tab_metrix;
     UINT16 tab_idx;
+
     velo_font_face->GetGlyphIndicesW(&tab_cp, 1, &tab_idx);
-    velo_font_face->GetDesignGlyphMetrics(&tab_idx, 1, &velo_tab_metrix, FALSE);
+    velo_font_face->GetDesignGlyphMetrics(&tab_idx, 1, &tab_metrix, FALSE);
 
     float scale = (float)movie_profile.velo_font_size / (float)font_metrix.designUnitsPerEm;
 
-    float t = velo_tab_metrix.topSideBearing * scale;
-    float b = velo_tab_metrix.bottomSideBearing * scale;
-    float aw = velo_tab_metrix.advanceWidth * scale;
-    float ah = velo_tab_metrix.advanceHeight * scale;
+    float t = tab_metrix.topSideBearing * scale;
+    float b = tab_metrix.bottomSideBearing * scale;
+    float aw = tab_metrix.advanceWidth * scale;
+    float ah = tab_metrix.advanceHeight * scale;
 
     velo_tab_height = ah - b - t;
     velo_tab_advance_x = aw;
@@ -104,8 +105,8 @@ void ProcState::velo_setup_tab_metrix()
 
 void ProcState::velo_setup_glyph_idxs()
 {
-    UINT32 cps[] = { L'0', L'1', L'2', L'3', L'4', L'5', L'6', L'7', L'8', L'9' };
-    velo_font_face->GetGlyphIndicesW(cps, SVR_ARRAY_SIZE(cps), velo_number_glyph_idxs);
+    const UINT32 CPS[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+    velo_font_face->GetGlyphIndicesW(CPS, SVR_ARRAY_SIZE(CPS), velo_number_glyph_idxs);
 }
 
 bool ProcState::velo_start()
@@ -164,7 +165,6 @@ void ProcState::velo_draw()
         advances[i] = velo_tab_advance_x;
     }
 
-    // Base horizontal positioning from the center.
     // Vertical positioning is done from the baseline.
 
     float w = text_length * velo_tab_advance_x;

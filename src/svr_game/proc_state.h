@@ -116,7 +116,6 @@ struct ProcState
     SvrVec2I velo_draw_pos;
 
     // Emulation of tabular font feature.
-    DWRITE_GLYPH_METRICS velo_tab_metrix;
     float velo_tab_height;
     float velo_tab_advance_x;
 
