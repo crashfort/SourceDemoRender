@@ -1,4 +1,4 @@
-Version 41, 26 October 2022
+Version 41, 20 March 2024
 ---------------------------
 
 Supported games in this release:
