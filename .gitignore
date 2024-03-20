@@ -18,3 +18,4 @@ bin/data/SVR_LOG.TXT
 *.lib
 bin/data/ENCODER_LOG.txt
 *.mov
+svr.zip
