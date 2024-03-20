@@ -1,6 +1,7 @@
 @echo off
 
 REM We use zip because more often than not people don't have 7zip or equivalent. Windows has built in support for opening zip.
+REM You need 7z in your PATH to run this.
 
 setlocal
 mkdir publish_temp\svr
@@ -21,6 +22,7 @@ copy /Y ".\update.cmd" "publish_temp\svr\"
 copy /Y ".\README.MD" "publish_temp\svr\"
 mkdir ".\publish_temp\svr\movies"
 del /S /Q ".\publish_temp\svr\data\SVR_LOG.TXT"
+del /S /Q ".\publish_temp\svr\data\ENCODER_LOG.TXT"
 
 cd publish_temp
 
