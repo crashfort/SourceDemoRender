@@ -13,7 +13,7 @@ struct IpcStructure
 
     char library_name[256]; // The path to the library to load.
     char export_name[256]; // The export function to call.
-    char svr_path[256]; // The path of the SVR directory.
+    char svr_path[256]; // The path of the SVR directory. Does not end with a slash.
 };
 
 // The code that will run in the started process.
@@ -28,7 +28,7 @@ const u8 IPC_REMOTE_FUNC_BYTES[] =
     0x8b, 0x7d, 0x08,
     0x8b, 0x47, 0x08,
     0x8d, 0xb7, 0x10, 0x02, 0x00,
-    00,
+    0x00,
     0x56,
     0xff, 0xd0,
     0x8b, 0x0f,
