@@ -11,8 +11,8 @@ struct IpcStructure
 
     SteamAppId app_id; // What Steam game we are starting.
 
-    char library_name[32]; // The path to the library to load.
-    char export_name[32]; // The export function to call.
+    char library_name[256]; // The path to the library to load.
+    char export_name[256]; // The export function to call.
     char svr_path[256]; // The path of the SVR directory.
 };
 
@@ -27,7 +27,8 @@ const u8 IPC_REMOTE_FUNC_BYTES[] =
     0x57,
     0x8b, 0x7d, 0x08,
     0x8b, 0x47, 0x08,
-    0x8d, 0x77, 0x50,
+    0x8d, 0xb7, 0x10, 0x02, 0x00,
+    00,
     0x56,
     0xff, 0xd0,
     0x8b, 0x0f,
@@ -35,7 +36,8 @@ const u8 IPC_REMOTE_FUNC_BYTES[] =
     0x50,
     0xff, 0xd1,
     0x8b, 0x57, 0x04,
-    0x8d, 0x4f, 0x30,
+    0x8d, 0x8f, 0x10, 0x01, 0x00,
+    0x00,
     0x51,
     0x50,
     0xff, 0xd2,
@@ -97,7 +99,7 @@ void LauncherState::ipc_setup_in_remote_process(LauncherGame* game, HANDLE proce
     // It needs to be able to contain all function bytes and the structure containing variable length strings.
     // The virtual memory that we allocated should not be freed as it will be used
     // as reference for future use within the application itself.
-    void* remote_mem = VirtualAllocEx(process, NULL, 1024, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    void* remote_mem = VirtualAllocEx(process, NULL, 2048, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 
     if (remote_mem == NULL)
     {
