@@ -23,6 +23,7 @@ struct SvrLockedQueue
 
     inline void free()
     {
+        items.~queue();
     }
 
     inline void push(T* item)
