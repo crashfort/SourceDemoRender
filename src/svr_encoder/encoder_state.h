@@ -76,8 +76,6 @@ struct EncoderState
 
     SvrAtom32 render_started;
 
-    SVR_THREAD_PADDING();
-
     // The threads start when rendering starts, and stop when rendering stops.
     // This makes it really easy to synchronize when stopping.
 
