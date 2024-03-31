@@ -9,7 +9,7 @@
 // This has the additional benefit of keeping the code a lot simpler, and also has no chance
 // of achieving the potential circular queue overflow problem which is difficult to handle without a huge mess.
 // Even if you manage to handle the overflow problem, you now have a bottleneck problem instead where the writer is clearly faster than the reader.
-// The things we store in these are now extremely large, so we just keep on growing since the order is very important.
+// The things we store in these are not extremely large, so we just keep on growing since the order is very important.
 
 template <class T>
 struct SvrLockedQueue
