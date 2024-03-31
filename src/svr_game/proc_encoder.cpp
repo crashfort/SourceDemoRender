@@ -397,8 +397,6 @@ bool ProcState::encoder_send_shared_tex()
 {
     bool ret = false;
 
-    vid_d3d11_context->Flush(); // Must be called too. Apparently just releasing sync above is not enough for some vendors.
-
     encoder_share_tex_lock->ReleaseSync(ENCODER_PROC_ID); // Allow encoder to read.
 
     if (!encoder_send_event(ENCODER_EVENT_NEW_VIDEO))
