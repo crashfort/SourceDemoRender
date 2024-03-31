@@ -1,4 +1,4 @@
 #pragma once
 #include "svr_common.h"
 
-const s32 SVR_VERSION = 41;
+const s32 SVR_VERSION = 42;
