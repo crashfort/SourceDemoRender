@@ -27,7 +27,7 @@ void svr_maybe_free(void** addr)
 {
     if (*addr)
     {
-        svr_free(addr);
+        svr_free(*addr);
         *addr = NULL;
     }
 }
