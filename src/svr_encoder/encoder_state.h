@@ -222,7 +222,7 @@ struct EncoderState
     ID3D11Texture2D* vid_converted_texs[VID_MAX_PLANES];
     ID3D11UnorderedAccessView* vid_converted_uavs[VID_MAX_PLANES];
 
-    VidTextureDownloadInput vid_texture_download_queue[VID_QUEUED_TEXTURES];
+    VidTextureDownloadInput* vid_texture_download_queue;
 
     // These indexes get wrapped.
     s64 render_download_write_idx;

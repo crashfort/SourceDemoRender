@@ -19,6 +19,8 @@ bool EncoderState::vid_init()
         goto rfail;
     }
 
+    vid_texture_download_queue = SVR_ZALLOC_NUM(VidTextureDownloadInput, VID_QUEUED_TEXTURES);
+
     ret = true;
     goto rexit;
 
@@ -119,6 +121,8 @@ void EncoderState::vid_free_static()
     svr_maybe_release(&vid_nv12_cs);
     svr_maybe_release(&vid_yuv422_cs);
     svr_maybe_release(&vid_yuv444_cs);
+
+    svr_maybe_free((void**)&vid_texture_download_queue);
 }
 
 void EncoderState::vid_free_dynamic()
