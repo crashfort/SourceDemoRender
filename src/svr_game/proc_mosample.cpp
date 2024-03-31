@@ -181,9 +181,7 @@ void ProcState::mosample_process(float weight)
 
     vid_d3d11_context->Dispatch(vid_get_num_cs_threads(movie_width), vid_get_num_cs_threads(movie_height), 1);
 
-    svr_start_prof(&mosample_prof);
     vid_d3d11_context->Flush();
-    svr_end_prof(&mosample_prof);
 
     ID3D11ShaderResourceView* null_srv = NULL;
     ID3D11UnorderedAccessView* null_uav = NULL;
