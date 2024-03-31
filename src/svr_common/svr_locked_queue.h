@@ -1,91 +1,56 @@
 #pragma once
 #include "svr_common.h"
-#include "svr_alloc.h"
-#include "svr_atom.h"
-#include <assert.h>
 #include <Windows.h>
+#include <queue>
 
 // Lock based queue.
 // Safe for several threads to push and pull.
+// During profiling during production, this was equally fast as SvrAsyncQueue and SvrAsyncStream.
+// This has the additional benefit of keeping the code a lot simpler, and also has no chance
+// of achieving the potential circular queue overflow problem which is difficult to handle without a huge mess.
+// Even if you manage to handle the overflow problem, you now have a bottleneck problem instead where the writer is clearly faster than the reader.
+// The things we store in these are now extremely large, so we just keep on growing since the order is very important.
 
 template <class T>
 struct SvrLockedQueue
 {
-    T* items_;
-    SRWLOCK lock_;
-    s32 buffer_capacity_;
-
-    s32 write_idx_;
-    s32 read_idx_;
+    std::queue<T> items;
+    SRWLOCK lock;
 
     inline void init(s32 capacity)
     {
-        items_ = (T*)svr_alloc(sizeof(T) * capacity);
-        buffer_capacity_ = capacity;
     }
 
     inline void free()
     {
-        svr_maybe_free((void**)&items_);
     }
 
-    inline bool push(T* item)
+    inline void push(T* item)
     {
-        bool ret = false;
-
-        AcquireSRWLockExclusive(&lock_);
-
-        s32 next_idx = write_idx_ + 1;
-
-        if (next_idx == buffer_capacity_)
-        {
-            next_idx = 0;
-        }
-
-        if (next_idx == read_idx_)
-        {
-            // We cannot add another element now. This is capacity minus 1. The read and write ends cannot be the same (as that would mean empty).
-            goto rexit;
-        }
-
-        items_[write_idx_] = *item;
-
-        write_idx_ = next_idx;
-
-        ret = true;
-
-    rexit:
-        ReleaseSRWLockExclusive(&lock_);
-        return ret;
+        AcquireSRWLockExclusive(&lock);
+        items.push(*item);
+        ReleaseSRWLockExclusive(&lock);
     }
 
     inline bool pull(T* item)
     {
         bool ret = false;
 
-        AcquireSRWLockExclusive(&lock_);
+        AcquireSRWLockExclusive(&lock);
 
-        if (read_idx_ == write_idx_)
+        if (items.size() == 0)
         {
             // Nothing to pull.
             goto rexit;
         }
 
-        *item = items_[read_idx_];
-
-        s32 next_idx = read_idx_ + 1;
-
-        if (next_idx == buffer_capacity_)
-        {
-            next_idx = 0;
-        }
-
-        read_idx_ = next_idx;
+        *item = items.front();
+        items.pop();
 
         ret = true;
 
     rexit:
-        ReleaseSRWLockExclusive(&lock_);
+        ReleaseSRWLockExclusive(&lock);
         return ret;
     }
 };

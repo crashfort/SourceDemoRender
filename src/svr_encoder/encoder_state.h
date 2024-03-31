@@ -90,15 +90,18 @@ struct EncoderState
 
     // Uncompressed frames and samples ready to be encoded.
     // Written to by the main and audio threads, read by the frame thread.
-    SvrAsyncQueue<RenderFrameThreadInput> render_frame_queue;
+    // Order matters.
+    SvrLockedQueue<RenderFrameThreadInput> render_frame_queue;
 
     // Video frames that have been encoded.
     // Written to by the frame thread, read by the main thread.
-    SvrAsyncStream<AVFrame*> render_recycled_video_frames;
+    // Order doesn't matter.
+    SvrLockedArray<AVFrame*> render_recycled_video_frames;
 
     // Audio frames that have been encoded.
     // Written to by the frame thread, read by the main thread.
-    SvrAsyncStream<AVFrame*> render_recycled_audio_frames;
+    // Order doesn't matter.
+    SvrLockedArray<AVFrame*> render_recycled_audio_frames;
 
     SvrAtom32 render_frame_thread_status; // Will be set to 0 by frame thread if it failed. Message will be in render_frame_thread_message.
     char render_frame_thread_message[256]; // Error message for the frame thread.
@@ -116,7 +119,8 @@ struct EncoderState
     // Compressed packets ready to be written.
     // Written to by the frame thread, read by the packet thread.
     // When rendering stops, this will be written to by the main thread instead.
-    SvrAsyncStream<AVPacket*> render_packet_queue;
+    // Order matters.
+    SvrLockedQueue<AVPacket*> render_packet_queue;
 
     SvrAtom32 render_packet_thread_status; // Will be set to 0 by packet thread if it failed. Message will be in render_packet_thread_message.
     char render_packet_thread_message[256]; // Error message for the packet thread.
@@ -132,11 +136,13 @@ struct EncoderState
 
     // Uncompressed audio samples ready to be converted and encoded.
     // Written to by the main thread, read by the audio thread.
-    SvrAsyncStream<RenderAudioThreadInput> render_audio_queue;
+    // Order matters.
+    SvrLockedQueue<RenderAudioThreadInput> render_audio_queue;
 
     // Raw audio buffers.
     // Written to by the audio thread, read by the main thread.
-    SvrAsyncStream<RenderAudioThreadInput> render_recycled_audio_buffers;
+    // Order does not matter.
+    SvrLockedArray<RenderAudioThreadInput> render_recycled_audio_buffers;
 
     SvrAtom32 render_audio_thread_status; // Will be set to 0 by audio thread if it failed. Message will be in render_audio_thread_message.
     char render_audio_thread_message[256]; // Error message for the audio thread.

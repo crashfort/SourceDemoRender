@@ -2,8 +2,9 @@
 #include "svr_common.h"
 #include "encoder_shared.h"
 #include "svr_log.h"
-#include "svr_stream.h"
-#include "svr_async_queue.h"
+#include "svr_alloc.h"
+#include "svr_locked_array.h"
+#include "svr_locked_queue.h"
 #include "svr_atom.h"
 #include "svr_defs.h"
 #include <stdio.h>
