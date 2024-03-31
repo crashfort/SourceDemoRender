@@ -61,17 +61,8 @@ SvrVdfLineType svr_vdf_categorize_line(const char* line)
 
 void svr_vdf_kv_free(SvrVdfKeyValue* priv)
 {
-    if (priv->key)
-    {
-        svr_free(priv->key);
-        priv->key = NULL;
-    }
-
-    if (priv->value)
-    {
-        svr_free(priv->value);
-        priv->value = NULL;
-    }
+    svr_maybe_free((void**)&priv->key);
+    svr_maybe_free((void**)&priv->value);
 }
 
 void svr_vdf_section_free(SvrVdfSection* priv)
@@ -90,11 +81,7 @@ void svr_vdf_section_free(SvrVdfSection* priv)
         svr_free(s);
     }
 
-    if (priv->name)
-    {
-        svr_free(priv->name);
-        priv->name = NULL;
-    }
+    svr_maybe_free((void**)&priv->name);
 
     priv->kvs.free();
     priv->sections.free();

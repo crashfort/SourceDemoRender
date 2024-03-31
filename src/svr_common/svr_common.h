@@ -91,6 +91,8 @@ inline void svr_maybe_release(T** ptr)
 // Maybe release a HANDLE based object.
 void svr_maybe_close_handle(void** h);
 
+void svr_maybe_free(void** addr);
+
 // Aligns up.
 inline s32 svr_align32(s32 value, s32 alignment)
 {

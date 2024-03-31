@@ -160,9 +160,5 @@ rexit:
 
 void ProcState::movie_free_profile()
 {
-    if (movie_profile.velo_font)
-    {
-        svr_free(movie_profile.velo_font);
-        movie_profile.velo_font = NULL;
-    }
+    svr_maybe_free((void**)&movie_profile.velo_font);
 }

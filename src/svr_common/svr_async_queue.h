@@ -49,12 +49,7 @@ struct SvrAsyncQueue
 
     inline void free()
     {
-        if (items_)
-        {
-            svr_free(items_);
-        }
-
-        items_ = NULL;
+        svr_maybe_free((void**)&items_);
     }
 
     inline bool push(T* in_item)

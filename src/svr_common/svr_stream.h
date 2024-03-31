@@ -35,11 +35,7 @@ struct SvrAsyncStream
 
     inline void free()
     {
-        if (slots_)
-        {
-            svr_free(slots_);
-            slots_ = NULL;
-        }
+        svr_maybe_free((void**)&slots_);
     }
 
     // When every item is going to be readded.

@@ -110,11 +110,7 @@ void ProcState::vid_free_static()
     svr_maybe_release(&vid_dwrite_factory);
     svr_maybe_release(&vid_d2d1_solid_brush);
 
-    if (vid_shader_mem)
-    {
-        svr_free(vid_shader_mem);
-        vid_shader_mem = NULL;
-    }
+    svr_maybe_free((void**)&vid_shader_mem);
 }
 
 void ProcState::vid_free_dynamic()

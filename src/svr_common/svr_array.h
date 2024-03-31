@@ -33,12 +33,8 @@ struct SvrDynArray
     // Init needs to be called again after.
     inline void free()
     {
-        if (mem)
-        {
-            svr_free(mem);
-        }
+        svr_maybe_free((void**)&mem);
 
-        mem = NULL;
         size = 0;
         capacity = 0;
     }

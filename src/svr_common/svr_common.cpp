@@ -23,6 +23,15 @@ void svr_maybe_close_handle(void** h)
     }
 }
 
+void svr_maybe_free(void** addr)
+{
+    if (*addr)
+    {
+        svr_free(addr);
+        *addr = NULL;
+    }
+}
+
 s32 svr_copy_string(const char* source, char* dest, s32 dest_chars)
 {
     s32 len = svr_min(dest_chars - 1, (s32)strlen(source));
