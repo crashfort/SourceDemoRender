@@ -1,18 +1,10 @@
-Version 41, 20 March 2024
+Version 42,
 ---------------------------
 
-Supported games in this release:
-* Counter-Strike: Source
-* Counter-Strike: Global Offensive
-* Team Fortress 2
-* Zombie Panic! Source
-* Half-Life 2
-* Source 2013 mods
-* Black Mesa
-* Half-Life 2: Deathmatch
-* Synergy
-* Hunt Down The Freeman
-* Empires
+* Fixed potential issue where audio and video could be dropped if the game is significantly faster than the encoding. This would not necessarily have happened in a real world scenario.
+
+Version 41, 20 March 2024
+---------------------------
 
 * Added a 64-bit external process that encodes the data from SVR. This comes with a performance boost, but also allows audio and video to be embedded in the same file.
 * Added an option to use the DNxHR video encoder. This codec works a lot better in video editors, and also has slightly better color information through YUV422 over NV12.
