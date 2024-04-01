@@ -79,3 +79,10 @@ The X axis is the samples per second and the Y axis is the exposure (click on th
 | 0.50 | ![mosample_960_050](https://user-images.githubusercontent.com/3614412/134065956-9b5a75d1-3c41-4dc0-b4fb-c9787c63bbeb.png) | ![mosample_1920_050](https://user-images.githubusercontent.com/3614412/134065965-bd1dba93-cd04-4c2c-880a-23907cb823a6.png) | ![mosample_3840_050](https://user-images.githubusercontent.com/3614412/134065972-24d4ce15-7528-4fdc-9ee2-509aa6cbc9fc.png) | ![mosample_7680_050](https://user-images.githubusercontent.com/3614412/134065979-2c158e36-03a2-46cb-bd5d-b461a9580eef.png)
 | 0.75 | ![mosample_960_075](https://user-images.githubusercontent.com/3614412/134065958-f2f9a2ed-ac75-44e6-a23d-ff8bd845db74.png) | ![mosample_1920_075](https://user-images.githubusercontent.com/3614412/134065967-51956d12-c611-4365-85a3-d4b0841cd8b0.png) | ![mosample_3840_075](https://user-images.githubusercontent.com/3614412/134065975-290e4508-2b02-4336-8b67-310f9a8b6ef8.png) | ![mosample_7680_075](https://user-images.githubusercontent.com/3614412/134065981-4474b397-e073-465f-8e4e-776031c3994f.png)
 | 1.00 | ![mosample_960_100](https://user-images.githubusercontent.com/3614412/134065959-919d64e8-29b4-4d08-96bc-6e9c323082c4.png) | ![mosample_1920_100](https://user-images.githubusercontent.com/3614412/134065969-bef4d03d-3cc2-490e-bdd2-ab17db41978f.png) | ![mosample_3840_100](https://user-images.githubusercontent.com/3614412/134065977-9ed70fba-a8af-4e67-92cc-ca02b5d7bf5a.png) | ![mosample_7680_100](https://user-images.githubusercontent.com/3614412/134065982-991ba3c1-5b1a-4aef-8f5b-b54abf68cc47.png)
+
+## Building
+1. Extract [ffmpeg-n5.1-latest-win64-gpl-shared-5.1](https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n5.1-latest-win64-gpl-shared-5.1.zip) to `deps\ffmpeg\`.
+2. Copy contents of `deps\ffmpeg\bin\` to `bin\`.
+3. Build `deps\minhook\build\VC16\MinHookVC16.sln` in Release.
+4. Open `svr.sln`.
+5. Call `build_shaders.cmd` from a Visual Studio Developer Command Prompt. In Visual Studio 2022, you can use `Tools -> Command Line -> Developer Command Prompt`.
