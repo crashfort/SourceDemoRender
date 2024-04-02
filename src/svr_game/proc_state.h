@@ -178,10 +178,10 @@ struct ProcState
     EncoderSharedMem* encoder_shared_ptr;
     void* encoder_audio_buffer;
 
-    // Fifo of audio samples we need to send to the encoder.
+    // FIFO of audio samples we need to send to the encoder.
     // During motion blur capture, the number of samples sent from the game will be very low (like 12).
     // We should not wake up the encoder and wait for just that little, so queue up a bunch instead and send many.
-    SvrDynArray<SvrWaveSample> encoder_pending_samples;
+    SvrDynQueue<SvrWaveSample> encoder_pending_samples;
 
     // Intermediate texture needed for texture sharing.
     // High precision textures are not allowed to be shared, so we need to downsample the result of the mosample to 32 bpp.

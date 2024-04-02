@@ -210,7 +210,7 @@ bool ProcState::encoder_start()
 
     encoder_share_tex_lock->AcquireSync(ENCODER_GAME_ID, INFINITE); // Set initial owner now.
 
-    encoder_pending_samples.size = 0;
+    encoder_pending_samples.clear();
 
     ret = true;
     goto rexit;
@@ -419,7 +419,7 @@ bool ProcState::encoder_send_audio_samples(SvrWaveSample* samples, s32 num_sampl
     // During motion blur capture, we will be getting really low number of samples in here (like 12).
     // This is way too little to wake up the encoder for and block the game.
     // Queue up a larger amount and send that instead.
-    encoder_pending_samples.insert_range(encoder_pending_samples.size, samples, num_samples);
+    encoder_pending_samples.push_range(samples, num_samples);
 
     bool ret = false;
 
@@ -440,16 +440,14 @@ rexit:
 // Send any remaining samples just before the rendering stops.
 void ProcState::encoder_flush_audio()
 {
-    while (encoder_pending_samples.size > 0)
+    while (encoder_pending_samples.size() > 0)
     {
-        s32 samples_to_write = svr_min(encoder_pending_samples.size, ENCODER_MAX_SAMPLES);
+        s32 samples_to_write = svr_min(encoder_pending_samples.size(), ENCODER_MAX_SAMPLES);
 
         if (!encoder_send_audio_from_pending(samples_to_write))
         {
             break;
         }
-
-        encoder_pending_samples.remove_range(0, samples_to_write);
     }
 }
 
@@ -458,7 +456,7 @@ bool ProcState::encoder_submit_pending_samples()
 {
     bool ret = false;
 
-    while (encoder_pending_samples.size >= ENCODER_MAX_SAMPLES)
+    while (encoder_pending_samples.size() >= ENCODER_MAX_SAMPLES)
     {
         s32 samples_to_write = ENCODER_MAX_SAMPLES;
 
@@ -466,8 +464,6 @@ bool ProcState::encoder_submit_pending_samples()
         {
             goto rfail;
         }
-
-        encoder_pending_samples.remove_range(0, samples_to_write);
     }
 
     ret = true;
@@ -484,7 +480,7 @@ bool ProcState::encoder_send_audio_from_pending(s32 num_samples)
 {
     bool ret = false;
 
-    memcpy(encoder_audio_buffer, encoder_pending_samples.mem, sizeof(SvrWaveSample) * num_samples);
+    encoder_pending_samples.pull_range((SvrWaveSample*)encoder_audio_buffer, num_samples);
     encoder_shared_ptr->waiting_audio_samples = num_samples;
 
     if (!encoder_send_event(ENCODER_EVENT_NEW_AUDIO))

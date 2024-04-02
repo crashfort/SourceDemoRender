@@ -28,6 +28,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_locked_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_log.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_prof.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)svr_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_sem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_standalone_common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_steam_common.h" />
