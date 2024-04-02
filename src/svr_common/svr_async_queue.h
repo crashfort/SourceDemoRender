@@ -9,7 +9,7 @@
 template <class T>
 struct __declspec(align(SVR_CPU_CACHE_SIZE)) SvrAsyncQueueItem
 {
-    SvrAtom32 turn_;
+    SvrAtom32 turn;
     SVR_STRUCT_PADDING(4);
 
     T value;
@@ -18,57 +18,57 @@ struct __declspec(align(SVR_CPU_CACHE_SIZE)) SvrAsyncQueueItem
 template <class T>
 struct SvrAsyncQueue
 {
-    SvrAsyncQueueItem<T>* items_;
-    s32 buffer_capacity_;
+    SvrAsyncQueueItem<T>* items;
+    s32 buffer_capacity;
 
     SVR_THREAD_PADDING();
 
-    SvrAtom32 head_;
+    SvrAtom32 head_atom;
 
     SVR_THREAD_PADDING();
 
-    SvrAtom32 tail_;
+    SvrAtom32 tail_atom;
 
     SVR_THREAD_PADDING();
 
     inline s32 queue_idx(s32 i)
     {
-        return i % buffer_capacity_;
+        return i % buffer_capacity;
     }
 
     inline s32 queue_turn(s32 i)
     {
-        return i / buffer_capacity_;
+        return i / buffer_capacity;
     }
 
     inline void init(s32 capacity)
     {
-        items_ = (SvrAsyncQueueItem<T>*)svr_zalloc(sizeof(SvrAsyncQueueItem<T>) * capacity);
-        buffer_capacity_ = capacity;
+        items = (SvrAsyncQueueItem<T>*)svr_zalloc(sizeof(SvrAsyncQueueItem<T>) * capacity);
+        buffer_capacity = capacity;
     }
 
     inline void free()
     {
-        svr_maybe_free((void**)&items_);
+        svr_maybe_free((void**)&items);
     }
 
     inline bool push(T* in_item)
     {
-        s32 head = svr_atom_load(&head_);
+        s32 head = svr_atom_load(&head_atom);
 
         bool ret;
 
         while (true)
         {
-            SvrAsyncQueueItem<T>* item = &items_[queue_idx(head)];
+            SvrAsyncQueueItem<T>* item = &items[queue_idx(head)];
 
-            if (queue_turn(head) * 2 == svr_atom_load(&item->turn_))
+            if (queue_turn(head) * 2 == svr_atom_load(&item->turn))
             {
-                if (svr_atom_cmpxchg(&head_, &head, head + 1))
+                if (svr_atom_cmpxchg(&head_atom, &head, head + 1))
                 {
                     item->value = *in_item;
 
-                    svr_atom_store(&item->turn_, queue_turn(head) * 2 + 1);
+                    svr_atom_store(&item->turn, queue_turn(head) * 2 + 1);
                     ret = true;
                     break;
                 }
@@ -77,7 +77,7 @@ struct SvrAsyncQueue
             else
             {
                 s32 prev_head = head;
-                head = svr_atom_load(&head_);
+                head = svr_atom_load(&head_atom);
 
                 if (head == prev_head)
                 {
@@ -93,18 +93,18 @@ struct SvrAsyncQueue
 
     inline bool pull(T* out_item)
     {
-        s32 tail = svr_atom_load(&tail_);
+        s32 tail = svr_atom_load(&tail_atom);
 
         while (true)
         {
-            SvrAsyncQueueItem<T>* item = &items_[queue_idx(tail)];
+            SvrAsyncQueueItem<T>* item = &items[queue_idx(tail)];
 
-            if (queue_turn(tail) * 2 + 1 == svr_atom_load(&item->turn_))
+            if (queue_turn(tail) * 2 + 1 == svr_atom_load(&item->turn))
             {
-                if (svr_atom_cmpxchg(&tail_, &tail, tail + 1))
+                if (svr_atom_cmpxchg(&tail_atom, &tail, tail + 1))
                 {
                     *out_item = item->value;
-                    svr_atom_store(&item->turn_, queue_turn(tail) * 2 + 2);
+                    svr_atom_store(&item->turn, queue_turn(tail) * 2 + 2);
                     return true;
                 }
             }
@@ -112,7 +112,7 @@ struct SvrAsyncQueue
             else
             {
                 s32 prev_tail = tail;
-                tail = svr_atom_load(&tail_);
+                tail = svr_atom_load(&tail_atom);
 
                 if (tail == prev_tail)
                 {
