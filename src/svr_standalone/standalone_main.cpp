@@ -334,6 +334,11 @@ FnHook snd_tx_stereo_hook;
 FnHook snd_mix_chans_hook;
 FnHook snd_device_tx_hook;
 
+FnHook d3d9ex_present_hook;
+FnHook d3d9ex_present_ex_hook;
+
+bool disable_window_update;
+
 bool snd_is_painting;
 bool snd_listener_underwater;
 
@@ -833,6 +838,30 @@ bool __fastcall eng_filter_time_override2(void* p, void* edx)
     }
 
     return ret;
+}
+
+HRESULT __stdcall d3d9ex_present_override(void* p, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion)
+{
+    if (svr_movie_active())
+    {
+        return S_OK;
+    }
+
+    using OrgFn = decltype(d3d9ex_present_override)*;
+    OrgFn org_fn = (OrgFn)d3d9ex_present_hook.original;
+    return org_fn(p, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+}
+
+HRESULT __stdcall d3d9ex_present_ex_override(void* p, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags)
+{
+    if (svr_movie_active())
+    {
+        return S_OK;
+    }
+
+    using OrgFn = decltype(d3d9ex_present_ex_override)*;
+    OrgFn org_fn = (OrgFn)d3d9ex_present_ex_hook.original;
+    return org_fn(p, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
 }
 
 // Subsitute for running exec on a cfg in the game directory. This is for running a cfg in the SVR directory.
@@ -1672,12 +1701,43 @@ void create_game_hooks()
         hook_function(get_snd_tx_stereo_override(), &snd_tx_stereo_hook);
     }
 
-    // Hooking the D3D9Ex present function to skip presenting is not worthwhile as it does not improve the game frame time.
+    if (disable_window_update)
+    {
+        FnOverride present_ov;
+        present_ov.target = get_virtual(gm_d3d9ex_device, 17); // Present.
+        present_ov.hook = d3d9ex_present_override;
+        hook_function(present_ov, &d3d9ex_present_hook);
+
+        FnOverride present_ex_ov;
+        present_ex_ov.target = get_virtual(gm_d3d9ex_device, 121); // PresentEx.
+        present_ex_ov.hook = d3d9ex_present_ex_override;
+        hook_function(present_ex_ov, &d3d9ex_present_ex_hook);
+    }
 
     patch_cvar_restrict();
 
     // All other threads will be frozen during this call.
     MH_EnableHook(MH_ALL_HOOKS);
+}
+
+void read_command_line()
+{
+    char* start_args = GetCommandLineA();
+
+    enable_autostop = true;
+
+    // Doesn't belong in a profile so here it is.
+    if (strstr(start_args, "-svrnoautostop"))
+    {
+        svr_log("Autostop is disabled\n");
+        enable_autostop = false;
+    }
+
+    if (strstr(start_args, "-svrnowindupd"))
+    {
+        svr_log("Window update is disabled\n");
+        disable_window_update = true;
+    }
 }
 
 DWORD WINAPI standalone_init_async(void* param)
@@ -1705,16 +1765,7 @@ DWORD WINAPI standalone_init_async(void* param)
 
     game_console_init();
 
-    char* start_args = GetCommandLineA();
-
-    enable_autostop = true;
-
-    // Doesn't belong in a profile so here it is.
-    if (strstr(start_args, "-svrnoautostop"))
-    {
-        svr_log("Autostop is disabled\n");
-        enable_autostop = false;
-    }
+    read_command_line();
 
     MH_Initialize();
 
