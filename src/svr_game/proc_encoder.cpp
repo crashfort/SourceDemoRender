@@ -480,6 +480,8 @@ bool ProcState::encoder_send_audio_from_pending(s32 num_samples)
 {
     bool ret = false;
 
+    assert(encoder_pending_samples.size() >= num_samples);
+
     encoder_pending_samples.pull_range((SvrWaveSample*)encoder_audio_buffer, num_samples);
     encoder_shared_ptr->waiting_audio_samples = num_samples;
 
