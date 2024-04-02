@@ -19,6 +19,8 @@ bool ProcState::encoder_init()
 
     game_log("Started encoder process\n");
 
+    encoder_pending_samples.init(ENCODER_MAX_SAMPLES * 2);
+
     ret = true;
     goto rexit;
 

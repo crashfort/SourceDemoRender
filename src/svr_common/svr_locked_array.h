@@ -22,6 +22,7 @@ struct SvrLockedArray
         items.free();
     }
 
+    // Pushes to the back.
     inline void push(T* item)
     {
         AcquireSRWLockExclusive(&lock);
@@ -29,6 +30,7 @@ struct SvrLockedArray
         ReleaseSRWLockExclusive(&lock);
     }
 
+    // Pops from the back.
     inline bool pull(T* item)
     {
         bool ret = false;
