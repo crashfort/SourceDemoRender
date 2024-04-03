@@ -121,7 +121,10 @@ bool ProcState::vid_load_shader(const char* name)
 {
     bool ret = false;
 
-    HANDLE h = CreateFileA(svr_va("%s\\data\\shaders\\%s", svr_resource_path, name), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    char path[MAX_PATH];
+    SVR_SNPRINTF(path, "%s\\data\\shaders\\%s", svr_resource_path, name);
+
+    HANDLE h = CreateFileA(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (h == INVALID_HANDLE_VALUE)
     {
