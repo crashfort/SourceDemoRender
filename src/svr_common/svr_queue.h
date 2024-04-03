@@ -16,7 +16,11 @@ struct SvrDynQueue
 
     inline void free()
     {
-        svr_fifo_free(&fifo);
+        if (fifo)
+        {
+            svr_fifo_free(fifo);
+            fifo = NULL;
+        }
     }
 
     // Push a single item to the back.

@@ -128,9 +128,9 @@ s32 svr_fifo_write_common(SvrDynFifo* f, u8* buf, s32* nb_elems)
     while (to_write > 0)
     {
         s32 len = svr_min(f->nb_elems - offset_w, to_write);
-        u8* wptr = f->buffer + offset_w * f->elem_size;
+        u8* write_ptr = f->buffer + offset_w * f->elem_size;
 
-        memcpy(wptr, buf, len * f->elem_size);
+        memcpy(write_ptr, buf, len * f->elem_size);
         buf += len * f->elem_size;
 
         offset_w += len;
@@ -181,9 +181,9 @@ s32 svr_fifo_peek_common(SvrDynFifo* f, u8* buf, s32* nb_elems)
     while (to_read > 0)
     {
         s32 len = svr_min(f->nb_elems - offset_r, to_read);
-        u8* rptr = f->buffer + offset_r * f->elem_size;
+        u8* read_ptr = f->buffer + offset_r * f->elem_size;
 
-        memcpy(buf, rptr, len * f->elem_size);
+        memcpy(buf, read_ptr, len * f->elem_size);
         buf += len * f->elem_size;
 
         offset_r += len;
@@ -237,11 +237,13 @@ void svr_fifo_reset(SvrDynFifo* f)
     f->is_empty = 1;
 }
 
-void svr_fifo_free(SvrDynFifo** f)
+void svr_fifo_free(SvrDynFifo* f)
 {
-    if (*f)
+    if (f->buffer)
     {
-        svr_free((*f)->buffer);
-        svr_free(*f);
+        svr_free(f->buffer);
+        f->buffer = NULL;
     }
+
+    svr_free(f);
 }

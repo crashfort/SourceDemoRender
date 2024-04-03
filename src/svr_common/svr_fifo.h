@@ -27,4 +27,4 @@ void svr_fifo_drain(SvrDynFifo* f, s32 size);
 void svr_fifo_reset(SvrDynFifo* f);
 
 // Frees the FIFO.
-void svr_fifo_free(SvrDynFifo** f);
+void svr_fifo_free(SvrDynFifo* f);
