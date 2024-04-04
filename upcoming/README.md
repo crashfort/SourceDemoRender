@@ -29,7 +29,10 @@ You can use `update.cmd` in the SVR directory to automatically download the late
 Any DirectX 11 (Direct3D 11.3, feature level 12_0) compatible graphics adapter with minimum of Windows 10 1909 is required. Hardware feature support verification will occur when starting the launcher.
 
 ## Startup
-Use `svr_launcher.exe` to start SVR. The launcher will scan the installed Steam games in your system and the supported games will be listed. **Steam must be started**. If you don't want to use the launch parameters from Steam, you can create a file called `svr_launch_params.ini` in the same folder as the launcher and insert a format like this (one line per game):
+
+**Steam must be started for SVR to work.**
+
+Use `svr_launcher.exe` to start SVR. The launcher will scan the installed Steam games in your system and the supported games will be listed. If you don't want to use the launch parameters from Steam, you can create a file called `svr_launch_params.ini` in the same folder as the launcher and insert a format like this (one line per game):
 
 ```ini
 240=-width 2560 -height 1440
@@ -73,7 +76,9 @@ The list of optional parameters are as follows:
 | ``autostop=<value>`` | Automatically stop the movie on demo disconnect. This can be 0 or 1. Default is 1. This is used to determine what happens when a demo ends, when you get kicked back to the main menu.
 | ``nowindupd=<value>`` | Disable window presentation. This can be 0 or 1. Default is 0. For some systems this may improve performance, however you will not be able to see anything.
 
-When starting and ending a movie, the files `data/cfg/svr_movie_start_user.cfg` and `data/cfg/svr_movie_end_user.cfg` in `data/cfg` will be executed (you can create these if you want to use them). This can be used to insert or overwrite commands that should be active only during the movie period. Note that these files are **not** in the game directory, but in the SVR directory in `data/cfg`. You can have game specific cfgs by using files called `data/cfg/svr_movie_start_<app_id>.cfg` and `data/cfg/svr_movie_end_<app_id>.cfg`. The `app_id` should be substituted for the Steam app id, such as `240` for Counter-Strike: Source.
+When starting and ending a movie, the files `data/cfg/svr_movie_start_user.cfg` and `data/cfg/svr_movie_end_user.cfg` in `data/cfg` will be executed (you can create these if you want to use them). This can be used to insert or overwrite commands that should be active only during the movie period. Note that these files are **not** in the game directory, but in the SVR directory in `data/cfg`.
+
+You can have game specific cfgs by using files called `data/cfg/svr_movie_start_<app_id>.cfg` and `data/cfg/svr_movie_end_<app_id>.cfg`. The `app_id` should be substituted for the Steam app id, such as **240** for **Counter-Strike: Source**.
 
 **It is recommended that you don't edit `svr_movie_start.cfg` and `svr_movie.end.cfg` as they may be changed in updates, which would overwrite your changes.**
 
