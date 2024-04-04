@@ -100,7 +100,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Shlwapi.lib;$(SolutionDir)deps\minhook\build\VC16\lib\Release\libMinHook.x86.lib;Synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;$(SolutionDir)deps\minhook\build\VC16\lib\Release\libMinHook.x86.lib;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -131,7 +131,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>Shlwapi.lib;$(SolutionDir)deps\minhook\build\VC16\lib\Release\libMinHook.x86.lib;Synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;$(SolutionDir)deps\minhook\build\VC16\lib\Release\libMinHook.x86.lib;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>

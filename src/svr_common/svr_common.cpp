@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <Windows.h>
 #include <assert.h>
+#include <mfapi.h>
 
 // Prefer to use this instead of calling Release yourself since you can use this to see the actual reference count.
 void svr_release(struct IUnknown* p)
@@ -366,4 +367,22 @@ void svr_unescape_path(const char* buf, char* dest, s32 dest_size)
 bool svr_idx_in_range(s32 idx, s32 size)
 {
     return idx >= 0 && idx < size;
+}
+
+SvrSplitTime svr_split_time(s64 us)
+{
+    s64 micros = us % 1000000;
+
+    SvrSplitTime ret;
+    ret.seconds = (us / 1000000) % 60;
+    ret.minutes = (us / 1000000 / 60) % 60;
+    ret.hours = (us / 1000000 / 60 / 60);
+    ret.millis = svr_rescale(micros, 1000, 1000000);
+
+    return ret;
+}
+
+s64 svr_rescale(s64 a, s64 b, s64 c)
+{
+    return MFllMulDiv(a, b, c, c / 2);
 }

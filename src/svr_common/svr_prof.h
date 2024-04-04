@@ -12,7 +12,7 @@ struct SvrProf
 };
 
 void svr_init_prof();
-s64 svr_prof_get_real_time();
+s64 svr_prof_get_real_time(); // Returns microseconds.
 
 #if SVR_PROF
 

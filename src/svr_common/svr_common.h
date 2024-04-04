@@ -135,3 +135,20 @@ const char* svr_extract_string(const char* text, char* dest, s32 dest_size);
 void svr_unescape_path(const char* buf, char* dest, s32 dest_size);
 
 bool svr_idx_in_range(s32 idx, s32 size);
+
+struct SvrSplitTime
+{
+    s32 hours;
+    s32 minutes;
+    s32 seconds;
+    s32 millis;
+};
+
+// Split input in microseconds to individual components.
+SvrSplitTime svr_split_time(s64 us);
+
+// Scale an integer from one range to another.
+// This will round to the nearest result, example:
+// svr_rescale(16667, 1000, 1000000) results in 17.
+// svr_rescale(16444, 1000, 1000000) results in 16.
+s64 svr_rescale(s64 a, s64 b, s64 c);

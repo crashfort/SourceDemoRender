@@ -41,10 +41,8 @@ void standalone_error(const char* format, ...)
 
     // MB_TASKMODAL or MB_APPLMODAL flags do not work.
 
-    HWND hwnd = NULL;
-    EnumThreadWindows(main_thread_id, EnumThreadWndProc, (LPARAM)&hwnd);
-
-    MessageBoxA(hwnd, message, "SVR", MB_ICONERROR | MB_OK);
+    extern HWND main_hwnd;
+    MessageBoxA(main_hwnd, message, "SVR", MB_ICONERROR | MB_OK);
 
     ExitProcess(1);
 }
@@ -355,11 +353,15 @@ s32 snd_num_samples;
 
 s64 tm_num_frames;
 s64 tm_first_frame_time;
-s64 tm_last_frame_time;
+s32 tm_game_rate; // Frames per second the game is processing at.
 
 s32 recording_state;
 
 bool enable_autostop;
+
+HWND main_hwnd;
+char wind_def_title[1024];
+s64 next_wind_update_time;
 
 // Velo is restricted to the movement based games.
 // This is done in order to increase reach for games, such as Source 2013 mods which may modify client.dll (otherwise every mod may need tailored setup).
@@ -626,7 +628,7 @@ void mix_audio_for_one_frame()
 
     s32 paint_time = **(s32**)gm_snd_paint_time_ptr;
 
-    float time_ahead_to_mix = 1.0f / (float)svr_get_game_rate();
+    float time_ahead_to_mix = 1.0f / (float)tm_game_rate;
     float num_frac_samples_to_mix = (time_ahead_to_mix * 44100.0f) + snd_lost_mix_time;
 
     s32 num_samples_to_mix = (s32)num_frac_samples_to_mix;
@@ -654,7 +656,7 @@ void mix_audio_for_one_frame2()
 
     s64 paint_time = **(s64**)gm_snd_paint_time_ptr;
 
-    float time_ahead_to_mix = 1.0f / (float)svr_get_game_rate();
+    float time_ahead_to_mix = 1.0f / (float)tm_game_rate;
     float num_frac_samples_to_mix = (time_ahead_to_mix * 44100.0f) + snd_lost_mix_time;
 
     s64 num_samples_to_mix = (s64)num_frac_samples_to_mix;
@@ -703,6 +705,9 @@ void do_recording_frame()
     svr_frame();
 
     tm_num_frames++;
+
+    void wind_update_title();
+    wind_update_title();
 }
 
 // Recording should only be possible when fully connected. We don't want the menu and loading screen to be recorded.
@@ -950,7 +955,6 @@ void __cdecl start_movie_override(void* args)
 {
     tm_num_frames = 0;
     tm_first_frame_time = 0;
-    tm_last_frame_time = 0;
 
     snd_skipped_samples = 0;
     snd_lost_mix_time = 0.0f;
@@ -1040,8 +1044,10 @@ void __cdecl start_movie_override(void* args)
 
     // Ensure the game runs at a fixed rate.
 
+    tm_game_rate = svr_get_game_rate();
+
     char hfr_buf[32];
-    StringCchPrintfA(hfr_buf, 32, "host_framerate %d\n", svr_get_game_rate());
+    StringCchPrintfA(hfr_buf, 32, "host_framerate %d\n", tm_game_rate);
 
     client_command(hfr_buf);
 
@@ -1064,14 +1070,14 @@ void end_the_movie()
     assert(svr_movie_active());
 
     recording_state = RECORD_STATE_STOPPED;
-    tm_last_frame_time = svr_prof_get_real_time();
+    s64 now = svr_prof_get_real_time();
 
     float time_taken = 0.0f;
     float fps = 0.0f;
 
-    if (tm_last_frame_time > 0 && tm_first_frame_time > 0)
+    if (tm_first_frame_time > 0)
     {
-        time_taken = (tm_last_frame_time - tm_first_frame_time) / 1000000.0f;
+        time_taken = (now - tm_first_frame_time) / 1000000.0f;
         fps = (float)tm_num_frames / time_taken;
     }
 
@@ -1081,6 +1087,9 @@ void end_the_movie()
 
     run_cfg("svr_movie_end.cfg");
     run_user_cfgs_for_event("end");
+
+    void wind_reset();
+    wind_reset();
 }
 
 void __cdecl end_movie_override(void* args)
@@ -1730,6 +1739,44 @@ void read_command_line()
     }
 }
 
+void wind_init()
+{
+    EnumThreadWindows(main_thread_id, EnumThreadWndProc, (LPARAM)&main_hwnd);
+    GetWindowTextA(main_hwnd, wind_def_title, SVR_ARRAY_SIZE(wind_def_title));
+}
+
+// Reset title when movie stops.
+void wind_reset()
+{
+    next_wind_update_time = 0;
+    SetWindowTextA(main_hwnd, wind_def_title);
+}
+
+void wind_update_title()
+{
+    s64 now = svr_prof_get_real_time();
+
+    if (now < next_wind_update_time)
+    {
+        return;
+    }
+
+    // Need to throttle this because updating the window title is slow apparently.
+    next_wind_update_time = now + 500000;
+
+    // Transform number of frames in a unit of frames per second into an elapsed period in microseconds.
+    // This is the video time.
+    SvrSplitTime video_split = svr_split_time(svr_rescale(tm_num_frames, 1000000, tm_game_rate));
+
+    // This is the real elapsed time.
+    SvrSplitTime real_split = svr_split_time(now - tm_first_frame_time);
+
+    char buf[1024];
+    SVR_SNPRINTF(buf, "%02d:%02d.%03d (%02d:%02d:%02d)", video_split.minutes, video_split.seconds, video_split.millis, real_split.hours, real_split.minutes, real_split.seconds);
+
+    SetWindowTextA(main_hwnd, buf);
+}
+
 DWORD WINAPI standalone_init_async(void* param)
 {
     // We don't want to show message boxes on failures because they work real bad in fullscreen.
@@ -1760,6 +1807,8 @@ DWORD WINAPI standalone_init_async(void* param)
     MH_Initialize();
 
     create_game_hooks();
+
+    wind_init();
 
     if (!svr_init(launcher_data.svr_path, gm_d3d9ex_device))
     {
