@@ -93,9 +93,11 @@ If something is not working properly, please find the `SVR_LOG.txt` and `ENCODER
 Due to the nature of reverse engineering games, it cannot be trusted that direct interoperability (with ReShade or HLAE for example) will work because the risk of collision.
 
 ## Profiles
-All recording settings are loaded from profiles which are located in `data/profiles`. The default profile is called `default.ini` and is the profile that will be used in case none is specified when starting a movie. These profiles are shared across all games and are written in a simple INI format. The documentation for profiles is written inside the default profile file [here](bin/data/profiles/default.ini).
+All recording settings are loaded from profiles which are located in `data/profiles`. The default profile is called `default.ini` and is the base profile of all settings. These profiles are shared across all games and are written in a simple INI format. The documentation for profiles is written inside the default profile [here](bin/data/profiles/default.ini).
 
-The default profile is used if none is specified when starting the movie. You can create your own profiles by copying `default.ini` and renaming it and making your changes. When starting your movie you can then specify your new profile. See Recording above. Note that if you edit the default profile, you will lose your changes when updating SVR.
+The default profile is used if no other is specified when starting the movie. You can override settings in the default profile by creating your own profiles inside `data/profiles`. When starting your movie you can then specify your new profile (see Recording above).
+
+The default profile is always loaded first, and your custom profile is loaded on top. This allows you to override individual setting without copying the entire profile. To create your own profile, create a file with an `.ini` extension inside `data/profiles/`. You can now override settings in the default profile by putting in the settings you want to override.
 
 ## Motion blur demo
 In this demo an object is rotating 6 times per second. This is a fast moving object, so higher samples per second will remove banding at cost of slower recording times. For slower scenes you may get away with a lower sampling rate. Exposure is dependant on the type of content being made. The goal you should be aiming for is to reduce the banding that happens with lower samples per second. A smaller exposure will leave shorter trails of motion blur.
