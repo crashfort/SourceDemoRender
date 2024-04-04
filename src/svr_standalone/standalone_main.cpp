@@ -1026,6 +1026,9 @@ void __cdecl start_movie_override(void* args)
     char movie_name[MAX_PATH];
     movie_name[0] = 0;
 
+    char profile_name[256];
+    profile_name[0] = 0;
+
     value_args = svr_extract_string(value_args, movie_name, SVR_ARRAY_SIZE(movie_name));
 
     if (movie_name[0] == 0)
@@ -1042,9 +1045,9 @@ void __cdecl start_movie_override(void* args)
     const char* opt_autostop = svr_ini_find_command_value(&inputs, "autostop");
     const char* opt_no_wind_upd = svr_ini_find_command_value(&inputs, "nowindupd");
 
-    if (opt_profile == NULL)
+    if (opt_profile)
     {
-        opt_profile = "default";
+        SVR_COPY_STRING(opt_profile, profile_name);
     }
 
     if (opt_timeout)
@@ -1104,7 +1107,7 @@ void __cdecl start_movie_override(void* args)
     startmovie_data.audio_params.audio_hz = 44100;
     startmovie_data.audio_params.audio_bits = 16;
 
-    if (!svr_start(movie_name, opt_profile, &startmovie_data))
+    if (!svr_start(movie_name, profile_name, &startmovie_data))
     {
         // Reverse above changes if something went wrong.
         run_cfg("svr_movie_end.cfg");

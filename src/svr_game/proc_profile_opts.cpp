@@ -1,10 +1,10 @@
 #include "proc_priv.h"
 
-s32 opt_atoi_in_range(SvrIniKeyValue* kv, s32 min, s32 max, s32 def)
+bool opt_atoi_in_range(SvrIniKeyValue* kv, s32 min, s32 max, s32* dest)
 {
     if (kv == NULL)
     {
-        return def;
+        return false;
     }
 
     s32 v = atoi(kv->value);
@@ -19,14 +19,15 @@ s32 opt_atoi_in_range(SvrIniKeyValue* kv, s32 min, s32 max, s32 def)
         v = new_v;
     }
 
-    return v;
+    *dest = v;
+    return true;
 }
 
-float opt_atof_in_range(SvrIniKeyValue* kv, float min, float max, float def)
+bool opt_atof_in_range(SvrIniKeyValue* kv, float min, float max, float* dest)
 {
     if (kv == NULL)
     {
-        return def;
+        return false;
     }
 
     float v = atof(kv->value);
@@ -41,31 +42,40 @@ float opt_atof_in_range(SvrIniKeyValue* kv, float min, float max, float def)
         v = new_v;
     }
 
-    return v;
+    *dest = v;
+    return true;
 }
 
-char* opt_str_or(SvrIniKeyValue* kv, const char* def)
+bool opt_str_or(SvrIniKeyValue* kv, char** dest)
 {
     if (kv == NULL)
     {
-        return svr_dup_str(def);
+        return false;
     }
 
-    return svr_dup_str(kv->value);
+    if (*dest)
+    {
+        svr_free(*dest);
+        *dest = NULL;
+    }
+
+    *dest = svr_dup_str(kv->value);
+    return true;
 }
 
-const char* opt_str_in_list_or(SvrIniKeyValue* kv, const char** list, s32 num, const char* def)
+bool opt_str_in_list_or(SvrIniKeyValue* kv, const char** list, s32 num, const char** dest)
 {
     if (kv == NULL)
     {
-        return def;
+        return false;
     }
 
     for (s32 i = 0; i < num; i++)
     {
         if (!strcmp(list[i], kv->value))
         {
-            return list[i];
+            *dest = list[i];
+            return true;
         }
     }
 
@@ -82,32 +92,16 @@ const char* opt_str_in_list_or(SvrIniKeyValue* kv, const char** list, s32 num, c
         }
     }
 
-    game_log("Option %s has incorrect value (value is %s, options are %s) setting to %s\n", kv->key, kv->value, opts, def);
+    game_log("Option %s has incorrect value (value is %s, options are %s)\n", kv->key, kv->value, opts);
 
-    return def;
+    return false;
 }
 
-const char* opt_rl_map_str_in_list(s32 value, OptStrIntMapping* mappings, s32 num)
-{
-    for (s32 i = 0; i < num; i++)
-    {
-        OptStrIntMapping* m = &mappings[i];
-
-        if (m->value == value)
-        {
-            return m->name;
-        }
-    }
-
-    return NULL;
-}
-
-s32 opt_map_str_in_list_or(SvrIniKeyValue* kv, OptStrIntMapping* mappings, s32 num, s32 def)
+bool opt_map_str_in_list_or(SvrIniKeyValue* kv, OptStrIntMapping* mappings, s32 num, s32* dest)
 {
     if (kv == NULL)
     {
-        OptStrIntMapping* m = &mappings[def];
-        return m->value;
+        return false;
     }
 
     for (s32 i = 0; i < num; i++)
@@ -116,7 +110,8 @@ s32 opt_map_str_in_list_or(SvrIniKeyValue* kv, OptStrIntMapping* mappings, s32 n
 
         if (!strcmp(m->name, kv->value))
         {
-            return m->value;
+            *dest = m->value;
+            return true;
         }
     }
 
@@ -134,20 +129,18 @@ s32 opt_map_str_in_list_or(SvrIniKeyValue* kv, OptStrIntMapping* mappings, s32 n
         }
     }
 
-    const char* def_title = opt_rl_map_str_in_list(def, mappings, num);
+    game_log("Option %s has incorrect value (value is %s, options are %s)\n", kv->key, kv->value, opts);
 
-    game_log("Option %s has incorrect value (value is %s, options are %s) setting to %s\n", kv->key, kv->value, opts, def_title);
-
-    return def;
+    return false;
 }
 
-SvrVec2I opt_make_vec2_or(SvrIniKeyValue* kv, SvrVec2I def)
+bool opt_make_vec2_or(SvrIniKeyValue* kv, SvrVec2I* dest)
 {
     SvrVec2I ret;
 
     if (kv == NULL)
     {
-        return def;
+        return false;
     }
 
     s32 num = sscanf(kv->value, "%d %d", &ret.x, &ret.y);
@@ -158,16 +151,17 @@ SvrVec2I opt_make_vec2_or(SvrIniKeyValue* kv, SvrVec2I def)
         game_log("Option %s has incorrect formatting. It should be in the format of <number> <number>. Setting to 0 0\n", kv->key);
     }
 
-    return ret;
+    *dest = ret;
+    return true;
 }
 
-SvrVec4I opt_make_color_or(SvrIniKeyValue* kv, SvrVec4I def)
+bool opt_make_color_or(SvrIniKeyValue* kv, SvrVec4I* dest)
 {
     SvrVec4I ret;
 
     if (kv == NULL)
     {
-        return def;
+        return false;
     }
 
     s32 num = sscanf(kv->value, "%d %d %d %d", &ret.x, &ret.y, &ret.z, &ret.w);
@@ -183,5 +177,6 @@ SvrVec4I opt_make_color_or(SvrIniKeyValue* kv, SvrVec4I def)
         game_log("Option %s has incorrect formatting. It should be a color in the format of 255 255 255 255 (RGBA). Setting to 255 255 255 255\n", kv->key);
     }
 
-    return ret;
+    *dest = ret;
+    return true;
 }

@@ -226,8 +226,7 @@ struct ProcState
     bool movie_start();
     void movie_end();
     void movie_setup_params();
-    bool movie_load_profile(const char* profile_path);
-    void movie_free_profile();
+    bool movie_load_profile(const char* name, bool required);
 
     // -----------------------------------------------
     // Movie state:

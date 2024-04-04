@@ -88,18 +88,6 @@ bool ProcState::start(const char* dest_file, const char* profile, ProcGameTextur
     svr_game_texture = *game_texture;
     svr_audio_params = *audio_params;
 
-    // Must load the profile first!
-
-    if (profile == NULL)
-    {
-        profile = "default";
-    }
-
-    // Build profile path.
-
-    char full_profile_path[MAX_PATH];
-    SVR_SNPRINTF(full_profile_path, "%s\\data\\profiles\\%s.ini", svr_resource_path, profile);
-
     // Build output video path.
 
     SVR_SNPRINTF(movie_path, "%s\\movies\\", svr_resource_path);
@@ -108,9 +96,20 @@ bool ProcState::start(const char* dest_file, const char* profile, ProcGameTextur
 
     movie_setup_params();
 
-    if (!movie_load_profile(full_profile_path))
+    // Must load the profiles first!
+    // The default profile is the base profile, and other profiles can override individual options.
+
+    if (!movie_load_profile("default", true))
     {
         goto rfail;
+    }
+
+    if (profile[0])
+    {
+        if (!movie_load_profile(profile, false))
+        {
+            goto rfail;
+        }
     }
 
     if (!vid_start())

@@ -1,6 +1,6 @@
 #include "proc_priv.h"
 
-// Font stuff for velo.
+// Profile loading.
 
 // Names for ini.
 OptStrIntMapping VELO_FONT_WEIGHT_TABLE[] = {
@@ -105,46 +105,54 @@ void ProcState::movie_setup_params()
     movie_height = tex_desc.Height;
 }
 
-bool ProcState::movie_load_profile(const char* profile_path)
+// A required profile must have all variables set to a proper value. This is used with the default profile.
+bool ProcState::movie_load_profile(const char* name, bool required)
 {
+    char full_profile_path[MAX_PATH];
+    SVR_SNPRINTF(full_profile_path, "%s\\data\\profiles\\%s.ini", svr_resource_path, name);
+
     bool ret = false;
 
-    movie_free_profile();
-
-    SvrIniSection* ini_root = svr_ini_load(profile_path);
+    SvrIniSection* ini_root = svr_ini_load(full_profile_path);
 
     if (ini_root == NULL)
     {
-        game_log("ERROR: Could not load profile %s\n", profile_path);
+        game_log("ERROR: Could not load profile %s\n", full_profile_path);
         goto rfail;
     }
 
-    movie_profile.video_fps = OPT_S32(ini_root, "video_fps", 1, 1000, 60);
-    movie_profile.video_encoder = OPT_STR_LIST(ini_root, "video_encoder", VIDEO_ENCODER_TABLE, "dnxhr");
-    movie_profile.video_x264_crf = OPT_S32(ini_root, "video_x264_crf", 0, 52, 15);
-    movie_profile.video_x264_preset = OPT_STR_LIST(ini_root, "video_x264_preset", X264_PRESET_TABLE, "veryfast");
-    movie_profile.video_x264_intra = OPT_BOOL(ini_root, "video_x264_intra", 0);
-    movie_profile.video_dnxhr_profile = OPT_STR_LIST(ini_root, "video_dnxhr_profile", DNXHR_PROFILE_TABLE, "hq");
-    movie_profile.audio_enabled = OPT_BOOL(ini_root, "audio_enabled", 0);
-    movie_profile.audio_encoder = OPT_STR_LIST(ini_root, "audio_encoder", AUDIO_ENCODER_TABLE, "aac");
-
-    movie_profile.mosample_enabled = OPT_BOOL(ini_root, "motion_blur_enabled", 0);
-    movie_profile.mosample_mult = OPT_S32(ini_root, "motion_blur_fps_mult", 2, INT32_MAX, 60);
-    movie_profile.mosample_exposure = OPT_FLOAT(ini_root, "motion_blur_exposure", 0.0f, 1.0f, 0.5f);
-
-    movie_profile.velo_enabled = OPT_BOOL(ini_root, "velo_enabled", 0);
-    movie_profile.velo_font = OPT_STR(ini_root, "velo_font", "Segoe UI");
-    movie_profile.velo_font_size = OPT_S32(ini_root, "velo_font_size", 16, 192, 48);
-    movie_profile.velo_font_color = OPT_COLOR(ini_root, "velo_color", SvrVec4I { 255, 255, 255, 100 });
-    movie_profile.velo_font_border_color = OPT_COLOR(ini_root, "velo_border_color", SvrVec4I { 0, 0, 0, 255 });
-    movie_profile.velo_font_border_size = OPT_S32(ini_root, "velo_border_size", 0, 192, 0);
-    movie_profile.velo_font_style = (DWRITE_FONT_STYLE)OPT_STR_MAP(ini_root, "velo_font_style", VELO_FONT_STYLE_TABLE, DWRITE_FONT_STYLE_NORMAL);
-    movie_profile.velo_font_weight = (DWRITE_FONT_WEIGHT)OPT_STR_MAP(ini_root, "velo_font_weight", VELO_FONT_WEIGHT_TABLE, DWRITE_FONT_WEIGHT_NORMAL);
-    movie_profile.velo_align = OPT_VEC2(ini_root, "velo_align", SvrVec2I { 0, 80 });
-    movie_profile.velo_anchor = OPT_STR_MAP(ini_root, "velo_anchor", VELO_ANCHOR_TABLE, VELO_ANCHOR_CENTER);
-    movie_profile.velo_length = OPT_STR_MAP(ini_root, "velo_length", VELO_LENGTH_TABLE, VELO_LENGTH_XY);
-
     ret = true;
+
+    ret &= OPT_S32(ini_root, "video_fps", 1, 1000, &movie_profile.video_fps);
+    ret &= OPT_STR_LIST(ini_root, "video_encoder", VIDEO_ENCODER_TABLE, &movie_profile.video_encoder);
+    ret &= OPT_S32(ini_root, "video_x264_crf", 0, 52, &movie_profile.video_x264_crf);
+    ret &= OPT_STR_LIST(ini_root, "video_x264_preset", X264_PRESET_TABLE, &movie_profile.video_x264_preset);
+    ret &= OPT_BOOL(ini_root, "video_x264_intra", &movie_profile.video_x264_intra);
+    ret &= OPT_STR_LIST(ini_root, "video_dnxhr_profile", DNXHR_PROFILE_TABLE, &movie_profile.video_dnxhr_profile);
+    ret &= OPT_BOOL(ini_root, "audio_enabled", &movie_profile.audio_enabled);
+    ret &= OPT_STR_LIST(ini_root, "audio_encoder", AUDIO_ENCODER_TABLE, &movie_profile.audio_encoder);
+
+    ret &= OPT_BOOL(ini_root, "motion_blur_enabled", &movie_profile.mosample_enabled);
+    ret &= OPT_S32(ini_root, "motion_blur_fps_mult", 2, INT32_MAX, &movie_profile.mosample_mult);
+    ret &= OPT_FLOAT(ini_root, "motion_blur_exposure", 0.0f, 1.0f, &movie_profile.mosample_exposure);
+
+    ret &= OPT_BOOL(ini_root, "velo_enabled", &movie_profile.velo_enabled);
+    ret &= OPT_STR(ini_root, "velo_font", &movie_profile.velo_font);
+    ret &= OPT_S32(ini_root, "velo_font_size", 16, 192, &movie_profile.velo_font_size);
+    ret &= OPT_COLOR(ini_root, "velo_color", &movie_profile.velo_font_color);
+    ret &= OPT_COLOR(ini_root, "velo_border_color", &movie_profile.velo_font_border_color);
+    ret &= OPT_S32(ini_root, "velo_border_size", 0, 192, &movie_profile.velo_font_border_size);
+    ret &= OPT_STR_MAP(ini_root, "velo_font_style", VELO_FONT_STYLE_TABLE, (s32*)&movie_profile.velo_font_style);
+    ret &= OPT_STR_MAP(ini_root, "velo_font_weight", VELO_FONT_WEIGHT_TABLE, (s32*)&movie_profile.velo_font_weight);
+    ret &= OPT_VEC2(ini_root, "velo_align", &movie_profile.velo_align);
+    ret &= OPT_STR_MAP(ini_root, "velo_anchor", VELO_ANCHOR_TABLE, &movie_profile.velo_anchor);
+    ret &= OPT_STR_MAP(ini_root, "velo_length", VELO_LENGTH_TABLE, &movie_profile.velo_length);
+
+    if (!required)
+    {
+        ret = true;
+    }
+
     goto rexit;
 
 rfail:
@@ -156,9 +164,4 @@ rexit:
     }
 
     return ret;
-}
-
-void ProcState::movie_free_profile()
-{
-    svr_maybe_free((void**)&movie_profile.velo_font);
 }
