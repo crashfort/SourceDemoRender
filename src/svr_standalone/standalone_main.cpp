@@ -359,6 +359,10 @@ s32 recording_state;
 
 bool enable_autostop;
 
+s32 movie_timeout; // After how many seconds to automatically end the movie.
+ITaskbarList3* taskbar_list; // The taskbar progress bar.
+s64 next_progress_update_time;
+
 HWND main_hwnd;
 char wind_def_title[1024];
 s64 next_wind_update_time;
@@ -708,6 +712,9 @@ void do_recording_frame()
 
     void wind_update_title();
     wind_update_title();
+
+    void update_timeout();
+    update_timeout();
 }
 
 // Recording should only be possible when fully connected. We don't want the menu and loading screen to be recorded.
@@ -951,6 +958,39 @@ const char* get_cmd_args(void* args)
     return NULL;
 }
 
+void show_start_movie_usage()
+{
+    game_console_msg("Usage: startmovie <name> (<optional parameters>)\n");
+    game_console_msg("Starts to record a movie with an optional parameters.\n");
+    game_console_msg("\n");
+    game_console_msg("Optional parameters are written in the following example format:\n");
+    game_console_msg("\n");
+    game_console_msg("    startmovie a.mov timeout=40 profile=my_profile\n");
+    game_console_msg("\n");
+    game_console_msg("The order does not matter for the optional parameters, and you can omit the ones you do not need.\n");
+    game_console_msg("The parameters are for features that are per render, and not persistent like the profile.\n");
+    game_console_msg("\n");
+    game_console_msg("Optional parameters are:\n");
+    game_console_msg("\n");
+    game_console_msg("    timeout=<seconds>\n");
+    game_console_msg("    Automatically stop rendering after the elapsed video time passes.\n");
+    game_console_msg("    This will add a progress bar to the task bar icon. By default, there is no timeout.\n");
+    game_console_msg("\n");
+    game_console_msg("    profile=<string>\n");
+    game_console_msg("    Override which rendering profile to use.\n");
+    game_console_msg("    If omitted, the default profile is used.\n");
+    game_console_msg("\n");
+    game_console_msg("    autostop=<value>\n");
+    game_console_msg("    Automatically stop the movie on demo disconnect. This can be 0 or 1. Default is 1.\n");
+    game_console_msg("    This is used to determine what happens when a demo ends, when you get kicked back to the main menu.\n");
+    game_console_msg("\n");
+    game_console_msg("    nowindupd=<value>\n");
+    game_console_msg("    Disable window presentation. This can be 0 or 1. Default is 0.\n");
+    game_console_msg("    For some systems this may improve performance, however you will not be able to see anything.\n");
+    game_console_msg("\n");
+    game_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
+}
+
 void __cdecl start_movie_override(void* args)
 {
     tm_num_frames = 0;
@@ -960,6 +1000,10 @@ void __cdecl start_movie_override(void* args)
     snd_lost_mix_time = 0.0f;
     snd_num_samples = 0;
 
+    movie_timeout = 0;
+    enable_autostop = true;
+    disable_window_update = false;
+
     // We don't want to call the original function for this command.
 
     if (svr_movie_active())
@@ -968,50 +1012,75 @@ void __cdecl start_movie_override(void* args)
         return;
     }
 
-    const char* value_args = get_cmd_args(args);
-
     // First argument is always startmovie.
+
+    const char* value_args = svr_advance_until_whitespace(get_cmd_args(args));
+    value_args = svr_advance_until_after_whitespace(value_args);
+
+    if (*value_args == 0)
+    {
+        show_start_movie_usage();
+        return;
+    }
 
     char movie_name[MAX_PATH];
     movie_name[0] = 0;
 
-    char profile[MAX_PATH];
-    profile[0] = 0;
+    value_args = svr_extract_string(value_args, movie_name, SVR_ARRAY_SIZE(movie_name));
 
-    s32 used_args = sscanf_s(value_args, "%*s %s %s", movie_name, MAX_PATH - 5, profile, MAX_PATH - 5);
-
-    if (used_args == 0 || used_args == EOF)
+    if (movie_name[0] == 0)
     {
-        game_console_msg("Usage: startmovie <name> (<optional profile>)\n");
-        game_console_msg("Starts to record a movie with an optional profile\n");
-        game_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
+        show_start_movie_usage();
         return;
     }
+
+    SvrDynArray<SvrIniKeyValue*> inputs = {};
+    svr_ini_parse_command_input(value_args, &inputs);
+
+    const char* opt_profile = svr_ini_find_command_value(&inputs, "profile");
+    const char* opt_timeout = svr_ini_find_command_value(&inputs, "timeout");
+    const char* opt_autostop = svr_ini_find_command_value(&inputs, "autostop");
+    const char* opt_no_wind_upd = svr_ini_find_command_value(&inputs, "nowindupd");
+
+    if (opt_profile == NULL)
+    {
+        opt_profile = "default";
+    }
+
+    if (opt_timeout)
+    {
+        movie_timeout = atoi(opt_timeout);
+    }
+
+    if (opt_autostop)
+    {
+        enable_autostop = atoi(opt_autostop);
+    }
+
+    if (opt_no_wind_upd)
+    {
+        disable_window_update = atoi(opt_autostop);
+    }
+
+    svr_ini_free_kvs(&inputs);
 
     // Will point to the end if no extension was provided.
     const char* movie_ext = PathFindExtensionA(movie_name);
 
-    if (*movie_ext == 0)
+    // Only allowed containers that have sufficient encoder support.
+    bool has_valid_ext = !strcmpi(movie_ext, ".mp4") || !strcmpi(movie_ext, ".mkv") || !strcmpi(movie_ext, ".mov");
+
+    if (!has_valid_ext)
     {
-        StringCchCatA(movie_name, MAX_PATH, ".mp4");
+        game_console_msg("File extension is wrong or missing. You may choose between MP4, MKV, MOV\n");
+        game_console_msg("\n");
+        game_console_msg("Example:\n");
+        game_console_msg("\n");
+        game_console_msg("    startmovie a.mov\n");
+        game_console_msg("\n");
+        game_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
+        return;
     }
-
-    else
-    {
-        // Only allowed containers that have sufficient encoder support.
-        bool has_valid_name = !strcmpi(movie_ext, ".mp4") || !strcmpi(movie_ext, ".mkv") || !strcmpi(movie_ext, ".mov");
-
-        if (!has_valid_name)
-        {
-            char renamed[MAX_PATH];
-            StringCchCopyA(renamed, MAX_PATH, movie_name);
-            PathRenameExtensionA(renamed, ".mp4");
-
-            StringCchCopyA(movie_name, MAX_PATH, renamed);
-        }
-    }
-
-    IDirect3DSurface9* bb_surf = NULL;
 
     // Some commands must be set before svr_start (such as mat_queue_mode 0, due to the backbuffer ordering of gm_d3d9ex_device->GetRenderTarget call).
     // This file must always be run! Movie cannot be started otherwise!
@@ -1024,6 +1093,7 @@ void __cdecl start_movie_override(void* args)
     run_user_cfgs_for_event("start");
 
     // The game backbuffer is the first index.
+    IDirect3DSurface9* bb_surf = NULL;
     gm_d3d9ex_device->GetRenderTarget(0, &bb_surf);
 
     // Audio parameters are fixed in Source so they cannot be changed, just better to have those constants in here.
@@ -1034,7 +1104,7 @@ void __cdecl start_movie_override(void* args)
     startmovie_data.audio_params.audio_hz = 44100;
     startmovie_data.audio_params.audio_bits = 16;
 
-    if (!svr_start(movie_name, profile, &startmovie_data))
+    if (!svr_start(movie_name, opt_profile, &startmovie_data))
     {
         // Reverse above changes if something went wrong.
         run_cfg("svr_movie_end.cfg");
@@ -1090,6 +1160,9 @@ void end_the_movie()
 
     void wind_reset();
     wind_reset();
+
+    void reset_timeout();
+    reset_timeout();
 }
 
 void __cdecl end_movie_override(void* args)
@@ -1719,26 +1792,6 @@ void create_game_hooks()
     MH_EnableHook(MH_ALL_HOOKS);
 }
 
-void read_command_line()
-{
-    char* start_args = GetCommandLineA();
-
-    enable_autostop = true;
-
-    // Doesn't belong in a profile so here it is.
-    if (strstr(start_args, "-svrnoautostop"))
-    {
-        svr_log("Autostop is disabled\n");
-        enable_autostop = false;
-    }
-
-    if (strstr(start_args, "-svrnowindupd"))
-    {
-        svr_log("Window update is disabled\n");
-        disable_window_update = true;
-    }
-}
-
 void wind_init()
 {
     EnumThreadWindows(main_thread_id, EnumThreadWndProc, (LPARAM)&main_hwnd);
@@ -1777,6 +1830,47 @@ void wind_update_title()
     SetWindowTextA(main_hwnd, buf);
 }
 
+void update_timeout()
+{
+    if (movie_timeout == 0)
+    {
+        return; // Should not stop automatically, and no progress to update.
+    }
+
+    s64 now = svr_prof_get_real_time();
+
+    if (now < next_progress_update_time)
+    {
+        return;
+    }
+
+    // Need to throttle this because updating the progress is slow apparently.
+    next_progress_update_time = now + 500000;
+
+    s64 end_frame = movie_timeout * tm_game_rate;
+
+    taskbar_list->SetProgressValue(main_hwnd, tm_num_frames, end_frame);
+
+    if (tm_num_frames >= end_frame)
+    {
+        end_the_movie();
+    }
+}
+
+void reset_timeout()
+{
+    taskbar_list->SetProgressValue(main_hwnd, 0, 0);
+    taskbar_list->SetProgressState(main_hwnd, TBPF_NOPROGRESS);
+
+    next_progress_update_time = 0;
+}
+
+void init_timeout()
+{
+    CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&taskbar_list));
+    reset_timeout();
+}
+
 DWORD WINAPI standalone_init_async(void* param)
 {
     // We don't want to show message boxes on failures because they work real bad in fullscreen.
@@ -1802,13 +1896,12 @@ DWORD WINAPI standalone_init_async(void* param)
 
     game_console_init();
 
-    read_command_line();
-
     MH_Initialize();
 
     create_game_hooks();
 
     wind_init();
+    init_timeout();
 
     if (!svr_init(launcher_data.svr_path, gm_d3d9ex_device))
     {
@@ -1831,6 +1924,8 @@ DWORD WINAPI standalone_init_async(void* param)
 // Called when launching by the standalone launcher. This is before the process has started, and there are no game libraries loaded here.
 extern "C" __declspec(dllexport) void svr_init_from_launcher(SvrGameInitData* init_data)
 {
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
     launcher_data = *init_data;
     main_thread_id = GetCurrentThreadId();
 

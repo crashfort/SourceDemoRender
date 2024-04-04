@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <assert.h>
 #include <mfapi.h>
+#include <strsafe.h>
 
 // Prefer to use this instead of calling Release yourself since you can use this to see the actual reference count.
 void svr_release(struct IUnknown* p)
@@ -338,7 +339,7 @@ const char* svr_extract_string(const char* text, char* dest, s32 dest_size)
     ptr = svr_advance_quote(ptr); // Maybe go inside quote.
     const char* next_ptr = svr_advance_string(quoted, ptr); // Read content.
     s32 dist = next_ptr - ptr; // Content length.
-    strncat(dest, ptr, svr_min(dist, dest_size - 1));
+    StringCchCopyNA(dest, dest_size, ptr, dist);
     next_ptr = svr_advance_quote(next_ptr); // Maybe go outside quote.
 
     return next_ptr;

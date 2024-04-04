@@ -90,7 +90,7 @@ bool ProcState::start(const char* dest_file, const char* profile, ProcGameTextur
 
     // Must load the profile first!
 
-    if (*profile == 0)
+    if (profile == NULL)
     {
         profile = "default";
     }
