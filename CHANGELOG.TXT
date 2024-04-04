@@ -9,6 +9,7 @@ Version 42,
 * Added a progress bar to the game taskbar icon if rendering timeout is enabled.
 * The startmovie command now has a new syntax for optional parameters.
 * Fixed all output being blurry.
+* Added profile inheritance. You now no longer need to copy the default profile, instead you can override individual settings from the default profile.
 
 Version 41, 20 March 2024
 ---------------------------
