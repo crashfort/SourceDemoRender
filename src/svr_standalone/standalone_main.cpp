@@ -1838,18 +1838,15 @@ void update_timeout()
     }
 
     s64 now = svr_prof_get_real_time();
-
-    if (now < next_progress_update_time)
-    {
-        return;
-    }
-
-    // Need to throttle this because updating the progress is slow apparently.
-    next_progress_update_time = now + 500000;
-
     s64 end_frame = movie_timeout * tm_game_rate;
 
-    taskbar_list->SetProgressValue(main_hwnd, tm_num_frames, end_frame);
+    if (now > next_progress_update_time)
+    {
+        // Need to throttle this because updating the progress is slow apparently.
+        next_progress_update_time = now + 500000;
+
+        taskbar_list->SetProgressValue(main_hwnd, tm_num_frames, end_frame);
+    }
 
     if (tm_num_frames >= end_frame)
     {
