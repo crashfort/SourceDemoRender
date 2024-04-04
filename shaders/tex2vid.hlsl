@@ -35,64 +35,6 @@ uint3 convert_rgb_to_yuv(float3 rgb)
     return ret;
 }
 
-float4 average_nearby_for_yuv(uint3 dtid)
-{
-    uint width;
-    uint height;
-    input_texture.GetDimensions(width, height);
-
-    float4 base = input_texture.Load(dtid);
-
-    float4 top_right;
-    float4 bot_left;
-    float4 bot_right;
-
-    if (dtid.x + 1 < width)
-    {
-        top_right = input_texture.Load(dtid, int2(1, 0));
-    }
-
-    else
-    {
-        top_right = base;
-    }
-
-    if (dtid.y + 1 < height)
-    {
-        bot_left = input_texture.Load(dtid, int2(0, 1));
-    }
-
-    else
-    {
-        bot_left = base;
-    }
-
-    if (dtid.x + 1 < width && dtid.y + 1 < height)
-    {
-        bot_right = input_texture.Load(dtid, int2(1, 1));
-    }
-
-    else
-    {
-        if (dtid.x + 1 < width)
-        {
-            bot_right = top_right;
-        }
-
-        else if (dtid.y + 1 < height)
-        {
-            bot_right = bot_left;
-        }
-
-        else
-        {
-            bot_right = base;
-        }
-    }
-
-    return (base + top_right + bot_left + bot_right) / 4.0;
-}
-
 // --------------------------------------------------------------------------------------------------------------------
 
 #if AV_PIX_FMT_NV12
@@ -106,7 +48,7 @@ RWTexture2D<uint2> output_texture_uv : register(u1);
 
 void proc(uint3 dtid)
 {
-    float4 pix = average_nearby_for_yuv(dtid);
+    float4 pix = input_texture.Load(dtid);
     uint3 yuv = convert_rgb_to_yuv(pix.xyz);
     output_texture_y[dtid.xy] = yuv.x;
     output_texture_uv[dtid.xy >> 1] = uint2(yuv.yz);
@@ -128,7 +70,7 @@ RWTexture2D<uint> output_texture_v : register(u2);
 
 void proc(uint3 dtid)
 {
-    float4 pix = average_nearby_for_yuv(dtid);
+    float4 pix = input_texture.Load(dtid);
     uint3 yuv = convert_rgb_to_yuv(pix.xyz);
     output_texture_y[dtid.xy] = yuv.x;
     output_texture_u[int2(dtid.x >> 1, dtid.y)] = yuv.y;
@@ -149,7 +91,7 @@ RWTexture2D<uint> output_texture_v : register(u2);
 
 void proc(uint3 dtid)
 {
-    float4 pix = average_nearby_for_yuv(dtid);
+    float4 pix = input_texture.Load(dtid);
     uint3 yuv = convert_rgb_to_yuv(pix.xyz);
     output_texture_y[dtid.xy] = yuv.x;
     output_texture_u[dtid.xy] = yuv.y;
