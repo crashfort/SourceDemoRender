@@ -2,6 +2,13 @@ Version 42,
 ---------------------------
 
 * Fixed potential issue where audio and video could be dropped if the game is significantly faster than the encoding. This would not necessarily have happened in a real world scenario.
+* Small performance improvements.
+* Video time and elapsed real time are now shown in the window title and the task bar.
+* New parameters have been added to the startmovie command, which allows you to control various things about the current rendering.
+* Added a rendering timeout option to the startmovie command, to automatically stop the movie after the video time reaches a certain time (region rendering).
+* Added a progress bar to the game taskbar icon if rendering timeout is enabled.
+* The startmovie command now has a new syntax for optional parameters.
+* Fixed all output being blurry.
 
 Version 41, 20 March 2024
 ---------------------------
