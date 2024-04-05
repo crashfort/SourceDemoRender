@@ -576,7 +576,7 @@ bool EncoderState::render_receive_audio()
         input.mem = shared_audio_buffer;
         input.num_samples = shared_mem_ptr->waiting_audio_samples;
 
-        render_give_thread_input(&input);
+        render_give_audio_thread_input(&input);
     }
 
     ret = true;
@@ -588,7 +588,7 @@ rexit:
     return ret;
 }
 
-void EncoderState::render_give_thread_input(RenderAudioThreadInput* input)
+void EncoderState::render_give_audio_thread_input(RenderAudioThreadInput* input)
 {
     audio_convert_to_codec_samples(input);
 
@@ -631,6 +631,10 @@ void EncoderState::render_encode_frame_from_audio_fifo(s32 num_samples)
 {
     AVFrame* frame = render_get_new_audio_frame();
     frame->pts = render_audio_pts;
+
+    // Override the number of samples.
+    // The frame has a capacity of the expected codec frame size allocated.
+    // For the last frames, we will not be using the full capacity.
     frame->nb_samples = num_samples;
 
     audio_copy_samples_to_frame(frame, num_samples);

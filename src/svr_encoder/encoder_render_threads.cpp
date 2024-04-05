@@ -207,7 +207,7 @@ void EncoderState::render_audio_proc()
                 break;
             }
 
-            render_give_thread_input(&buffer);
+            render_give_audio_thread_input(&buffer);
 
             render_recycled_audio_buffers.push(&buffer); // Give back the audio buffer.
         }

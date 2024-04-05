@@ -180,7 +180,7 @@ struct EncoderState
     bool render_check_thread_errors();
     bool render_receive_video();
     bool render_receive_audio();
-    void render_give_thread_input(RenderAudioThreadInput* input);
+    void render_give_audio_thread_input(RenderAudioThreadInput* input);
     void render_flush_audio_fifo();
     void render_submit_audio_fifo();
     void render_encode_frame_from_audio_fifo(s32 num_samples);
