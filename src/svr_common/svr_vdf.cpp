@@ -23,6 +23,11 @@ SvrVdfLineType svr_vdf_categorize_line(const char* line)
     const char* ptr = line;
     ptr = svr_advance_until_after_whitespace(ptr);
 
+    if (*ptr == 0)
+    {
+        return SVR_VDF_LINE_NONE; // Blanks are no good.
+    }
+
     if (*ptr == '{')
     {
         return SVR_VDF_LINE_SECTION_START;
