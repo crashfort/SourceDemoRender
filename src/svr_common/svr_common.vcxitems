@@ -19,7 +19,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_alloc.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_api.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_array.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)svr_async_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_atom.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_defs.h" />
@@ -30,10 +29,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_log.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_prof.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_queue.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)svr_sem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_standalone_common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_steam_common.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)svr_stream.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_vdf.h" />
   </ItemGroup>
   <ItemGroup>
@@ -45,7 +42,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_ini.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_log.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_prof.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)svr_sem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_vdf.cpp" />
   </ItemGroup>
   <ItemGroup>
