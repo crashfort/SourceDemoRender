@@ -1,4 +1,4 @@
-Version 42,
+Version 42, 11 April 2024
 ---------------------------
 
 * Fixed potential issue where audio and video could be dropped if the game is significantly faster than the encoding. This would not necessarily have happened in a real world scenario.
