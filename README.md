@@ -3,9 +3,9 @@
 
 [Discord](https://discord.gg/5t8D68c)
 
-Source Video Render (SVR, formely SDR) can be used to record movies for the Source engine with way higher performance than the built in `startmovie` command. SVR does not have video effects - if you need video effects, see [HLAE](https://www.advancedfx.org/).
+Source Video Render (SVR, formely SDR) is used to record movies for the Source engine. SVR does not have video effects - if you need video effects, see [HLAE](https://www.advancedfx.org/).
 
-SVR can record faster than realtime for normal videos (a 3 minute video can be recorded in 42 seconds). Videos can also be created with high quality motion blur (this is a slower process).
+SVR can record faster than realtime for normal videos, or with high quality motion blur.
 
 ## Updates
 You can use `update.cmd` in the SVR directory to automatically download the latest release. The latest SVR will be downloaded to `svr.zip`. You can extract this folder and SVR is now updated.
@@ -29,7 +29,10 @@ You can use `update.cmd` in the SVR directory to automatically download the late
 Any DirectX 11 (Direct3D 11.3, feature level 12_0) compatible graphics adapter with minimum of Windows 10 1909 is required. Hardware feature support verification will occur when starting the launcher.
 
 ## Startup
-Use `svr_launcher.exe` to start SVR. The launcher will scan the installed Steam games in your system and the supported games will be listed. **The launch parameters will be read from Steam so Steam must be started**. If you don't want to use the launch parameters from Steam, you can create a file called `svr_launch_params.ini` in the same folder as the launcher and insert a format like this (one line per game):
+
+**Steam must be started for SVR to work.**
+
+Use `svr_launcher.exe` to start SVR. The launcher will scan the installed Steam games in your system and the supported games will be listed. If you don't want to use the launch parameters from Steam, you can create a file called `svr_launch_params.ini` in the same folder as the launcher and insert a format like this (one line per game):
 
 ```ini
 240=-width 2560 -height 1440
@@ -43,20 +46,45 @@ It's possible to launch Source 2013 SP mods using this file by using the 220 app
 220=-game <mod_name>
 ```
 
-The following launch parameters are always used: ``-steam -insecure +sv_lan 1 -console -novid``.
+The following launch parameters are always added by the launcher: ``-steam -insecure +sv_lan 1 -console -novid``.
 
 When using `svr_launcher.exe` you are starting the standalone SVR, which modifies existing games to add SVR support. SVR stores the game build which it was tested and known to work on. In case a game updates, SVR may stop working and this will be printed to `SVR_LOG.txt`.
 
 ## Recording
-Once in game, you use the `startmovie` console command to start recording a movie and `endmovie` to stop. The `startmovie` command takes 1 or 2 parameters in this format: `startmovie <name> (<profile>)`. The *name* is the filename of the movie which will be located in `data/movies/`. **If the name does not contain an extension (container), mp4 will automatically be selected.**. The *profile* is an optional parameter that decides which settings this movie will use. If not specified, the default profile is used (see Profiles below about profiles).
+Once in game, you can use the `startmovie` console command to start recording a movie and the `endmovie` command to stop.
 
-It's possible to start recording in the main menu but content will only be saved when outside of the main menu. Recording automatically stops when returning back to the main menu, unless ``-svrnoautostop`` is passed in as a launch parameter to the game. If autostop is disabled, SVR will not keep recording the menu, but will start recording again when connected or playing a demo.
+The `startmovie` command should be used like this:
 
-When starting and ending a movie, the files `data/cfg/svr_movie_start_user.cfg` and `data/cfg/svr_movie_end_user.cfg` in `data/cfg` will be executed (create these if you want to have them). This can be used to insert or overwrite commands that should be active only during the movie period. Note that these files are **not** in the game directory, but in the SVR directory in `data/cfg`. You can have game specific cfgs by using files called `data/cfg/svr_movie_start_<app_id>.cfg` and `data/cfg/svr_movie_end_<app_id>.cfg`. The `app_id` should be substituted for the Steam app id, such as 240 for Counter-Strike: Source.
+```
+startmovie <file> (<optional parameters>)
+```
 
-It is recommended that you don't edit `svr_movie_start.cfg` and `svr_movie.end.cfg` as they may be changed in updates, which would overwrite your changes.
+As an example:
 
-The execution order of the cfgs is as follows: `svr_movie_start.cfg` > `svr_movie_start_user.cfg` > `svr_movie_start_<app_id>.cfg`. Each cfg can override the previous.
+```
+startmovie movie.mov timeout=30
+```
+
+The above example will produce a video called `movie.mov` with a render region of 30 seconds. Videos will be placed in the `data/movies/` directory.
+
+The list of optional parameters are as follows:
+
+| Parameter         | Description
+| ----------------- | -----------
+| ``timeout=<seconds>`` | Automatically stop rendering after the elapsed video time passes. This will add a progress bar to the task bar icon. By default, there is no timeout.
+| ``profile=<string>`` | Override which rendering profile to use. If omitted, the default profile is used. See below about profiles.
+| ``autostop=<value>`` | Automatically stop the movie on demo disconnect. This can be 0 or 1. Default is 1. This is used to determine what happens when a demo ends, when you get kicked back to the main menu.
+| ``nowindupd=<value>`` | Disable window presentation. This can be 0 or 1. Default is 0. For some systems this may improve performance, however you will not be able to see anything.
+
+When starting and ending a movie, the files `data/cfg/svr_movie_start_user.cfg` and `data/cfg/svr_movie_end_user.cfg` in `data/cfg` will be executed (you can create these if you want to use them). This can be used to insert or overwrite commands that should be active only during the movie period. Note that these files are **not** in the game directory, but in the SVR directory in `data/cfg`.
+
+You can have game specific cfgs by using files called `data/cfg/svr_movie_start_<app_id>.cfg` and `data/cfg/svr_movie_end_<app_id>.cfg`. The `app_id` should be substituted for the Steam app id, such as **240** for **Counter-Strike: Source**.
+
+**It is recommended that you don't edit `svr_movie_start.cfg` and `svr_movie.end.cfg` as they may be changed in updates, which would overwrite your changes.**
+
+The execution order of the cfgs is as follows: `svr_movie_start.cfg > svr_movie_start_user.cfg > svr_movie_start_<app_id>.cfg`. Each cfg file can override the previous.
+
+The commands that are placed in `svr_movie_start.cfg` are required and must not be overwritten. Most notably, the variable `mat_queue_mode` must be 0 during recording for recording to work properly.
 
 ## Something's not working
 If something is not working properly, please find the `SVR_LOG.txt` and `ENCODER_LOG.txt` file in the `data/` directory and explain what you were doing and upload it to [Discord](https://discord.gg/5t8D68c) or create a new issue here.
@@ -65,9 +93,11 @@ If something is not working properly, please find the `SVR_LOG.txt` and `ENCODER
 Due to the nature of reverse engineering games, it cannot be trusted that direct interoperability (with ReShade or HLAE for example) will work because the risk of collision.
 
 ## Profiles
-All recording settings are loaded from profiles which are located in `data/profiles`. The default profile is called `default.ini` and is the profile that will be used in case none is specified when starting a movie. These profiles are shared across all games. All profiles are written in a simple INI format. The documentation for profiles is written in `default.ini` [here](bin/data/profiles/default.ini).
+All recording settings are loaded from profiles which are located in `data/profiles`. The default profile is called `default.ini` and is the base profile of all settings. These profiles are shared across all games and are written in a simple INI format. The documentation for profiles is written inside the default profile [here](bin/data/profiles/default.ini).
 
-The default profile is used if none is specified when starting the movie. You can create your own profiles by copying `default.ini` and renaming it and making your changes. When starting your movie you can then specify your new profile. See Recording above. Note that if you edit the default profile, you will lose your changes when updating SVR.
+The default profile is used if no other is specified when starting the movie. You can override settings in the default profile by creating your own profiles inside `data/profiles`. When starting your movie you can then specify your new profile (see Recording above).
+
+The default profile is always loaded first, and your custom profile is loaded on top. This allows you to override individual setting without copying the entire profile. To create your own profile, create a file with an `.ini` extension inside `data/profiles/`. You can now override settings in the default profile by putting in the settings you want to override.
 
 ## Motion blur demo
 In this demo an object is rotating 6 times per second. This is a fast moving object, so higher samples per second will remove banding at cost of slower recording times. For slower scenes you may get away with a lower sampling rate. Exposure is dependant on the type of content being made. The goal you should be aiming for is to reduce the banding that happens with lower samples per second. A smaller exposure will leave shorter trails of motion blur.
