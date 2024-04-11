@@ -844,9 +844,12 @@ bool __fastcall eng_filter_time_override2(void* p, void* edx)
 
 HRESULT __stdcall d3d9ex_present_override(void* p, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion)
 {
-    if (svr_movie_active())
+    if (disable_window_update)
     {
-        return S_OK;
+        if (svr_movie_active())
+        {
+            return S_OK;
+        }
     }
 
     using OrgFn = decltype(d3d9ex_present_override)*;
@@ -856,9 +859,12 @@ HRESULT __stdcall d3d9ex_present_override(void* p, CONST RECT* pSourceRect, CONS
 
 HRESULT __stdcall d3d9ex_present_ex_override(void* p, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags)
 {
-    if (svr_movie_active())
+    if (disable_window_update)
     {
-        return S_OK;
+        if (svr_movie_active())
+        {
+            return S_OK;
+        }
     }
 
     using OrgFn = decltype(d3d9ex_present_ex_override)*;
@@ -1062,7 +1068,7 @@ void __cdecl start_movie_override(void* args)
 
     if (opt_no_wind_upd)
     {
-        disable_window_update = atoi(opt_autostop);
+        disable_window_update = atoi(opt_no_wind_upd);
     }
 
     svr_ini_free_kvs(&inputs);
@@ -1776,18 +1782,15 @@ void create_game_hooks()
         hook_function(get_snd_tx_stereo_override(), &snd_tx_stereo_hook);
     }
 
-    if (disable_window_update)
-    {
-        FnOverride present_ov;
-        present_ov.target = get_virtual(gm_d3d9ex_device, 17); // Present.
-        present_ov.hook = d3d9ex_present_override;
-        hook_function(present_ov, &d3d9ex_present_hook);
+    FnOverride present_ov;
+    present_ov.target = get_virtual(gm_d3d9ex_device, 17); // Present.
+    present_ov.hook = d3d9ex_present_override;
+    hook_function(present_ov, &d3d9ex_present_hook);
 
-        FnOverride present_ex_ov;
-        present_ex_ov.target = get_virtual(gm_d3d9ex_device, 121); // PresentEx.
-        present_ex_ov.hook = d3d9ex_present_ex_override;
-        hook_function(present_ex_ov, &d3d9ex_present_ex_hook);
-    }
+    FnOverride present_ex_ov;
+    present_ex_ov.target = get_virtual(gm_d3d9ex_device, 121); // PresentEx.
+    present_ex_ov.hook = d3d9ex_present_ex_override;
+    hook_function(present_ex_ov, &d3d9ex_present_ex_hook);
 
     patch_cvar_restrict();
 
