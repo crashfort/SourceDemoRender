@@ -13,7 +13,7 @@ LauncherGame SUPPORTED_GAMES[] = {
     LauncherGame { STEAM_GAME_HDTF, "Hunt Down The Freeman", "-game hdtf", "common\\Hunt Down The Freeman\\", "hdtf.exe", 2604730 },
 #endif
 #ifdef _WIN64
-    LauncherGame { STEAM_GAME_TF2, "Team Fortress 2", "-game tf", "common\\Team Fortress 2\\", "hl2.exe", 7504322 },
+    LauncherGame { STEAM_GAME_TF2, "Team Fortress 2", "-game tf", "common\\Team Fortress 2\\", "tf_win64.exe", 7504322 },
 #endif
 };
 
