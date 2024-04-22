@@ -57,7 +57,7 @@ s32 LauncherState::start_game(LauncherGame* game)
         launcher_error("Executable is not a 64-bit executable.");
     }
 #else
-    if (exe-type != SCS_32BIT_BINARY)
+    if (exe_type != SCS_32BIT_BINARY)
     {
         launcher_error("Executable is not a 32-bit executable.");
     }
