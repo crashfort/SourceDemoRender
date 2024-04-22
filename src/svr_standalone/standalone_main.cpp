@@ -823,7 +823,7 @@ bool __fastcall eng_filter_time_override2(void* p, void* edx)
     float dt;
 
     // TODO Inline assembly not allowed on x64.
-#if 0
+#ifndef _WIN64
     __asm {
         movss dt, xmm1
     };
@@ -834,7 +834,7 @@ bool __fastcall eng_filter_time_override2(void* p, void* edx)
     if (!ret)
     {
     // TODO Inline assembly not allowed on x64.
-#if 0
+#ifndef _WIN64
         __asm {
             movss xmm1, dt
         };
