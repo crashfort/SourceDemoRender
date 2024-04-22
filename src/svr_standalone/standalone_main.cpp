@@ -822,17 +822,23 @@ bool __fastcall eng_filter_time_override2(void* p, void* edx)
 {
     float dt;
 
+    // TODO Inline assembly not allowed on x64.
+#if 0
     __asm {
         movss dt, xmm1
     };
+#endif
 
     bool ret = run_frame();
 
     if (!ret)
     {
+    // TODO Inline assembly not allowed on x64.
+#if 0
         __asm {
             movss xmm1, dt
         };
+#endif
 
         using GmEngFilterTimeFn2 = bool(__fastcall*)(void* p, void* edx);
         GmEngFilterTimeFn2 org_fn = (GmEngFilterTimeFn2)eng_filter_time_hook.original;
