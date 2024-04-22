@@ -44,6 +44,25 @@ s32 LauncherState::start_game(LauncherGame* game)
 
     SVR_SNPRINTF(full_exe_path, "%s%s", installed_game_path, game->exe_name);
 
+    DWORD exe_type = 0;
+    if (!GetBinaryTypeA(full_exe_path, &exe_type))
+    {
+        svr_log("GetBinaryTypeA failed with code %lu\n", GetLastError());
+        launcher_error("Could not determine executable type.");
+    }
+
+#ifdef _WIN64
+    if (exe_type != SCS_64BIT_BINARY)
+    {
+        launcher_error("Executable is not a 64-bit executable.");
+    }
+#else
+    if (exe-type != SCS_32BIT_BINARY)
+    {
+        launcher_error("Executable is not a 32-bit executable.");
+    }
+#endif
+
     char full_args[1024];
     full_args[0] = 0;
 
