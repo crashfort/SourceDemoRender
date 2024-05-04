@@ -7,6 +7,8 @@ Source Video Render (SVR, formely SDR) is used to record movies for the Source e
 
 SVR can record faster than realtime for normal videos, or with high quality motion blur.
 
+See [Replay Viewer](https://github.com/crashfort/ReplayViewer) as a substitute for Counter-Strike: Source Source TV demos! The replay viewer will produce significantly smoother videos without teleport lag and server side interpolation.
+
 ## Updates
 You can use `update.cmd` in the SVR directory to automatically download the latest release. The latest SVR will be downloaded to `svr.zip`. You can extract this folder and SVR is now updated.
 
