@@ -56,7 +56,7 @@ void svr_ini_parse_line(SvrIniSection* priv, const char* line, SvrIniLineType ty
 
 SvrIniSection* svr_ini_load(const char* path)
 {
-    char* file_mem = svr_read_file_as_string(path);
+    char* file_mem = svr_read_file_as_string(path, 0);
 
     if (file_mem == NULL)
     {
@@ -110,7 +110,7 @@ void svr_ini_free_kvs(SvrDynArray<SvrIniKeyValue*>* kvs)
 {
     for (s32 i = 0; i < kvs->size; i++)
     {
-        svr_ini_free_kv((*kvs)[i]);
+        svr_ini_free_kv(kvs->at(i));
     }
 
     kvs->free();
@@ -209,7 +209,7 @@ const char* svr_ini_find_command_value(SvrDynArray<SvrIniKeyValue*>* kvs, const 
 {
     for (s32 i = 0; i < kvs->size; i++)
     {
-        SvrIniKeyValue* kv = (*kvs)[i];
+        SvrIniKeyValue* kv = kvs->at(i);
 
         if (!strcmpi(kv->key, key))
         {

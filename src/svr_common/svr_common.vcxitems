@@ -30,7 +30,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_prof.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_standalone_common.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)svr_steam_common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_vdf.h" />
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,8 @@
 #include "svr_common.h"
 #include <stdarg.h>
 
+// Shared between svr_standalone.dll and svr_game.dll.
+
 void game_console_init();
 
 // Puts to both game console and log file.

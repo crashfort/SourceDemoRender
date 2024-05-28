@@ -365,7 +365,8 @@ bool ProcState::encoder_send_event(EncoderSharedEvent event)
     // When this returns, svr_encoder will be paused and in a known state waiting to be woken up again.
     // This call also makes synchronization easier in this process.
 
-    HANDLE handles[] = {
+    HANDLE handles[] =
+    {
         encoder_proc,
         game_wake_event_h,
     };

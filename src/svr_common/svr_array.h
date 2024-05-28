@@ -12,7 +12,13 @@ struct SvrDynArray
     s32 capacity; // How many items there can be.
     s32 grow_align; // How much to grow by when needed.
 
-    T& operator[](s32 idx)
+    inline T& operator[](s32 idx)
+    {
+        assert(svr_idx_in_range(idx, size));
+        return mem[idx];
+    }
+
+    inline T& at(s32 idx)
     {
         assert(svr_idx_in_range(idx, size));
         return mem[idx];

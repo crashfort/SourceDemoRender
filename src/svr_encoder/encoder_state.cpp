@@ -127,7 +127,8 @@ void EncoderState::event_loop()
 {
     svr_log("Encoder ready\n");
 
-    HANDLE handles[] = {
+    HANDLE handles[] =
+    {
         game_process,
         encoder_wake_event_h,
     };

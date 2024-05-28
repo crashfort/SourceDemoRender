@@ -212,7 +212,10 @@ void ProcState::velo_draw()
         vid_d2d1_context->DrawGeometry(geom, vid_d2d1_solid_brush, movie_profile.velo_font_border_size);
 
         svr_release(geom);
+        geom = NULL;
+
         svr_release(sink);
+        sink = NULL;
     }
 
     // Use more specialized path with no border.
@@ -233,9 +236,9 @@ void ProcState::velo_draw()
     vid_d2d1_context->SetTarget(NULL);
 }
 
-void ProcState::velo_give(float* source)
+void ProcState::velo_give(SvrVec3 source)
 {
-    memcpy(velo_vector, source, sizeof(float) * 3);
+    velo_vector = source;
 }
 
 // Percentage alignments based from the center of the screen.
@@ -258,19 +261,19 @@ float ProcState::velo_get_length()
     {
         case VELO_LENGTH_XY:
         {
-            length = velo_vector[0] * velo_vector[0] + velo_vector[1] * velo_vector[1];
+            length = velo_vector.x * velo_vector.x + velo_vector.y * velo_vector.y;
             break;
         }
 
         case VELO_LENGTH_XYZ:
         {
-            length = velo_vector[0] * velo_vector[0] + velo_vector[1] * velo_vector[1] + velo_vector[2] * velo_vector[2];
+            length = velo_vector.x * velo_vector.x + velo_vector.y * velo_vector.y + velo_vector.z * velo_vector.z;
             break;
         }
         
         case VELO_LENGTH_Z:
         {
-            length = velo_vector[2] * velo_vector[2];
+            length = velo_vector.z * velo_vector.z;
             break;
         }
     }

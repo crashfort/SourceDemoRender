@@ -3,7 +3,8 @@
 // Profile loading.
 
 // Names for ini.
-OptStrIntMapping VELO_FONT_WEIGHT_TABLE[] = {
+OptStrIntMapping VELO_FONT_WEIGHT_TABLE[] =
+{
     OptStrIntMapping { "thin", DWRITE_FONT_WEIGHT_THIN },
     OptStrIntMapping { "extralight", DWRITE_FONT_WEIGHT_EXTRA_LIGHT },
     OptStrIntMapping { "light", DWRITE_FONT_WEIGHT_LIGHT },
@@ -18,21 +19,24 @@ OptStrIntMapping VELO_FONT_WEIGHT_TABLE[] = {
 };
 
 // Names for ini.
-OptStrIntMapping VELO_FONT_STYLE_TABLE[] = {
+OptStrIntMapping VELO_FONT_STYLE_TABLE[] =
+{
     OptStrIntMapping { "normal", DWRITE_FONT_STYLE_NORMAL },
     OptStrIntMapping { "italic", DWRITE_FONT_STYLE_ITALIC },
     OptStrIntMapping { "extraitalic", DWRITE_FONT_STYLE_OBLIQUE },
 };
 
 // Names for ini.
-OptStrIntMapping VELO_ANCHOR_TABLE[] = {
+OptStrIntMapping VELO_ANCHOR_TABLE[] =
+{
     OptStrIntMapping { "left", VELO_ANCHOR_LEFT },
     OptStrIntMapping { "center", VELO_ANCHOR_CENTER },
     OptStrIntMapping { "right", VELO_ANCHOR_RIGHT },
 };
 
 // Names for ini.
-OptStrIntMapping VELO_LENGTH_TABLE[] = {
+OptStrIntMapping VELO_LENGTH_TABLE[] =
+{
     OptStrIntMapping { "xy", VELO_LENGTH_XY },
     OptStrIntMapping { "xyz", VELO_LENGTH_XYZ },
     OptStrIntMapping { "z", VELO_LENGTH_Z },
@@ -40,7 +44,8 @@ OptStrIntMapping VELO_LENGTH_TABLE[] = {
 
 // Names for ini.
 // Should be synchronized with encoder_render.cpp.
-const char* VIDEO_ENCODER_TABLE[] = {
+const char* VIDEO_ENCODER_TABLE[] =
+{
     "libx264",
     "libx264_444",
     "dnxhr",
@@ -48,12 +53,14 @@ const char* VIDEO_ENCODER_TABLE[] = {
 
 // Names for ini.
 // Should be synchronized with encoder_render.cpp.
-const char* AUDIO_ENCODER_TABLE[] = {
+const char* AUDIO_ENCODER_TABLE[] =
+{
     "aac",
 };
 
 // Names for ini and ffmpeg.
-const char* X264_PRESET_TABLE[] = {
+const char* X264_PRESET_TABLE[] =
+{
     "ultrafast",
     "superfast",
     "veryfast",
@@ -68,7 +75,8 @@ const char* X264_PRESET_TABLE[] = {
 
 // Names for ini.
 // Should be synchronized with encoder_render.cpp.
-const char* DNXHR_PROFILE_TABLE[] = {
+const char* DNXHR_PROFILE_TABLE[] =
+{
     "lb",
     "sq",
     "hq",

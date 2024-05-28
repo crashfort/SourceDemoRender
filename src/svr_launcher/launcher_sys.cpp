@@ -30,21 +30,6 @@ void LauncherState::sys_show_windows_version()
     svr_log("Using operating system %s\n", winver);
 }
 
-void trim_right(char* buf, s32 length)
-{
-    s32 len = length;
-    char* start = buf;
-    char* end = buf + len - 1;
-
-    while (end != start && svr_is_whitespace(*end))
-    {
-        end--;
-    }
-
-    end++;
-    *end = 0;
-}
-
 void LauncherState::sys_show_processor()
 {
     HKEY hkey;
@@ -62,7 +47,7 @@ void LauncherState::sys_show_processor()
     RegGetValueA(hkey, NULL, "ProcessorNameString", RRF_RT_REG_SZ, NULL, name, &name_size);
 
     // The value will have a lot of extra spaces at the end.
-    trim_right(name, strlen(name));
+    svr_trim_right(name, strlen(name));
 
     svr_log("Using processor %s (%lu cpus)\n", name, GetActiveProcessorCount(ALL_PROCESSOR_GROUPS));
 }
@@ -89,7 +74,8 @@ void LauncherState::sys_check_hw_caps()
     // of the adapter below, and also to more accurately query the hw caps.
     const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_11_0;
 
-    const D3D_FEATURE_LEVEL DEVICE_LEVELS[] = {
+    const D3D_FEATURE_LEVEL DEVICE_LEVELS[] =
+    {
         MINIMUM_DEVICE_LEVEL
     };
 
@@ -113,6 +99,8 @@ void LauncherState::sys_check_hw_caps()
     // Useful for future troubleshooting.
     // Use https://www.pcilookup.com/ to see more information about device and vendor ids.
     svr_log("Using graphics device %x by vendor %x\n", dxgi_adapter_desc.DeviceId, dxgi_adapter_desc.VendorId);
+
+    // We use this format for motion sample.
 
     D3D11_FEATURE_DATA_FORMAT_SUPPORT2 fmt_support2;
     fmt_support2.InFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;

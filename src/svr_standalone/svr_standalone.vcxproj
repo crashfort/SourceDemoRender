@@ -19,16 +19,44 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <None Include="standalone_main.cpp" />
+    <None Include="game_search.cpp" />
+    <None Include="game_overrides.cpp" />
+    <None Include="game_wind.cpp" />
+    <None Include="game_rec.cpp" />
+    <None Include="game_cfg.cpp" />
+    <None Include="game_hook.cpp" />
+    <None Include="game_init.cpp" />
+    <None Include="game_libs.cpp" />
+    <None Include="game_proxies.cpp" />
+    <None Include="game_scan.cpp" />
+    <None Include="game_util.cpp" />
+    <None Include="game_d3d9ex.cpp" />
+    <None Include="game_video.cpp" />
+    <None Include="game_audio.cpp" />
+    <None Include="game_audio_v1.cpp" />
+    <None Include="game_velo.cpp" />
     <ClCompile Include="unity_standalone.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="standalone_priv.h" />
+    <ClInclude Include="game_asm.h" />
+    <ClInclude Include="game_common.h" />
+    <ClInclude Include="game_priv.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\svr_game\svr_game.vcxproj">
       <Project>{0b116e75-c1cc-409b-a50a-274dc2d4cb41}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="game_asm_x64.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="game_asm_x86.asm">
+      <FileType>MASM</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </MASM>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -66,6 +94,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
     <Import Project="..\svr_common\svr_common.vcxitems" Label="Shared" />
@@ -242,5 +271,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>

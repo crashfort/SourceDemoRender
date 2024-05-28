@@ -95,11 +95,12 @@ SVR_API bool svr_movie_active();
 // To be called when movie recording should start. Can be in response to a console command or UI element or some automatic event.
 // Calling this function will create a media file but only when svr_frame is called will content be written.
 //
-// The movie name is the filename of the video that will be created, including the extension.
+// The movie name is the file name of the video that will be created, including the extension.
 // Movies are saved in the SVR directory.
-// The allowed extensions (media containers) for the H264 video stream is one of the following: mp4, mkv, mov.
+// The allowed extensions (media containers) for the H264 video stream is one of the following: MP4, MKV, MOV.
+// For the DNxHR encoder, only the MOV container is allowed.
 // Starting the movie will fail if the container is not one of these. AVI is not supported as it's a very outdated
-// container that does not support various H264 features.
+// container that does not support various codec features.
 //
 // The movie profile is a name of a profile that contains encode details and more, located in the SVR directory.
 //
@@ -107,21 +108,21 @@ SVR_API bool svr_movie_active();
 // *) fps_max should be set to 0 to not introduce any extra latency between frames.
 // *) mat_queue_mode must be set to 0 because the queued rendering (value of 2) does not work.
 // *) engine_no_focus_sleep should be set to 0 to allow the game not being in focus while processing.
-// *) volume should be set to 0 for it to not be annoying.
 //
 // They can be reset back to their previous value after calling svr_stop.
 //
-// After calling this function, set host_framerate to the value returned by svr_get_game_rate.
+// After calling this function, set the host_framerate console variable to the value returned by svr_get_game_rate.
+//
 // Load svr_movie_start.cfg after calling this.
 SVR_API bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieData* movie_data);
 
-// This function should be called after svr_start to read how fast the game should be running.
-// Set host_framerate to the value this returns.
+// This function should be called after svr_start to read how fast the game should be running, in frames per second.
+// Set the host_framerate console variable to the value this returns.
 SVR_API int svr_get_game_rate();
 
 // To be called when movie recording should stop. Can be in response to a console command or UI element or some automatic event.
 // Calling this function will stop movie production and calling svr_frame will not do anything.
-// The console variables mentioned in svr_start can be reset back to their previous value after this. Also host_framerate must be set back to 0.
+// The console variables mentioned in svr_start can be reset back to their previous value after this. Also the host_framerate console variable must be set back to 0.
 // Load svr_movie_end.cfg after calling this.
 SVR_API void svr_stop();
 
@@ -130,12 +131,12 @@ SVR_API void svr_stop();
 // This must only be called if svr_movie_active returns true.
 SVR_API void svr_frame();
 
-// Returns if velo is enabled in the active profile.
+// Returns true if velo is enabled in the active profile.
 // You can use this to prevent extra work if it is not needed.
 // Must only be called after svr_start.
 SVR_API bool svr_is_velo_enabled();
 
-// Returns if audio is enabled in the active profile.
+// Returns true if audio is enabled in the active profile.
 // You can use this to prevent extra work if it is not needed.
 // Must only be called after svr_start.
 SVR_API bool svr_is_audio_enabled();
@@ -144,7 +145,7 @@ SVR_API bool svr_is_audio_enabled();
 // Must be called before svr_frame.
 SVR_API void svr_give_velocity(float* xyz);
 
-// Give audio samples to write. This must be 16 bit samples at 44100 hz.
+// Give audio samples to write. This must be 2 channel 16 bit samples at 44100 hz.
 SVR_API void svr_give_audio(SvrWaveSample* samples, int num_samples);
 
 }

@@ -164,7 +164,7 @@ void svr_check_all_mask(bool* mask, s32 num, bool* all_false, bool* all_true)
     *all_true = are_all_true;
 }
 
-char* svr_read_file_as_string(const char* path)
+char* svr_read_file_as_string(const char* path, SvrReadFileFlags flags)
 {
     HANDLE h = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -178,11 +178,23 @@ char* svr_read_file_as_string(const char* path)
     LARGE_INTEGER large;
     GetFileSizeEx(h, &large);
 
-    if (large.HighPart == 0 && large.LowPart < INT32_MAX)
+    s32 ceiling = 0;
+
+    if (flags & SVR_READ_FILE_FLAGS_NEW_LINE)
     {
-        ret = (char*)svr_alloc(large.LowPart + 1);
+        ceiling++;
+    }
+
+    if (large.HighPart == 0 && large.LowPart < (INT32_MAX - ceiling))
+    {
+        ret = (char*)svr_alloc(large.LowPart + 1 + ceiling);
 
         ReadFile(h, ret, large.LowPart, NULL, NULL);
+
+        if (flags & SVR_READ_FILE_FLAGS_NEW_LINE)
+        {
+            ret[large.LowPart - 1] = '\n';
+        }
 
         ret[large.LowPart] = 0;
     }
@@ -386,4 +398,65 @@ SvrSplitTime svr_split_time(s64 us)
 s64 svr_rescale(s64 a, s64 b, s64 c)
 {
     return MFllMulDiv(a, b, c, c / 2);
+}
+
+bool svr_check_all_true(bool* opts, s32 num)
+{
+    for (s32 i = 0; i < num; i++)
+    {
+        if (!opts[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool svr_check_one_true(bool* opts, s32 num)
+{
+    for (s32 i = 0; i < num; i++)
+    {
+        if (opts[i])
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+s32 svr_count_num_true(bool* opts, s32 num)
+{
+    s32 ret = 0;
+
+    for (s32 i = 0; i < num; i++)
+    {
+        ret += opts[i];
+    }
+
+    return ret;
+}
+
+bool svr_does_file_exist(const char* path)
+{
+    WIN32_FILE_ATTRIBUTE_DATA attr;
+    auto res = GetFileAttributesExA(path, GetFileExInfoStandard, &attr);
+
+    return res != 0;
+}
+
+void svr_trim_right(char* buf, s32 length)
+{
+    s32 len = length;
+    char* start = buf;
+    char* end = buf + len - 1;
+
+    while (end != start && svr_is_whitespace(*end))
+    {
+        end--;
+    }
+
+    end++;
+    *end = 0;
 }

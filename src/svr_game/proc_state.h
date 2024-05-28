@@ -121,7 +121,7 @@ struct ProcState
 
     UINT16 velo_number_glyph_idxs[10]; // Glyph indexes for all numbers so we don't have to look that up every time.
 
-    float velo_vector[3];
+    SvrVec3 velo_vector;
 
     bool velo_init();
     void velo_free_static();
@@ -132,7 +132,7 @@ struct ProcState
     bool velo_start();
     void velo_end();
     void velo_draw();
-    void velo_give(float* source);
+    void velo_give(SvrVec3 source);
     SvrVec2I velo_get_pos();
     float velo_get_length();
 
@@ -153,6 +153,7 @@ struct ProcState
 
     // To not upload data all the time.
     float mosample_weight_cache;
+
     float mosample_remainder;
     float mosample_remainder_step;
 
@@ -227,12 +228,4 @@ struct ProcState
     void movie_end();
     void movie_setup_params();
     bool movie_load_profile(const char* name, bool required);
-
-    // -----------------------------------------------
-    // Movie state:
-
-    SvrProf frame_prof;
-    SvrProf dl_prof;
-    SvrProf write_prof;
-    SvrProf mosample_prof;
 };

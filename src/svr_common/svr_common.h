@@ -40,6 +40,22 @@ using wchar = wchar_t;
 
 #define SVR_COPY_STRING(SOURCE, DEST) svr_copy_string((SOURCE), (DEST), SVR_ARRAY_SIZE((DEST)))
 
+#define SVR_BIT(N) (1 << (N))
+
+#ifdef _WIN64
+#define SVR_IS_X64() true
+#define SVR_IS_X86() false
+#else
+#define SVR_IS_X64() false
+#define SVR_IS_X86() true
+#endif
+
+#ifdef _WIN64
+#define SVR_ARCH_STRING "x64"
+#else
+#define SVR_ARCH_STRING "x86"
+#endif
+
 struct SvrVec2I
 {
     s32 x;
@@ -52,6 +68,13 @@ struct SvrVec4I
     s32 y;
     s32 z;
     s32 w;
+};
+
+struct SvrVec3
+{
+    float x;
+    float y;
+    float z;
 };
 
 template <class T>
@@ -119,7 +142,14 @@ bool svr_is_sorted(s32* idxs, s32 num);
 bool svr_are_idxs_unique(s32* idxs, s32 num);
 void svr_check_all_mask(bool* mask, s32 num, bool* all_false, bool* all_true);
 
-char* svr_read_file_as_string(const char* path);
+using SvrReadFileFlags = u32;
+
+enum /* SvrReadFileFlags */
+{
+    SVR_READ_FILE_FLAGS_NEW_LINE = 1 << 0, // End with a new line.
+};
+
+char* svr_read_file_as_string(const char* path, SvrReadFileFlags flags);
 
 const char* svr_read_line(const char* start, char* dest, s32 dest_size);
 
@@ -152,3 +182,11 @@ SvrSplitTime svr_split_time(s64 us);
 // svr_rescale(16667, 1000, 1000000) results in 17.
 // svr_rescale(16444, 1000, 1000000) results in 16.
 s64 svr_rescale(s64 a, s64 b, s64 c);
+
+bool svr_check_all_true(bool* opts, s32 num);
+bool svr_check_one_true(bool* opts, s32 num);
+s32 svr_count_num_true(bool* opts, s32 num);
+
+bool svr_does_file_exist(const char* path);
+
+void svr_trim_right(char* buf, s32 length);

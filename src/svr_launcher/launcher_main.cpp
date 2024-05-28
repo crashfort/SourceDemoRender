@@ -20,20 +20,12 @@ int main(int argc, char** argv)
 
     launcher_state.init();
 
-    // We delay finding which Steam library a game is in until a game has been chosen.
-
-    // Autostarting a game works by giving the app id.
+    // Autostarting a game works by giving the id.
     if (argc == 2)
     {
-        SteamAppId app_id = strtoul(argv[1], NULL, 10);
-
-        if (app_id == 0)
-        {
-            return 1;
-        }
-
-        return launcher_state.autostart_game(app_id);
+        const char* id = argv[1];
+        return launcher_state.autostart_game(id);
     }
 
-    return launcher_state.steam_show_start_menu();
+    return launcher_state.show_start_menu();
 }

@@ -64,7 +64,7 @@ s32 svr_fifo_grow(SvrDynFifo* f, s32 inc)
 
     f->buffer = tmp;
 
-    // Move the data from the beginning of the ring buffer to the newly allocated space
+    // Move the data from the beginning of the ring buffer to the newly allocated space.
     if (f->offset_w <= f->offset_r && !f->is_empty)
     {
         s32 copy = svr_min(inc, f->offset_w);
