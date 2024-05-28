@@ -16,6 +16,13 @@ void game_engine_client_command_proxy_0(GameFnProxy* proxy, void* params, void* 
     fn(NULL, NULL, (const char*)params);
 }
 
+void game_engine_client_command_proxy_1(GameFnProxy* proxy, void* params, void* res)
+{
+    using DestFn = void(__fastcall*)(void* p, const char* str);
+    DestFn fn = (DestFn)proxy->target;
+    fn(NULL, (const char*)params);
+}
+
 // ----------------------------------------------------------------
 
 void game_get_player_by_index_proxy_0(GameFnProxy* proxy, void* params, void* res)
@@ -50,11 +57,21 @@ void game_get_signon_state_proxy_0(GameFnProxy* proxy, void* params, void* res)
     *(s32*)res = **(s32**)proxy->target;
 }
 
+void game_get_signon_state_proxy_1(GameFnProxy* proxy, void* params, void* res)
+{
+    *(s32*)res = *(s32*)proxy->target;
+}
+
 // ----------------------------------------------------------------
 
 void game_get_paint_time_proxy_0(GameFnProxy* proxy, void* params, void* res)
 {
     *(s32*)res = **(s32**)proxy->target;
+}
+
+void game_get_paint_time_proxy_1(GameFnProxy* proxy, void* params, void* res)
+{
+    *(s32*)res = *(s32*)proxy->target;
 }
 
 // ----------------------------------------------------------------
@@ -64,11 +81,21 @@ void game_get_local_player_proxy_0(GameFnProxy* proxy, void* params, void* res)
     *(void**)res = **(void***)proxy->target;
 }
 
+void game_get_local_player_proxy_1(GameFnProxy* proxy, void* params, void* res)
+{
+    *(void**)res = *(void**)proxy->target;
+}
+
 // ----------------------------------------------------------------
 
 void game_get_paint_buffer_proxy_0(GameFnProxy* proxy, void* params, void* res)
 {
     *(GameSndSample0**)res = **(GameSndSample0***)proxy->target;
+}
+
+void game_get_paint_buffer_proxy_1(GameFnProxy* proxy, void* params, void* res)
+{
+    *(GameSndSample0**)res = *(GameSndSample0**)proxy->target;
 }
 
 // ----------------------------------------------------------------

@@ -33,6 +33,7 @@ void game_audio_v1_mix_audio_for_one_frame()
     s32 num_samples = aligned_end_time - paint_time;
 
     game_state.snd_skipped_samples = raw_end_time - aligned_end_time;
+    game_state.snd_num_samples = num_samples;
 
     if (num_samples > 0)
     {

@@ -54,9 +54,13 @@ GameFnProxy game_get_get_snd_paint_time_proxy_2()
 
     addr += 2;
 
+    u32 offset = *(u32*)addr;
+    addr += offset;
+    addr += 4;
+
     GameFnProxy px;
     px.target = addr;
-    px.proxy = game_get_paint_time_proxy_0;
+    px.proxy = game_get_paint_time_proxy_1;
     return px;
 }
 
@@ -102,9 +106,13 @@ GameFnProxy game_get_snd_get_paint_buffer_proxy_0()
 
     addr += 3;
 
+    u32 offset = *(u32*)addr;
+    addr += offset;
+    addr += 4;
+
     GameFnProxy px;
     px.target = addr;
-    px.proxy = game_get_paint_buffer_proxy_0;
+    px.proxy = game_get_paint_buffer_proxy_1;
     return px;
 }
 
@@ -313,9 +321,13 @@ GameFnProxy game_get_get_signon_state_proxy_1()
 
     addr += 2;
 
+    u32 offset = *(u32*)addr;
+    addr += offset;
+    addr += 8;
+
     GameFnProxy px;
     px.target = addr;
-    px.proxy = game_get_signon_state_proxy_0;
+    px.proxy = game_get_signon_state_proxy_1;
     return px;
 }
 
@@ -354,10 +366,13 @@ GameFnProxy game_get_get_local_player_proxy_1()
     }
 
     addr += 3;
+    u32 offset = *(u32*)addr;
+    addr += offset;
+    addr += 4;
 
     GameFnProxy px;
     px.target = addr;
-    px.proxy = game_get_local_player_proxy_0;
+    px.proxy = game_get_local_player_proxy_1;
     return px;
 }
 
@@ -389,7 +404,11 @@ void* game_get_engine_client_ptr_1()
     if (addr)
     {
         addr += 18;
-        return game_create_interface("engine.dll", *(const char**)addr);
+        u32 offset = *(u32*)addr;
+        addr += offset;
+        addr += 4;
+
+        return game_create_interface("engine.dll", (const char*)addr);
     }
 
     return addr;
@@ -423,7 +442,11 @@ void* game_get_d3d9ex_device_1()
     if (addr)
     {
         addr += 3;
-        return **(void***)addr;
+        u32 offset = *(u32*)addr;
+        addr += offset;
+        addr += 4;
+
+        return *(void**)addr;
     }
 
     return addr;
@@ -506,7 +529,7 @@ GameFnProxy game_get_engine_client_command_proxy_1()
 
     GameFnProxy px;
     px.target = addr;
-    px.proxy = game_engine_client_command_proxy_0;
+    px.proxy = game_engine_client_command_proxy_1;
     return px;
 }
 

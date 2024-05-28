@@ -251,13 +251,18 @@ void game_overrides_init();
 // Proxies for redirecting stuff to or from the game:
 void game_get_spec_target_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_engine_client_command_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_engine_client_command_proxy_1(GameFnProxy* proxy, void* params, void* res);
 void game_get_player_by_index_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_get_velocity_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_get_cmd_args_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_get_signon_state_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_get_signon_state_proxy_1(GameFnProxy* proxy, void* params, void* res);
 void game_get_paint_time_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_get_paint_time_proxy_1(GameFnProxy* proxy, void* params, void* res);
 void game_get_local_player_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_get_local_player_proxy_1(GameFnProxy* proxy, void* params, void* res);
 void game_get_paint_buffer_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_get_paint_buffer_proxy_1(GameFnProxy* proxy, void* params, void* res);
 
 void game_engine_client_command(const char* cmd);
 const char* game_get_cmd_args(void* ptr);
