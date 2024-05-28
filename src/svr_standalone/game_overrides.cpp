@@ -40,6 +40,12 @@ void __fastcall game_snd_device_tx_samples_override_0(void* p, void* edx, u32 un
 {
     if (!svr_movie_active())
     {
+        // For this override, we must call the original in case we are not recording.
+        // Otherwise there will only be sound when recording.
+
+        using OrgFn = decltype(game_snd_device_tx_samples_override_0)*;
+        OrgFn org_fn = (OrgFn)game_state.snd_device_tx_samples_hook.original;
+        org_fn(p, edx, unused);
         return;
     }
 
