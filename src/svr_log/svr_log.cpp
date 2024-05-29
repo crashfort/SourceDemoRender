@@ -11,7 +11,7 @@ void log_function(const char* text, s32 length)
     assert(log_file_handle);
 
     AcquireSRWLockExclusive(&log_lock);
-    WriteFile(log_file_handle, text, length, NULL, NULL);
+    WriteFile(log_file_handle, text, sizeof(char) * length, NULL, NULL);
     ReleaseSRWLockExclusive(&log_lock);
 }
 
