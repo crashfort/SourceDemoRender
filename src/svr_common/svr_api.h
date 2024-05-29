@@ -18,7 +18,7 @@
 
 // Windows only.
 
-#if SVR_GAME_DLL
+#ifdef SVR_GAME_DLL
 #define SVR_API __declspec(dllexport)
 #else
 #define SVR_API __declspec(dllimport)
@@ -39,9 +39,9 @@ struct ID3D11Device;
 
 struct SvrAudioParams
 {
-    s32 audio_channels; // Must be 2 for now.
-    s32 audio_hz;
-    s32 audio_bits; // Must be 16 for now.
+    int audio_channels; // Must be 2 for now.
+    int audio_hz;
+    int audio_bits; // Must be 16 for now.
 };
 
 struct SvrStartMovieData
