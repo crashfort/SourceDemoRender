@@ -15,7 +15,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_log", "src\svr_log\svr_
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_console", "src\svr_console\svr_console.vcxproj", "{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_common", "src\svr_common\svr_common.vcxitems", "{63A2BF65-3F7C-4FF1-B15A-2DD0BE4D4DAD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_common", "src\svr_common\svr_common.vcxproj", "{DF7F2790-4886-4224-AFC1-B44687571612}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -73,20 +73,19 @@ Global
 		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Release|x64.Build.0 = Release|x64
 		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Release|x86.ActiveCfg = Release|Win32
 		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Release|x86.Build.0 = Release|Win32
+		{DF7F2790-4886-4224-AFC1-B44687571612}.Debug|x64.ActiveCfg = Debug|x64
+		{DF7F2790-4886-4224-AFC1-B44687571612}.Debug|x64.Build.0 = Debug|x64
+		{DF7F2790-4886-4224-AFC1-B44687571612}.Debug|x86.ActiveCfg = Debug|Win32
+		{DF7F2790-4886-4224-AFC1-B44687571612}.Debug|x86.Build.0 = Debug|Win32
+		{DF7F2790-4886-4224-AFC1-B44687571612}.Release|x64.ActiveCfg = Release|x64
+		{DF7F2790-4886-4224-AFC1-B44687571612}.Release|x64.Build.0 = Release|x64
+		{DF7F2790-4886-4224-AFC1-B44687571612}.Release|x86.ActiveCfg = Release|Win32
+		{DF7F2790-4886-4224-AFC1-B44687571612}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A259E5C4-19A4-456A-A266-E6F6E481A317}
-	EndGlobalSection
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		src\svr_common\svr_common.vcxitems*{0b116e75-c1cc-409b-a50a-274dc2d4cb41}*SharedItemsImports = 4
-		src\svr_common\svr_common.vcxitems*{4de1e027-caf8-4106-abef-1a6885cc82dd}*SharedItemsImports = 4
-		src\svr_common\svr_common.vcxitems*{62fbfae7-7764-4245-84c9-515ecb551439}*SharedItemsImports = 4
-		src\svr_common\svr_common.vcxitems*{63a2bf65-3f7c-4ff1-b15a-2dd0be4d4dad}*SharedItemsImports = 9
-		src\svr_common\svr_common.vcxitems*{bbf36482-6a97-476d-9f0c-5b144ca7f1e1}*SharedItemsImports = 4
-		src\svr_common\svr_common.vcxitems*{c31c1b41-95e7-45c6-a16f-f86a81f13d9f}*SharedItemsImports = 4
-		src\svr_common\svr_common.vcxitems*{e750167e-861f-4cf4-9f5d-20f473129641}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal

@@ -35,6 +35,9 @@
     <ClInclude Include="proc_state.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\svr_common\svr_common.vcxproj">
+      <Project>{df7f2790-4886-4224-afc1-b44687571612}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\svr_console\svr_console.vcxproj">
       <Project>{bbf36482-6a97-476d-9f0c-5b144ca7f1e1}</Project>
     </ProjectReference>
@@ -79,9 +82,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="Shared">
-    <Import Project="..\svr_common\svr_common.vcxitems" Label="Shared" />
-  </ImportGroup>
+  <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -158,7 +159,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;d2d1.lib;DWRITE.LIB;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -185,7 +186,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;d2d1.lib;DWRITE.LIB;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -216,7 +217,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;d2d1.lib;DWRITE.LIB;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -247,7 +248,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;d2d1.lib;DWRITE.LIB;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
