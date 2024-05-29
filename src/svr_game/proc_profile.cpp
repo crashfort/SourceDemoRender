@@ -125,7 +125,7 @@ bool ProcState::movie_load_profile(const char* name, bool required)
 
     if (ini_root == NULL)
     {
-        game_log("ERROR: Could not load profile %s\n", full_profile_path);
+        svr_console_msg_and_log("ERROR: Could not load profile %s\n", full_profile_path);
         goto rfail;
     }
 

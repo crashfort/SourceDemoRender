@@ -35,7 +35,7 @@ bool ProcState::velo_create_font_face()
 
     if (!font_exists)
     {
-        game_log("ERROR: The specified velo font %s is not installed in the system\n", movie_profile.velo_font);
+        svr_console_msg_and_log("ERROR: The specified velo font %s is not installed in the system\n", movie_profile.velo_font);
         goto rfail;
     }
 
@@ -43,7 +43,7 @@ bool ProcState::velo_create_font_face()
 
     if (FAILED(hr))
     {
-        game_log("ERROR: Could not get the font family of font %s\n", movie_profile.velo_font);
+        svr_console_msg_and_log("ERROR: Could not get the font family of font %s\n", movie_profile.velo_font);
         goto rfail;
     }
 
@@ -51,7 +51,7 @@ bool ProcState::velo_create_font_face()
 
     if (FAILED(hr))
     {
-        game_log("ERROR: Could not find the combination of font parameters (weight, stretch, style) in the font %s\n", movie_profile.velo_font);
+        svr_console_msg_and_log("ERROR: Could not find the combination of font parameters (weight, stretch, style) in the font %s\n", movie_profile.velo_font);
         goto rfail;
     }
 
@@ -59,7 +59,7 @@ bool ProcState::velo_create_font_face()
 
     if (FAILED(hr))
     {
-        game_log("ERROR: Could not create a font face of font %s\n", movie_profile.velo_font);
+        svr_console_msg_and_log("ERROR: Could not create a font face of font %s\n", movie_profile.velo_font);
         goto rfail;
     }
 

@@ -71,7 +71,7 @@ void game_init_async_proc()
 
     game_search_wait_for_libs();
 
-    game_console_init();
+    svr_console_init();
     game_hook_init();
     svr_prof_init();
 
@@ -96,9 +96,9 @@ void game_init_async_proc()
     // It's useful to show that we have loaded when in standalone mode.
     // This message may not be the latest message but at least it's in there.
 
-    game_console_msg("-------------------------------------------------------\n");
-    game_console_msg("SVR initialized\n");
-    game_console_msg("-------------------------------------------------------\n");
+    svr_console_msg("-------------------------------------------------------\n");
+    svr_console_msg("SVR initialized\n");
+    svr_console_msg("-------------------------------------------------------\n");
 }
 
 struct GameCapsPrint

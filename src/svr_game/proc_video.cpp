@@ -128,7 +128,7 @@ bool ProcState::vid_load_shader(const char* name)
 
     if (h == INVALID_HANDLE_VALUE)
     {
-        svr_log("Could not load shader %s (%lu)\n", name, GetLastError());
+        svr_log("ERROR: Could not load shader %s (%lu)\n", name, GetLastError());
         goto rfail;
     }
 

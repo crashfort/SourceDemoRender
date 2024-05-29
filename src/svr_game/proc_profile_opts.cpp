@@ -14,7 +14,7 @@ bool opt_atoi_in_range(SvrIniKeyValue* kv, s32 min, s32 max, s32* dest)
         s32 new_v = v;
         svr_clamp(&new_v, min, max);
 
-        game_log("Option %s out of range (min is %d, max is %d, value is %d) setting to %d\n", kv->key, min, max, v, new_v);
+        svr_console_msg_and_log("Option %s out of range (min is %d, max is %d, value is %d) setting to %d\n", kv->key, min, max, v, new_v);
 
         v = new_v;
     }
@@ -37,7 +37,7 @@ bool opt_atof_in_range(SvrIniKeyValue* kv, float min, float max, float* dest)
         float new_v = v;
         svr_clamp(&new_v, min, max);
 
-        game_log("Option %s out of range (min is %0.2f, max is %0.2f, value is %0.2f) setting to %0.2f\n", kv->key, min, max, v, new_v);
+        svr_console_msg_and_log("Option %s out of range (min is %0.2f, max is %0.2f, value is %0.2f) setting to %0.2f\n", kv->key, min, max, v, new_v);
 
         v = new_v;
     }
@@ -92,7 +92,7 @@ bool opt_str_in_list_or(SvrIniKeyValue* kv, const char** list, s32 num, const ch
         }
     }
 
-    game_log("Option %s has incorrect value (value is %s, options are %s)\n", kv->key, kv->value, opts);
+    svr_console_msg_and_log("Option %s has incorrect value (value is %s, options are %s)\n", kv->key, kv->value, opts);
 
     return false;
 }
@@ -129,7 +129,7 @@ bool opt_map_str_in_list_or(SvrIniKeyValue* kv, OptStrIntMapping* mappings, s32 
         }
     }
 
-    game_log("Option %s has incorrect value (value is %s, options are %s)\n", kv->key, kv->value, opts);
+    svr_console_msg_and_log("Option %s has incorrect value (value is %s, options are %s)\n", kv->key, kv->value, opts);
 
     return false;
 }
@@ -148,7 +148,7 @@ bool opt_make_vec2_or(SvrIniKeyValue* kv, SvrVec2I* dest)
     if (num != 2)
     {
         ret = SvrVec2I { 0, 0 };
-        game_log("Option %s has incorrect formatting. It should be in the format of <number> <number>. Setting to 0 0\n", kv->key);
+        svr_console_msg_and_log("Option %s has incorrect formatting. It should be in the format of <number> <number>. Setting to 0 0\n", kv->key);
     }
 
     *dest = ret;
@@ -174,7 +174,7 @@ bool opt_make_color_or(SvrIniKeyValue* kv, SvrVec4I* dest)
     if (num != 4)
     {
         ret = SvrVec4I { 255, 255, 255, 255 };
-        game_log("Option %s has incorrect formatting. It should be a color in the format of 255 255 255 255 (RGBA). Setting to 255 255 255 255\n", kv->key);
+        svr_console_msg_and_log("Option %s has incorrect formatting. It should be a color in the format of 255 255 255 255 (RGBA). Setting to 255 255 255 255\n", kv->key);
     }
 
     *dest = ret;

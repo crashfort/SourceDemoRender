@@ -21,7 +21,7 @@ bool game_run_cfg(const char* name, bool required)
     {
         if (required)
         {
-            svr_log("Could not open cfg %s\n", full_cfg_path);
+            svr_log("ERROR: Could not open cfg %s\n", full_cfg_path);
         }
 
         return false;

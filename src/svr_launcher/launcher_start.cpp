@@ -38,7 +38,7 @@ s32 LauncherState::start_game(LauncherGame* game)
     svr_log("---------------------------------------------------\n");
 
     // Need to close the file so the game can open it.
-    svr_shutdown_log();
+    svr_free_log();
 
     // Let the process actually start now.
     // You want to place a breakpoint on this line when debugging the game!

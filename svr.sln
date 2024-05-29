@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31410.414
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_common", "src\svr_common\svr_common.vcxitems", "{63A2BF65-3F7C-4FF1-B15A-2DD0BE4D4DAD}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_encoder", "src\svr_encoder\svr_encoder.vcxproj", "{C31C1B41-95E7-45C6-A16F-F86A81F13D9F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_game", "src\svr_game\svr_game.vcxproj", "{0B116E75-C1CC-409B-A50A-274DC2D4CB41}"
@@ -13,7 +11,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_launcher", "src\svr_lau
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_standalone", "src\svr_standalone\svr_standalone.vcxproj", "{4DE1E027-CAF8-4106-ABEF-1A6885CC82DD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_game_common", "src\svr_game_common\svr_game_common.vcxitems", "{4F6688BD-ABDD-4514-A65C-AE2F4E3EE904}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_log", "src\svr_log\svr_log.vcxproj", "{62FBFAE7-7764-4245-84C9-515ECB551439}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_console", "src\svr_console\svr_console.vcxproj", "{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "svr_common", "src\svr_common\svr_common.vcxitems", "{63A2BF65-3F7C-4FF1-B15A-2DD0BE4D4DAD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,6 +57,22 @@ Global
 		{4DE1E027-CAF8-4106-ABEF-1A6885CC82DD}.Release|x64.Build.0 = Release|x64
 		{4DE1E027-CAF8-4106-ABEF-1A6885CC82DD}.Release|x86.ActiveCfg = Release|Win32
 		{4DE1E027-CAF8-4106-ABEF-1A6885CC82DD}.Release|x86.Build.0 = Release|Win32
+		{62FBFAE7-7764-4245-84C9-515ECB551439}.Debug|x64.ActiveCfg = Debug|x64
+		{62FBFAE7-7764-4245-84C9-515ECB551439}.Debug|x64.Build.0 = Debug|x64
+		{62FBFAE7-7764-4245-84C9-515ECB551439}.Debug|x86.ActiveCfg = Debug|Win32
+		{62FBFAE7-7764-4245-84C9-515ECB551439}.Debug|x86.Build.0 = Debug|Win32
+		{62FBFAE7-7764-4245-84C9-515ECB551439}.Release|x64.ActiveCfg = Release|x64
+		{62FBFAE7-7764-4245-84C9-515ECB551439}.Release|x64.Build.0 = Release|x64
+		{62FBFAE7-7764-4245-84C9-515ECB551439}.Release|x86.ActiveCfg = Release|Win32
+		{62FBFAE7-7764-4245-84C9-515ECB551439}.Release|x86.Build.0 = Release|Win32
+		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Debug|x64.ActiveCfg = Debug|x64
+		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Debug|x64.Build.0 = Debug|x64
+		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Debug|x86.ActiveCfg = Debug|Win32
+		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Debug|x86.Build.0 = Debug|Win32
+		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Release|x64.ActiveCfg = Release|x64
+		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Release|x64.Build.0 = Release|x64
+		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Release|x86.ActiveCfg = Release|Win32
+		{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -64,11 +82,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		src\svr_common\svr_common.vcxitems*{0b116e75-c1cc-409b-a50a-274dc2d4cb41}*SharedItemsImports = 4
-		src\svr_game_common\svr_game_common.vcxitems*{0b116e75-c1cc-409b-a50a-274dc2d4cb41}*SharedItemsImports = 4
 		src\svr_common\svr_common.vcxitems*{4de1e027-caf8-4106-abef-1a6885cc82dd}*SharedItemsImports = 4
-		src\svr_game_common\svr_game_common.vcxitems*{4de1e027-caf8-4106-abef-1a6885cc82dd}*SharedItemsImports = 4
-		src\svr_game_common\svr_game_common.vcxitems*{4f6688bd-abdd-4514-a65c-ae2f4e3ee904}*SharedItemsImports = 9
+		src\svr_common\svr_common.vcxitems*{62fbfae7-7764-4245-84c9-515ecb551439}*SharedItemsImports = 4
 		src\svr_common\svr_common.vcxitems*{63a2bf65-3f7c-4ff1-b15a-2dd0be4d4dad}*SharedItemsImports = 9
+		src\svr_common\svr_common.vcxitems*{bbf36482-6a97-476d-9f0c-5b144ca7f1e1}*SharedItemsImports = 4
 		src\svr_common\svr_common.vcxitems*{c31c1b41-95e7-45c6-a16f-f86a81f13d9f}*SharedItemsImports = 4
 		src\svr_common\svr_common.vcxitems*{e750167e-861f-4cf4-9f5d-20f473129641}*SharedItemsImports = 4
 	EndGlobalSection

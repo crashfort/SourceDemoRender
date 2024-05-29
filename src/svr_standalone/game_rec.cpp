@@ -68,42 +68,42 @@ void game_rec_update_autostop()
 
 void game_rec_show_start_movie_usage()
 {
-    game_console_msg("Usage: startmovie <name> (<optional parameters>)\n");
-    game_console_msg("Starts to record a movie with an optional parameters.\n");
-    game_console_msg("\n");
-    game_console_msg("Optional parameters are written in the following example format:\n");
-    game_console_msg("\n");
-    game_console_msg("    startmovie a.mov timeout=40 profile=my_profile\n");
-    game_console_msg("\n");
-    game_console_msg("The order does not matter for the optional parameters, and you can omit the ones you do not need.\n");
-    game_console_msg("The parameters are for features that are per render, and not persistent like the profile.\n");
-    game_console_msg("\n");
-    game_console_msg("Optional parameters are:\n");
-    game_console_msg("\n");
-    game_console_msg("    timeout=<seconds>\n");
-    game_console_msg("    Automatically stop rendering after the elapsed video time passes.\n");
-    game_console_msg("    This will add a progress bar to the task bar icon. By default, there is no timeout.\n");
-    game_console_msg("\n");
-    game_console_msg("    profile=<string>\n");
-    game_console_msg("    Override which rendering profile to use.\n");
-    game_console_msg("    If omitted, the default profile is used.\n");
-    game_console_msg("\n");
-    game_console_msg("    autostop=<value>\n");
-    game_console_msg("    Automatically stop the movie on demo disconnect. This can be 0 or 1. Default is 1.\n");
-    game_console_msg("    This is used to determine what happens when a demo ends, when you get kicked back to the main menu.\n");
-    game_console_msg("\n");
-    game_console_msg("    nowindupd=<value>\n");
-    game_console_msg("    Disable window presentation. This can be 0 or 1. Default is 0.\n");
-    game_console_msg("    For some systems this may improve performance, however you will not be able to see anything.\n");
-    game_console_msg("\n");
-    game_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
+    svr_console_msg("Usage: startmovie <name> (<optional parameters>)\n");
+    svr_console_msg("Starts to record a movie with an optional parameters.\n");
+    svr_console_msg("\n");
+    svr_console_msg("Optional parameters are written in the following example format:\n");
+    svr_console_msg("\n");
+    svr_console_msg("    startmovie a.mov timeout=40 profile=my_profile\n");
+    svr_console_msg("\n");
+    svr_console_msg("The order does not matter for the optional parameters, and you can omit the ones you do not need.\n");
+    svr_console_msg("The parameters are for features that are per render, and not persistent like the profile.\n");
+    svr_console_msg("\n");
+    svr_console_msg("Optional parameters are:\n");
+    svr_console_msg("\n");
+    svr_console_msg("    timeout=<seconds>\n");
+    svr_console_msg("    Automatically stop rendering after the elapsed video time passes.\n");
+    svr_console_msg("    This will add a progress bar to the task bar icon. By default, there is no timeout.\n");
+    svr_console_msg("\n");
+    svr_console_msg("    profile=<string>\n");
+    svr_console_msg("    Override which rendering profile to use.\n");
+    svr_console_msg("    If omitted, the default profile is used.\n");
+    svr_console_msg("\n");
+    svr_console_msg("    autostop=<value>\n");
+    svr_console_msg("    Automatically stop the movie on demo disconnect. This can be 0 or 1. Default is 1.\n");
+    svr_console_msg("    This is used to determine what happens when a demo ends, when you get kicked back to the main menu.\n");
+    svr_console_msg("\n");
+    svr_console_msg("    nowindupd=<value>\n");
+    svr_console_msg("    Disable window presentation. This can be 0 or 1. Default is 0.\n");
+    svr_console_msg("    For some systems this may improve performance, however you will not be able to see anything.\n");
+    svr_console_msg("\n");
+    svr_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
 }
 
 void game_rec_start_movie(void* cmd_args)
 {
     if (svr_movie_active())
     {
-        game_console_msg("Movie already started\n");
+        svr_console_msg("Movie already started\n");
         return;
     }
 
@@ -185,13 +185,13 @@ void game_rec_start_movie(void* cmd_args)
 
     if (!svr_check_one_true(valid_exts, SVR_ARRAY_SIZE(valid_exts)))
     {
-        game_console_msg("File extension is wrong or missing. You may choose between MP4, MKV, MOV\n");
-        game_console_msg("\n");
-        game_console_msg("Example:\n");
-        game_console_msg("\n");
-        game_console_msg("    startmovie a.mov\n");
-        game_console_msg("\n");
-        game_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
+        svr_console_msg("File extension is wrong or missing. You may choose between MP4, MKV, MOV\n");
+        svr_console_msg("\n");
+        svr_console_msg("Example:\n");
+        svr_console_msg("\n");
+        svr_console_msg("    startmovie a.mov\n");
+        svr_console_msg("\n");
+        svr_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
         return;
     }
 
@@ -205,7 +205,7 @@ void game_rec_start_movie(void* cmd_args)
 
     if (!svr_check_all_true(required_cfgs, SVR_ARRAY_SIZE(required_cfgs)))
     {
-        game_log("Required files svr_start_movie.cfg and svr_movie_end.cfg could not be found\n");
+        svr_console_msg_and_log("Required files svr_start_movie.cfg and svr_movie_end.cfg could not be found\n");
         goto rfail;
     }
 
@@ -244,7 +244,7 @@ void game_rec_start_movie(void* cmd_args)
     game_state.snd_lost_mix_time = 0.0f;
     game_state.snd_num_samples = 0;
 
-    game_log("Starting movie to %s\n", movie_name);
+    svr_console_msg_and_log("Starting movie to %s\n", movie_name);
 
     goto rexit;
 
@@ -256,7 +256,7 @@ void game_rec_end_movie()
 {
     if (!svr_movie_active())
     {
-        game_console_msg("Movie not started\n");
+        svr_console_msg("Movie not started\n");
         return;
     }
 
@@ -273,7 +273,7 @@ void game_rec_end_movie()
         fps = (float)game_state.rec_num_frames / time_taken;
     }
 
-    game_log("Ending movie after %0.2f seconds (%lld frames, %0.2f fps)\n", time_taken, game_state.rec_num_frames, fps);
+    svr_console_msg_and_log("Ending movie after %0.2f seconds (%lld frames, %0.2f fps)\n", time_taken, game_state.rec_num_frames, fps);
 
     svr_stop();
 

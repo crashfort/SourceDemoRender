@@ -26,7 +26,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_ini.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_locked_array.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_locked_queue.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)svr_log.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_prof.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)svr_standalone_common.h" />
@@ -39,7 +38,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_common.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_fifo.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_ini.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)svr_log.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_prof.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)svr_vdf.cpp" />
   </ItemGroup>

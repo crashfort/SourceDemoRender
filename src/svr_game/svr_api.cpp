@@ -28,6 +28,10 @@ bool svr_movie_running;
 
 // -------------------------------------------------
 
+bool integrated_init_done;
+
+// -------------------------------------------------
+
 int svr_api_version()
 {
     return SVR_API_VERSION;
@@ -55,9 +59,47 @@ void free_all_dynamic_svr_stuff()
     svr_maybe_release(&svr_content_srv);
 }
 
+// Big hack but don't know any other way to do this.
+// In standalone mode, the log and console would have already been opened by svr_standalone.dll.
+// In integrated mode, we will have to open them ourselves to be sure we can output diagonstic messages.
+void check_standalone_svr_mode(const char* svr_path)
+{
+    if (integrated_init_done)
+    {
+        return;
+    }
+
+#ifdef _WIN64
+    if (GetModuleHandleA("svr_standalone64.dll"))
+#else
+    if (GetModuleHandleA("svr_standalone.dll"))
+#endif
+    {
+        return; // Log already open in standalone mode.
+    }
+
+    char log_file_path[MAX_PATH];
+    SVR_SNPRINTF(log_file_path, "%s\\data\\SVR_LOG.txt", svr_path);
+
+    svr_init_log(log_file_path, false);
+
+    SYSTEMTIME lt;
+    GetLocalTime(&lt);
+
+    svr_log("SVR " SVR_ARCH_STRING " version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
+    svr_log("This is a integrated version of SVR\n");
+    svr_log("For more information see https://github.com/crashfort/SourceDemoRender\n");
+
+    svr_console_init();
+
+    integrated_init_done = true;
+}
+
 bool svr_init(const char* svr_path, IUnknown* game_device)
 {
     bool ret = false;
+
+    check_standalone_svr_mode(svr_path);
 
     // Adds a reference if successful.
     game_device->QueryInterface(IID_PPV_ARGS(&svr_d3d11_device));
@@ -132,8 +174,6 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
             goto rfail;
         }
     }
-
-    game_console_init();
 
     if (!proc_state.init(svr_path, svr_d3d11_device))
     {

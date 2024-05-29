@@ -19,20 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="svr_launcher.exe.manifest" />
+    <ClCompile Include="svr_console.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="launcher_main.cpp" />
-    <None Include="launcher_ipc.cpp" />
-    <None Include="launcher_start.cpp" />
-    <None Include="launcher_state.cpp" />
-    <None Include="launcher_steam.cpp" />
-    <None Include="launcher_sys.cpp" />
-    <ClCompile Include="unity_launcher.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="launcher_priv.h" />
-    <ClInclude Include="launcher_state.h" />
+    <ClInclude Include="svr_console.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\svr_log\svr_log.vcxproj">
@@ -42,32 +32,33 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{E750167E-861F-4CF4-9F5D-20F473129641}</ProjectGuid>
-    <RootNamespace>svr_launcher</RootNamespace>
+    <ProjectGuid>{BBF36482-6A97-476D-9F0C-5B144CA7F1E1}</ProjectGuid>
+    <RootNamespace>svr_game</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>svr_console</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -96,11 +87,11 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)build\$(TargetName)-$(PlatformTarget)-$(Configuration)\</IntDir>
-    <TargetName>svr_launcher</TargetName>
+    <TargetName>svr_console</TargetName>
     <ExcludePath>$(VcpkgRoot);$(ExcludePath)</ExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>svr_launcher64</TargetName>
+    <TargetName>svr_console64</TargetName>
     <ExcludePath>$(VcpkgRoot);$(ExcludePath)</ExcludePath>
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
@@ -110,11 +101,11 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)build\$(TargetName)-$(PlatformTarget)-$(Configuration)\</IntDir>
-    <TargetName>svr_launcher</TargetName>
+    <TargetName>svr_console</TargetName>
     <ExcludePath>$(VcpkgRoot);$(ExcludePath)</ExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <TargetName>svr_launcher64</TargetName>
+    <TargetName>svr_console64</TargetName>
     <ExcludePath>$(VcpkgRoot);$(ExcludePath)</ExcludePath>
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
@@ -136,9 +127,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_DEBUG;SVR_LAUNCHER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_DEBUG;SVR_CONSOLE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -147,15 +138,15 @@
       <OpenMPSupport>false</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
-      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
       <SupportJustMyCode>false</SupportJustMyCode>
       <CompileAs>CompileAsCpp</CompileAs>
       <BuildStlModules>false</BuildStlModules>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Shlwapi.lib;D3D11.LIB;wbemuuid.lib;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -163,9 +154,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_DEBUG;SVR_LAUNCHER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_DEBUG;SVR_CONSOLE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -174,15 +165,15 @@
       <OpenMPSupport>false</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
-      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
       <SupportJustMyCode>false</SupportJustMyCode>
       <CompileAs>CompileAsCpp</CompileAs>
       <BuildStlModules>false</BuildStlModules>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Shlwapi.lib;D3D11.LIB;wbemuuid.lib;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -192,9 +183,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_RELEASE;SVR_LAUNCHER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_RELEASE;SVR_CONSOLE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
       <ExceptionHandling>false</ExceptionHandling>
@@ -203,17 +194,17 @@
       <OpenMPSupport>false</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
-      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)src\svr_common;$(SolutionDir)src\svr_log</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
       <BuildStlModules>false</BuildStlModules>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>Shlwapi.lib;D3D11.LIB;wbemuuid.lib;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;d2d1.lib;DWRITE.LIB;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -223,9 +214,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_XM_NO_INTRINSICS_;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_RELEASE;SVR_LAUNCHER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NO_VA_START_VALIDATION;SVR_RELEASE;SVR_CONSOLE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
       <ExceptionHandling>false</ExceptionHandling>
@@ -234,17 +225,17 @@
       <OpenMPSupport>false</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
-      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\stb;$(SolutionDir)src\svr_common;$(SolutionDir)src\svr_log</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
       <BuildStlModules>false</BuildStlModules>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>Shlwapi.lib;D3D11.LIB;wbemuuid.lib;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Synchronization.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
