@@ -14,6 +14,7 @@ set VS_FXCOPTS=/T vs_5_0 /E main /nologo /WX /Ges /Zpc /Qstrip_reflect /Qstrip_d
 set PS_FXCOPTS=/T ps_5_0 /E main /nologo /WX /Ges /Zpc /Qstrip_reflect /Qstrip_debug
 set OUTDIR=bin\data\shaders
 
+mkdir %OUTDIR% > NUL
 fxc shaders\tex2vid.hlsl %CS_FXCOPTS% /D AV_PIX_FMT_NV12=1 /Fo %OUTDIR%\convert_nv12
 fxc shaders\tex2vid.hlsl %CS_FXCOPTS% /D AV_PIX_FMT_YUV422P=1 /Fo %OUTDIR%\convert_yuv422
 fxc shaders\tex2vid.hlsl %CS_FXCOPTS% /D AV_PIX_FMT_YUV444P=1 /Fo %OUTDIR%\convert_yuv444
