@@ -8,6 +8,7 @@ Version 43,
 * Added new game definitions in data/games/ folder that allows creating game profiles, including setting custom start arguments.
 * Installed games are no longer read from Steam.
 * Start parameters are no longer read from Steam.
+* Added a workaround for engine parsing bug if the startmovie command is in a chained sequence of commands, followed by a space.
 
 Version 42, 11 April 2024
 ---------------------------
