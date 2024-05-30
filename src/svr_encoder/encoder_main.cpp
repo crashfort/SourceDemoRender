@@ -27,7 +27,11 @@ void av_log_callback(void* avcl, int level, const char* fmt, va_list vl)
     }
 
     svr_log(format, buf);
-    OutputDebugStringA(svr_va(format, buf));
+
+    if (IsDebuggerPresent())
+    {
+        OutputDebugStringA(svr_va(format, buf));
+    }
 }
 
 int main(int argc, char** argv)
@@ -51,7 +55,7 @@ int main(int argc, char** argv)
     SYSTEMTIME lt;
     GetLocalTime(&lt);
 
-    svr_log("SVR version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
+    svr_log("SVR " SVR_ARCH_STRING " version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
     svr_log("For more information see https://github.com/crashfort/SourceDemoRender\n");
 
     // We inherit handles when creating this process, so we can just read the handle address directly.

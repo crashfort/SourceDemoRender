@@ -14,7 +14,7 @@ void LauncherState::init()
     SYSTEMTIME lt;
     GetLocalTime(&lt);
 
-    launcher_log("SVR version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
+    launcher_log("SVR " SVR_ARCH_STRING " version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
     launcher_log("This is a standalone version of SVR. Interoperability with other applications may not work\n");
     launcher_log("For more information see https://github.com/crashfort/SourceDemoRender\n");
 
@@ -24,11 +24,14 @@ void LauncherState::init()
     sys_check_hw_caps();
 #endif
 
-    steam_find_path();
-    steam_find_installed_supported_games();
-    steam_find_libraries();
+    if (steam_find_path())
+    {
+        steam_find_libraries();
+    }
 
-    svr_log("Found %d games in %d Steam libraries\n", steam_installed_games.size, steam_library_paths.size);
+    load_games();
+
+    svr_log("Found %d games\n", game_list.size);
 }
 
 // Will put both to console and to file.
@@ -59,6 +62,7 @@ __declspec(noreturn) void LauncherState::launcher_error(const char* format, ...)
     ExitProcess(1);
 }
 
+// Prompt user for an input number.
 s32 LauncherState::get_choice_from_user(s32 min, s32 max)
 {
     s32 selection = -1;

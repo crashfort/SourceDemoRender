@@ -28,6 +28,10 @@ bool svr_movie_running;
 
 // -------------------------------------------------
 
+bool integrated_init_done;
+
+// -------------------------------------------------
+
 int svr_api_version()
 {
     return SVR_API_VERSION;
@@ -55,17 +59,56 @@ void free_all_dynamic_svr_stuff()
     svr_maybe_release(&svr_content_srv);
 }
 
+// Big hack but don't know any other way to do this.
+// In standalone mode, the log and console would have already been opened by svr_standalone.dll.
+// In integrated mode, we will have to open them ourselves to be sure we can output diagonstic messages.
+void check_standalone_svr_mode(const char* svr_path)
+{
+    if (integrated_init_done)
+    {
+        return;
+    }
+
+#ifdef _WIN64
+    if (GetModuleHandleA("svr_standalone64.dll"))
+#else
+    if (GetModuleHandleA("svr_standalone.dll"))
+#endif
+    {
+        return; // Log already open in standalone mode.
+    }
+
+    char log_file_path[MAX_PATH];
+    SVR_SNPRINTF(log_file_path, "%s\\data\\SVR_LOG.txt", svr_path);
+
+    svr_init_log(log_file_path, false);
+
+    SYSTEMTIME lt;
+    GetLocalTime(&lt);
+
+    svr_log("SVR " SVR_ARCH_STRING " version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
+    svr_log("This is a integrated version of SVR\n");
+    svr_log("For more information see https://github.com/crashfort/SourceDemoRender\n");
+
+    svr_console_init();
+
+    integrated_init_done = true;
+}
+
 bool svr_init(const char* svr_path, IUnknown* game_device)
 {
     bool ret = false;
 
+    check_standalone_svr_mode(svr_path);
+
     // Adds a reference if successful.
     game_device->QueryInterface(IID_PPV_ARGS(&svr_d3d11_device));
     game_device->QueryInterface(IID_PPV_ARGS(&svr_d3d9ex_device));
+    game_device->Release();
 
     if (svr_d3d11_device == NULL && svr_d3d9ex_device == NULL)
     {
-        OutputDebugStringA("SVR (svr_init): The passed game_device is not a D3D11 (ID3D11Device) or a D3D9Ex (IDirect3DDevice9Ex) type\n");
+        OutputDebugStringA("SVR (svr_init): The passed game_device is not a ID3D11Device or a IDirect3DDevice9Ex type\n");
         goto rfail;
     }
 
@@ -88,12 +131,12 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
             goto rfail;
         }
 
-        #if SVR_DEBUG
+#if SVR_DEBUG
         if (device_flags & D3D11_CREATE_DEVICE_DEBUG)
         {
             OutputDebugStringA("SVR (svr_init): The game D3D11 device has the debug layer enabled\n");
         }
-        #endif
+#endif
 
         svr_d3d11_device->GetImmediateContext(&svr_d3d11_context);
     }
@@ -107,14 +150,15 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
         // It is also only intended to be used from a single thread.
         UINT device_create_flags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
-        #if SVR_DEBUG
+#if SVR_DEBUG
         device_create_flags |= D3D11_CREATE_DEVICE_DEBUG;
-        #endif
+#endif
 
         // Should be good enough for all the features that we make use of.
         const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_12_0;
 
-        const D3D_FEATURE_LEVEL DEVICE_LEVELS[] = {
+        const D3D_FEATURE_LEVEL DEVICE_LEVELS[] =
+        {
             MINIMUM_DEVICE_LEVEL
         };
 
@@ -130,8 +174,6 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
             goto rfail;
         }
     }
-
-    game_console_init();
 
     if (!proc_state.init(svr_path, svr_d3d11_device))
     {
@@ -165,10 +207,11 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
 
     movie_data->game_tex_view->QueryInterface(IID_PPV_ARGS(&svr_d3d9ex_content_surf));
     movie_data->game_tex_view->QueryInterface(IID_PPV_ARGS(&svr_content_srv));
+    svr_release(movie_data->game_tex_view);
 
     if (svr_d3d9ex_content_surf == NULL && svr_content_srv == NULL)
     {
-        OutputDebugStringA("SVR (svr_start): The passed game texture view is not a D3D11 (ID3D11ShaderResourceView) or a D3D9Ex (IDirect3DSurface9) type\n");
+        OutputDebugStringA("SVR (svr_start): The passed game texture view is not a ID3D11ShaderResourceView or a IDirect3DSurface9 type\n");
         goto rfail;
     }
 
@@ -178,7 +221,9 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         ID3D11Resource* content_res = NULL;
         svr_content_srv->GetResource(&content_res);
         content_res->QueryInterface(IID_PPV_ARGS(&svr_content_tex));
+
         svr_release(content_res);
+        content_res = NULL;
 
         D3D11_TEXTURE2D_DESC tex_desc;
         svr_content_tex->GetDesc(&tex_desc);
@@ -211,7 +256,9 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         }
 
         d3d9ex_share_tex->GetSurfaceLevel(0, &svr_d3d9ex_share_surf);
+
         svr_release(d3d9ex_share_tex);
+        d3d9ex_share_tex = NULL;
 
         svr_d3d11_device->OpenSharedResource(d3d9ex_share_h, IID_PPV_ARGS(&svr_content_tex));
         svr_d3d11_device->CreateShaderResourceView(svr_content_tex, NULL, &svr_content_srv);
@@ -291,7 +338,12 @@ bool svr_is_audio_enabled()
 
 void svr_give_velocity(float* xyz)
 {
-    proc_state.velo_give(xyz);
+    SvrVec3 vec;
+    vec.x = xyz[0];
+    vec.y = xyz[1];
+    vec.z = xyz[2];
+
+    proc_state.velo_give(vec);
 }
 
 void svr_give_audio(SvrWaveSample* samples, int num_samples)

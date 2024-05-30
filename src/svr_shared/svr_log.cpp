@@ -1,10 +1,7 @@
-#include "svr_log.h"  
+#include "svr_log.h"
 #include "svr_common.h"
-#include <stb_sprintf.h>
 #include <assert.h>
 #include <Windows.h>
-
-// File logging stuff.
 
 HANDLE log_file_handle;
 SRWLOCK log_lock;
@@ -14,17 +11,15 @@ void log_function(const char* text, s32 length)
     assert(log_file_handle);
 
     AcquireSRWLockExclusive(&log_lock);
-    WriteFile(log_file_handle, text, length, NULL, NULL);
+    WriteFile(log_file_handle, text, sizeof(char) * length, NULL, NULL);
     ReleaseSRWLockExclusive(&log_lock);
 }
 
 void svr_init_log(const char* log_file_path, bool append)
 {
-    // If we are the launcher, we delete the log before creating it to allow changing case.
-    // Normally Windows does not allow renaming cases, so we start new.
-    if (!append)
+    if (log_file_handle)
     {
-        DeleteFileA(log_file_path);
+        return;
     }
 
     DWORD open_flags = append ? OPEN_EXISTING : CREATE_ALWAYS;
@@ -46,7 +41,7 @@ void svr_init_log(const char* log_file_path, bool append)
     }
 }
 
-void svr_shutdown_log()
+void svr_free_log()
 {
     svr_maybe_close_handle(&log_file_handle);
 }

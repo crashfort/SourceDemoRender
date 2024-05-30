@@ -104,11 +104,14 @@ bool ProcState::start(const char* dest_file, const char* profile, ProcGameTextur
         goto rfail;
     }
 
-    if (profile[0])
+    if (profile)
     {
-        if (!movie_load_profile(profile, false))
+        if (profile[0])
         {
-            goto rfail;
+            if (!movie_load_profile(profile, false))
+            {
+                goto rfail;
+            }
         }
     }
 

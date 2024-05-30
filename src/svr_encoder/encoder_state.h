@@ -1,13 +1,10 @@
 #pragma once
 
-const s32 RENDER_QUEUED_FRAMES = 8192; // How many uncompressed AVFrame* to queue up for encoding.
-const s32 RENDER_QUEUED_PACKETS = 8192; // How many compressed AVPacket* to queue up for writing.
-const s32 VID_QUEUED_TEXTURES = 256; // How many converted uncompressed frames to store in RAM before encode.
-const s32 RENDER_QUEUED_AUDIO_BUFFERS = 8192; // How many audio buffers to queue up for conversion and encoding.
-
-// At most, YUV uses 3 planes.
-const s32 VID_MAX_PLANES = 3;
-
+const s32 RENDER_QUEUED_FRAMES = 8192; // Max number of uncompressed AVFrame* to queue up for encoding.
+const s32 RENDER_QUEUED_PACKETS = 8192; // Max number of compressed AVPacket* to queue up for writing.
+const s32 VID_QUEUED_TEXTURES = 16; // Max number of converted uncompressed frames to store in RAM before encode.
+const s32 RENDER_QUEUED_AUDIO_BUFFERS = 8192; // Max number of audio buffers to queue up for conversion and encoding.
+const s32 VID_MAX_PLANES = 3; // At most, YUV uses 3 planes.
 const s32 AUDIO_MAX_CHANS = 8;
 
 struct RenderVideoInfo;

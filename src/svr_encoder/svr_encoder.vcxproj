@@ -49,9 +49,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="Shared">
-    <Import Project="..\svr_common\svr_common.vcxitems" Label="Shared" />
-  </ImportGroup>
+  <ImportGroup Label="Shared" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -89,7 +87,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <AdditionalIncludeDirectories>$(SolutionDir)deps\ffmpeg\include;$(SolutionDir)deps\stb;$(SolutionDir)src\svr_common;$(SolutionDir)src\svr_encoder_common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)deps\ffmpeg\include;$(SolutionDir)deps\stb;$(SolutionDir)src\svr_common;$(SolutionDir)src\svr_shared</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <OpenMPSupport>false</OpenMPSupport>
       <EnableModules>false</EnableModules>
@@ -102,10 +100,13 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;Synchronization.lib;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;$(SolutionDir)bin\svr_log64.lib;$(SolutionDir)bin\svr_common64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PreBuildEvent>
+      <Command>msbuild "$(SolutionDir)svr.sln" /t:svr_common /t:svr_shared /p:Configuration=$(Configuration) /p:Platform=$(Platform) -m -noLogo</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -125,7 +126,7 @@
       <EnableModules>false</EnableModules>
       <AdditionalOptions>/volatile:iso /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)deps\ffmpeg\include;$(SolutionDir)deps\stb;$(SolutionDir)src\svr_common;$(SolutionDir)src\svr_encoder_common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)deps\ffmpeg\include;$(SolutionDir)deps\stb;$(SolutionDir)src\svr_common;$(SolutionDir)src\svr_shared</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
       <BuildStlModules>false</BuildStlModules>
     </ClCompile>
@@ -134,10 +135,13 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;Shlwapi.lib;Synchronization.lib;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;Mfplat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;$(SolutionDir)bin\svr_log64.lib;$(SolutionDir)bin\svr_common64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PreBuildEvent>
+      <Command>msbuild "$(SolutionDir)svr.sln" /t:svr_common /t:svr_shared /p:Configuration=$(Configuration) /p:Platform=$(Platform) -m -noLogo</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

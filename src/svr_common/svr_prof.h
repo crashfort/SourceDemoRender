@@ -1,9 +1,6 @@
 #pragma once
 #include "svr_common.h"
 
-// Disable for releases.
-#define SVR_PROF 0
-
 struct SvrProf
 {
     s64 start;
@@ -11,19 +8,9 @@ struct SvrProf
     s64 total;
 };
 
-void svr_init_prof();
+void svr_prof_init();
 s64 svr_prof_get_real_time(); // Returns microseconds.
 
-#if SVR_PROF
-
-void svr_start_prof(SvrProf* prof);
-void svr_end_prof(SvrProf* prof);
-void svr_reset_prof(SvrProf* prof);
-
-#else
-
-#define svr_start_prof()
-#define svr_end_prof()
-#define svr_reset_prof()
-
-#endif
+void svr_prof_start(SvrProf* prof);
+void svr_prof_end(SvrProf* prof);
+void svr_prof_reset(SvrProf* prof);

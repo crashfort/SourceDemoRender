@@ -272,7 +272,7 @@ bool svr_vdf_section_is_root(SvrVdfSection* section)
 
 SvrVdfSection* svr_vdf_load(const char* path)
 {
-    char* file_mem = svr_read_file_as_string(path);
+    char* file_mem = svr_read_file_as_string(path, 0);
 
     if (file_mem == NULL)
     {

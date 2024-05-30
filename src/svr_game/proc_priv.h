@@ -2,7 +2,7 @@
 #include "svr_common.h"
 #include "svr_defs.h"
 #include "svr_log.h"
-#include "game_console.h"
+#include "svr_console.h"
 #include "svr_queue.h"
 #include "encoder_shared.h"
 #include <d3d11.h>

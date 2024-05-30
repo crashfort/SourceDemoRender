@@ -12,45 +12,17 @@ See [Replay Viewer](https://github.com/crashfort/ReplayViewer) as a substitute f
 ## Updates
 You can use `update.cmd` in the SVR directory to automatically download the latest release. The latest SVR will be downloaded to `svr.zip`. You can extract this folder and SVR is now updated.
 
-## Game support
-| Game          | Windows
-| ------------- | -----------------------
-| Counter-Strike: Source           | ✔
-| Counter-Strike: Global Offensive | ✔
-| Team Fortress 2                  | ✔
-| Zombie Panic! Source             | ✔
-| Empires                          | ✔
-| Half-Life 2                      | ✔
-| Half-Life 2: Deathmatch          | ✔
-| Source 2013 SP mods              | ✔
-| Synergy                          | ✔
-| Black Mesa                       | ✔
-| Hunt Down The Freeman            | ✔
-
 ## Prerequisites
 Any DirectX 11 (Direct3D 11.3, feature level 12_0) compatible graphics adapter with minimum of Windows 10 1909 is required. Hardware feature support verification will occur when starting the launcher.
 
 ## Startup
+Use `svr_launcher.exe` or `svr_launcher64.exe` to start the standalone SVR launcher. The launcher allows you to select which game you want to start. The games database is stored in the `data/games` directory. Here you can create new game profiles if you wish to change the launch parameters or configurations. The following launch parameters are always added by the launcher: ``-steam -insecure +sv_lan 1 -console -novid``.
 
-**Steam must be started for SVR to work.**
+The menu selection of the launcher can be bypassed by passing in the identification name for a game as a start argument to the launcher. As an example:
 
-Use `svr_launcher.exe` to start SVR. The launcher will scan the installed Steam games in your system and the supported games will be listed. If you don't want to use the launch parameters from Steam, you can create a file called `svr_launch_params.ini` in the same folder as the launcher and insert a format like this (one line per game):
-
-```ini
-240=-width 2560 -height 1440
 ```
-
-The key is the Steam app id and the value has the parameters to add.
-
-It's possible to launch Source 2013 SP mods using this file by using the 220 app id (Half-Life 2) with a custom `-game` parameter. If a custom game parameter is used, the one specified by SVR will not be used. Do it like this:
-
-```ini
-220=-game <mod_name>
+svr_launcher.exe cstrike_steam.ini
 ```
-
-The following launch parameters are always added by the launcher: ``-steam -insecure +sv_lan 1 -console -novid``.
-
-When using `svr_launcher.exe` you are starting the standalone SVR, which modifies existing games to add SVR support. SVR stores the game build which it was tested and known to work on. In case a game updates, SVR may stop working and this will be printed to `SVR_LOG.txt`.
 
 ## Recording
 Once in game, you can use the `startmovie` console command to start recording a movie and the `endmovie` command to stop.
@@ -80,11 +52,9 @@ The list of optional parameters are as follows:
 
 When starting and ending a movie, the files `data/cfg/svr_movie_start_user.cfg` and `data/cfg/svr_movie_end_user.cfg` in `data/cfg` will be executed (you can create these if you want to use them). This can be used to insert or overwrite commands that should be active only during the movie period. Note that these files are **not** in the game directory, but in the SVR directory in `data/cfg`.
 
-You can have game specific cfgs by using files called `data/cfg/svr_movie_start_<app_id>.cfg` and `data/cfg/svr_movie_end_<app_id>.cfg`. The `app_id` should be substituted for the Steam app id, such as **240** for **Counter-Strike: Source**.
-
 **It is recommended that you don't edit `svr_movie_start.cfg` and `svr_movie.end.cfg` as they may be changed in updates, which would overwrite your changes.**
 
-The execution order of the cfgs is as follows: `svr_movie_start.cfg > svr_movie_start_user.cfg > svr_movie_start_<app_id>.cfg`. Each cfg file can override the previous.
+The execution order of the cfgs is as follows: `svr_movie_start.cfg > svr_movie_start_user.cfg`. Each cfg file can override the previous.
 
 The commands that are placed in `svr_movie_start.cfg` are required and must not be overwritten. Most notably, the variable `mat_queue_mode` must be 0 during recording for recording to work properly.
 

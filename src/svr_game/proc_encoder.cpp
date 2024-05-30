@@ -17,7 +17,7 @@ bool ProcState::encoder_init()
         goto rfail;
     }
 
-    game_log("Started encoder process\n");
+    svr_console_msg_and_log("Started encoder process\n");
 
     encoder_pending_samples.init(ENCODER_MAX_SAMPLES * 2);
 
@@ -365,7 +365,8 @@ bool ProcState::encoder_send_event(EncoderSharedEvent event)
     // When this returns, svr_encoder will be paused and in a known state waiting to be woken up again.
     // This call also makes synchronization easier in this process.
 
-    HANDLE handles[] = {
+    HANDLE handles[] =
+    {
         encoder_proc,
         game_wake_event_h,
     };
@@ -376,7 +377,7 @@ bool ProcState::encoder_send_event(EncoderSharedEvent event)
     // Encoder exited or crashed or something.
     if (waited_h == encoder_proc)
     {
-        game_log("Encoder exited or crashed\n");
+        svr_console_msg_and_log("Encoder exited or crashed\n");
         return false;
     }
 
@@ -386,8 +387,8 @@ bool ProcState::encoder_send_event(EncoderSharedEvent event)
         {
             // Any error in svr_encoder is written to its log.
             // We also want to log the error in the console and in our log.
-            game_log(encoder_shared_ptr->error_message);
-            game_log("See ENCODER_LOG.txt for more information\n");
+            svr_console_msg_and_log(encoder_shared_ptr->error_message);
+            svr_console_msg_and_log("See ENCODER_LOG.txt for more information\n");
             return false;
         }
     }
