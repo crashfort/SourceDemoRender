@@ -29,7 +29,6 @@ struct EncoderSharedMovieParams
     char dest_file[256];
 
     // Incoming data specs:
-    // Audio will always be using signed integers.
     s32 video_height;
     s32 video_width;
     s32 audio_channels;
@@ -54,7 +53,6 @@ struct EncoderSharedMem
     EncoderSharedMovieParams movie_params; // Movie parameters and profile stuff set by svr_game on ENCODER_EVENT_START.
 
     // Shared handle to the latest game texture in the B8G8R8A8 format. Updated on ENCODER_EVENT_NEW_VIDEO.
-    // This is not a normal handle and should not be closed.
     u32 game_texture_h;
 
     // Pointer types have different sizes in 32-bit and 64-bit so we have to store the offsets from the base
