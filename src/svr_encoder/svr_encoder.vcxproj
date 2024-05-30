@@ -100,7 +100,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;$(SolutionDir)bin\svr_log64.lib;$(SolutionDir)bin\svr_common64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;$(SolutionDir)bin\svr_common64.lib;$(SolutionDir)bin\svr_shared64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -135,7 +135,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;$(SolutionDir)bin\svr_log64.lib;$(SolutionDir)bin\svr_common64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D11.LIB;DXGI.LIB;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;$(SolutionDir)bin\svr_common64.lib;$(SolutionDir)bin\svr_shared64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>noenv.obj %(AdditionalOptions)</AdditionalOptions>
     </Link>
