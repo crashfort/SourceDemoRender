@@ -111,6 +111,15 @@ void game_rec_start_movie(void* cmd_args)
 
     const char* args = game_get_cmd_args(cmd_args);
 
+    // It's possible for the engine to incorrectly parse the command line in the console, adding extra whitespace at the start in some cases.
+    args = svr_advance_until_after_whitespace(args);
+
+    if (*args == 0)
+    {
+        svr_console_msg("Internal engine command parsing error\n");
+        return;
+    }
+
     const char* value_args = svr_advance_until_whitespace(args);
     value_args = svr_advance_until_after_whitespace(value_args);
 
