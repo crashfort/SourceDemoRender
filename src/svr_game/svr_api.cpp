@@ -195,6 +195,17 @@ bool svr_movie_active()
     return svr_movie_running;
 }
 
+void copy_shared_d3d9ex_tex_to_d3d11_tex()
+{
+    // If we are a D3D9Ex game, we have to copy over the game content texture to the D3D11 texture.
+    if (svr_d3d9ex_device)
+    {
+        // Copy over the game content to the shared texture.
+        // Don't use any filtering type because the source and destinations are both same size.
+        svr_d3d9ex_device->StretchRect(svr_d3d9ex_content_surf, NULL, svr_d3d9ex_share_surf, NULL, D3DTEXF_NONE);
+    }
+}
+
 bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieData* movie_data)
 {
     bool ret = false;
@@ -273,6 +284,9 @@ bool svr_start(const char* movie_name, const char* movie_profile, SvrStartMovieD
         goto rfail;
     }
 
+    // Immediately copy from the backbuffer so the first frame is not empty.
+    copy_shared_d3d9ex_tex_to_d3d11_tex();
+
     svr_movie_running = true;
 
     ret = true;
@@ -313,13 +327,7 @@ void svr_stop()
 
 void svr_frame()
 {
-    // If we are a D3D9Ex game, we have to copy over the game content texture to the D3D11 texture.
-    if (svr_d3d9ex_device)
-    {
-        // Copy over the game content to the shared texture.
-        // Don't use any filtering type because the source and destinations are both same size.
-        svr_d3d9ex_device->StretchRect(svr_d3d9ex_content_surf, NULL, svr_d3d9ex_share_surf, NULL, D3DTEXF_NONE);
-    }
+    copy_shared_d3d9ex_tex_to_d3d11_tex();
 
     // The D3D11 texture now contains the game content.
 
