@@ -1,14 +1,15 @@
 Version 43,
 ---------------------------
 
-* Fixed bug where state would be reset if the movie was attempted to be started twice.
+* Fixed bug where recording state would be reset if the movie was attempted to be started twice.
 * Fixed crash when using the nowindupd parameter.
 * SVR is now self-learning and should be able to work with most Source engine games automatically.
-* SVR is now modularized and can work with partial functionality if not present in the game.
+* SVR is now modularized and can work with partial functionality if all is not present in the game.
 * Added new game definitions in data/games/ folder that allows creating game profiles, including setting custom start arguments.
 * Installed games are no longer read from Steam.
 * Start parameters are no longer read from Steam.
 * Added a workaround for engine parsing bug if the startmovie command is in a chained sequence of commands, followed by a space.
+* Fixed first frame of video being black.
 
 Version 42, 11 April 2024
 ---------------------------
