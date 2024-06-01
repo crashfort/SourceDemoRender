@@ -15,9 +15,9 @@ bool game_run_cfg(const char* name, bool required)
     SVR_SNPRINTF(full_cfg_path, "%s\\data\\cfg\\%s", game_state.svr_path, name);
 
     // Commands must end with a newline.
-    char* mem = svr_read_file_as_string(full_cfg_path, SVR_READ_FILE_FLAGS_NEW_LINE);
+    char* file_mem = svr_read_file_as_string(full_cfg_path, SVR_READ_FILE_FLAGS_NEW_LINE);
 
-    if (mem == NULL)
+    if (file_mem == NULL)
     {
         if (required)
         {
@@ -31,7 +31,9 @@ bool game_run_cfg(const char* name, bool required)
 
     // The file can be executed as is. The game takes care of splitting by newline.
     // We don't monitor what is inside the cfg, it's up to the user.
-    game_engine_client_command(mem);
+    game_engine_client_command(file_mem);
+
+    svr_free(file_mem);
 
     return true;
 }
