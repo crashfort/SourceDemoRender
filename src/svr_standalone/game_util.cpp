@@ -36,11 +36,6 @@ void game_apply_patch(void* target, void* bytes, s32 num_bytes)
     VirtualProtect(target, num_bytes, old_protect, NULL); // Restore page.
 }
 
-bool game_is_valid(void* addr)
-{
-    return addr;
-}
-
 bool game_is_valid(GameFnOverride ov)
 {
     return ov.target;

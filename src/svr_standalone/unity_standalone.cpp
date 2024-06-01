@@ -14,4 +14,5 @@
 #include "game_d3d9ex.cpp"
 #include "game_audio.cpp"
 #include "game_audio_v1.cpp"
+#include "game_audio_v2.cpp"
 #include "game_velo.cpp"

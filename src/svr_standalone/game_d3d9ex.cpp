@@ -26,12 +26,12 @@ HRESULT __stdcall game_d3d9ex_present_override(void* p, CONST RECT* pSourceRect,
 
 void game_d3d9ex_init()
 {
-    game_d3d9ex_state.device = (IDirect3DDevice9Ex*)game_state.search_desc.d3d9ex_device_ptr;
+    game_d3d9ex_state.device = (IDirect3DDevice9Ex*)game_get_d3d9ex_device();
     game_d3d9ex_state.device->AddRef();
 
     // Fixed in ABI and cannot be changed.
     GameFnOverride d3d9ex_present_override;
-    d3d9ex_present_override.target = game_get_virtual(game_state.search_desc.d3d9ex_device_ptr, 17);
+    d3d9ex_present_override.target = game_get_virtual(game_get_d3d9ex_device(), 17);
     d3d9ex_present_override.override = game_d3d9ex_present_override;
 
     game_hook_create(&d3d9ex_present_override, &game_d3d9ex_state.present_hook);

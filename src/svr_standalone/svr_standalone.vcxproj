@@ -35,6 +35,7 @@
     <None Include="game_audio.cpp" />
     <None Include="game_audio_v1.cpp" />
     <None Include="game_velo.cpp" />
+    <None Include="game_audio_v2.cpp" />
     <ClCompile Include="unity_standalone.cpp" />
   </ItemGroup>
   <ItemGroup>

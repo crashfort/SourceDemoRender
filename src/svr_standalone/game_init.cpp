@@ -120,7 +120,11 @@ void game_init_check_modules()
         CAP(GAME_CAP_HAS_AUTOSTOP),
         CAP(GAME_CAP_D3D9EX_VIDEO),
         CAP(GAME_CAP_AUDIO_DEVICE_1),
+        CAP(GAME_CAP_AUDIO_DEVICE_1_5),
         CAP(GAME_CAP_AUDIO_DEVICE_2),
+        CAP(GAME_CAP_64_BIT_AUDIO_TIME),
+        CAP(GAME_CAP_VELO_1),
+        CAP(GAME_CAP_VELO_2),
     };
 
     svr_log("Game caps:\n");

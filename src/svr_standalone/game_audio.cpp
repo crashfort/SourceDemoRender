@@ -9,7 +9,8 @@ struct GameAudioSearch
 GameAudioSearch GAME_AUDIO_BACKENDS[] =
 {
     GameAudioSearch { GAME_CAP_AUDIO_DEVICE_1, &game_audio_v1_desc },
-    GameAudioSearch { GAME_CAP_AUDIO_DEVICE_2, &game_audio_v1_desc },
+    GameAudioSearch { GAME_CAP_AUDIO_DEVICE_1_5, &game_audio_v1_desc },
+    GameAudioSearch { GAME_CAP_AUDIO_DEVICE_2, &game_audio_v2_desc },
 };
 
 void game_audio_init()

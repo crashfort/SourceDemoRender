@@ -74,6 +74,22 @@ void __cdecl game_snd_paint_chans_override_0(s32 end_time, bool is_underwater)
     org_fn(end_time, is_underwater);
 }
 
+void __cdecl game_snd_paint_chans_override_1(s64 end_time, bool is_underwater)
+{
+    game_state.snd_listener_underwater = is_underwater;
+
+    if (svr_movie_active() && !game_state.snd_is_painting)
+    {
+        return; // When movie is active we call this ourselves with the real number of samples write.
+    }
+
+    // Will call game_snd_tx_stereo_override_0 or game_snd_device_tx_samples_override_0.
+
+    using OrgFn = decltype(game_snd_paint_chans_override_1)*;
+    OrgFn org_fn = (OrgFn)game_state.snd_paint_chans_hook.original;
+    org_fn(end_time, is_underwater);
+}
+
 // ----------------------------------------------------------------
 
 void __cdecl game_start_movie_override_0(void* cmd_args)
@@ -104,6 +120,28 @@ bool __fastcall game_eng_filter_time_override_0(void* p, void* edx, float dt)
     return ret;
 }
 
+#ifndef _WIN64
+bool __fastcall game_eng_filter_time_override_1(void* p, void* edx)
+{
+    float dt;
+
+    __asm movss dt, xmm1;
+
+    bool ret = game_rec_run_frame();
+
+    if (!ret)
+    {
+        __asm movss xmm1, dt;
+
+        using OrgFn = decltype(game_eng_filter_time_override_1)*;
+        OrgFn org_fn = (OrgFn)game_state.filter_time_hook.original;
+        ret = org_fn(p, edx);
+    }
+
+    return ret;
+}
+#endif
+
 // ----------------------------------------------------------------
 
 void game_overrides_init()
@@ -122,7 +160,7 @@ void game_overrides_init()
         game_hook_create(&game_state.search_desc.snd_tx_stereo_override, &game_state.snd_tx_stereo_hook);
     }
 
-    if (game_state.search_desc.caps & GAME_CAP_AUDIO_DEVICE_2)
+    if (game_state.search_desc.caps & GAME_CAP_AUDIO_DEVICE_1_5 | GAME_CAP_AUDIO_DEVICE_2)
     {
         game_hook_create(&game_state.search_desc.snd_device_tx_samples_override, &game_state.snd_device_tx_samples_hook);
     }
@@ -130,5 +168,5 @@ void game_overrides_init()
     // If the game has a restriction that prevents cvars from changing when in game or demo playback.
     // This replaces the flags to compare to, so the comparison will always be false.
     s32 cvar_restrict_patch_bytes = 0x00;
-    game_apply_patch(game_state.search_desc.cvar_patch_restrict_addr, &cvar_restrict_patch_bytes, sizeof(cvar_restrict_patch_bytes));
+    game_apply_patch(game_get_cvar_patch_restrict(), &cvar_restrict_patch_bytes, sizeof(cvar_restrict_patch_bytes));
 }

@@ -15,7 +15,11 @@ enum /* GameCaps */
     GAME_CAP_HAS_AUTOSTOP = SVR_BIT(4),
     GAME_CAP_D3D9EX_VIDEO = SVR_BIT(5),
     GAME_CAP_AUDIO_DEVICE_1 = SVR_BIT(6),
-    GAME_CAP_AUDIO_DEVICE_2 = SVR_BIT(7),
+    GAME_CAP_AUDIO_DEVICE_1_5 = SVR_BIT(7),
+    GAME_CAP_AUDIO_DEVICE_2 = SVR_BIT(8),
+    GAME_CAP_64_BIT_AUDIO_TIME = SVR_BIT(9),
+    GAME_CAP_VELO_1 = SVR_BIT(10),
+    GAME_CAP_VELO_2 = SVR_BIT(11),
 };
 
 // -----------------------------------------------
@@ -102,22 +106,22 @@ struct GameSearchDesc
     GameFnOverride start_movie_override;
     GameFnOverride end_movie_override;
     GameFnOverride filter_time_override;
-    void* engine_client_ptr;
-    void* cvar_patch_restrict_addr;
+    GameFnProxy cvar_patch_restrict_proxy;
     GameFnProxy engine_client_command_proxy;
-    GameFnProxy get_cmd_args_proxy;
+    GameFnProxy cmd_args_proxy;
 
     // Video D3D9EX required:
-    void* d3d9ex_device_ptr;
+    GameFnProxy d3d9ex_device_proxy;
 
     // Velo required:
-    GameFnProxy get_player_by_index_proxy;
-    GameFnProxy get_spec_target_proxy;
-    GameFnProxy get_local_player_proxy;
-    GameFnProxy get_entity_velocity_proxy;
+    GameFnProxy player_by_index_proxy;
+    GameFnProxy entity_velocity_proxy;
+    GameFnProxy spec_target_proxy;
+    GameFnProxy local_player_proxy;
+    GameFnProxy spec_target_or_local_player_proxy;
 
     // Audio required:
-    GameFnProxy snd_get_paint_time_proxy;
+    GameFnProxy snd_paint_time_proxy;
     GameFnOverride snd_paint_chans_override;
     s32 snd_sample_rate;
     s32 snd_num_channels;
@@ -128,10 +132,10 @@ struct GameSearchDesc
 
     // Audio device 2 required:
     GameFnOverride snd_device_tx_samples_override;
-    GameFnProxy snd_get_paint_buffer_proxy;
+    GameFnProxy snd_paint_buffer_proxy;
 
     // Autostop required:
-    GameFnProxy get_signon_state_proxy;
+    GameFnProxy signon_state_proxy;
     s32 signon_state_none;
     s32 signon_state_full;
 };
@@ -157,7 +161,6 @@ struct GameState
     const char* svr_path; // Absolute path to SVR. Does not end with a slash.
 
     GameSearchDesc search_desc;
-
     GameVideoDesc* video_desc;
     GameAudioDesc* audio_desc;
 
@@ -222,7 +225,6 @@ void* game_get_export(const char* dll, const char* name);
 void game_apply_patch(void* target, void* bytes, s32 num_bytes);
 
 // Used by game_search.cpp for the module validation arrays.
-bool game_is_valid(void* addr);
 bool game_is_valid(GameFnOverride ov);
 bool game_is_valid(GameFnProxy px);
 
@@ -239,9 +241,14 @@ struct GameSndSample0
 void __cdecl game_snd_tx_stereo_override_0(void* unk, GameSndSample0* paint_buf, s32 paint_time, s32 end_time);
 void __fastcall game_snd_device_tx_samples_override_0(void* p, void* edx, u32 unused);
 void __cdecl game_snd_paint_chans_override_0(s32 end_time, bool is_underwater);
+void __cdecl game_snd_paint_chans_override_1(s64 end_time, bool is_underwater);
 void __cdecl game_start_movie_override_0(void* args);
 void __cdecl game_end_movie_override_0(void* args);
 bool __fastcall game_eng_filter_time_override_0(void* p, void* edx, float dt);
+
+#ifndef _WIN64
+bool __fastcall game_eng_filter_time_override_1(void* p, void* edx);
+#endif
 
 void game_overrides_init();
 
@@ -249,20 +256,25 @@ void game_overrides_init();
 // game_proxies.cpp:
 
 // Proxies for redirecting stuff to or from the game:
-void game_get_spec_target_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_spec_target_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_engine_client_command_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_engine_client_command_proxy_1(GameFnProxy* proxy, void* params, void* res);
-void game_get_player_by_index_proxy_0(GameFnProxy* proxy, void* params, void* res);
-void game_get_velocity_proxy_0(GameFnProxy* proxy, void* params, void* res);
-void game_get_cmd_args_proxy_0(GameFnProxy* proxy, void* params, void* res);
-void game_get_signon_state_proxy_0(GameFnProxy* proxy, void* params, void* res);
-void game_get_signon_state_proxy_1(GameFnProxy* proxy, void* params, void* res);
-void game_get_paint_time_proxy_0(GameFnProxy* proxy, void* params, void* res);
-void game_get_paint_time_proxy_1(GameFnProxy* proxy, void* params, void* res);
-void game_get_local_player_proxy_0(GameFnProxy* proxy, void* params, void* res);
-void game_get_local_player_proxy_1(GameFnProxy* proxy, void* params, void* res);
-void game_get_paint_buffer_proxy_0(GameFnProxy* proxy, void* params, void* res);
-void game_get_paint_buffer_proxy_1(GameFnProxy* proxy, void* params, void* res);
+void game_player_by_index_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_velocity_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_cmd_args_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_signon_state_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_signon_state_proxy_1(GameFnProxy* proxy, void* params, void* res);
+void game_paint_time_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_paint_time_proxy_1(GameFnProxy* proxy, void* params, void* res);
+void game_paint_time_proxy_2(GameFnProxy* proxy, void* params, void* res);
+void game_local_player_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_local_player_proxy_1(GameFnProxy* proxy, void* params, void* res);
+void game_spec_target_or_local_player_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_paint_buffer_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_paint_buffer_proxy_1(GameFnProxy* proxy, void* params, void* res);
+void game_cvar_restrict_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_d3d9ex_device_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_d3d9ex_device_proxy_1(GameFnProxy* proxy, void* params, void* res);
 
 void game_engine_client_command(const char* cmd);
 const char* game_get_cmd_args(void* ptr);
@@ -270,9 +282,13 @@ SvrVec3 game_get_entity_velocity(void* entity);
 void* game_get_player_by_index(s32 idx);
 void* game_get_local_player();
 s32 game_get_spec_target();
+void* game_get_spec_target_or_local_player();
 s32 game_get_signon_state();
 s32 game_get_snd_paint_time_0();
+s64 game_get_snd_paint_time_1();
 GameSndSample0* game_get_snd_paint_buffer_0();
+void* game_get_d3d9ex_device();
+void* game_get_cvar_patch_restrict();
 
 // -----------------------------------------------
 // game_init.cpp:
@@ -327,9 +343,16 @@ extern GameVideoDesc game_d3d9ex_desc;
 extern GameAudioDesc game_audio_v1_desc;
 
 // -----------------------------------------------
+// game_audio_v2.cpp:
+
+extern GameAudioDesc game_audio_v2_desc;
+
+// -----------------------------------------------
 // game_velo.cpp:
 
 void game_velo_frame();
 void* game_velo_get_active_player();
+void* game_velo_get_active_player_dumb();
+void* game_velo_get_active_player_smart();
 
 // -----------------------------------------------
