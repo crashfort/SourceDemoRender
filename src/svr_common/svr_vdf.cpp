@@ -309,5 +309,7 @@ SvrVdfSection* svr_vdf_load(const char* path)
 
     assert(parse_state.section_stack.size == 1);
 
+    svr_free(file_mem);
+
     return root;
 }
