@@ -20,4 +20,3 @@
 #include <MinHook.h>
 
 #include "game_common.h"
-#include "game_asm.h"
