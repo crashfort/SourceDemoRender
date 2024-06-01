@@ -178,7 +178,7 @@ char* svr_read_file_as_string(const char* path, SvrReadFileFlags flags)
     LARGE_INTEGER large;
     GetFileSizeEx(h, &large);
 
-    s32 ceiling = 0;
+    s32 ceiling = 1; // Extra for terminator.
 
     if (flags & SVR_READ_FILE_FLAGS_NEW_LINE)
     {
@@ -187,16 +187,20 @@ char* svr_read_file_as_string(const char* path, SvrReadFileFlags flags)
 
     if (large.HighPart == 0 && large.LowPart < (INT32_MAX - ceiling))
     {
-        ret = (char*)svr_alloc(large.LowPart + 1 + ceiling);
+        ret = (char*)svr_alloc(large.LowPart + ceiling);
 
-        ReadFile(h, ret, large.LowPart, NULL, NULL);
+        DWORD num_read = 0;
+        ReadFile(h, ret, large.LowPart, &num_read, NULL);
+
+        DWORD extra_pos = num_read;
 
         if (flags & SVR_READ_FILE_FLAGS_NEW_LINE)
         {
-            ret[large.LowPart - 1] = '\n';
+            ret[extra_pos] = '\n';
+            extra_pos++;
         }
 
-        ret[large.LowPart] = 0;
+        ret[extra_pos] = 0;
     }
 
     CloseHandle(h);
