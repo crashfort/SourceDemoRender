@@ -1,6 +1,6 @@
 #include "game_priv.h"
 
-const s32 GAME_WIND_WINDOW_TITLE_SIZE = 512;
+const s32 GAME_WIND_TITLE_SIZE = 512;
 
 BOOL CALLBACK game_wind_enum_first_hwnd(HWND hwnd, LPARAM lparam)
 {
@@ -13,19 +13,19 @@ void game_wind_early_init()
 {
     // Used by the window progress bar.
     // Must be called in the main thread because it will be used in the main thread.
+
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&game_state.wind_taskbar_list));
 }
 
 void game_wind_init()
 {
-    game_state.wind_def_title = (char*)svr_zalloc(sizeof(char) * GAME_WIND_WINDOW_TITLE_SIZE);
+    game_state.wind_def_title = (char*)svr_zalloc(sizeof(char) * GAME_WIND_TITLE_SIZE);
 
     // Find the main window. We could probably scan for this too.
     EnumThreadWindows(game_state.main_thread_id, game_wind_enum_first_hwnd, (LPARAM)&game_state.wind_hwnd);
 
-    GetWindowTextA(game_state.wind_hwnd, game_state.wind_def_title, GAME_WIND_WINDOW_TITLE_SIZE);
-
-    CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&game_state.wind_taskbar_list));
+    GetWindowTextA(game_state.wind_hwnd, game_state.wind_def_title, GAME_WIND_TITLE_SIZE);
 
     game_wind_reset();
 }
