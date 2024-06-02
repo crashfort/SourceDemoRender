@@ -197,7 +197,7 @@ rexit:
     return ret;
 }
 
-bool ProcState::vid_create_shaders(ProcShader* shaders, s32 num)
+bool ProcState::vid_create_shaders_list(ProcShader* shaders, s32 num)
 {
     bool ret = true;
 

@@ -243,7 +243,7 @@ struct EncoderState
     void vid_free_dynamic();
     bool vid_load_shader(const char* name);
     bool vid_create_shader(const char* name, void** shader, D3D11_SHADER_TYPE type);
-    bool vid_create_shaders(EncoderShader* shaders, s32 num);
+    bool vid_create_shaders_list(EncoderShader* shaders, s32 num);
     bool vid_start();
     bool vid_open_game_texture();
     void vid_create_conversion_texs();

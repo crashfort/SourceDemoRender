@@ -95,7 +95,7 @@ bool EncoderState::vid_create_shaders()
         EncoderShader { "convert_yuv444", (void**)&vid_yuv444_cs, D3D11_COMPUTE_SHADER },
     };
 
-    if (!vid_create_shaders(SHADER_LIST, SVR_ARRAY_SIZE(SHADER_LIST)))
+    if (!vid_create_shaders_list(SHADER_LIST, SVR_ARRAY_SIZE(SHADER_LIST)))
     {
         goto rfail;
     }
@@ -226,7 +226,7 @@ rexit:
     return ret;
 }
 
-bool EncoderState::vid_create_shaders(EncoderShader* shaders, s32 num)
+bool EncoderState::vid_create_shaders_list(EncoderShader* shaders, s32 num)
 {
     bool ret = true;
 

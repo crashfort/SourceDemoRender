@@ -108,7 +108,7 @@ struct ProcState
     void vid_free_dynamic();
     bool vid_load_shader(const char* name);
     bool vid_create_shader(const char* name, void** shader, D3D11_SHADER_TYPE type);
-    bool vid_create_shaders(ProcShader* shaders, s32 num);
+    bool vid_create_shaders_list(ProcShader* shaders, s32 num);
     void vid_update_constant_buffer(ID3D11Buffer* buffer, void* data, UINT size);
     void vid_clear_rtv(ID3D11RenderTargetView* rtv, float r, float g, float b, float a);
     s32 vid_get_num_cs_threads(s32 unit);
