@@ -197,6 +197,24 @@ rexit:
     return ret;
 }
 
+bool ProcState::vid_create_shaders(ProcShader* shaders, s32 num)
+{
+    bool ret = true;
+
+    for (s32 i = 0; i < num; i++)
+    {
+        ProcShader* s = &shaders[i];
+
+        if (!vid_create_shader(s->name, s->dest, s->type))
+        {
+            ret = false;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 void ProcState::vid_update_constant_buffer(ID3D11Buffer* buffer, void* data, UINT size)
 {
     D3D11_MAPPED_SUBRESOURCE mapped;

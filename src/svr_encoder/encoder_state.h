@@ -29,6 +29,13 @@ struct VidTextureDownloadInput
     ID3D11Texture2D* dl_texs[VID_MAX_PLANES]; // In system memory.
 };
 
+struct EncoderShader
+{
+    const char* name;
+    void** dest;
+    D3D11_SHADER_TYPE type;
+};
+
 struct EncoderState
 {
     // -----------------------------------------------
@@ -236,6 +243,7 @@ struct EncoderState
     void vid_free_dynamic();
     bool vid_load_shader(const char* name);
     bool vid_create_shader(const char* name, void** shader, D3D11_SHADER_TYPE type);
+    bool vid_create_shaders(EncoderShader* shaders, s32 num);
     bool vid_start();
     bool vid_open_game_texture();
     void vid_create_conversion_texs();

@@ -61,12 +61,13 @@ bool ProcState::mosample_create_shaders()
 {
     bool ret = false;
 
-    if (!vid_create_shader("mosample", (void**)&mosample_cs, D3D11_COMPUTE_SHADER))
+    ProcShader SHADER_LIST[] =
     {
-        goto rfail;
-    }
+        ProcShader { "mosample", (void**)&mosample_cs, D3D11_COMPUTE_SHADER },
+        ProcShader { "downsample", (void**)&mosample_downsample_cs, D3D11_COMPUTE_SHADER },
+    };
 
-    if (!vid_create_shader("downsample", (void**)&mosample_downsample_cs, D3D11_COMPUTE_SHADER))
+    if (!vid_create_shaders(SHADER_LIST, SVR_ARRAY_SIZE(SHADER_LIST)))
     {
         goto rfail;
     }

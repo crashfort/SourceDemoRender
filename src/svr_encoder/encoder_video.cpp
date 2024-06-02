@@ -88,17 +88,14 @@ bool EncoderState::vid_create_shaders()
 
     vid_shader_mem = svr_alloc(VID_SHADER_SIZE);
 
-    if (!vid_create_shader("convert_nv12", (void**)&vid_nv12_cs, D3D11_COMPUTE_SHADER))
+    EncoderShader SHADER_LIST[] =
     {
-        goto rfail;
-    }
+        EncoderShader { "convert_nv12", (void**)&vid_nv12_cs, D3D11_COMPUTE_SHADER },
+        EncoderShader { "convert_yuv422", (void**)&vid_yuv422_cs, D3D11_COMPUTE_SHADER },
+        EncoderShader { "convert_yuv444", (void**)&vid_yuv444_cs, D3D11_COMPUTE_SHADER },
+    };
 
-    if (!vid_create_shader("convert_yuv422", (void**)&vid_yuv422_cs, D3D11_COMPUTE_SHADER))
-    {
-        goto rfail;
-    }
-
-    if (!vid_create_shader("convert_yuv444", (void**)&vid_yuv444_cs, D3D11_COMPUTE_SHADER))
+    if (!vid_create_shaders(SHADER_LIST, SVR_ARRAY_SIZE(SHADER_LIST)))
     {
         goto rfail;
     }
@@ -226,6 +223,24 @@ bool EncoderState::vid_create_shader(const char* name, void** shader, D3D11_SHAD
 rfail:
 
 rexit:
+    return ret;
+}
+
+bool EncoderState::vid_create_shaders(EncoderShader* shaders, s32 num)
+{
+    bool ret = true;
+
+    for (s32 i = 0; i < num; i++)
+    {
+        EncoderShader* s = &shaders[i];
+
+        if (!vid_create_shader(s->name, s->dest, s->type))
+        {
+            ret = false;
+            break;
+        }
+    }
+
     return ret;
 }
 
