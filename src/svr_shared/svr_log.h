@@ -1,7 +1,7 @@
 #pragma once
 #include <stdarg.h>
 
-#ifdef SVR_LOG_DLL
+#ifdef SVR_SHARED_DLL
 #define SVR_LOG_API __declspec(dllexport)
 #else
 #define SVR_LOG_API __declspec(dllimport)
