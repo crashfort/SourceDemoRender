@@ -1,4 +1,4 @@
-Version 43,
+Version 43, 4 June 2024
 ---------------------------
 
 * Fixed bug where recording state would be reset if the movie was attempted to be started twice.
@@ -10,6 +10,7 @@ Version 43,
 * Start parameters are no longer read from Steam.
 * Added a workaround for engine parsing bug if the startmovie command is in a chained sequence of commands, followed by a space.
 * Fixed first frame of video being black.
+* Added support for x64 games, with new x64 variants of all systems and a new launcher.
 
 Version 42, 11 April 2024
 ---------------------------
