@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <mfapi.h>
 #include <strsafe.h>
+#include <intrin.h>
 
 // Prefer to use this instead of calling Release yourself since you can use this to see the actual reference count.
 void svr_release(struct IUnknown* p)
@@ -439,6 +440,12 @@ s32 svr_count_num_true(bool* opts, s32 num)
         ret += opts[i];
     }
 
+    return ret;
+}
+
+s32 svr_count_set_bits(u32 bits)
+{
+    s32 ret = __popcnt(bits);
     return ret;
 }
 

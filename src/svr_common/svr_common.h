@@ -186,6 +186,7 @@ s64 svr_rescale(s64 a, s64 b, s64 c);
 bool svr_check_all_true(bool* opts, s32 num);
 bool svr_check_one_true(bool* opts, s32 num);
 s32 svr_count_num_true(bool* opts, s32 num);
+s32 svr_count_set_bits(u32 bits);
 
 bool svr_does_file_exist(const char* path);
 

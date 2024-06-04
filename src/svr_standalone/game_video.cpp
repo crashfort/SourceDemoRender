@@ -14,16 +14,23 @@ GameVideoSearch GAME_VIDEO_BACKENDS[] =
 // Find the right video backend from the search description.
 void game_video_init()
 {
+    GameVideoDesc* best_desc = NULL;
+    s32 best_match = 0;
+
     for (s32 i = 0; i < SVR_ARRAY_SIZE(GAME_VIDEO_BACKENDS); i++)
     {
         GameVideoSearch* s = &GAME_VIDEO_BACKENDS[i];
 
-        if (game_state.search_desc.caps & s->caps)
+        s32 num_match = svr_count_set_bits(game_state.search_desc.caps & s->caps);
+
+        if (num_match > best_match)
         {
-            game_state.video_desc = s->desc;
-            break;
+            best_desc = s->desc;
+            best_match = num_match;
         }
     }
+
+    game_state.video_desc = best_desc;
 
     if (game_state.video_desc == NULL)
     {
