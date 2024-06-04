@@ -48,7 +48,15 @@ void game_audio_frame()
     {
         if (game_state.audio_desc)
         {
-            game_state.audio_desc->mix_audio_for_one_frame();
+            // Figure out how many samples we need to process for this frame.
+
+            float time_ahead_to_mix = 1.0f / (float)game_state.rec_game_rate;
+            float num_frac_samples_to_mix = (time_ahead_to_mix * game_state.search_desc.snd_sample_rate) + game_state.snd_lost_mix_time;
+
+            s32 num_samples_to_mix = (s32)num_frac_samples_to_mix;
+            game_state.snd_lost_mix_time = num_frac_samples_to_mix - (float)num_samples_to_mix;
+
+            game_state.audio_desc->mix_audio_for_one_frame(num_samples_to_mix);
         }
     }
 }

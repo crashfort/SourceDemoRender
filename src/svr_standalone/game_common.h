@@ -49,7 +49,7 @@ struct GameAudioDesc
 
     void(*init)();
     void(*free)();
-    void(*mix_audio_for_one_frame)();
+    void(*mix_audio_for_one_frame)(s32 num_samples_to_mix);
 };
 
 void game_audio_init();
