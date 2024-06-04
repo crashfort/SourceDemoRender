@@ -28,10 +28,12 @@ void av_log_callback(void* avcl, int level, const char* fmt, va_list vl)
 
     svr_log(format, buf);
 
+#ifdef SVR_DEBUG
     if (IsDebuggerPresent())
     {
         OutputDebugStringA(svr_va(format, buf));
     }
+#endif
 }
 
 int main(int argc, char** argv)
