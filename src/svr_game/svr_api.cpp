@@ -131,7 +131,7 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
             goto rfail;
         }
 
-#if SVR_DEBUG
+#ifdef SVR_DEBUG
         if (device_flags & D3D11_CREATE_DEVICE_DEBUG)
         {
             OutputDebugStringA("SVR (svr_init): The game D3D11 device has the debug layer enabled\n");
@@ -150,7 +150,7 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
         // It is also only intended to be used from a single thread.
         UINT device_create_flags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
-#if SVR_DEBUG
+#ifdef SVR_DEBUG
         device_create_flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 

@@ -37,9 +37,9 @@ bool EncoderState::vid_create_device()
 
     UINT device_create_flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
 
-    #if SVR_DEBUG
+#ifdef SVR_DEBUG
     device_create_flags |= D3D11_CREATE_DEVICE_DEBUG;
-    #endif
+#endif
 
     // Should be good enough for all the features that we make use of.
     const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_12_0;
