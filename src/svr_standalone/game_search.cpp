@@ -1086,7 +1086,7 @@ const s32 GAME_SEARCH_LIB_WAIT_TIME = 120;
 void game_search_wait_for_libs()
 {
     SvrDynArray<const char*> list = {};
-    list.push("tier0.dll"); // Hack for now in order to be sure the console is loaded for game_console.cpp.
+    list.push("tier0.dll"); // Hack for now in order to be sure the console is loaded for svr_console.cpp.
 
 #define SELECT_LIBS(OPTS) game_select_libs(OPTS, SVR_ARRAY_SIZE(OPTS), &list)
 
