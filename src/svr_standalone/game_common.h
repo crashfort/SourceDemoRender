@@ -110,7 +110,7 @@ struct GameSearchDesc
     GameFnProxy engine_client_command_proxy;
     GameFnProxy cmd_args_proxy;
 
-    // Video D3D9EX required:
+    // Video D3D9Ex required:
     GameFnProxy d3d9ex_device_proxy;
 
     // Velo required:
@@ -227,6 +227,10 @@ void game_apply_patch(void* target, void* bytes, s32 num_bytes);
 // Used by game_search.cpp for the module validation arrays.
 bool game_is_valid(GameFnOverride ov);
 bool game_is_valid(GameFnProxy px);
+
+// Follow relative addressing displacement.
+// Length is the number of bytes taken up by the instruction.
+void* game_follow_displacement(void* from, s32 length);
 
 // -----------------------------------------------
 // game_overrides.cpp:

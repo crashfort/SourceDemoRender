@@ -53,10 +53,7 @@ GameFnProxy game_get_snd_paint_time_proxy_2()
     }
 
     addr += 2;
-
-    u32 offset = *(u32*)addr;
-    addr += offset;
-    addr += 4;
+    addr = (u8*)game_follow_displacement(addr, 4);
 
     GameFnProxy px;
     px.target = addr;
@@ -136,10 +133,7 @@ GameFnProxy game_get_snd_get_paint_buffer_proxy_0()
     }
 
     addr += 3;
-
-    u32 offset = *(u32*)addr;
-    addr += offset;
-    addr += 4;
+    addr = (u8*)game_follow_displacement(addr, 4);
 
     GameFnProxy px;
     px.target = addr;
@@ -415,10 +409,7 @@ GameFnProxy game_get_signon_state_proxy_1()
     }
 
     addr += 2;
-
-    u32 offset = *(u32*)addr;
-    addr += offset;
-    addr += 8;
+    addr = (u8*)game_follow_displacement(addr, 8);
 
     GameFnProxy px;
     px.target = addr;
@@ -485,9 +476,7 @@ GameFnProxy game_get_local_player_proxy_1()
     }
 
     addr += 3;
-    u32 offset = *(u32*)addr;
-    addr += offset;
-    addr += 4;
+    addr = (u8*)game_follow_displacement(addr, 4);
 
     GameFnProxy px;
     px.target = addr;
@@ -548,9 +537,7 @@ GameFnProxy game_get_d3d9ex_device_proxy_1()
     }
 
     addr += 3;
-    u32 offset = *(u32*)addr;
-    addr += offset;
-    addr += 4;
+    addr = (u8*)game_follow_displacement(addr, 4);
 
     GameFnProxy px;
     px.target = addr;

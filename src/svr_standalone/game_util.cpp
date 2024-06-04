@@ -45,3 +45,14 @@ bool game_is_valid(GameFnProxy px)
 {
     return px.target;
 }
+
+void* game_follow_displacement(void* from, s32 length)
+{
+    u8* addr = (u8*)from;
+
+    s32 offset = *(s32*)addr;
+    addr += offset;
+    addr += length;
+
+    return addr;
+}
