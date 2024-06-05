@@ -4,6 +4,14 @@ REM We use zip because more often than not people don't have 7zip or equivalent.
 REM You need 7z in your PATH to run this.
 
 setlocal
+
+where /Q devenv || (
+    echo This must be run in the Visual Studio Developer Command Prompt. In Visual Studio 2022, you can use Tools -^> Command Line -^> Developer Command Prompt
+    exit /b
+)
+
+devenv svr.sln /Rebuild Release
+
 mkdir publish_temp\svr
 
 copy /Y ".\bin\svr_game.dll" "publish_temp\svr\"
