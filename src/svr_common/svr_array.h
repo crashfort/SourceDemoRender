@@ -94,6 +94,18 @@ struct SvrDynArray
         }
     }
 
+    inline void push_range(const T* items, s32 num)
+    {
+        expand_if_needed(size + num);
+
+        // Add to back.
+        for (s32 i = 0; i < num; i++)
+        {
+            memcpy(mem + size, &items[i], sizeof(T));
+            size++;
+        }
+    }
+
     inline T* emplace()
     {
         expand_if_needed(size + 1);
@@ -200,9 +212,9 @@ struct SvrDynArray
 
         if (i == size - 1)
         {
-            #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
             memset(mem + size - 1, 0, sizeof(T));
-            #endif
+#endif
 
             size--;
             return;
@@ -213,9 +225,9 @@ struct SvrDynArray
 
         memmove(remove_at, remove_at + 1, (new_size - i) * sizeof(T));
 
-        #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
         memset(remove_at + (new_size - i), 0, sizeof(T));
-        #endif
+#endif
 
         size--;
     }
@@ -279,9 +291,9 @@ struct SvrDynArray
             memcpy(mem + i, mem + size - 1, sizeof(T));
         }
 
-        #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
         memset(mem + size - 1, 0, sizeof(T));
-        #endif
+#endif
 
         size--;
     }
@@ -300,9 +312,9 @@ struct SvrDynArray
 
         if (start_idx == 0 && num == size)
         {
-            #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
             memset(mem, 0, used_size_in_memory());
-            #endif
+#endif
 
             size = 0;
             return;
@@ -313,9 +325,9 @@ struct SvrDynArray
 
         memmove(mem + start_idx, mem + end_idx, sizeof(T) * num_after_range);
 
-        #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
         // TODO If we decide to use this.
-        #endif
+#endif
 
         size -= num;
     }
@@ -339,9 +351,9 @@ struct SvrDynArray
 
         else if (num == size)
         {
-            #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
             memset(mem, 0, used_size_in_memory());
-            #endif
+#endif
 
             size = 0;
             return;
@@ -363,9 +375,9 @@ struct SvrDynArray
                 {
                     memcpy(mem + next_keep, mem + i, sizeof(T));
 
-                    #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
                     memset(mem + i, 0, sizeof(T));
-                    #endif
+#endif
                 }
 
                 // We have moved an item to the front, so advance to the next spot.
@@ -388,9 +400,9 @@ struct SvrDynArray
                     next_idx = -1;
                 }
 
-                #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
                 memset(mem + i, 0, sizeof(T));
-                #endif
+#endif
             }
         }
 
@@ -417,9 +429,9 @@ struct SvrDynArray
         // All should be removed.
         if (all_false)
         {
-            #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
             memset(mem, 0, used_size_in_memory());
-            #endif
+#endif
 
             size = 0;
             return;
@@ -439,9 +451,9 @@ struct SvrDynArray
                 {
                     memcpy(mem + next_keep, mem + i, sizeof(T));
 
-                    #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
                     memset(mem + i, 0, sizeof(T));
-                    #endif
+#endif
                 }
 
                 // We have moved an item to the front, so advance to the next spot.
@@ -452,9 +464,9 @@ struct SvrDynArray
             {
                 num_matches++;
 
-                #ifdef SVR_ARRAY_ZERO_ON_REMOVE
+#ifdef SVR_ARRAY_ZERO_ON_REMOVE
                 memset(mem + i, 0, sizeof(T));
-                #endif
+#endif
             }
         }
 

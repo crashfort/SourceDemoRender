@@ -52,6 +52,11 @@ s32 svr_atom_sub(SvrAtom32* atom, s32 num)
     return svr_atom_add(atom, 0 - num);
 }
 
+s32 svr_atom_swap(SvrAtom32* atom, s32 value)
+{
+    return (s32)InterlockedExchange((LONG*)&atom->v, value);
+}
+
 void svr_atom_store(SvrAtom64* atom, s64 value)
 {
     _ReadWriteBarrier();
@@ -100,36 +105,7 @@ s64 svr_atom_sub(SvrAtom64* atom, s64 num)
     return svr_atom_add(atom, 0 - num);
 }
 
-void svr_notify_atom_changed(SvrAtom32* atom)
+s64 svr_atom_swap(SvrAtom64* atom, s64 value)
 {
-    // This creates a full memory barrier. Wake all waiting threads.
-    WakeByAddressAll(&atom->v);
-}
-
-void svr_notify_atom_changed(SvrAtom64* atom)
-{
-    // This creates a full memory barrier. Wake all waiting threads.
-    WakeByAddressAll(&atom->v);
-}
-
-void svr_wait_until_atom_is(SvrAtom32* atom, s32 target_value)
-{
-    s32 captured_value = svr_atom_load(atom);
-
-    while (captured_value != target_value)
-    {
-        WaitOnAddress(&atom->v, &captured_value, sizeof(target_value), INFINITE); // Awake when value differs.
-        captured_value = svr_atom_load(atom);
-    }
-}
-
-void svr_wait_until_atom_is(SvrAtom64* atom, s64 target_value)
-{
-    s64 captured_value = svr_atom_load(atom);
-
-    while (captured_value != target_value)
-    {
-        WaitOnAddress(&atom->v, &captured_value, sizeof(target_value), INFINITE); // Awake when value differs.
-        captured_value = svr_atom_load(atom);
-    }
+    return (s64)InterlockedExchange64((volatile LONG64*)&atom->v, (LONG64)value);
 }

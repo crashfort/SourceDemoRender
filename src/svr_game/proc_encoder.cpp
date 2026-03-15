@@ -1,4 +1,5 @@
 #include "proc_priv.h"
+#include "proc_state.h"
 
 bool ProcState::encoder_init()
 {
@@ -51,10 +52,16 @@ void ProcState::encoder_free_static()
         encoder_shared_ptr = NULL;
     }
 
-    if (game_wake_event_h)
+    if (encoder_game_wake_event_h)
     {
-        CloseHandle(game_wake_event_h);
-        game_wake_event_h = NULL;
+        CloseHandle(encoder_game_wake_event_h);
+        encoder_game_wake_event_h = NULL;
+    }
+
+    if (encoder_ready_event_h)
+    {
+        CloseHandle(encoder_ready_event_h);
+        encoder_ready_event_h = NULL;
     }
 
     if (encoder_wake_event_h)
@@ -114,7 +121,8 @@ bool ProcState::encoder_create_shared_mem()
     }
 
     // These must be auto reset events so there are no race conditions!
-    game_wake_event_h = CreateEventA(&sa, FALSE, FALSE, NULL);
+    encoder_game_wake_event_h = CreateEventA(&sa, FALSE, FALSE, NULL);
+    encoder_ready_event_h = CreateEventA(&sa, FALSE, FALSE, NULL);
     encoder_wake_event_h = CreateEventA(&sa, FALSE, FALSE, NULL);
 
     memset(encoder_shared_ptr, 0, mem_size); // Put to known state.
@@ -123,7 +131,8 @@ bool ProcState::encoder_create_shared_mem()
     // Also build the messy offsets because we are mixing 32-bit and 64-bit.
 
     encoder_shared_ptr->game_pid = GetCurrentProcessId();
-    encoder_shared_ptr->game_wake_event_h = (u32)game_wake_event_h;
+    encoder_shared_ptr->game_wake_event_h = (u32)encoder_game_wake_event_h;
+    encoder_shared_ptr->encoder_ready_event_h = (u32)encoder_ready_event_h;
     encoder_shared_ptr->encoder_wake_event_h = (u32)encoder_wake_event_h;
 
     s32 offset = 0;
@@ -182,6 +191,43 @@ bool ProcState::encoder_start_process()
     encoder_proc = proc_info.hProcess;
     CloseHandle(proc_info.hThread);
 
+    // Wait for ready (or failure) early here so you don't have to see the error until trying to start the movie.
+
+    HANDLE handles[] =
+    {
+        encoder_proc,
+        encoder_ready_event_h,
+    };
+
+    DWORD waited = WaitForMultipleObjects(SVR_ARRAY_SIZE(handles), handles, FALSE, INFINITE);
+
+    if (waited == WAIT_FAILED)
+    {
+        svr_log("ERROR: Could not determine the state of the encoder process (%lu)\n", GetLastError());
+        goto rfail;
+    }
+
+    HANDLE waited_h = handles[waited - WAIT_OBJECT_0];
+
+    if (waited_h == encoder_proc)
+    {
+        svr_console_msg_and_log("ERROR: Encoder crashed for unknown reason\n");
+        goto rfail;
+    }
+
+    if (waited_h == encoder_ready_event_h)
+    {
+        if (encoder_shared_ptr->error)
+        {
+            // Any error in svr_encoder is written to its log.
+            // We also want to log the error in the console and in our log.
+            svr_console_msg_and_log(encoder_shared_ptr->error_message);
+            svr_console_msg_and_log("See encoder_log.txt for more information\n");
+
+            goto rfail;
+        }
+    }
+
     ret = true;
     goto rexit;
 
@@ -213,6 +259,8 @@ bool ProcState::encoder_start()
     encoder_share_tex_lock->AcquireSync(ENCODER_GAME_ID, INFINITE); // Set initial owner now.
 
     encoder_pending_samples.clear();
+
+    encoder_sent_video_frames = 0;
 
     ret = true;
     goto rexit;
@@ -255,7 +303,7 @@ bool ProcState::encoder_set_shared_mem_params()
 
     if (res == 0)
     {
-        svr_log("ERROR: Could not duplicate share texture handle (%lu)\n", GetLastError());
+        svr_log("ERROR: Could not duplicate share texture handle to svr_encoder (%lu)\n", GetLastError());
         goto rfail;
     }
 
@@ -368,10 +416,16 @@ bool ProcState::encoder_send_event(EncoderSharedEvent event)
     HANDLE handles[] =
     {
         encoder_proc,
-        game_wake_event_h,
+        encoder_game_wake_event_h,
     };
 
     DWORD waited = WaitForMultipleObjects(SVR_ARRAY_SIZE(handles), handles, FALSE, INFINITE);
+
+    if (waited == WAIT_FAILED)
+    {
+        return false;
+    }
+
     HANDLE waited_h = handles[waited - WAIT_OBJECT_0];
 
     // Encoder exited or crashed or something.
@@ -381,14 +435,14 @@ bool ProcState::encoder_send_event(EncoderSharedEvent event)
         return false;
     }
 
-    if (waited_h == game_wake_event_h)
+    if (waited_h == encoder_game_wake_event_h)
     {
         if (encoder_shared_ptr->error)
         {
             // Any error in svr_encoder is written to its log.
             // We also want to log the error in the console and in our log.
             svr_console_msg_and_log(encoder_shared_ptr->error_message);
-            svr_console_msg_and_log("See ENCODER_LOG.txt for more information\n");
+            svr_console_msg_and_log("See encoder_log.txt for more information\n");
             return false;
         }
     }
@@ -406,6 +460,8 @@ bool ProcState::encoder_send_shared_tex()
     {
         goto rfail;
     }
+
+    encoder_sent_video_frames++;
 
     ret = true;
     goto rexit;

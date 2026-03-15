@@ -1,7 +1,7 @@
 #include "launcher_priv.h"
 
 // Base arguments that every game will have.
-const char* BASE_GAME_ARGS = "-steam -insecure +sv_lan 1 -console -novid";
+const char* BASE_GAME_ARGS = "-steam -insecure +sv_lan 1 -console -novid -noip";
 
 s32 LauncherState::start_game(LauncherGame* game)
 {
@@ -19,7 +19,7 @@ s32 LauncherState::start_game(LauncherGame* game)
         StringCchCatA(full_args, SVR_ARRAY_SIZE(full_args), svr_va(" %s", game->args));
     }
 
-    launcher_log("Starting %s (%s). If launching doesn't work then make sure any antivirus is disabled\n", game->display_name, game->file_name);
+    svr_log("Starting %s (%s). If launching doesn't work then make sure any antivirus is disabled\n", game->display_name, game->file_name);
 
     STARTUPINFOA start_info = {};
     start_info.cb = sizeof(STARTUPINFOA);
@@ -85,7 +85,7 @@ void LauncherState::load_games()
     SVR_SNPRINTF(pattern, "%s\\data\\games\\*.ini", working_dir);
 
     WIN32_FIND_DATAA ffd;
-    auto h = FindFirstFileExA(pattern, FindExInfoBasic, &ffd, FindExSearchNameMatch, NULL, 0);
+    HANDLE h = FindFirstFileExA(pattern, FindExInfoBasic, &ffd, FindExSearchNameMatch, NULL, 0);
 
     if (h == INVALID_HANDLE_VALUE)
     {
@@ -130,17 +130,17 @@ bool LauncherState::parse_game(const char* file, LauncherGame* dest)
 {
     bool ret = false;
 
-    SvrIniSection* ini_root = svr_ini_load(file);
+    SvrIniSection ini_root = {};
 
-    if (ini_root == NULL)
+    if (!svr_ini_load(file, &ini_root))
     {
         goto rfail;
     }
 
-    SvrIniKeyValue* name_kv = svr_ini_section_find_kv(ini_root, "name");
-    SvrIniKeyValue* steam_path_kv = svr_ini_section_find_kv(ini_root, "steam_path");
-    SvrIniKeyValue* other_path_kv = svr_ini_section_find_kv(ini_root, "other_path");
-    SvrIniKeyValue* args_kv = svr_ini_section_find_kv(ini_root, "args");
+    SvrIniKeyValue* name_kv = svr_ini_section_find_kv(&ini_root, "name");
+    SvrIniKeyValue* steam_path_kv = svr_ini_section_find_kv(&ini_root, "steam_path");
+    SvrIniKeyValue* other_path_kv = svr_ini_section_find_kv(&ini_root, "other_path");
+    SvrIniKeyValue* args_kv = svr_ini_section_find_kv(&ini_root, "args");
 
     if (name_kv == NULL)
     {
@@ -210,11 +210,7 @@ rfail:
     free_game(dest);
 
 rexit:
-    if (ini_root)
-    {
-        svr_ini_free(ini_root);
-        ini_root = NULL;
-    }
+    svr_ini_free(&ini_root);
 
     return ret;
 }
@@ -248,12 +244,12 @@ void LauncherState::free_game(LauncherGame* game)
 
 s32 LauncherState::show_start_menu()
 {
-    launcher_log("Installed games:\n");
+    svr_log("Installed games: %d\n", game_list.size);
 
     for (s32 i = 0; i < game_list.size; i++)
     {
         LauncherGame* game = &game_list[i];
-        launcher_log("[%d] %s (%s)\n", i + 1, game->display_name, game->file_name);
+        svr_log("[%d] %s (%s)\n", i + 1, game->display_name, game->file_name);
     }
 
     printf("\nSelect which game to start: ");

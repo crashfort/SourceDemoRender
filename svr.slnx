@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Win32" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="src/svr_common/svr_common.vcxproj" Id="df7f2790-4886-4224-afc1-b44687571612" />
+  <Project Path="src/svr_encoder/svr_encoder.vcxproj" Id="c31c1b41-95e7-45c6-a16f-f86a81f13d9f">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="src/svr_game/svr_game.vcxproj" Id="0b116e75-c1cc-409b-a50a-274dc2d4cb41" />
+  <Project Path="src/svr_launcher/svr_launcher.vcxproj" Id="e750167e-861f-4cf4-9f5d-20f473129641" />
+  <Project Path="src/svr_shared/svr_shared.vcxproj" Id="0da14111-6ba2-4670-a183-ee7bed08b7e9" />
+  <Project Path="src/svr_standalone/svr_standalone.vcxproj" Id="4de1e027-caf8-4106-abef-1a6885cc82dd" />
+</Solution>

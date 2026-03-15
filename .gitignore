@@ -20,3 +20,8 @@ bin/data/ENCODER_LOG.txt
 *.mov
 svr.zip
 *.idb
+bin/live_edit.ini
+/bin/movies
+*.dem
+*.rec
+bin/data/studio_log.txt

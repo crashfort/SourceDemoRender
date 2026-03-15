@@ -88,14 +88,14 @@ bool EncoderState::vid_create_shaders()
 
     vid_shader_mem = svr_alloc(VID_SHADER_SIZE);
 
-    EncoderShader SHADER_LIST[] =
+    EncoderShader shader_list[] =
     {
         EncoderShader { "convert_nv12", (void**)&vid_nv12_cs, D3D11_COMPUTE_SHADER },
         EncoderShader { "convert_yuv422", (void**)&vid_yuv422_cs, D3D11_COMPUTE_SHADER },
         EncoderShader { "convert_yuv444", (void**)&vid_yuv444_cs, D3D11_COMPUTE_SHADER },
     };
 
-    if (!vid_create_shaders_list(SHADER_LIST, SVR_ARRAY_SIZE(SHADER_LIST)))
+    if (!vid_create_shaders_list(shader_list, SVR_ARRAY_SIZE(shader_list)))
     {
         goto rfail;
     }

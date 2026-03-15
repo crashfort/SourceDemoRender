@@ -4,7 +4,7 @@
 
 using SvrIniLineType = s32;
 
-enum /* SvrIniLineType */
+enum // SvrIniLineType
 {
     SVR_INI_LINE_NONE,
     SVR_INI_LINE_KV,
@@ -42,9 +42,9 @@ void svr_ini_parse_line(SvrIniSection* priv, const char* line, SvrIniLineType ty
         // Key values have two values.
         case SVR_INI_LINE_KV:
         {
-            SvrIniKeyValue* kv = svr_ini_parse_expression(ptr);
+            SvrIniKeyValue kv;
 
-            if (kv)
+            if (svr_ini_parse_expression(ptr, &kv))
             {
                 priv->kvs.push(kv);
             }
@@ -54,16 +54,16 @@ void svr_ini_parse_line(SvrIniSection* priv, const char* line, SvrIniLineType ty
     }
 }
 
-SvrIniSection* svr_ini_load(const char* path)
+bool svr_ini_load(const char* path, SvrIniSection* section)
 {
+    *section = {};
+
     char* file_mem = svr_read_file_as_string(path, 0);
 
     if (file_mem == NULL)
     {
-        return NULL;
+        return false;
     }
-
-    SvrIniSection* priv = SVR_ZALLOC(SvrIniSection);
 
     char line[8192];
 
@@ -77,7 +77,7 @@ SvrIniSection* svr_ini_load(const char* path)
 
         if (type != SVR_INI_LINE_NONE)
         {
-            svr_ini_parse_line(priv, line, type);
+            svr_ini_parse_line(section, line, type);
         }
 
         prev_str = next_str;
@@ -90,27 +90,27 @@ SvrIniSection* svr_ini_load(const char* path)
 
     svr_free(file_mem);
 
-    return priv;
+    return true;
 }
 
 void svr_ini_free(SvrIniSection* priv)
 {
     svr_ini_free_kvs(&priv->kvs);
-    svr_free(priv);
+    *priv = {};
 }
 
 void svr_ini_free_kv(SvrIniKeyValue* kv)
 {
     svr_free(kv->key);
     svr_free(kv->value);
-    svr_free(kv);
+    *kv = {};
 }
 
-void svr_ini_free_kvs(SvrDynArray<SvrIniKeyValue*>* kvs)
+void svr_ini_free_kvs(SvrDynArray<SvrIniKeyValue>* kvs)
 {
     for (s32 i = 0; i < kvs->size; i++)
     {
-        svr_ini_free_kv(kvs->at(i));
+        svr_ini_free_kv(&kvs->at(i));
     }
 
     kvs->free();
@@ -120,7 +120,7 @@ SvrIniKeyValue* svr_ini_section_find_kv(SvrIniSection* priv, const char* key)
 {
     for (s32 i = 0; i < priv->kvs.size; i++)
     {
-        SvrIniKeyValue* kv = priv->kvs[i];
+        SvrIniKeyValue* kv = &priv->kvs[i];
 
         if (!strcmpi(kv->key, key))
         {
@@ -131,8 +131,10 @@ SvrIniKeyValue* svr_ini_section_find_kv(SvrIniSection* priv, const char* key)
     return NULL;
 }
 
-SvrIniKeyValue* svr_ini_parse_expression(const char* expr)
+bool svr_ini_parse_expression(const char* expr, SvrIniKeyValue* kv)
 {
+    *kv = {};
+
     // At most, one line can have a key and a value.
     char key_name[512];
     key_name[0] = 0;
@@ -143,14 +145,14 @@ SvrIniKeyValue* svr_ini_parse_expression(const char* expr)
 
     if (*next_ptr == 0)
     {
-        return NULL; // There only a key.
+        return false; // There only a key.
     }
 
     s32 dist = next_ptr - ptr; // Content length.
 
     if (dist == 0)
     {
-        return NULL; // There is only an equal sign and nothing else.
+        return false; // There is only an equal sign and nothing else.
     }
 
     StringCchCopyNA(key_name, SVR_ARRAY_SIZE(key_name), ptr, dist);
@@ -159,31 +161,30 @@ SvrIniKeyValue* svr_ini_parse_expression(const char* expr)
 
     if (*ptr != '=')
     {
-        return NULL; // There must not be any space before the equal sign.
+        return false; // There must not be any space before the equal sign.
     }
 
     ptr++; // Go past equal sign.
 
     if (*ptr == 0)
     {
-        return NULL; // Value is missing.
+        return false; // Value is missing.
     }
 
     next_ptr = svr_advance_until_after_whitespace(ptr); // Go past blanks.
 
     if (ptr != next_ptr)
     {
-        return NULL; // There must not be a space after the equal sign.
+        return false; // There must not be a space after the equal sign.
     }
 
-    SvrIniKeyValue* kv = SVR_ZALLOC(SvrIniKeyValue);
     kv->key = svr_dup_str(key_name);
     kv->value = svr_dup_str(ptr);
 
-    return kv;
+    return true;
 }
 
-void svr_ini_parse_command_input(const char* input, SvrDynArray<SvrIniKeyValue*>* dest)
+void svr_ini_parse_command_input(const char* input, SvrDynArray<SvrIniKeyValue>* dest)
 {
     const char* ptr = svr_advance_until_after_whitespace(input);
 
@@ -194,9 +195,9 @@ void svr_ini_parse_command_input(const char* input, SvrDynArray<SvrIniKeyValue*>
 
         const char* next_ptr = svr_extract_string(ptr, expr, SVR_ARRAY_SIZE(expr));
 
-        SvrIniKeyValue* kv = svr_ini_parse_expression(expr);
+        SvrIniKeyValue kv;
 
-        if (kv)
+        if (svr_ini_parse_expression(expr, &kv))
         {
             dest->push(kv);
         }
@@ -205,11 +206,11 @@ void svr_ini_parse_command_input(const char* input, SvrDynArray<SvrIniKeyValue*>
     }
 }
 
-const char* svr_ini_find_command_value(SvrDynArray<SvrIniKeyValue*>* kvs, const char* key)
+const char* svr_ini_find_command_value(SvrDynArray<SvrIniKeyValue>* kvs, const char* key)
 {
     for (s32 i = 0; i < kvs->size; i++)
     {
-        SvrIniKeyValue* kv = kvs->at(i);
+        SvrIniKeyValue* kv = &kvs->at(i);
 
         if (!strcmpi(kv->key, key))
         {

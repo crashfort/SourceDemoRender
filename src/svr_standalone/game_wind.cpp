@@ -1,7 +1,5 @@
 #include "game_priv.h"
 
-const s32 GAME_WIND_TITLE_SIZE = 512;
-
 BOOL CALLBACK game_wind_enum_first_hwnd(HWND hwnd, LPARAM lparam)
 {
     HWND* out_hwnd = (HWND*)lparam;
@@ -20,24 +18,16 @@ void game_wind_early_init()
 
 void game_wind_init()
 {
-    game_state.wind_def_title = (char*)svr_zalloc(sizeof(char) * GAME_WIND_TITLE_SIZE);
-
     // Find the main window. We could probably scan for this too.
     EnumThreadWindows(game_state.main_thread_id, game_wind_enum_first_hwnd, (LPARAM)&game_state.wind_hwnd);
 
-    GetWindowTextA(game_state.wind_hwnd, game_state.wind_def_title, GAME_WIND_TITLE_SIZE);
+    GetWindowTextA(game_state.wind_hwnd, game_state.wind_def_title, SVR_ARRAY_SIZE(game_state.wind_def_title));
 
     game_wind_reset();
 }
 
 void game_wind_free()
 {
-    if (game_state.wind_def_title)
-    {
-        svr_free(game_state.wind_def_title);
-        game_state.wind_def_title = NULL;
-    }
-
     if (game_state.wind_taskbar_list)
     {
         svr_release(game_state.wind_taskbar_list);
@@ -78,6 +68,12 @@ void game_wind_update_progress(s64 now)
 
 void game_wind_update()
 {
+    if (game_studio_active())
+    {
+        // Window is not visible with studio.
+        return;
+    }
+
     s64 now = svr_prof_get_real_time();
 
     if (now < game_state.wind_next_update_time)

@@ -3,13 +3,13 @@
 // -----------------------------------------------
 
 // Features that a game has.
-// If you add new caps, also add them to game_init_check_modules in game_init.cpp.
+// If you add new caps, also add them to game_init_check_caps in game_init.cpp.
 using GameCaps = u32;
 
-enum /* GameCaps */
+enum // GameCaps
 {
     GAME_CAP_HAS_CORE = SVR_BIT(0),
-    GAME_CAP_HAS_VELO = SVR_BIT(1),
+    GAME_CAP_HAS_LOCAL_PLAYER = SVR_BIT(1),
     GAME_CAP_HAS_AUDIO = SVR_BIT(2),
     GAME_CAP_HAS_VIDEO = SVR_BIT(3),
     GAME_CAP_HAS_AUTOSTOP = SVR_BIT(4),
@@ -18,8 +18,11 @@ enum /* GameCaps */
     GAME_CAP_AUDIO_DEVICE_1_5 = SVR_BIT(7),
     GAME_CAP_AUDIO_DEVICE_2 = SVR_BIT(8),
     GAME_CAP_64_BIT_AUDIO_TIME = SVR_BIT(9),
-    GAME_CAP_VELO_1 = SVR_BIT(10),
-    GAME_CAP_VELO_2 = SVR_BIT(11),
+    GAME_CAP_LOCAL_PLAYER_DUMB = SVR_BIT(10),
+    GAME_CAP_LOCAL_PLAYER_SMART = SVR_BIT(11),
+    GAME_CAP_HAS_LAGCOMP = SVR_BIT(12),
+    GAME_CAP_HAS_STUDIO = SVR_BIT(13),
+    GAME_CAP_HAS_INPUT = SVR_BIT(14),
 };
 
 // -----------------------------------------------
@@ -68,6 +71,7 @@ using GameProxyFn = void(*)(GameFnProxy* proxy, void* params, void* res);
 struct GameFnProxy
 {
     void* target; // Proxy specific data.
+    void* extra[4]; // Extra proxy specific data. Put static parameters here, not dynamic parameters.
     GameProxyFn proxy;
 };
 
@@ -89,6 +93,7 @@ struct GameFnHook
 
 void game_hook_init();
 void game_hook_create(GameFnOverride* ov, GameFnHook* dest);
+void game_hook_api(const char* proc_name, const char* dll, GameFnHook* dest);
 void game_hook_remove(GameFnHook* dest);
 void game_hook_enable(GameFnHook* h, bool v);
 void game_hook_enable_all();
@@ -120,6 +125,19 @@ struct GameSearchDesc
     GameFnProxy local_player_proxy;
     GameFnProxy spec_target_or_local_player_proxy;
 
+    // Input required:
+    GameFnProxy player_buttons_proxy;
+    u32 in_attack;
+    u32 in_jump;
+    u32 in_duck;
+    u32 in_forward;
+    u32 in_back;
+    u32 in_yaw_left;
+    u32 in_yaw_right;
+    u32 in_move_left;
+    u32 in_move_right;
+    u32 in_walk;
+
     // Audio required:
     GameFnProxy snd_paint_time_proxy;
     GameFnOverride snd_paint_chans_override;
@@ -138,6 +156,12 @@ struct GameSearchDesc
     GameFnProxy signon_state_proxy;
     s32 signon_state_none;
     s32 signon_state_full;
+
+    // Studio required:
+    GameFnProxy demo_player_playback_tick_proxy;
+
+    // Lag compensation required:
+    GameFnOverride adjust_interpolation_amount_override;
 };
 
 void game_search_wait_for_libs();
@@ -147,7 +171,7 @@ void game_search_fill_desc(GameSearchDesc* desc); // Try and fill everything in 
 
 using GameRecState = s32;
 
-enum /* GameRecState */
+enum // GameRecState
 {
     GAME_REC_STOPPED,
     GAME_REC_WAITING,
@@ -164,6 +188,12 @@ struct GameState
     GameVideoDesc* video_desc;
     GameAudioDesc* audio_desc;
 
+    GameFnOverride show_window_ov;
+    GameFnHook show_window_hook;
+
+    GameFnOverride set_window_pos_ov;
+    GameFnHook set_window_pos_hook;
+
     GameFnHook start_movie_hook;
     GameFnHook end_movie_hook;
     GameFnHook filter_time_hook;
@@ -172,14 +202,18 @@ struct GameState
     GameFnHook snd_tx_stereo_hook;
     GameFnHook snd_device_tx_samples_hook;
 
+    GameFnHook adjust_interpolation_amount_hook;
+
     HWND wind_hwnd; // Main game window.
-    char* wind_def_title; // Default title on start. Used to revert after recording.
+    char wind_def_title[256]; // Default title on start. Used to revert after recording.
     s64 wind_next_update_time; // Throttled update frequency because updating the title is slow.
     ITaskbarList3* wind_taskbar_list; // The taskbar progress bar.
 
+    s64 game_frames;
     s64 rec_num_frames; // Number of processed frames.
     s64 rec_start_time; // Time of start for timing purposes.
     s32 rec_game_rate; // Frames per second the game is processing game at (includes motion blur).
+    s32 rec_video_fps;
     s32 rec_timeout; // After how many seconds to automatically end the movie.
     GameRecState rec_state; // Recording state tracking for autostop.
     bool rec_enable_autostop; // From start args: automatically stop on disconnect.
@@ -190,6 +224,13 @@ struct GameState
     float snd_lost_mix_time; // Time that was lost between the fps to sample rate conversion. This is added back next frame.
     s32 snd_num_samples; // Used by audio variant 2.
     s32 snd_skipped_samples; // The number of samples to submit must align to 4 sample boundaries, that means there may be samples over that we have to process in the next frame.
+
+    HANDLE studio_shared_mem_h;
+    StudioSharedMem* studio_shared_ptr;
+    StudioSharedPeer* studio_peer;
+    StudioSharedCmdId studio_pending_cmd;
+    s32 studio_spec_skips;
+    s32 studio_next_spec_skip;
 };
 
 extern GameState game_state;
@@ -249,10 +290,10 @@ void __cdecl game_snd_paint_chans_override_1(s64 end_time, bool is_underwater);
 void __cdecl game_start_movie_override_0(void* args);
 void __cdecl game_end_movie_override_0(void* args);
 bool __fastcall game_eng_filter_time_override_0(void* p, void* edx, float dt);
-
 #ifndef _WIN64
 bool __fastcall game_eng_filter_time_override_1(void* p, void* edx);
 #endif
+float __cdecl game_adjust_interpolation_amount_override_0(void* p, float base_interp);
 
 void game_overrides_init();
 
@@ -265,6 +306,7 @@ void game_engine_client_command_proxy_0(GameFnProxy* proxy, void* params, void* 
 void game_engine_client_command_proxy_1(GameFnProxy* proxy, void* params, void* res);
 void game_player_by_index_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_velocity_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_buttons_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_cmd_args_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_signon_state_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_signon_state_proxy_1(GameFnProxy* proxy, void* params, void* res);
@@ -279,10 +321,12 @@ void game_paint_buffer_proxy_1(GameFnProxy* proxy, void* params, void* res);
 void game_cvar_restrict_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_d3d9ex_device_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_d3d9ex_device_proxy_1(GameFnProxy* proxy, void* params, void* res);
+void game_demo_player_playback_tick_proxy_0(GameFnProxy* proxy, void* params, void* res);
 
 void game_engine_client_command(const char* cmd);
 const char* game_get_cmd_args(void* ptr);
 SvrVec3 game_get_entity_velocity(void* entity);
+u32 game_get_player_buttons(void* player);
 void* game_get_player_by_index(s32 idx);
 void* game_get_local_player();
 s32 game_get_spec_target();
@@ -292,7 +336,9 @@ s32 game_get_snd_paint_time_0();
 s64 game_get_snd_paint_time_1();
 GameSndSample0* game_get_snd_paint_buffer_0();
 void* game_get_d3d9ex_device();
-void* game_get_cvar_patch_restrict();
+s32 game_get_demo_player_playback_tick();
+
+void game_proxies_init();
 
 // -----------------------------------------------
 // game_init.cpp:
@@ -302,7 +348,7 @@ void game_init_error(const char* format, ...);
 void game_init(SvrGameInitData* svr_init_data);
 void game_init_log();
 void game_init_async_proc();
-void game_init_check_modules();
+void game_init_check_caps();
 
 // -----------------------------------------------
 // game_wind.cpp:
@@ -330,6 +376,16 @@ bool game_rec_run_frame();
 void game_rec_do_record_frame();
 
 // -----------------------------------------------
+// game_studio.cpp:
+
+void game_studio_early_init();
+bool game_studio_init();
+void game_studio_update();
+void game_studio_update_pending_cmd();
+void game_studio_stop_recording();
+bool game_studio_active();
+
+// -----------------------------------------------
 // game_cfg.cpp:
 
 bool game_has_cfg(const char* name);
@@ -355,8 +411,17 @@ extern GameAudioDesc game_audio_v2_desc;
 // game_velo.cpp:
 
 void game_velo_frame();
-void* game_velo_get_active_player();
-void* game_velo_get_active_player_dumb();
-void* game_velo_get_active_player_smart();
+
+// -----------------------------------------------
+// game_input.cpp:
+
+void game_input_frame();
+
+// -----------------------------------------------
+// game_player.cpp:
+
+void* game_get_active_player();
+void* game_get_active_player_dumb();
+void* game_get_active_player_smart();
 
 // -----------------------------------------------

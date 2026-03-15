@@ -46,6 +46,7 @@ struct EncoderState
     HANDLE game_process;
     HANDLE shared_mem_h;
     HANDLE game_wake_event_h;
+    HANDLE encoder_ready_event_h;
     HANDLE encoder_wake_event_h;
     HANDLE game_texture_h;
     void* shared_audio_buffer; // Where svr_game will put the audio samples.
@@ -193,6 +194,7 @@ struct EncoderState
     void render_encode_frame(AVCodecContext* ctx, AVStream* stream, AVFrame* frame, AVMediaType type);
     AVFrame* render_get_new_video_frame();
     AVFrame* render_get_new_audio_frame();
+    RenderAudioThreadInput render_alloc_audio_buffer();
     RenderAudioThreadInput render_get_new_audio_buffer(s32 num_samples);
     s32 render_get_audio_buffer_size(s32 num_samples);
     void render_free_recycled_stuff();

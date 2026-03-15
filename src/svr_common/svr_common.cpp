@@ -13,7 +13,7 @@
 void svr_release(struct IUnknown* p)
 {
     assert(p);
-    auto n = p->Release();
+    ULONG n = p->Release();
     s32 a = 5;
 }
 
@@ -94,6 +94,21 @@ s32 svr_to_utf16(const char* value, s32 value_length, wchar* buf, s32 buf_chars)
     if (length < buf_chars)
     {
         buf[length] = 0;
+    }
+
+    return length;
+}
+
+s32 svr_to_utf8(const wchar* value, s32 value_length, char* dest, s32 dest_size)
+{
+    s32 length = WideCharToMultiByte(CP_UTF8, 0, value, value_length, dest, dest_size, NULL, NULL);
+
+    if (dest)
+    {
+        if (length < dest_size)
+        {
+            dest[length] = 0;
+        }
     }
 
     return length;
@@ -202,6 +217,42 @@ char* svr_read_file_as_string(const char* path, SvrReadFileFlags flags)
         }
 
         ret[extra_pos] = 0;
+    }
+
+    CloseHandle(h);
+
+    return ret;
+}
+
+void* svr_read_file(const char* path, s32* size)
+{
+    if (size)
+    {
+        *size = 0;
+    }
+
+    HANDLE h = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if (h == INVALID_HANDLE_VALUE)
+    {
+        return NULL;
+    }
+
+    void* ret = NULL;
+
+    LARGE_INTEGER large;
+    GetFileSizeEx(h, &large);
+
+    if (large.HighPart == 0 && large.LowPart < INT32_MAX)
+    {
+        ret = svr_alloc(large.LowPart);
+
+        ReadFile(h, ret, large.LowPart, NULL, NULL);
+
+        if (size)
+        {
+            *size = large.LowPart;
+        }
     }
 
     CloseHandle(h);
@@ -405,44 +456,6 @@ s64 svr_rescale(s64 a, s64 b, s64 c)
     return MFllMulDiv(a, b, c, c / 2);
 }
 
-bool svr_check_all_true(bool* opts, s32 num)
-{
-    for (s32 i = 0; i < num; i++)
-    {
-        if (!opts[i])
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool svr_check_one_true(bool* opts, s32 num)
-{
-    for (s32 i = 0; i < num; i++)
-    {
-        if (opts[i])
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-s32 svr_count_num_true(bool* opts, s32 num)
-{
-    s32 ret = 0;
-
-    for (s32 i = 0; i < num; i++)
-    {
-        ret += opts[i];
-    }
-
-    return ret;
-}
-
 s32 svr_count_set_bits(u32 bits)
 {
     s32 ret = __popcnt(bits);
@@ -452,7 +465,7 @@ s32 svr_count_set_bits(u32 bits)
 bool svr_does_file_exist(const char* path)
 {
     WIN32_FILE_ATTRIBUTE_DATA attr;
-    auto res = GetFileAttributesExA(path, GetFileExInfoStandard, &attr);
+    BOOL res = GetFileAttributesExA(path, GetFileExInfoStandard, &attr);
 
     return res != 0;
 }

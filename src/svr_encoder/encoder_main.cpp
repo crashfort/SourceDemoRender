@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     _set_error_mode(_OUT_TO_MSGBOX); // Must be called so we can actually use assert because Microsoft messed it up in console builds.
 #endif
 
-    svr_init_log("data\\ENCODER_LOG.txt", false);
+    svr_init_log("data\\encoder_log.txt", false);
 
     if (argc != 2)
     {
@@ -57,14 +57,18 @@ int main(int argc, char** argv)
     SYSTEMTIME lt;
     GetLocalTime(&lt);
 
-    svr_log("SVR " SVR_ARCH_STRING " version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
+    svr_log("SVR Encoder " SVR_ARCH_STRING " version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
     svr_log("For more information see https://github.com/crashfort/SourceDemoRender\n");
 
     // We inherit handles when creating this process, so we can just read the handle address directly.
     // The encoder is 64-bit and the game is 32-bit, but all handles only have 32 bits significant, so this is safe.
     HANDLE shared_mem_h = (HANDLE)(u32)strtoul(argv[1], NULL, 10);
 
-    encoder_state.init(shared_mem_h);
+    if (!encoder_state.init(shared_mem_h))
+    {
+        return 1;
+    }
+
     encoder_state.event_loop();
     encoder_state.free_static();
 

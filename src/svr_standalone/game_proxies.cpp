@@ -1,4 +1,5 @@
 #include "game_priv.h"
+#include "game_common.h"
 
 #define GAME_CALL_PROXY(PX, PARAM, RES) (PX).proxy(&(PX), (PARAM), (RES))
 
@@ -41,6 +42,13 @@ void game_velocity_proxy_0(GameFnProxy* proxy, void* params, void* res)
     u8* ptr = (u8*)params;
     ptr += (s32)proxy->target;
     memcpy(res, ptr, sizeof(SvrVec3));
+}
+
+void game_buttons_proxy_0(GameFnProxy* proxy, void* params, void* res)
+{
+    u8* ptr = (u8*)params;
+    ptr += (s32)proxy->target;
+    *(u32*)res = *(s32*)ptr;
 }
 
 // ----------------------------------------------------------------
@@ -118,7 +126,10 @@ void game_paint_buffer_proxy_1(GameFnProxy* proxy, void* params, void* res)
 
 void game_cvar_restrict_proxy_0(GameFnProxy* proxy, void* params, void* res)
 {
-    *(void**)res = proxy->target;
+    // If the game has a restriction that prevents console variables from changing when in game or demo playback.
+    // This changes so it is always allowed to change any console variable.
+    s32 cvar_restrict_patch_bytes = 0x00;
+    game_apply_patch(proxy->target, &cvar_restrict_patch_bytes, sizeof(cvar_restrict_patch_bytes));
 }
 
 // ----------------------------------------------------------------
@@ -131,6 +142,15 @@ void game_d3d9ex_device_proxy_0(GameFnProxy* proxy, void* params, void* res)
 void game_d3d9ex_device_proxy_1(GameFnProxy* proxy, void* params, void* res)
 {
     *(void**)res = *(void**)proxy->target;
+}
+
+// ----------------------------------------------------------------
+
+void game_demo_player_playback_tick_proxy_0(GameFnProxy* proxy, void* params, void* res)
+{
+    using DestFn = s32(__fastcall*)(void* p, void* edx);
+    DestFn func = (DestFn)proxy->target;
+    *(s32*)res = func(proxy->extra[0], NULL);
 }
 
 // ----------------------------------------------------------------
@@ -152,16 +172,26 @@ const char* game_get_cmd_args(void* ptr)
 
 SvrVec3 game_get_entity_velocity(void* entity)
 {
-    assert(game_state.search_desc.caps & GAME_CAP_HAS_VELO);
+    assert(game_state.search_desc.caps & GAME_CAP_HAS_LOCAL_PLAYER);
 
     SvrVec3 ret = {};
     GAME_CALL_PROXY(game_state.search_desc.entity_velocity_proxy, entity, &ret);
     return ret;
 }
 
+u32 game_get_player_buttons(void* player)
+{
+    assert(game_state.search_desc.caps & GAME_CAP_HAS_LOCAL_PLAYER);
+    assert(game_state.search_desc.caps & GAME_CAP_HAS_INPUT);
+
+    u32 ret = 0;
+    GAME_CALL_PROXY(game_state.search_desc.player_buttons_proxy, player, &ret);
+    return ret;
+}
+
 void* game_get_player_by_index(s32 idx)
 {
-    assert(game_state.search_desc.caps & GAME_CAP_HAS_VELO);
+    assert(game_state.search_desc.caps & GAME_CAP_HAS_LOCAL_PLAYER);
 
     void* ret = NULL;
     GAME_CALL_PROXY(game_state.search_desc.player_by_index_proxy, &idx, &ret);
@@ -170,7 +200,7 @@ void* game_get_player_by_index(s32 idx)
 
 void* game_get_local_player()
 {
-    assert(game_state.search_desc.caps & GAME_CAP_HAS_VELO);
+    assert(game_state.search_desc.caps & GAME_CAP_HAS_LOCAL_PLAYER);
 
     void* ret = NULL;
     GAME_CALL_PROXY(game_state.search_desc.local_player_proxy, NULL, &ret);
@@ -179,7 +209,7 @@ void* game_get_local_player()
 
 s32 game_get_spec_target()
 {
-    assert(game_state.search_desc.caps & GAME_CAP_HAS_VELO);
+    assert(game_state.search_desc.caps & GAME_CAP_HAS_LOCAL_PLAYER);
 
     s32 ret = 0;
     GAME_CALL_PROXY(game_state.search_desc.spec_target_proxy, NULL, &ret);
@@ -188,7 +218,7 @@ s32 game_get_spec_target()
 
 void* game_get_spec_target_or_local_player()
 {
-    assert(game_state.search_desc.caps & GAME_CAP_HAS_VELO);
+    assert(game_state.search_desc.caps & GAME_CAP_HAS_LOCAL_PLAYER);
 
     void* ret = 0;
     GAME_CALL_PROXY(game_state.search_desc.spec_target_or_local_player_proxy, NULL, &ret);
@@ -242,13 +272,18 @@ void* game_get_d3d9ex_device()
     return ret;
 }
 
-void* game_get_cvar_patch_restrict()
+s32 game_get_demo_player_playback_tick()
 {
-    assert(game_state.search_desc.caps & GAME_CAP_HAS_CORE);
+    assert(game_state.search_desc.caps & GAME_CAP_HAS_STUDIO);
 
-    void* ret = NULL;
-    GAME_CALL_PROXY(game_state.search_desc.cvar_patch_restrict_proxy, NULL, &ret);
+    s32 ret = 0;
+    GAME_CALL_PROXY(game_state.search_desc.demo_player_playback_tick_proxy, NULL, &ret);
     return ret;
+}
+
+void game_proxies_init()
+{
+    GAME_CALL_PROXY(game_state.search_desc.cvar_patch_restrict_proxy, NULL, NULL);
 }
 
 #undef GAME_CALL_PROXY

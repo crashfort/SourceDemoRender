@@ -1,5 +1,8 @@
 #include "proc_priv.h"
 
+// Any weight less than this is not productive to spin up the pipeline for.
+const float MOSAMPLE_MIN_WEIGHT = 1.0f / 255.0f;
+
 struct __declspec(align(16)) MosampleCb
 {
     float mosample_weight;
@@ -61,13 +64,13 @@ bool ProcState::mosample_create_shaders()
 {
     bool ret = false;
 
-    ProcShader SHADER_LIST[] =
+    ProcShader shader_list[] =
     {
         ProcShader { "mosample", (void**)&mosample_cs, D3D11_COMPUTE_SHADER },
         ProcShader { "downsample", (void**)&mosample_downsample_cs, D3D11_COMPUTE_SHADER },
     };
 
-    if (!vid_create_shaders_list(SHADER_LIST, SVR_ARRAY_SIZE(SHADER_LIST)))
+    if (!vid_create_shaders_list(shader_list, SVR_ARRAY_SIZE(shader_list)))
     {
         goto rfail;
     }
@@ -166,6 +169,13 @@ void ProcState::mosample_end()
 // TODO Probably consider to process several frames at once instead of just 1.
 void ProcState::mosample_process(float weight)
 {
+    // Very small weights will not have any noticable impact on the resulting image.
+    // It is not needed to load the pipeline up for this.
+    if (weight < MOSAMPLE_MIN_WEIGHT)
+    {
+        return;
+    }
+
     if (weight != mosample_weight_cache)
     {
         MosampleCb cb_data;
@@ -235,7 +245,7 @@ void ProcState::mosample_new_video_frame()
         // Black is the only color that will work here, because the motion sampling is additive.
         vid_clear_rtv(mosample_work_tex_rtv, 0.0f, 0.0f, 0.0f, 1.0f);
 
-        if (mosample_remainder > FLT_EPSILON && mosample_remainder > (1.0f - exposure))
+        if (mosample_remainder > MOSAMPLE_MIN_WEIGHT && mosample_remainder > (1.0f - exposure))
         {
             weight = ((mosample_remainder - (1.0f - exposure)) * (1.0f / exposure));
             mosample_process(weight);

@@ -1,4 +1,5 @@
 #include "encoder_priv.h"
+#include "encoder_state.h"
 
 // Actual calls to audio and video codecs and container.
 
@@ -29,6 +30,17 @@ bool EncoderState::render_init()
     render_packet_wake_event_h = CreateEventA(NULL, FALSE, FALSE, NULL);
     render_audio_wake_event_h = CreateEventA(NULL, FALSE, FALSE, NULL);
 
+    // Prepare some audio buffers that can be reused.
+    const s32 PRECACHED_AUDIO_INPUTS = 256;
+
+    RenderAudioThreadInput precached_audio_inputs[PRECACHED_AUDIO_INPUTS];
+
+    for (s32 i = 0; i < PRECACHED_AUDIO_INPUTS; i++)
+    {
+        precached_audio_inputs[i] = render_alloc_audio_buffer();
+    }
+
+    render_recycled_audio_buffers.push_range(precached_audio_inputs, PRECACHED_AUDIO_INPUTS);
     return true;
 }
 
@@ -752,6 +764,17 @@ rexit:
     return ret;
 }
 
+RenderAudioThreadInput EncoderState::render_alloc_audio_buffer()
+{
+    s32 capacity = render_get_audio_buffer_size(ENCODER_MAX_SAMPLES);
+
+    RenderAudioThreadInput ret = {};
+    ret.mem = svr_alloc(capacity);
+    ret.num_samples = ENCODER_MAX_SAMPLES;
+
+    return ret;
+}
+
 RenderAudioThreadInput EncoderState::render_get_new_audio_buffer(s32 num_samples)
 {
     RenderAudioThreadInput ret = {};
@@ -763,11 +786,7 @@ RenderAudioThreadInput EncoderState::render_get_new_audio_buffer(s32 num_samples
         return ret;
     }
 
-    s32 capacity = render_get_audio_buffer_size(ENCODER_MAX_SAMPLES);
-
-    ret.mem = svr_alloc(capacity);
-    ret.num_samples = num_samples;
-
+    ret = render_alloc_audio_buffer();
     return ret;
 }
 

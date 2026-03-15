@@ -1,4 +1,5 @@
 #include "proc_priv.h"
+#include "proc_state.h"
 
 bool ProcState::init(const char* in_resource_path, ID3D11Device* in_d3d11_device)
 {
@@ -16,12 +17,22 @@ bool ProcState::init(const char* in_resource_path, ID3D11Device* in_d3d11_device
         goto rfail;
     }
 
+    if (!input_init())
+    {
+        goto rfail;
+    }
+
     if (!mosample_init())
     {
         goto rfail;
     }
 
     if (!encoder_init())
+    {
+        goto rfail;
+    }
+
+    if (!studio_init())
     {
         goto rfail;
     }
@@ -64,6 +75,11 @@ bool ProcState::is_velo_enabled()
     return movie_profile.velo_enabled;
 }
 
+bool ProcState::is_input_enabled()
+{
+    return movie_profile.input_enabled;
+}
+
 bool ProcState::is_audio_enabled()
 {
     return movie_profile.audio_enabled;
@@ -72,13 +88,26 @@ bool ProcState::is_audio_enabled()
 // Call this when you have written everything you need to encoder_share_tex.
 void ProcState::process_finished_shared_tex()
 {
-    // Now is the time to draw the velo if we have it.
+    // Now is the time to draw the additions we have any.
+
     if (movie_profile.velo_enabled)
     {
         velo_draw();
     }
 
+    if (movie_profile.input_enabled)
+    {
+        input_draw();
+    }
+
     encoder_send_shared_tex();
+
+    movie_lagcomp_queued_time += movie_lagcomp_frame_time;
+
+    if (movie_lagcomp_queued_time >= movie_lagcomp_interp)
+    {
+        movie_lagcomp_queued_time = movie_lagcomp_interp;
+    }
 }
 
 bool ProcState::start(const char* dest_file, const char* profile, ProcGameTexture* game_texture, SvrAudioParams* audio_params)
@@ -130,10 +159,22 @@ bool ProcState::start(const char* dest_file, const char* profile, ProcGameTextur
         goto rfail;
     }
 
+    if (!input_start())
+    {
+        goto rfail;
+    }
+
     if (!encoder_start())
     {
         goto rfail;
     }
+
+    if (!studio_start())
+    {
+        goto rfail;
+    }
+
+    setup_lag_compensation();
 
     ret = true;
     goto rexit;
@@ -150,25 +191,32 @@ void ProcState::end()
     encoder_end();
     mosample_end();
     velo_end();
+    input_end();
     vid_end();
 
-    svr_game_texture = {};
+    free_dynamic();
 }
 
 void ProcState::free_static()
 {
+    studio_free_static();
     encoder_free_static();
     mosample_free_static();
     velo_free_static();
+    input_free_static();
     vid_free_static();
 }
 
 void ProcState::free_dynamic()
 {
+    studio_free_dynamic();
     encoder_free_dynamic();
     mosample_free_dynamic();
     velo_free_dynamic();
+    input_free_dynamic();
     vid_free_dynamic();
+
+    svr_game_texture = {};
 }
 
 s32 ProcState::get_game_rate()
@@ -179,4 +227,11 @@ s32 ProcState::get_game_rate()
     }
 
     return movie_profile.video_fps;
+}
+
+void ProcState::setup_lag_compensation()
+{
+    movie_lagcomp_frame_time = 1.0f / (float)movie_profile.video_fps;
+    movie_lagcomp_queued_time = 0.0f;
+    movie_lagcomp_interp = movie_profile.lagcomp_override;
 }

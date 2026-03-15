@@ -18,6 +18,7 @@ bool EncoderState::init(HANDLE in_shared_mem_h)
     }
 
     game_wake_event_h = (HANDLE)shared_mem_ptr->game_wake_event_h;
+    encoder_ready_event_h = (HANDLE)shared_mem_ptr->encoder_ready_event_h;
     encoder_wake_event_h = (HANDLE)shared_mem_ptr->encoder_wake_event_h;
     shared_audio_buffer = (u8*)shared_mem_ptr + shared_mem_ptr->audio_buffer_offset;
 
@@ -51,6 +52,8 @@ rfail:
     free_static();
 
 rexit:
+    SetEvent(encoder_ready_event_h);
+
     return ret;
 }
 

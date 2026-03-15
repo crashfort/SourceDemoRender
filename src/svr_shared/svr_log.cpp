@@ -10,6 +10,16 @@ void log_function(const char* text, s32 length)
 {
     assert(log_file_handle);
 
+    if (IsDebuggerPresent())
+    {
+        OutputDebugStringA(text);
+    }
+
+    if (GetConsoleWindow())
+    {
+        WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), text, sizeof(char) * length, NULL, NULL);
+    }
+
     AcquireSRWLockExclusive(&log_lock);
     WriteFile(log_file_handle, text, sizeof(char) * length, NULL, NULL);
     ReleaseSRWLockExclusive(&log_lock);
@@ -21,6 +31,16 @@ void svr_init_log(const char* log_file_path, bool append)
     {
         return;
     }
+
+#if 0
+    AllocConsole();
+
+    HWND hwnd = GetConsoleWindow();
+    SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE);
+
+    freopen("CONOUT$", "w", stdout);
+    freopen("CONOUT$", "w", stderr);
+#endif
 
     DWORD open_flags = append ? OPEN_EXISTING : CREATE_ALWAYS;
     log_file_handle = CreateFileA(log_file_path, GENERIC_WRITE, FILE_SHARE_READ, NULL, open_flags, FILE_ATTRIBUTE_NORMAL, NULL);

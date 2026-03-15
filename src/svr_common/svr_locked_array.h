@@ -30,6 +30,13 @@ struct SvrLockedArray
         ReleaseSRWLockExclusive(&lock);
     }
 
+    inline void push_range(T* new_items, s32 num)
+    {
+        AcquireSRWLockExclusive(&lock);
+        items.push_range(new_items, num);
+        ReleaseSRWLockExclusive(&lock);
+    }
+
     // Pops from the back.
     inline bool pull(T* item)
     {

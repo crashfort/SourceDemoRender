@@ -16,3 +16,6 @@
 #include "game_audio_v1.cpp"
 #include "game_audio_v2.cpp"
 #include "game_velo.cpp"
+#include "game_input.cpp"
+#include "game_player.cpp"
+#include "game_studio.cpp"

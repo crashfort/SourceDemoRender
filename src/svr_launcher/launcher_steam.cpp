@@ -6,7 +6,7 @@ bool LauncherState::steam_find_path()
 
     if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Valve\\Steam", 0, KEY_READ, &steam_hkey) != 0)
     {
-        launcher_log("Steam is not installed.");
+        svr_log("Steam is not installed.");
         return false;
     }
 
@@ -35,15 +35,15 @@ bool LauncherState::steam_find_libraries()
     char full_vdf_path[MAX_PATH];
     SVR_SNPRINTF(full_vdf_path, "%s\\steamapps\\libraryfolders.vdf", steam_path);
 
-    SvrVdfSection* vdf_root = svr_vdf_load(full_vdf_path);
+    SvrVdfSection vdf_root = {};
 
-    if (vdf_root == NULL)
+    if (!svr_vdf_load(full_vdf_path, &vdf_root))
     {
-        launcher_log("No Steam libraries could be found.");
+        svr_log("No Steam libraries could be found.");
         goto rfail;
     }
 
-    SvrVdfSection* libraries_folders_section = svr_vdf_section_find_section(vdf_root, "libraryfolders", NULL);
+    SvrVdfSection* libraries_folders_section = svr_vdf_section_find_section(&vdf_root, "libraryfolders", NULL);
 
     if (libraries_folders_section == NULL)
     {
@@ -76,10 +76,7 @@ bool LauncherState::steam_find_libraries()
 
 rfail:
 rexit:
-    if (vdf_root)
-    {
-        svr_vdf_free(vdf_root);
-    }
+    svr_vdf_free(&vdf_root);
 
     return ret;
 }

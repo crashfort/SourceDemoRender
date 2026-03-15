@@ -74,12 +74,7 @@ void LauncherState::sys_check_hw_caps()
     // of the adapter below, and also to more accurately query the hw caps.
     const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_11_0;
 
-    const D3D_FEATURE_LEVEL DEVICE_LEVELS[] =
-    {
-        MINIMUM_DEVICE_LEVEL
-    };
-
-    HRESULT hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, DEVICE_LEVELS, 1, D3D11_SDK_VERSION, &d3d11_device, NULL, &d3d11_context);
+    HRESULT hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, &MINIMUM_DEVICE_LEVEL, 1, D3D11_SDK_VERSION, &d3d11_device, NULL, &d3d11_context);
 
     if (FAILED(hr))
     {

@@ -1,7 +1,7 @@
 #pragma once
 #include "svr_common.h"
 
-// Shared stuff between 32-bit svr_game and 64-bit svr_encoder.
+// Shared stuff between svr_game and svr_encoder.
 
 // All Windows handles only use 32 bits of data, so we can safely refer to them in here as u32 with _h in the name.
 // https://learn.microsoft.com/en-us/windows/win32/winprog64/interprocess-communication
@@ -15,7 +15,7 @@ const s32 ENCODER_PROC_ID = 1;
 
 using EncoderSharedEvent = s32;
 
-enum /* EncoderSharedEvent */
+enum // EncoderSharedEvent
 {
     ENCODER_EVENT_NONE,
     ENCODER_EVENT_START, // Movie parameters will be setup. This event can fail.
@@ -52,7 +52,7 @@ struct EncoderSharedMem
 {
     EncoderSharedMovieParams movie_params; // Movie parameters and profile stuff set by svr_game on ENCODER_EVENT_START.
 
-    // Shared handle to the latest game texture in the B8G8R8A8 format. Updated on ENCODER_EVENT_NEW_VIDEO.
+    // Shared handle to the latest game texture in B8G8R8A8 format. Updated on ENCODER_EVENT_NEW_VIDEO.
     u32 game_texture_h;
 
     // Pointer types have different sizes in 32-bit and 64-bit so we have to store the offsets from the base
@@ -63,6 +63,7 @@ struct EncoderSharedMem
 
     u32 game_wake_event_h; // Event set by svr_encoder to wake svr_game up.
     u32 encoder_wake_event_h; // Event set by svr_game to wake svr_encoder up.
+    u32 encoder_ready_event_h; // Event set by svr_encoder to notify svr_game the process is ready.
     u32 game_pid; // Game process id. Used by svr_encoder to know if the game exits so we don't get stuck.
 
     EncoderSharedEvent event_type; // Set by svr_game to let svr_encoder know what to do when woken up. Updated on all events.

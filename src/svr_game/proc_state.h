@@ -1,5 +1,8 @@
 #pragma once
 
+const s32 PROC_LAGCOMP_MAX = 512;
+const s32 PROC_LAGCOMP_MASK = PROC_LAGCOMP_MAX - 1;
+
 // Texture that comes directly from the game.
 // This is read only and is managed by svr_api.
 struct ProcGameTexture
@@ -10,7 +13,7 @@ struct ProcGameTexture
 
 using ProcVeloAnchor = s32;
 
-enum /* ProcVeloAnchor */
+enum // ProcVeloAnchor
 {
     VELO_ANCHOR_LEFT,
     VELO_ANCHOR_CENTER,
@@ -19,7 +22,7 @@ enum /* ProcVeloAnchor */
 
 using ProcVeloLength = s32;
 
-enum /* ProcVeloLength */
+enum // ProcVeloLength
 {
     VELO_LENGTH_XY,
     VELO_LENGTH_XYZ,
@@ -38,6 +41,9 @@ struct MovieProfile
     s32 video_x264_intra;
     s32 audio_enabled;
 
+    // Interpolation latency compensation:
+    float lagcomp_override;
+
     // Mosample options:
     s32 mosample_enabled;
     s32 mosample_mult;
@@ -55,6 +61,13 @@ struct MovieProfile
     SvrVec2I velo_align;
     ProcVeloAnchor velo_anchor;
     ProcVeloLength velo_length;
+
+    // Input options:
+    s32 input_enabled;
+    SvrVec2I input_align;
+    SvrVec4I input_active_color;
+    SvrVec4I input_inactive_color;
+    s32 input_scale;
 };
 
 struct ProcShader
@@ -62,6 +75,14 @@ struct ProcShader
     const char* name;
     void** dest;
     D3D11_SHADER_TYPE type;
+};
+
+struct ProcInputString
+{
+    UINT16 glyph_idxs[32];
+    float advances[32];
+    s32 length;
+    float width;
 };
 
 struct ProcState
@@ -79,12 +100,15 @@ struct ProcState
     void new_video_frame();
     void new_audio_samples(SvrWaveSample* samples, s32 num_samples);
     bool is_velo_enabled();
+    bool is_input_enabled();
     bool is_audio_enabled();
     void process_finished_shared_tex();
     void end();
     void free_static();
     void free_dynamic();
     s32 get_game_rate();
+
+    void setup_lag_compensation();
 
     // -----------------------------------------------
     // Video state:
@@ -114,35 +138,77 @@ struct ProcState
     s32 vid_get_num_cs_threads(s32 unit);
     bool vid_start();
     void vid_end();
-    D2D1_COLOR_F vid_fill_d2d1_color(SvrVec4I color);
-    D2D1_POINT_2F vid_fill_d2d1_pt(SvrVec2I p);
+    D2D1_COLOR_F vid_convert(SvrVec4I color);
+    D2D1_POINT_2F vid_convert(SvrVec2I p);
+    D2D1_POINT_2F vid_convert(SvrVec2 p);
+    IDWriteFontFace* vid_create_font_face(const char* font_family, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style);
 
     // -----------------------------------------------
     // Velo state:
 
+    SvrVec3 velo_latest_vectors;
+    SvrVec3 velo_prev_vectors;
+    SvrVec3 velo_vectors[PROC_LAGCOMP_MAX];
+    u64 velo_lagcomp_write;
+    u64 velo_lagcomp_read;
+
     IDWriteFontFace* velo_font_face;
-    SvrVec2I velo_draw_pos;
+    SvrVec2 velo_draw_pos;
 
     // Emulation of tabular font feature.
     float velo_tab_height;
     float velo_tab_advance_x;
 
-    UINT16 velo_number_glyph_idxs[10]; // Glyph indexes for all numbers so we don't have to look that up every time.
+    ID2D1PathGeometry* velo_number_paths[10];
 
-    SvrVec3 velo_vector;
+    UINT16 velo_number_glyph_idxs[10]; // Glyph indexes for all numbers so we don't have to look that up every time.
 
     bool velo_init();
     void velo_free_static();
     void velo_free_dynamic();
-    bool velo_create_font_face();
     void velo_setup_tab_metrix();
     void velo_setup_glyph_idxs();
     bool velo_start();
     void velo_end();
     void velo_draw();
     void velo_give(SvrVec3 source);
-    SvrVec2I velo_get_pos();
-    float velo_get_length();
+    SvrVec2 velo_get_pos();
+    float velo_get_length(SvrVec3 vec);
+
+    // -----------------------------------------------
+    // Input state:
+
+    SvrButtons input_latest_buttons;
+    SvrButtons input_prev_buttons;
+    SvrButtons input_buttons[PROC_LAGCOMP_MAX];
+    u64 input_lagcomp_write;
+    u64 input_lagcomp_read;
+
+    SvrVec2 input_draw_pos;
+    ID2D1Bitmap1* input_dir_arrow;
+    IDWriteFontFace1* input_font_face;
+
+    ProcInputString input_jump_string;
+    ProcInputString input_duck_string;
+
+    float input_row_height;
+    float input_arrow_size;
+    float input_diamond_diameter;
+    float input_extras_radius;
+    float input_font_size;
+    float input_scale;
+
+    bool input_init();
+    void input_free_static();
+    void input_free_dynamic();
+    bool input_start();
+    void input_end();
+    void input_draw();
+    void input_draw_one_input_arrow(bool state, SvrVec4 orientation, SvrVec2 pos, SvrVec2 offset);
+    void input_draw_one_input_string(bool state, ProcInputString* display, SvrVec2 pos, SvrVec2 offset);
+    void input_give(SvrButtons buttons);
+    SvrVec2 input_get_pos();
+    ProcInputString input_setup_string(const char* display);
 
     // -----------------------------------------------
     // Motion blur state:
@@ -182,7 +248,8 @@ struct ProcState
 
     HANDLE encoder_proc;
     HANDLE encoder_shared_mem_h;
-    HANDLE game_wake_event_h;
+    HANDLE encoder_game_wake_event_h;
+    HANDLE encoder_ready_event_h;
     HANDLE encoder_wake_event_h;
     EncoderSharedMem* encoder_shared_ptr;
     void* encoder_audio_buffer;
@@ -202,6 +269,7 @@ struct ProcState
     HANDLE encoder_share_tex_h;
     ID2D1Bitmap1* encoder_d2d1_share_tex; // Not a real texture, but a reference to encoder_share_tex.
     IDXGIKeyedMutex* encoder_share_tex_lock;
+    s32 encoder_sent_video_frames;
 
     bool encoder_init();
     void encoder_free_static();
@@ -229,6 +297,10 @@ struct ProcState
 
     MovieProfile movie_profile;
 
+    float movie_lagcomp_interp;
+    float movie_lagcomp_queued_time;
+    float movie_lagcomp_frame_time;
+
     bool movie_init();
     void movie_free_static();
     void movie_free_dynamic();
@@ -236,4 +308,22 @@ struct ProcState
     void movie_end();
     void movie_setup_params();
     bool movie_load_profile(const char* name, bool required);
+
+    // -----------------------------------------------
+    // Studio state:
+
+    HANDLE studio_proc_h;
+    HANDLE studio_shared_mem_h;
+    StudioSharedMem* studio_shared_ptr;
+    StudioSharedPeer* studio_peer;
+
+    bool studio_init();
+    void studio_free_static();
+    void studio_free_dynamic();
+    bool studio_start();
+
+    bool studio_active();
+
+    void studio_update();
+    void studio_update_progress();
 };

@@ -1,4 +1,5 @@
 #include "game_priv.h"
+#include "game_common.h"
 
 void* game_create_interface(const char* dll, const char* name)
 {

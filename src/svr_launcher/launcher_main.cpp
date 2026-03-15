@@ -16,11 +16,11 @@ int main(int argc, char** argv)
 #endif
 
     // For standalone mode, the launcher creates the log file that the game then appends to.
-    svr_init_log("data\\SVR_LOG.txt", false);
+    svr_init_log("data\\svr_log.txt", false);
 
     launcher_state.init();
 
-    // Autostarting a game works by giving the id.
+    // Autostarting a game works by giving the game ini.
     if (argc == 2)
     {
         const char* id = argv[1];

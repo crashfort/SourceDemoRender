@@ -29,7 +29,7 @@ struct SvrDynQueue
         push_range(item, 1);
     }
 
-    // Pop a single item frm the front.
+    // Pop a single item from the front.
     inline bool pull(T* item)
     {
         return pull_range(item, 1);

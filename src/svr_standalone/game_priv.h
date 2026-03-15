@@ -8,6 +8,7 @@
 #include "svr_ini.h"
 #include "svr_alloc.h"
 #include "svr_console.h"
+#include "studio_shared.h"
 #include <Windows.h>
 #include <Psapi.h>
 #include <strsafe.h>

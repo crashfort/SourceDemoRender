@@ -16,7 +16,7 @@ struct SvrVdfSection
 };
 
 // Load a VDF formatted file from a path.
-SvrVdfSection* svr_vdf_load(const char* path);
+bool svr_vdf_load(const char* path, SvrVdfSection* section);
 
 // Call when no longer needed.
 void svr_vdf_free(SvrVdfSection* priv);

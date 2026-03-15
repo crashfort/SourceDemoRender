@@ -1,4 +1,5 @@
 #include "game_priv.h"
+#include "game_common.h"
 
 // Convert sample format and send.
 void game_prepare_and_send_sound_0(GameSndSample0* paint_buf, s32 num_samples)
@@ -144,6 +145,22 @@ bool __fastcall game_eng_filter_time_override_1(void* p, void* edx)
 
 // ----------------------------------------------------------------
 
+float __cdecl game_adjust_interpolation_amount_override_0(void* p, float base_interp)
+{
+    if (svr_movie_active())
+    {
+        return (1.0f / svr_get_video_frame_rate()) * 2.0f;
+    }
+
+    using OrgFn = decltype(game_adjust_interpolation_amount_override_0)*;
+    OrgFn org_fn = (OrgFn)game_state.adjust_interpolation_amount_hook.original;
+
+    float ret = org_fn(p, base_interp);
+    return ret;
+}
+
+// ----------------------------------------------------------------
+
 void game_overrides_init()
 {
     game_hook_create(&game_state.search_desc.start_movie_override, &game_state.start_movie_hook);
@@ -160,13 +177,14 @@ void game_overrides_init()
         game_hook_create(&game_state.search_desc.snd_tx_stereo_override, &game_state.snd_tx_stereo_hook);
     }
 
-    if (game_state.search_desc.caps & GAME_CAP_AUDIO_DEVICE_1_5 | GAME_CAP_AUDIO_DEVICE_2)
+    if (game_state.search_desc.caps & (GAME_CAP_AUDIO_DEVICE_1_5 | GAME_CAP_AUDIO_DEVICE_2))
     {
         game_hook_create(&game_state.search_desc.snd_device_tx_samples_override, &game_state.snd_device_tx_samples_hook);
     }
 
-    // If the game has a restriction that prevents cvars from changing when in game or demo playback.
-    // This replaces the flags to compare to, so the comparison will always be false.
-    s32 cvar_restrict_patch_bytes = 0x00;
-    game_apply_patch(game_get_cvar_patch_restrict(), &cvar_restrict_patch_bytes, sizeof(cvar_restrict_patch_bytes));
+    if (game_state.search_desc.caps & GAME_CAP_HAS_LAGCOMP)
+    {
+        // Too inconsistent.
+        // game_hook_create(&game_state.search_desc.adjust_interpolation_amount_override, &game_state.adjust_interpolation_amount_hook);
+    }
 }

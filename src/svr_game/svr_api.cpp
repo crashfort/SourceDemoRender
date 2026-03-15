@@ -1,4 +1,5 @@
 #include "proc_priv.h"
+#include "svr_api.h"
 
 // Used for internal and external SVR.
 // This layer if necessary translates operations from D3D9Ex to D3D11.
@@ -32,12 +33,12 @@ bool integrated_init_done;
 
 // -------------------------------------------------
 
-int svr_api_version()
+int32_t svr_api_version()
 {
     return SVR_API_VERSION;
 }
 
-int svr_dll_version()
+int32_t svr_dll_version()
 {
     return SVR_VERSION;
 }
@@ -79,7 +80,7 @@ void check_standalone_svr_mode(const char* svr_path)
     }
 
     char log_file_path[MAX_PATH];
-    SVR_SNPRINTF(log_file_path, "%s\\data\\SVR_LOG.txt", svr_path);
+    SVR_SNPRINTF(log_file_path, "%s\\data\\svr_log.txt", svr_path);
 
     svr_init_log(log_file_path, false);
 
@@ -157,16 +158,11 @@ bool svr_init(const char* svr_path, IUnknown* game_device)
         // Should be good enough for all the features that we make use of.
         const D3D_FEATURE_LEVEL MINIMUM_DEVICE_LEVEL = D3D_FEATURE_LEVEL_12_0;
 
-        const D3D_FEATURE_LEVEL DEVICE_LEVELS[] =
-        {
-            MINIMUM_DEVICE_LEVEL
-        };
-
         HRESULT hr;
 
         D3D_FEATURE_LEVEL created_device_level;
 
-        hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, DEVICE_LEVELS, 1, D3D11_SDK_VERSION, &svr_d3d11_device, &created_device_level, &svr_d3d11_context);
+        hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, device_create_flags, &MINIMUM_DEVICE_LEVEL, 1, D3D11_SDK_VERSION, &svr_d3d11_device, &created_device_level, &svr_d3d11_context);
 
         if (FAILED(hr))
         {
@@ -299,7 +295,7 @@ rexit:
     return ret;
 }
 
-int svr_get_game_rate()
+int32_t svr_get_game_rate()
 {
     if (!svr_movie_running)
     {
@@ -308,6 +304,17 @@ int svr_get_game_rate()
     }
 
     return proc_state.get_game_rate();
+}
+
+int32_t svr_get_video_frame_rate()
+{
+    if (!svr_movie_running)
+    {
+        OutputDebugStringA("SVR (svr_get_game_rate): Movie is not started. It is not allowed to call this now\n");
+        return 0;
+    }
+
+    return proc_state.movie_profile.video_fps;
 }
 
 void svr_stop()
@@ -332,11 +339,17 @@ void svr_frame()
     // The D3D11 texture now contains the game content.
 
     proc_state.new_video_frame();
+    proc_state.studio_update();
 }
 
 bool svr_is_velo_enabled()
 {
     return proc_state.is_velo_enabled();
+}
+
+bool svr_is_input_enabled()
+{
+    return proc_state.is_input_enabled();
 }
 
 bool svr_is_audio_enabled()
@@ -346,15 +359,16 @@ bool svr_is_audio_enabled()
 
 void svr_give_velocity(float* xyz)
 {
-    SvrVec3 vec;
-    vec.x = xyz[0];
-    vec.y = xyz[1];
-    vec.z = xyz[2];
-
+    SvrVec3 vec = { xyz[0], xyz[1], xyz[2] };
     proc_state.velo_give(vec);
 }
 
-void svr_give_audio(SvrWaveSample* samples, int num_samples)
+void svr_give_buttons(SvrButtons buttons)
+{
+    proc_state.input_give(buttons);
+}
+
+void svr_give_audio(SvrWaveSample* samples, int32_t num_samples)
 {
     proc_state.new_audio_samples(samples, num_samples);
 }

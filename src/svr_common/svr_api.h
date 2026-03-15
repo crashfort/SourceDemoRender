@@ -1,7 +1,8 @@
 #pragma once
+#include <stdint.h>
+
 // Interface header for SVR.
 // Don't use internal headers here such as svr_common, or internal type aliases, as this header should be easily distributed.
-// This header is used by SVR standalone and by the Momentum integration.
 
 // How this should be used:
 // 1) At startup, compare the return value of svr_api_version with SVR_API_VERSION and continue if the versions match.
@@ -13,7 +14,7 @@
 // 5) Call svr_stop when movie production should stop.
 
 // Programming errors are printed to the debugger output (prefixed with "SVR (<function name>):").
-// User or system errors will print messages to SVR_LOG.txt (for standalone SVR) and/or to the game console (if available at the time of error).
+// User or system errors will print messages to svr_log.txt (for standalone SVR) and/or to the game console (if available at the time of error).
 // All functions in this API must be called from the game main thread only.
 
 // Windows only.
@@ -29,7 +30,7 @@ extern "C"
 
 // To be increased when something in the interface changes. Internal DLL changes (svr_dll_version) does not have to up this.
 // The API must not be used if the DLL API version does not match the client header API version.
-const int SVR_API_VERSION = 1;
+const int32_t SVR_API_VERSION = 2;
 
 struct IUnknown;
 struct IDirect3DSurface9;
@@ -39,9 +40,9 @@ struct ID3D11Device;
 
 struct SvrAudioParams
 {
-    int audio_channels; // Must be 2 for now.
-    int audio_hz;
-    int audio_bits; // Must be 16 for now.
+    int32_t audio_channels; // Must be 2 for now.
+    int32_t audio_hz;
+    int32_t audio_bits; // Must be 16 for now.
 };
 
 struct SvrStartMovieData
@@ -59,17 +60,31 @@ struct SvrStartMovieData
 
 struct SvrWaveSample
 {
-    short l;
-    short r;
+    int16_t l;
+    int16_t r;
+};
+
+struct SvrButtons
+{
+    int8_t in_attack : 1;
+    int8_t in_jump : 1;
+    int8_t in_duck : 1;
+    int8_t in_forward : 1;
+    int8_t in_back : 1;
+    int8_t in_yaw_left : 1;
+    int8_t in_yaw_right : 1;
+    int8_t in_move_left : 1;
+    int8_t in_move_right : 1;
+    int8_t in_walk : 1;
 };
 
 // For checking mismatch between built DLL and client header.
 // Always call this and ensure that the versions match (compare to SVR_API_VERSION). The API should not be used if these mismatch, as it will most likely crash!
 // You should not call svr_init (or any function at all) if there is a mismatch.
-SVR_API int svr_api_version();
+SVR_API int32_t svr_api_version();
 
 // SVR binary version. Marks new features or fixes.
-SVR_API int svr_dll_version();
+SVR_API int32_t svr_dll_version();
 
 // To be called once at startup.
 //
@@ -118,7 +133,9 @@ SVR_API bool svr_start(const char* movie_name, const char* movie_profile, SvrSta
 
 // This function should be called after svr_start to read how fast the game should be running, in frames per second.
 // Set the host_framerate console variable to the value this returns.
-SVR_API int svr_get_game_rate();
+SVR_API int32_t svr_get_game_rate();
+
+SVR_API int32_t svr_get_video_frame_rate();
 
 // To be called when movie recording should stop. Can be in response to a console command or UI element or some automatic event.
 // Calling this function will stop movie production and calling svr_frame will not do anything.
@@ -136,6 +153,11 @@ SVR_API void svr_frame();
 // Must only be called after svr_start.
 SVR_API bool svr_is_velo_enabled();
 
+// Returns true if input is enabled in the active profile.
+// You can use this to prevent extra work if it is not needed.
+// Must only be called after svr_start.
+SVR_API bool svr_is_input_enabled();
+
 // Returns true if audio is enabled in the active profile.
 // You can use this to prevent extra work if it is not needed.
 // Must only be called after svr_start.
@@ -145,7 +167,11 @@ SVR_API bool svr_is_audio_enabled();
 // Must be called before svr_frame.
 SVR_API void svr_give_velocity(float* xyz);
 
+// For the input extension, call this to give the player button bits so it can be drawn to the encoded video.
+// Must be called before svr_frame.
+SVR_API void svr_give_buttons(SvrButtons buttons);
+
 // Give audio samples to write. This must be 2 channel 16 bit samples at 44100 hz.
-SVR_API void svr_give_audio(SvrWaveSample* samples, int num_samples);
+SVR_API void svr_give_audio(SvrWaveSample* samples, int32_t num_samples);
 
 }

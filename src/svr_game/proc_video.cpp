@@ -1,4 +1,5 @@
 #include "proc_priv.h"
+#include "proc_state.h"
 
 const s32 VID_SHADER_SIZE = 8192; // Max size one shader can be when loading.
 
@@ -66,6 +67,7 @@ bool ProcState::vid_create_d2d1()
     }
 
     vid_d2d1_context->CreateSolidColorBrush({}, &vid_d2d1_solid_brush);
+    vid_d2d1_context->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
     ret = true;
     goto rexit;
@@ -247,7 +249,7 @@ void ProcState::vid_end()
 {
 }
 
-D2D1_COLOR_F ProcState::vid_fill_d2d1_color(SvrVec4I color)
+D2D1_COLOR_F ProcState::vid_convert(SvrVec4I color)
 {
     D2D1_COLOR_F ret;
     ret.r = color.x / 255.0f;
@@ -257,7 +259,73 @@ D2D1_COLOR_F ProcState::vid_fill_d2d1_color(SvrVec4I color)
     return ret;
 }
 
-D2D1_POINT_2F ProcState::vid_fill_d2d1_pt(SvrVec2I p)
+D2D1_POINT_2F ProcState::vid_convert(SvrVec2I p)
 {
     return D2D1::Point2F(p.x, p.y);
+}
+
+D2D1_POINT_2F ProcState::vid_convert(SvrVec2 p)
+{
+    return D2D1::Point2F(p.x, p.y);
+}
+
+// Try to find the font in the system.
+IDWriteFontFace* ProcState::vid_create_font_face(const char* font_family, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style)
+{
+    HRESULT hr;
+    IDWriteFontCollection* coll = NULL;
+    IDWriteFontFamily* font_fam = NULL;
+    IDWriteFont* font = NULL;
+    IDWriteFontFace* font_face = NULL;
+
+    wchar stupid_buf[128];
+    svr_to_utf16(font_family, strlen(font_family), stupid_buf, SVR_ARRAY_SIZE(stupid_buf));
+
+    vid_dwrite_factory->GetSystemFontCollection(&coll, FALSE);
+
+    UINT font_index;
+    BOOL font_exists;
+    coll->FindFamilyName(stupid_buf, &font_index, &font_exists);
+
+    if (!font_exists)
+    {
+        svr_console_msg_and_log("ERROR: The specified velo font %s is not installed in the system\n", font_family);
+        goto rfail;
+    }
+
+    hr = coll->GetFontFamily(font_index, &font_fam);
+
+    if (FAILED(hr))
+    {
+        svr_console_msg_and_log("ERROR: Could not get the font family of font %s\n", font_family);
+        goto rfail;
+    }
+
+    hr = font_fam->GetFirstMatchingFont(weight, DWRITE_FONT_STRETCH_NORMAL, style, &font);
+
+    if (FAILED(hr))
+    {
+        svr_console_msg_and_log("ERROR: Could not find the combination of font parameters (weight, stretch, style) in the font %s\n", font_family);
+        goto rfail;
+    }
+
+    hr = font->CreateFontFace(&font_face);
+
+    if (FAILED(hr))
+    {
+        svr_console_msg_and_log("ERROR: Could not create a font face of font %s\n", font_family);
+        goto rfail;
+    }
+
+    goto rexit;
+
+rfail:
+    svr_maybe_release(&font_face);
+
+rexit:
+    svr_maybe_release(&coll);
+    svr_maybe_release(&font_fam);
+    svr_maybe_release(&font);
+
+    return font_face;
 }

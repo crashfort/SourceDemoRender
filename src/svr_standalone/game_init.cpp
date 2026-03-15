@@ -13,6 +13,9 @@ void game_init(SvrGameInitData* init_data)
     game_state.main_thread_id = GetCurrentThreadId();
     game_state.svr_path = init_data->svr_path;
 
+    game_hook_init();
+
+    game_studio_early_init();
     game_wind_early_init();
 
     // Init needs to be done async because we need to wait for the libraries to load while the game loads as normal.
@@ -23,7 +26,7 @@ void game_init(SvrGameInitData* init_data)
 void game_init_log()
 {
     char log_file_path[MAX_PATH];
-    SVR_SNPRINTF(log_file_path, "%s\\data\\SVR_LOG.txt", game_state.svr_path);
+    SVR_SNPRINTF(log_file_path, "%s\\data\\svr_log.txt", game_state.svr_path);
 
     // Append to the log file the launcher created.
     svr_init_log(log_file_path, true);
@@ -72,26 +75,27 @@ void game_init_async_proc()
     game_search_wait_for_libs();
 
     svr_console_init();
-    game_hook_init();
     svr_prof_init();
 
     game_search_fill_desc(&game_state.search_desc);
 
-    game_init_check_modules();
+    game_init_check_caps();
     game_overrides_init();
+    game_proxies_init();
     game_video_init();
     game_audio_init();
     game_wind_init();
     game_rec_init();
-
-    game_hook_enable_all();
+    game_studio_init();
 
     IUnknown* video_device = game_state.video_desc->get_game_device();
 
     if (!svr_init(game_state.svr_path, video_device))
     {
-        game_init_error("Could not initialize SVR. Ensure you are using the latest version of SVR and upload your SVR_LOG.txt.");
+        game_init_error("Could not initialize SVR. Ensure you are using the latest version of SVR and upload your svr_log.txt.");
     }
+
+    game_hook_enable_all();
 
     // It's useful to show that we have loaded when in standalone mode.
     // This message may not be the latest message but at least it's in there.
@@ -107,14 +111,14 @@ struct GameCapsPrint
     const char* name;
 };
 
-void game_init_check_modules()
+void game_init_check_caps()
 {
 #define CAP(X) GameCapsPrint { X, #X }
 
     GameCapsPrint caps_print[] =
     {
         CAP(GAME_CAP_HAS_CORE),
-        CAP(GAME_CAP_HAS_VELO),
+        CAP(GAME_CAP_HAS_LOCAL_PLAYER),
         CAP(GAME_CAP_HAS_AUDIO),
         CAP(GAME_CAP_HAS_VIDEO),
         CAP(GAME_CAP_HAS_AUTOSTOP),
@@ -123,9 +127,13 @@ void game_init_check_modules()
         CAP(GAME_CAP_AUDIO_DEVICE_1_5),
         CAP(GAME_CAP_AUDIO_DEVICE_2),
         CAP(GAME_CAP_64_BIT_AUDIO_TIME),
-        CAP(GAME_CAP_VELO_1),
-        CAP(GAME_CAP_VELO_2),
+        CAP(GAME_CAP_LOCAL_PLAYER_DUMB),
+        CAP(GAME_CAP_LOCAL_PLAYER_SMART),
+        CAP(GAME_CAP_HAS_LAGCOMP),
+        CAP(GAME_CAP_HAS_STUDIO),
     };
+
+#undef CAP
 
     svr_log("Game caps:\n");
 
@@ -139,18 +147,12 @@ void game_init_check_modules()
         }
     }
 
-    bool required_caps[] =
-    {
-        game_state.search_desc.caps & GAME_CAP_HAS_CORE,
-        game_state.search_desc.caps & GAME_CAP_HAS_VIDEO,
-    };
+    GameCaps required_caps = GAME_CAP_HAS_CORE | GAME_CAP_HAS_VIDEO;
 
-    if (!svr_check_all_true(required_caps, SVR_ARRAY_SIZE(required_caps)))
+    if ((game_state.search_desc.caps & required_caps) != required_caps)
     {
-        game_init_error("SVR support is missing or wrong. Ensure you are using the latest version of SVR and upload your SVR_LOG.txt.");
+        game_init_error("SVR support is missing or wrong. Ensure you are using the latest version of SVR and upload your svr_log.txt.");
     }
-
-#undef CAP
 }
 
 // Called when launching by the standalone launcher. This is before the process has started, and there are no game libraries loaded here.

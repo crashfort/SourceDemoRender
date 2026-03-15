@@ -70,11 +70,25 @@ struct SvrVec4I
     s32 w;
 };
 
+struct SvrVec4
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
 struct SvrVec3
 {
     float x;
     float y;
     float z;
+};
+
+struct SvrVec2
+{
+    float x;
+    float y;
 };
 
 template <class T>
@@ -137,6 +151,7 @@ bool svr_starts_with(const char* str, const char* prefix);
 bool svr_ends_with(const char* str, const char* suffix);
 
 s32 svr_to_utf16(const char* value, s32 value_length, wchar* buf, s32 buf_chars);
+s32 svr_to_utf8(const wchar* value, s32 value_length, char* dest, s32 dest_size);
 
 bool svr_is_sorted(s32* idxs, s32 num);
 bool svr_are_idxs_unique(s32* idxs, s32 num);
@@ -144,12 +159,13 @@ void svr_check_all_mask(bool* mask, s32 num, bool* all_false, bool* all_true);
 
 using SvrReadFileFlags = u32;
 
-enum /* SvrReadFileFlags */
+enum // SvrReadFileFlags
 {
-    SVR_READ_FILE_FLAGS_NEW_LINE = 1 << 0, // End with a new line.
+    SVR_READ_FILE_FLAGS_NEW_LINE = SVR_BIT(0), // End with a new line.
 };
 
 char* svr_read_file_as_string(const char* path, SvrReadFileFlags flags);
+void* svr_read_file(const char* path, s32* size);
 
 const char* svr_read_line(const char* start, char* dest, s32 dest_size);
 
@@ -183,9 +199,6 @@ SvrSplitTime svr_split_time(s64 us);
 // svr_rescale(16444, 1000, 1000000) results in 16.
 s64 svr_rescale(s64 a, s64 b, s64 c);
 
-bool svr_check_all_true(bool* opts, s32 num);
-bool svr_check_one_true(bool* opts, s32 num);
-s32 svr_count_num_true(bool* opts, s32 num);
 s32 svr_count_set_bits(u32 bits);
 
 bool svr_does_file_exist(const char* path);

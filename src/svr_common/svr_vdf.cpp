@@ -3,7 +3,7 @@
 
 using SvrVdfLineType = s32;
 
-enum /* SvrVdfLineType */
+enum // SvrVdfLineType
 {
     SVR_VDF_LINE_NONE,
     SVR_VDF_LINE_SECTION_NAME,
@@ -191,7 +191,6 @@ const char* svr_vdf_section_find_value_or(SvrVdfSection* priv, const char* key, 
 void svr_vdf_free(SvrVdfSection* root)
 {
     svr_vdf_section_free(root);
-    svr_free(root);
 }
 
 SvrVdfSection* svr_vdf_parse_state_get_cur_section(SvrVdfParseState* priv)
@@ -270,23 +269,23 @@ bool svr_vdf_section_is_root(SvrVdfSection* section)
     return section->name == NULL;
 }
 
-SvrVdfSection* svr_vdf_load(const char* path)
+bool svr_vdf_load(const char* path, SvrVdfSection* section)
 {
+    *section = {};
+
     char* file_mem = svr_read_file_as_string(path, 0);
 
     if (file_mem == NULL)
     {
-        return NULL;
+        return false;
     }
-
-    SvrVdfSection* root = SVR_ZALLOC(SvrVdfSection);
 
     char line[8192];
 
     const char* prev_str = file_mem;
 
     SvrVdfParseState parse_state = {};
-    parse_state.section_stack.push(root);
+    parse_state.section_stack.push(section);
 
     while (true)
     {
@@ -311,5 +310,5 @@ SvrVdfSection* svr_vdf_load(const char* path)
 
     svr_free(file_mem);
 
-    return root;
+    return true;
 }

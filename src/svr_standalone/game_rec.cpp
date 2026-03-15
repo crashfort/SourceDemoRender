@@ -150,7 +150,7 @@ void game_rec_start_movie(void* cmd_args)
 
     // Read start args.
 
-    SvrDynArray<SvrIniKeyValue*> inputs = {};
+    SvrDynArray<SvrIniKeyValue> inputs = {};
     svr_ini_parse_command_input(value_args, &inputs);
 
     const char* opt_profile = svr_ini_find_command_value(&inputs, "profile");
@@ -185,14 +185,12 @@ void game_rec_start_movie(void* cmd_args)
 
     // Only allowed containers that have sufficient encoder support.
     // Though DNxHR can only be used with MOV, we cannot check the content of the profile here.
-    bool valid_exts[] =
-    {
-        !strcmpi(movie_ext, ".mp4"),
-        !strcmpi(movie_ext, ".mkv"),
-        !strcmpi(movie_ext, ".mov"),
-    };
+    bool valid_ext =
+        !strcmpi(movie_ext, ".mp4") ||
+        !strcmpi(movie_ext, ".mkv") ||
+        !strcmpi(movie_ext, ".mov");
 
-    if (!svr_check_one_true(valid_exts, SVR_ARRAY_SIZE(valid_exts)))
+    if (!valid_ext)
     {
         svr_console_msg("File extension is wrong or missing. You may choose between MP4, MKV, MOV\n");
         svr_console_msg("\n");
@@ -206,13 +204,11 @@ void game_rec_start_movie(void* cmd_args)
 
     // These files must exist in order to set the right values.
 
-    bool required_cfgs[] =
-    {
-        game_has_cfg("svr_movie_start.cfg"),
-        game_has_cfg("svr_movie_end.cfg"),
-    };
+    bool required_cfgs =
+        game_has_cfg("svr_movie_start.cfg") &&
+        game_has_cfg("svr_movie_end.cfg");
 
-    if (!svr_check_all_true(required_cfgs, SVR_ARRAY_SIZE(required_cfgs)))
+    if (!required_cfgs)
     {
         svr_console_msg_and_log("Required files svr_start_movie.cfg and svr_movie_end.cfg could not be found\n");
         goto rfail;
@@ -238,14 +234,19 @@ void game_rec_start_movie(void* cmd_args)
     // Ensure the game runs at a fixed rate.
 
     game_state.rec_game_rate = svr_get_game_rate();
+    game_state.rec_video_fps = svr_get_video_frame_rate();
 
+    game_engine_client_command(svr_va("sv_minupdaterate %d\n", game_state.rec_video_fps));
+    game_engine_client_command(svr_va("sv_maxupdaterate %d\n", game_state.rec_video_fps));
     game_engine_client_command(svr_va("host_framerate %d\n", game_state.rec_game_rate));
+    game_engine_client_command(svr_va("cl_updaterate %d\n", game_state.rec_video_fps));
 
     // Allow recording the next frame.
     game_state.rec_state = GAME_REC_WAITING;
 
     // Reset recording state.
 
+    game_state.game_frames = 0;
     game_state.rec_num_frames = 0;
     game_state.rec_start_time = svr_prof_get_real_time();
 
@@ -289,12 +290,16 @@ void game_rec_end_movie()
     game_run_cfgs_for_event("end");
 
     game_wind_reset();
+    game_studio_stop_recording();
 }
 
 bool game_rec_run_frame()
 {
+    game_state.game_frames++;
+
     game_rec_update_recording_state();
     game_rec_update_autostop();
+    game_studio_update();
 
     if (game_state.rec_state == GAME_REC_POSSIBLE && svr_movie_active())
     {
@@ -309,6 +314,7 @@ void game_rec_do_record_frame()
 {
     game_audio_frame();
     game_velo_frame();
+    game_input_frame();
 
     svr_frame();
 

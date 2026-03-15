@@ -1,4 +1,5 @@
 #include "launcher_priv.h"
+#include "launcher_state.h"
 
 void LauncherState::init()
 {
@@ -14,9 +15,9 @@ void LauncherState::init()
     SYSTEMTIME lt;
     GetLocalTime(&lt);
 
-    launcher_log("SVR " SVR_ARCH_STRING " version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
-    launcher_log("This is a standalone version of SVR. Interoperability with other applications may not work\n");
-    launcher_log("For more information see https://github.com/crashfort/SourceDemoRender\n");
+    svr_log("SVR " SVR_ARCH_STRING " version %d (%02d/%02d/%04d %02d:%02d:%02d)\n", SVR_VERSION, lt.wDay, lt.wMonth, lt.wYear, lt.wHour, lt.wMinute, lt.wSecond);
+    svr_log("This is a standalone version of SVR. Interoperability with other applications may not work\n");
+    svr_log("For more information see https://github.com/crashfort/SourceDemoRender\n");
 
     sys_show_windows_version();
     sys_show_processor();
@@ -32,18 +33,6 @@ void LauncherState::init()
     load_games();
 
     svr_log("Found %d games\n", game_list.size);
-}
-
-// Will put both to console and to file.
-// Use printf for other messages that should not be shown in file.
-// Use svr_log for messages that should not be shown on screen.
-void LauncherState::launcher_log(const char* format, ...)
-{
-    va_list va;
-    va_start(va, format);
-    svr_log_v(format, va);
-    vprintf(format, va);
-    va_end(va);
 }
 
 __declspec(noreturn) void LauncherState::launcher_error(const char* format, ...)

@@ -3,11 +3,9 @@
 
 [Discord](https://discord.gg/5t8D68c)
 
-Source Video Render (SVR, formely SDR) is used to record movies for the Source engine. SVR does not have video effects - if you need video effects, see [HLAE](https://www.advancedfx.org/).
+Source Video Render is used to record movies for the Source engine. SVR does not have video effects - if you need video effects, see [HLAE](https://www.advancedfx.org/).
 
 SVR can record faster than realtime for normal videos, or with high quality motion blur.
-
-See [Replay Viewer](https://github.com/crashfort/ReplayViewer) as a substitute for Counter-Strike: Source Source TV demos! The replay viewer will produce significantly smoother videos without teleport lag and server side interpolation.
 
 ## Updates
 You can use `update.cmd` in the SVR directory to automatically download the latest release. The latest SVR will be downloaded to `svr.zip`. You can extract this folder and SVR is now updated.
@@ -16,7 +14,7 @@ You can use `update.cmd` in the SVR directory to automatically download the late
 Any DirectX 11 (Direct3D 11.3, feature level 12_0) compatible graphics adapter with minimum of Windows 10 1909 is required. Hardware feature support verification will occur when starting the launcher.
 
 ## Startup
-Use `svr_launcher.exe` or `svr_launcher64.exe` to start the standalone SVR launcher. The launcher allows you to select which game you want to start. The games database is stored in the `data/games` directory. Here you can create new game profiles if you wish to change the launch parameters or configurations. The following launch parameters are always added by the launcher: ``-steam -insecure +sv_lan 1 -console -novid``.
+Use `svr_launcher.exe` or `svr_launcher64.exe` to start the standalone SVR launcher. The launcher allows you to select which game you want to start. The games database is stored in the `data/games` directory. Here you can create new game profiles if you wish to change the launch parameters or configurations. The following launch parameters are always added by the launcher: ``-steam -insecure +sv_lan 1 -console -novid -noip``.
 
 The menu selection of the launcher can be bypassed by passing in the identification name for a game as a start argument to the launcher. As an example:
 
@@ -59,7 +57,7 @@ The execution order of the cfgs is as follows: `svr_movie_start.cfg > svr_movie_
 The commands that are placed in `svr_movie_start.cfg` are required and must not be overwritten. Most notably, the variable `mat_queue_mode` must be 0 during recording for recording to work properly.
 
 ## Something's not working
-If something is not working properly, please find the `SVR_LOG.txt` and `ENCODER_LOG.txt` file in the `data/` directory and explain what you were doing and upload it to [Discord](https://discord.gg/5t8D68c) or create a new issue here.
+If something is not working properly, please find the `svr_log.txt` and `encoder_log.txt` file in the `data/` directory and explain what you were doing and upload it to [Discord](https://discord.gg/5t8D68c) or create a new issue here.
 
 ## Interoperability with other programs
 Due to the nature of reverse engineering games, it cannot be trusted that direct interoperability (with ReShade or HLAE for example) will work because the risk of collision.
@@ -70,6 +68,9 @@ All recording settings are loaded from profiles which are located in `data/profi
 The default profile is used if no other is specified when starting the movie. You can override settings in the default profile by creating your own profiles inside `data/profiles`. When starting your movie you can then specify your new profile (see Recording above).
 
 The default profile is always loaded first, and your custom profile is loaded on top. This allows you to override individual setting without copying the entire profile. To create your own profile, create a file with an `.ini` extension inside `data/profiles/`. You can now override settings in the default profile by putting in the settings you want to override.
+
+## Studio
+SVR Studio is a Windows application to automatically manage render queues of events in demos. This is only supported for Counter-Strike Source 64-bit.
 
 ## Motion blur demo
 In this demo an object is rotating 6 times per second. This is a fast moving object, so higher samples per second will remove banding at cost of slower recording times. For slower scenes you may get away with a lower sampling rate. Exposure is dependant on the type of content being made. The goal you should be aiming for is to reduce the banding that happens with lower samples per second. A smaller exposure will leave shorter trails of motion blur.
@@ -83,8 +84,8 @@ The X axis is the samples per second and the Y axis is the exposure (click on th
 | 1.00 | ![mosample_960_100](https://user-images.githubusercontent.com/3614412/134065959-919d64e8-29b4-4d08-96bc-6e9c323082c4.png) | ![mosample_1920_100](https://user-images.githubusercontent.com/3614412/134065969-bef4d03d-3cc2-490e-bdd2-ab17db41978f.png) | ![mosample_3840_100](https://user-images.githubusercontent.com/3614412/134065977-9ed70fba-a8af-4e67-92cc-ca02b5d7bf5a.png) | ![mosample_7680_100](https://user-images.githubusercontent.com/3614412/134065982-991ba3c1-5b1a-4aef-8f5b-b54abf68cc47.png)
 
 ## Building
-1. Extract [ffmpeg-n5.1-latest-win64-gpl-shared-5.1](https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n5.1-latest-win64-gpl-shared-5.1.zip) to `deps\ffmpeg\`.
+1. Extract [ffmpeg-n8.0-latest-win64-gpl-shared-8.0](https://github.com/BtbN/FFmpeg-Builds/releases/tag/latest) to `deps\ffmpeg\`.
 2. Copy contents of `deps\ffmpeg\bin\` to `bin\`.
 3. Build `deps\minhook\build\VC16\MinHookVC16.sln` in Release.
-4. Open `svr.sln`.
-5. Call `build_shaders.cmd` from a Visual Studio Developer Command Prompt. In Visual Studio 2022, you can use `Tools -> Command Line -> Developer Command Prompt`.
+4. Open `svr.slnx`.
+5. Call `build_shaders.cmd` from a Visual Studio Developer Command Prompt. In Visual Studio 2026, you can use `Tools -> Command Line -> Developer Command Prompt`.

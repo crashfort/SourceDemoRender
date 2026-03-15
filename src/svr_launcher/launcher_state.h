@@ -21,7 +21,6 @@ struct LauncherState
 
     void init();
 
-    void launcher_log(const char* format, ...);
     __declspec(noreturn) void launcher_error(const char* format, ...);
     s32 get_choice_from_user(s32 min, s32 max);
     s32 start_game(LauncherGame* game);
