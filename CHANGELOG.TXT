@@ -1,4 +1,4 @@
-Version 44, xxx 2026
+Version 44, 16 March 2026
 ---------------------------
 
 * Fixed x64 CS:S launch.
