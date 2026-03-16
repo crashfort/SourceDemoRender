@@ -1,3 +1,17 @@
+Version 44, xxx 2026
+---------------------------
+
+* Fixed x64 CS:S launch.
+* Fixed x64 CS:S velo.
+* Improved performance when using velo border.
+* Added input display for demos created using SVR Source TV addon.
+* Added interpolation latency compensation to velo and input display.
+* Updated encoder ffmpeg libraries to version 8.
+* Created SVR Studio application for automated rendering of events in demos.
+* Improved startup synchronization with SVR Encoder process.
+* Improved performance when using motion blur.
+* Created SVR Source TV addon for better server demo recordings: 1:1 game tick rate, better position and view angle precision, possibility for input display. This only exists for server operators.
+
 Version 43, 4 June 2024
 ---------------------------
 
