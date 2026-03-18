@@ -71,7 +71,7 @@ bool game_studio_init()
 
     // Mute the process for this session when using studio.
     // This legacy function works fine for this, and doesn't require the WASAPI COM cascade.
-    // The original volume is automatically restored when the prcoess starts normally next time.
+    // The original volume is automatically restored when the process starts normally next time.
     waveOutSetVolume(NULL, 0);
 
     game_state.studio_peer = &game_state.studio_shared_ptr->game_peer;
