@@ -125,11 +125,6 @@ rexit:
 
 void ProcState::mosample_free_static()
 {
-    svr_maybe_release(&mosample_work_tex);
-    svr_maybe_release(&mosample_work_tex_rtv);
-    svr_maybe_release(&mosample_work_tex_srv);
-    svr_maybe_release(&mosample_work_tex_uav);
-
     svr_maybe_release(&mosample_cs);
     svr_maybe_release(&mosample_downsample_cs);
     svr_maybe_release(&mosample_cb);
@@ -137,6 +132,10 @@ void ProcState::mosample_free_static()
 
 void ProcState::mosample_free_dynamic()
 {
+    svr_maybe_release(&mosample_work_tex);
+    svr_maybe_release(&mosample_work_tex_rtv);
+    svr_maybe_release(&mosample_work_tex_srv);
+    svr_maybe_release(&mosample_work_tex_uav);
 }
 
 bool ProcState::mosample_start()
