@@ -51,7 +51,7 @@ struct MovieProfile
 
     // Velo options:
     s32 velo_enabled;
-    char* velo_font; // Allocated.
+    char velo_font[128];
     s32 velo_font_size;
     SvrVec4I velo_font_color;
     SvrVec4I velo_font_border_color;

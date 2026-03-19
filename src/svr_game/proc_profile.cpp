@@ -134,7 +134,7 @@ void ProcState::movie_setup_default_profile()
     movie_profile.mosample_exposure = 0.5f;
 
     movie_profile.velo_enabled = 0;
-    movie_profile.velo_font = "Segoe UI";
+    SVR_COPY_STRING("Segoe UI", movie_profile.velo_font);
     movie_profile.velo_font_size = 48;
     movie_profile.velo_font_color = { 200, 200, 200,255 };
     movie_profile.velo_font_border_color = { 0, 0, 0,255 };
@@ -185,7 +185,7 @@ bool ProcState::movie_load_profile(const char* name)
     ret &= OPT_FLOAT(&ini_root, "motion_blur_exposure", 0.0f, 1.0f, &movie_profile.mosample_exposure);
 
     ret &= OPT_BOOL(&ini_root, "velo_enabled", &movie_profile.velo_enabled);
-    ret &= OPT_STR(&ini_root, "velo_font", &movie_profile.velo_font);
+    ret &= OPT_STR(&ini_root, "velo_font", movie_profile.velo_font);
     ret &= OPT_S32(&ini_root, "velo_font_size", 16, 192, &movie_profile.velo_font_size);
     ret &= OPT_COLOR(&ini_root, "velo_color", &movie_profile.velo_font_color);
     ret &= OPT_COLOR(&ini_root, "velo_border_color", &movie_profile.velo_font_border_color);
@@ -202,6 +202,7 @@ bool ProcState::movie_load_profile(const char* name)
     ret &= OPT_COLOR(&ini_root, "input_inactive_color", &movie_profile.input_inactive_color);
     ret &= OPT_S32(&ini_root, "input_scale", 50, 500, &movie_profile.input_scale);
 
+    ret = true;
     goto rexit;
 
 rfail:

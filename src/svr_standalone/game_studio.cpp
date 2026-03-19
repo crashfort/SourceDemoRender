@@ -127,20 +127,23 @@ void game_studio_update()
         {
             StudioSharedSkipToStartCmd* cmd = &game_state.studio_peer->cmd_data.skip_to_start_cmd;
 
+            // Returns when the target tick is reached.
+            game_state.studio_pending_cmd = cmd_id;
+
             // Go to set tick (%d), not relative (0) and pause (1).
             game_engine_client_command(svr_va("demo_gototick %d 0 1\n", cmd->tick));
 
             // Set free roaming observer mode and allow super fast forward.
             game_engine_client_command("spec_mode 6; host_framerate 1; r_norefresh 1\n");
-
-            // Returns when the target tick is reached.
-            game_state.studio_pending_cmd = cmd_id;
             break;
         }
 
         case STUDIO_SHARED_CMD_START_REC:
         {
             StudioSharedStartRecCmd* cmd = &game_state.studio_peer->cmd_data.start_rec_cmd;
+
+            // Returns when the recording ends.
+            game_state.studio_pending_cmd = cmd_id;
 
             if (cmd->steam_id[0])
             {
@@ -154,9 +157,6 @@ void game_studio_update()
 
             game_engine_client_command(svr_va("startmovie %s timeout=%d profile=%s\n", cmd->movie_name, cmd->movie_length, cmd->profile));
 
-            // Returns when the recording ends.
-            game_state.studio_pending_cmd = cmd_id;
-
             game_state.studio_spec_skips = 0;
             game_state.studio_next_spec_skip = 4;
             break;
@@ -166,10 +166,10 @@ void game_studio_update()
         {
             StudioSharedPlayDemoCmd* cmd = &game_state.studio_peer->cmd_data.play_demo_cmd;
 
-            game_engine_client_command(svr_va("playdemo %s\n", cmd->demo_name));
-
             // Returns when the demo starts.
             game_state.studio_pending_cmd = cmd_id;
+
+            game_engine_client_command(svr_va("playdemo %s\n", cmd->demo_name));
             break;
         }
 

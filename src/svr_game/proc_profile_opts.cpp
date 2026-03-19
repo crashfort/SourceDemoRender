@@ -46,20 +46,14 @@ bool opt_atof_in_range(SvrIniKeyValue* kv, float min, float max, float* dest)
     return true;
 }
 
-bool opt_str_or(SvrIniKeyValue* kv, char** dest)
+bool opt_str_or(SvrIniKeyValue* kv, char* dest, s32 dest_size)
 {
     if (kv == NULL)
     {
         return false;
     }
 
-    if (*dest)
-    {
-        svr_free(*dest);
-        *dest = NULL;
-    }
-
-    *dest = svr_dup_str(kv->value);
+    svr_copy_string(kv->value, dest, dest_size);
     return true;
 }
 
