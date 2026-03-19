@@ -13,7 +13,9 @@ bool EncoderState::init(HANDLE in_shared_mem_h)
 
     if (shared_mem_ptr == NULL)
     {
-        error("ERROR: Could not view encoder shared memory (%lu)\n", GetLastError());
+        DWORD error_code = GetLastError();
+
+        error("ERROR: Could not view encoder shared memory (%lu)\n", error_code);
         goto rfail;
     }
 
@@ -26,7 +28,9 @@ bool EncoderState::init(HANDLE in_shared_mem_h)
 
     if (game_process == NULL)
     {
-        error("ERROR: Could not open game process (%lu)\n", GetLastError());
+        DWORD error_code = GetLastError();
+
+        error("ERROR: Could not open game process (%lu)\n", error_code);
         goto rfail;
     }
 

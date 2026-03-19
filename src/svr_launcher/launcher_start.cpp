@@ -28,7 +28,9 @@ s32 LauncherState::start_game(LauncherGame* game)
 
     if (!CreateProcessA(game->path, full_args, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &start_info, &info))
     {
-        svr_log("CreateProcessA failed with code %lu\n", GetLastError());
+        DWORD error = GetLastError();
+
+        svr_log("CreateProcessA failed with code %lu\n", error);
         launcher_error("Could not initialize standalone SVR. If you use an antivirus, add exception or disable.");
     }
 
@@ -271,7 +273,9 @@ bool LauncherState::exe_is_right_arch(const char* path)
 
     if (!GetBinaryTypeA(path, &exe_type))
     {
-        svr_log("GetBinaryTypeA failed with code %lu\n", GetLastError());
+        DWORD error = GetLastError();
+
+        svr_log("GetBinaryTypeA failed with code %lu\n", error);
         return false;
     }
 

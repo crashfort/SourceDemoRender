@@ -107,7 +107,9 @@ bool ProcState::encoder_create_shared_mem()
 
     if (encoder_shared_mem_h == NULL)
     {
-        svr_log("ERROR: Could not create encoder shared memory (%lu)\n", GetLastError());
+        DWORD error = GetLastError();
+
+        svr_log("ERROR: Could not create encoder shared memory (%lu)\n", error);
         goto rfail;
     }
 
@@ -116,7 +118,9 @@ bool ProcState::encoder_create_shared_mem()
     // This can't fail in this case, but check anyway I guess.
     if (encoder_shared_ptr == NULL)
     {
-        svr_log("ERROR: Could not view encoder shared memory (%lu)\n", GetLastError());
+        DWORD error = GetLastError();
+
+        svr_log("ERROR: Could not view encoder shared memory (%lu)\n", error);
         goto rfail;
     }
 
@@ -179,7 +183,9 @@ bool ProcState::encoder_start_process()
     // Need to inherit handles so we can pass the shared memory handle as a parameter.
     if (!CreateProcessA(NULL, full_args, NULL, NULL, TRUE, flags, NULL, svr_resource_path, &start_info, &proc_info))
     {
-        svr_log("ERROR: Could not create encoder process (%lu)\n", GetLastError());
+        DWORD error = GetLastError();
+
+        svr_log("ERROR: Could not create encoder process (%lu)\n", error);
         goto rfail;
     }
 
@@ -203,7 +209,9 @@ bool ProcState::encoder_start_process()
 
     if (waited == WAIT_FAILED)
     {
-        svr_log("ERROR: Could not determine the state of the encoder process (%lu)\n", GetLastError());
+        DWORD error = GetLastError();
+
+        svr_log("ERROR: Could not determine the state of the encoder process (%lu)\n", error);
         goto rfail;
     }
 
@@ -303,7 +311,9 @@ bool ProcState::encoder_set_shared_mem_params()
 
     if (res == 0)
     {
-        svr_log("ERROR: Could not duplicate share texture handle to svr_encoder (%lu)\n", GetLastError());
+        DWORD error = GetLastError();
+
+        svr_log("ERROR: Could not duplicate share texture handle to svr_encoder (%lu)\n", error);
         goto rfail;
     }
 

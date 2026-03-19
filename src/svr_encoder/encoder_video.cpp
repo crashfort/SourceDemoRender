@@ -157,7 +157,9 @@ bool EncoderState::vid_load_shader(const char* name)
 
     if (h == INVALID_HANDLE_VALUE)
     {
-        error("ERROR: Could not load shader %s (%lu)\n", name, GetLastError());
+        DWORD error_code = GetLastError();
+
+        error("ERROR: Could not load shader %s (%lu)\n", name, error_code);
         goto rfail;
     }
 
