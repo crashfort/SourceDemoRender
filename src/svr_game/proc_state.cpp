@@ -127,20 +127,18 @@ bool ProcState::start(const char* dest_file, const char* profile, ProcGameTextur
 
     // Must load the profiles first!
     // The default profile is the base profile, and other profiles can override individual options.
+    movie_setup_default_profile();
 
-    if (!movie_load_profile("default", true))
+    if (!movie_load_profile("default"))
     {
         goto rfail;
     }
 
-    if (profile)
+    if (profile && profile[0])
     {
-        if (profile[0])
+        if (!movie_load_profile(profile))
         {
-            if (!movie_load_profile(profile, false))
-            {
-                goto rfail;
-            }
+            goto rfail;
         }
     }
 

@@ -15,18 +15,18 @@ using ProcVeloAnchor = s32;
 
 enum // ProcVeloAnchor
 {
-    VELO_ANCHOR_LEFT,
-    VELO_ANCHOR_CENTER,
-    VELO_ANCHOR_RIGHT,
+    PROC_VELO_ANCHOR_LEFT,
+    PROC_VELO_ANCHOR_CENTER,
+    PROC_VELO_ANCHOR_RIGHT,
 };
 
 using ProcVeloLength = s32;
 
 enum // ProcVeloLength
 {
-    VELO_LENGTH_XY,
-    VELO_LENGTH_XYZ,
-    VELO_LENGTH_Z,
+    PROC_VELO_LENGTH_XY,
+    PROC_VELO_LENGTH_XYZ,
+    PROC_VELO_LENGTH_Z,
 };
 
 struct MovieProfile
@@ -307,7 +307,8 @@ struct ProcState
     bool movie_start();
     void movie_end();
     void movie_setup_params();
-    bool movie_load_profile(const char* name, bool required);
+    void movie_setup_default_profile();
+    bool movie_load_profile(const char* name);
 
     // -----------------------------------------------
     // Studio state:

@@ -165,12 +165,12 @@ void ProcState::velo_draw()
 
     SvrVec2 pos = velo_draw_pos;
 
-    if (movie_profile.velo_anchor == VELO_ANCHOR_CENTER)
+    if (movie_profile.velo_anchor == PROC_VELO_ANCHOR_CENTER)
     {
         pos.x = velo_draw_pos.x - (w / 2.0f);
     }
 
-    if (movie_profile.velo_anchor == VELO_ANCHOR_RIGHT)
+    if (movie_profile.velo_anchor == PROC_VELO_ANCHOR_RIGHT)
     {
         pos.x -= w;
     }
@@ -247,19 +247,19 @@ float ProcState::velo_get_length(SvrVec3 vec)
 
     switch (movie_profile.velo_length)
     {
-        case VELO_LENGTH_XY:
+        case PROC_VELO_LENGTH_XY:
         {
             length = (vec.x * vec.x) + (vec.y * vec.y);
             break;
         }
 
-        case VELO_LENGTH_XYZ:
+        case PROC_VELO_LENGTH_XYZ:
         {
             length = (vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z);
             break;
         }
         
-        case VELO_LENGTH_Z:
+        case PROC_VELO_LENGTH_Z:
         {
             length = (vec.z * vec.z);
             break;

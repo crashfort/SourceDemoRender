@@ -30,17 +30,17 @@ OptStrIntMapping VELO_FONT_STYLE_TABLE[] =
 // Names for ini.
 OptStrIntMapping VELO_ANCHOR_TABLE[] =
 {
-    OptStrIntMapping { "left", VELO_ANCHOR_LEFT },
-    OptStrIntMapping { "center", VELO_ANCHOR_CENTER },
-    OptStrIntMapping { "right", VELO_ANCHOR_RIGHT },
+    OptStrIntMapping { "left", PROC_VELO_ANCHOR_LEFT },
+    OptStrIntMapping { "center", PROC_VELO_ANCHOR_CENTER },
+    OptStrIntMapping { "right", PROC_VELO_ANCHOR_RIGHT },
 };
 
 // Names for ini.
 OptStrIntMapping VELO_LENGTH_TABLE[] =
 {
-    OptStrIntMapping { "xy", VELO_LENGTH_XY },
-    OptStrIntMapping { "xyz", VELO_LENGTH_XYZ },
-    OptStrIntMapping { "z", VELO_LENGTH_Z },
+    OptStrIntMapping { "xy", PROC_VELO_LENGTH_XY },
+    OptStrIntMapping { "xyz", PROC_VELO_LENGTH_XYZ },
+    OptStrIntMapping { "z", PROC_VELO_LENGTH_Z },
 };
 
 // Names for ini.
@@ -113,8 +113,46 @@ void ProcState::movie_setup_params()
     movie_height = tex_desc.Height;
 }
 
-// A required profile must have all variables set to a proper value. This is used with the default profile.
-bool ProcState::movie_load_profile(const char* name, bool required)
+void ProcState::movie_setup_default_profile()
+{
+    movie_profile = {};
+
+    movie_profile.video_fps = 60;
+    movie_profile.video_encoder = "dnxhr";
+    movie_profile.video_x264_crf = 15;
+    movie_profile.video_x264_preset = "ultrafast";
+    movie_profile.video_x264_intra = 0;
+    movie_profile.video_dnxhr_profile = "hq";
+
+    movie_profile.audio_enabled = 0;
+    movie_profile.audio_encoder = "aac";
+
+    movie_profile.lagcomp_override = 0.1f;
+
+    movie_profile.mosample_enabled = 0;
+    movie_profile.mosample_mult = 60;
+    movie_profile.mosample_exposure = 0.5f;
+
+    movie_profile.velo_enabled = 0;
+    movie_profile.velo_font = "Segoe UI";
+    movie_profile.velo_font_size = 48;
+    movie_profile.velo_font_color = { 200, 200, 200,255 };
+    movie_profile.velo_font_border_color = { 0, 0, 0,255 };
+    movie_profile.velo_font_border_size = 0;
+    movie_profile.velo_font_style = DWRITE_FONT_STYLE_NORMAL;
+    movie_profile.velo_font_weight = DWRITE_FONT_WEIGHT_NORMAL;
+    movie_profile.velo_align = { 0, 90 };
+    movie_profile.velo_anchor = PROC_VELO_ANCHOR_CENTER;
+    movie_profile.velo_length = PROC_VELO_LENGTH_XY;
+
+    movie_profile.input_enabled = 0;
+    movie_profile.input_align = { 0, 50 };
+    movie_profile.input_scale = 100;
+    movie_profile.input_active_color = { 200, 200, 200, 255 };
+    movie_profile.input_inactive_color = { 50, 50, 50, 255 };
+}
+
+bool ProcState::movie_load_profile(const char* name)
 {
     char full_profile_path[MAX_PATH];
     SVR_SNPRINTF(full_profile_path, "%s\\data\\profiles\\%s.ini", svr_resource_path, name);
@@ -164,15 +202,9 @@ bool ProcState::movie_load_profile(const char* name, bool required)
     ret &= OPT_COLOR(&ini_root, "input_inactive_color", &movie_profile.input_inactive_color);
     ret &= OPT_S32(&ini_root, "input_scale", 50, 500, &movie_profile.input_scale);
 
-    if (!required)
-    {
-        ret = true;
-    }
-
     goto rexit;
 
 rfail:
-
 rexit:
     svr_ini_free(&ini_root);
 
