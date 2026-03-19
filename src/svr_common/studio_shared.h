@@ -122,7 +122,7 @@ struct StudioSharedMem
     // Studio process id.
     u32 studio_pid;
 
-    // Unique identifier for this studio session.
+    // Unique identifier for this studio session (the rendering command id).
     s32 session;
 
     SVR_THREAD_PADDING();
