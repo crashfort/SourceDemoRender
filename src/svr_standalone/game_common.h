@@ -231,6 +231,7 @@ struct GameState
     StudioSharedCmdId studio_pending_cmd;
     s32 studio_spec_skips;
     s32 studio_next_spec_skip;
+    bool studio_started_con_log;
 };
 
 extern GameState game_state;

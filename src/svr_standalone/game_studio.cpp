@@ -96,6 +96,12 @@ void game_studio_update()
         return;
     }
 
+    if (!game_state.studio_started_con_log)
+    {
+        game_engine_client_command(svr_va("con_logfile svr_con_log%d.txt\n", game_state.studio_shared_ptr->session));
+        game_state.studio_started_con_log = true;
+    }
+
     game_studio_update_pending_cmd();
 
     if (svr_movie_active())
@@ -264,9 +270,6 @@ void game_studio_stop_recording()
     }
 
     assert(game_state.studio_pending_cmd == STUDIO_SHARED_CMD_START_REC);
-
-    // Dump console for troubleshooting.
-    game_engine_client_command("condump\n");
 
     // Command finished.
     game_state.studio_pending_cmd = STUDIO_SHARED_CMD_NONE;
