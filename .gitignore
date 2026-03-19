@@ -25,3 +25,4 @@ bin/live_edit.ini
 *.dem
 *.rec
 bin/data/studio_log.txt
+bin/data/studio_settings.bin
