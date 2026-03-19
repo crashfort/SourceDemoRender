@@ -85,6 +85,8 @@ struct StudioSharedPeer
 
     // Write error strings to this.
     char error[256];
+
+    SVR_THREAD_PADDING();
 };
 
 // Memory that is shared between the processes.
@@ -119,4 +121,6 @@ struct StudioSharedMem
 
     // Studio process id.
     u32 studio_pid;
+
+    SVR_THREAD_PADDING();
 };
