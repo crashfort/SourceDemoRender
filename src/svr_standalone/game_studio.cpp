@@ -279,3 +279,19 @@ bool game_studio_active()
 {
     return game_state.studio_shared_mem_h;
 }
+
+void game_studio_movie_start_failed()
+{
+    if (!game_studio_active())
+    {
+        return;
+    }
+
+    assert(game_state.studio_pending_cmd == STUDIO_SHARED_CMD_START_REC);
+
+    // Command finished.
+    game_state.studio_pending_cmd = STUDIO_SHARED_CMD_NONE;
+
+    SVR_COPY_STRING("Could not start movie. See svr_log.txt for details", game_state.studio_peer->error);
+    SetEvent((HANDLE)game_state.studio_peer->wake_studio_h);
+}

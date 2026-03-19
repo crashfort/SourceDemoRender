@@ -384,6 +384,7 @@ void game_studio_update();
 void game_studio_update_pending_cmd();
 void game_studio_stop_recording();
 bool game_studio_active();
+void game_studio_movie_start_failed();
 
 // -----------------------------------------------
 // game_cfg.cpp:

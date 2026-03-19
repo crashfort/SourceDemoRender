@@ -117,7 +117,7 @@ void game_rec_start_movie(void* cmd_args)
     if (*args == 0)
     {
         svr_console_msg("Internal engine command parsing error\n");
-        return;
+        goto rfail;
     }
 
     const char* value_args = svr_advance_until_whitespace(args);
@@ -137,7 +137,7 @@ void game_rec_start_movie(void* cmd_args)
     if (movie_name[0] == 0)
     {
         game_rec_show_start_movie_usage();
-        return;
+        goto rfail;
     }
 
     // Defaults for start args.
@@ -199,7 +199,7 @@ void game_rec_start_movie(void* cmd_args)
         svr_console_msg("    startmovie a.mov\n");
         svr_console_msg("\n");
         svr_console_msg("For more information see https://github.com/crashfort/SourceDemoRender\n");
-        return;
+        goto rfail;
     }
 
     // These files must exist in order to set the right values.
@@ -258,8 +258,11 @@ void game_rec_start_movie(void* cmd_args)
 
     goto rexit;
 
-rfail:;
-rexit:;
+rfail:
+    game_studio_movie_start_failed();
+
+rexit:
+    ;
 }
 
 void game_rec_end_movie()
