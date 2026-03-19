@@ -98,7 +98,7 @@ void game_studio_update()
 
     if (!game_state.studio_started_con_log)
     {
-        game_engine_client_command(svr_va("con_logfile svr_con_log%d.txt\n", game_state.studio_shared_ptr->session));
+        game_engine_client_command(svr_va("con_logfile svr_con_log%d.txt\n", svr_atom_load(&game_state.studio_shared_ptr->session)));
         game_state.studio_started_con_log = true;
     }
 
