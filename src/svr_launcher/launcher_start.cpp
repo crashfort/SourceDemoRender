@@ -37,7 +37,6 @@ s32 LauncherState::start_game(LauncherGame* game)
     ipc_setup_in_remote_process(game, info.hProcess, info.hThread);
 
     svr_log("Launcher finished, rest of the log is from the game\n");
-    svr_log("---------------------------------------------------\n");
 
     // Need to close the file so the game can open it.
     svr_free_log();

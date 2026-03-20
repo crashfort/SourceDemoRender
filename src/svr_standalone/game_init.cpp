@@ -32,6 +32,7 @@ void game_init_log()
     svr_init_log(log_file_path, true);
 
     // Need to notify that we have started because a lot of things can go wrong in standalone launch.
+    svr_log("---------------------------------------------------\n");
     svr_log("Hello from the game\n");
 }
 
