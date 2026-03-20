@@ -44,8 +44,8 @@ void game_studio_early_init()
     game_state.set_window_pos_ov.target = SetWindowPos;
     game_state.set_window_pos_ov.override = game_studio_set_window_pos_override;
 
-    // game_hook_create(&game_state.set_window_pos_ov, &game_state.set_window_pos_hook);
-    // game_hook_enable(&game_state.set_window_pos_hook, true);
+    game_hook_create(&game_state.set_window_pos_ov, &game_state.set_window_pos_hook);
+    game_hook_enable(&game_state.set_window_pos_hook, true);
 }
 
 bool game_studio_init()
