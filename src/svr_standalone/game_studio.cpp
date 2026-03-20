@@ -72,6 +72,10 @@ bool game_studio_init()
     // Mute the process for this session when using studio.
     // This legacy function works fine for this, and doesn't require the WASAPI COM cascade.
     // The original volume is automatically restored when the process starts normally next time.
+    //
+    // ACTUALLY: Muting through this function causes permanent volume loss for most users when restarting the game, even without studio.
+    // The volume mixer shows that the process is not muted. I can not personally reproduce this but for now don't mute the process at all.
+    // Set to max volume to restore any pending issues.
     waveOutSetVolume(NULL, UINT32_MAX);
 
     game_state.studio_peer = &game_state.studio_shared_ptr->game_peer;
