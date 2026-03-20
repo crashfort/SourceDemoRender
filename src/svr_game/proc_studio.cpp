@@ -52,7 +52,7 @@ bool ProcState::studio_init()
 
     studio_peer = &studio_shared_ptr->proc_peer;
 
-    svr_log("Proc (Studio): Connected to SVR Studio\n");
+    svr_log("Proc (Studio): Connected to SVR Studio (session %d)\n", svr_atom_load(&studio_shared_ptr->session));
 
     // Notify started.
     SetEvent((HANDLE)studio_peer->wake_studio_h);

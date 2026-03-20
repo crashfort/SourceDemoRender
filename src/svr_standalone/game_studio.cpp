@@ -80,7 +80,7 @@ bool game_studio_init()
 
     game_state.studio_peer = &game_state.studio_shared_ptr->game_peer;
 
-    svr_console_msg_and_log("Game (Studio): Connected to SVR Studio\n");
+    svr_console_msg_and_log("Game (Studio): Connected to SVR Studio (session %d)\n", svr_atom_load(&game_state.studio_shared_ptr->session));
 
     // Notify started.
     SetEvent((HANDLE)game_state.studio_peer->wake_studio_h);
