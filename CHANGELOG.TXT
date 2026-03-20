@@ -1,3 +1,10 @@
+Version 45, 20 March 2026
+---------------------------
+
+* Fixed permanent game audio mute for some users.
+* Fixed standalone log not being reset between studio sessions.
+* Fixed tampering of the default profile causing the studio process to not continue.
+
 Version 44, 16 March 2026
 ---------------------------
 
