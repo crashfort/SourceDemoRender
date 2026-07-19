@@ -56,6 +56,7 @@ struct MovieProfile
     SvrVec4I velo_font_color;
     SvrVec4I velo_font_border_color;
     s32 velo_font_border_size;
+    s32 velo_shadow_offset;
     DWRITE_FONT_STYLE velo_font_style;
     DWRITE_FONT_WEIGHT velo_font_weight;
     SvrVec2I velo_align;

@@ -139,6 +139,7 @@ void ProcState::movie_setup_default_profile()
     movie_profile.velo_font_color = { 200, 200, 200,255 };
     movie_profile.velo_font_border_color = { 0, 0, 0,255 };
     movie_profile.velo_font_border_size = 0;
+    movie_profile.velo_shadow_offset = 0;
     movie_profile.velo_font_style = DWRITE_FONT_STYLE_NORMAL;
     movie_profile.velo_font_weight = DWRITE_FONT_WEIGHT_NORMAL;
     movie_profile.velo_align = { 0, 90 };
@@ -190,6 +191,7 @@ bool ProcState::movie_load_profile(const char* name)
     ret &= OPT_COLOR(&ini_root, "velo_color", &movie_profile.velo_font_color);
     ret &= OPT_COLOR(&ini_root, "velo_border_color", &movie_profile.velo_font_border_color);
     ret &= OPT_S32(&ini_root, "velo_border_size", 0, 192, &movie_profile.velo_font_border_size);
+    ret &= OPT_S32(&ini_root, "velo_shadow_offset", 0, 192, &movie_profile.velo_shadow_offset);
     ret &= OPT_STR_MAP(&ini_root, "velo_font_style", VELO_FONT_STYLE_TABLE, (s32*)&movie_profile.velo_font_style);
     ret &= OPT_STR_MAP(&ini_root, "velo_font_weight", VELO_FONT_WEIGHT_TABLE, (s32*)&movie_profile.velo_font_weight);
     ret &= OPT_VEC2(&ini_root, "velo_align", &movie_profile.velo_align);
