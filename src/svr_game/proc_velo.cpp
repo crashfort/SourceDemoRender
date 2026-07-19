@@ -216,8 +216,8 @@ void ProcState::velo_draw()
         if (movie_profile.velo_shadow_offset > 0)
         {
             SvrVec2 pos_copy = pos;
-            pos_copy.x += 2.0f;
-            pos_copy.y += 2.0f;
+            pos_copy.x += movie_profile.velo_shadow_offset;
+            pos_copy.y += movie_profile.velo_shadow_offset;
 
             vid_d2d1_solid_brush->SetColor(vid_convert(movie_profile.velo_font_border_color));
             vid_d2d1_context->DrawGlyphRun(vid_convert(pos_copy), &run, vid_d2d1_solid_brush);
