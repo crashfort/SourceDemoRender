@@ -134,7 +134,7 @@ void ProcState::velo_draw()
     }
 
     float length = velo_get_length(front);
-    s32 speed = (s32)(sqrtf(length) + 0.5f);
+    s32 speed = (s32)sqrtf(length);
 
     char buf[128];
     s32 text_length = SVR_SNPRINTF(buf, "%d", speed);
