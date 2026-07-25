@@ -145,6 +145,7 @@ void ProcState::movie_setup_default_profile()
     movie_profile.velo_align = { 0, 90 };
     movie_profile.velo_anchor = PROC_VELO_ANCHOR_CENTER;
     movie_profile.velo_length = PROC_VELO_LENGTH_XY;
+    movie_profile.velo_fps = 20;
 
     movie_profile.input_enabled = 0;
     movie_profile.input_align = { 0, 50 };
@@ -197,6 +198,7 @@ bool ProcState::movie_load_profile(const char* name)
     ret &= OPT_VEC2(&ini_root, "velo_align", &movie_profile.velo_align);
     ret &= OPT_STR_MAP(&ini_root, "velo_anchor", VELO_ANCHOR_TABLE, &movie_profile.velo_anchor);
     ret &= OPT_STR_MAP(&ini_root, "velo_length", VELO_LENGTH_TABLE, &movie_profile.velo_length);
+    ret &= OPT_S32(&ini_root, "velo_fps", 1, 9999, &movie_profile.velo_fps);
 
     ret &= OPT_BOOL(&ini_root, "input_enabled", &movie_profile.input_enabled);
     ret &= OPT_VEC2(&ini_root, "input_align", &movie_profile.input_align);

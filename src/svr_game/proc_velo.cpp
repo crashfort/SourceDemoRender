@@ -98,6 +98,7 @@ bool ProcState::velo_start()
 
     velo_lagcomp_write = 0;
     velo_lagcomp_read = 0;
+    velo_accum_time = 0.0f;
 
     ret = true;
     goto rexit;
@@ -236,7 +237,15 @@ void ProcState::velo_draw()
 
 void ProcState::velo_give(SvrVec3 source)
 {
-    velo_latest_vectors = source;
+    velo_accum_time += (1.0f / movie_profile.video_fps);
+
+    float velo_fps_reciprocal = (1.0f / movie_profile.velo_fps);
+
+    if (velo_accum_time >= velo_fps_reciprocal)
+    {
+        velo_latest_vectors = source;
+        velo_accum_time = 0.0f;
+    }
 }
 
 // Percentage alignments based from the center of the screen.

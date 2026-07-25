@@ -62,6 +62,7 @@ struct MovieProfile
     SvrVec2I velo_align;
     ProcVeloAnchor velo_anchor;
     ProcVeloLength velo_length;
+    s32 velo_fps;
 
     // Input options:
     s32 input_enabled;
@@ -152,6 +153,7 @@ struct ProcState
     SvrVec3 velo_vectors[PROC_LAGCOMP_MAX];
     u64 velo_lagcomp_write;
     u64 velo_lagcomp_read;
+    float velo_accum_time;
 
     IDWriteFontFace* velo_font_face;
     SvrVec2 velo_draw_pos;
