@@ -30,7 +30,7 @@ void game_engine_client_command_proxy_1(GameFnProxy* proxy, void* params, void* 
 
 void game_player_by_index_proxy_0(GameFnProxy* proxy, void* params, void* res)
 {
-    using DestFn = void*(__cdecl*)(s32 index);
+    using DestFn = void* (__cdecl*)(s32 index);
     DestFn fn = (DestFn)proxy->target;
     *(void**)res = fn(*(s32*)params);
 }
@@ -105,7 +105,7 @@ void game_local_player_proxy_1(GameFnProxy* proxy, void* params, void* res)
 
 void game_spec_target_or_local_player_proxy_0(GameFnProxy* proxy, void* params, void* res)
 {
-    using DestFn = void*(__cdecl*)();
+    using DestFn = void* (__cdecl*)();
     DestFn fn = (DestFn)proxy->target;
     *(void**)res = fn();
 }
@@ -129,7 +129,7 @@ void game_cvar_restrict_proxy_0(GameFnProxy* proxy, void* params, void* res)
     // If the game has a restriction that prevents console variables from changing when in game or demo playback.
     // This changes so it is always allowed to change any console variable.
     s32 cvar_restrict_patch_bytes = 0x00;
-    game_apply_patch(proxy->target, &cvar_restrict_patch_bytes, sizeof(cvar_restrict_patch_bytes));
+    game_apply_patch(proxy->target, &cvar_restrict_patch_bytes, sizeof(cvar_restrict_patch_bytes), NULL);
 }
 
 // ----------------------------------------------------------------
@@ -151,6 +151,33 @@ void game_demo_player_playback_tick_proxy_0(GameFnProxy* proxy, void* params, vo
     using DestFn = s32(__fastcall*)(void* p, void* edx);
     DestFn func = (DestFn)proxy->target;
     *(s32*)res = func(proxy->extra[0], NULL);
+}
+
+void game_local_velo_estimation_proxy_0(GameFnProxy* proxy, void* params, void* res)
+{
+    bool enable = *(bool*)params;
+
+    if (!enable)
+    {
+        // Patch to remove.
+
+        s32 num_bytes = (s32)proxy->extra[0];
+        u8* patch_bytes = SVR_ALLOCA_NUM(u8, num_bytes);
+        memset(patch_bytes, 0x90, num_bytes);
+        game_apply_patch(proxy->target, patch_bytes, num_bytes, &game_state.local_velo_estimation_orig_patch);
+    }
+
+    else
+    {
+        // Patch to restore previous bytes.
+
+        GameStoredPatch* stored = &game_state.local_velo_estimation_orig_patch;
+
+        if (stored->num_bytes > 0)
+        {
+            game_apply_patch(proxy->target, stored->orig_bytes, stored->num_bytes, NULL);
+        }
+    }
 }
 
 // ----------------------------------------------------------------
@@ -279,6 +306,11 @@ s32 game_get_demo_player_playback_tick()
     s32 ret = 0;
     GAME_CALL_PROXY(game_state.search_desc.demo_player_playback_tick_proxy, NULL, &ret);
     return ret;
+}
+
+void game_enable_local_velo_estimation(bool enable)
+{
+    GAME_CALL_PROXY(game_state.search_desc.patch_local_velo_estimation_proxy, &enable, NULL);
 }
 
 void game_proxies_init()

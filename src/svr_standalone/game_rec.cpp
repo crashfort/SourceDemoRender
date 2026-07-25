@@ -231,6 +231,10 @@ void game_rec_start_movie(void* cmd_args)
         goto rfail;
     }
 
+    // Restore this as we don't know what we are going to play next.
+    game_state.has_found_svr_stv_addon_demo = false;
+    game_enable_local_velo_estimation(true);
+
     // Ensure the game runs at a fixed rate.
 
     game_state.rec_game_rate = svr_get_game_rate();

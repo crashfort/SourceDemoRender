@@ -856,6 +856,24 @@ GameFnProxy game_get_buttons_proxy_0()
     return px;
 }
 
+// For x64 CS:S.
+// Only works with the SVR STV addon.
+GameFnProxy game_get_local_velo_estimation_proxy_0()
+{
+    u8* addr = (u8*)game_scan_pattern("client.dll", "E8 ?? ?? ?? ?? 0F 28 74 24 ?? 8B D6", NULL);
+
+    if (addr == NULL)
+    {
+        return {};
+    }
+
+    GameFnProxy px;
+    px.target = addr;
+    px.proxy = game_local_velo_estimation_proxy_0;
+    px.extra[0] = (void*)5; // Patch 5 bytes.
+    return px;
+}
+
 // ----------------------------------------------------------------
 
 // For x86 CS:S.
@@ -1096,6 +1114,12 @@ GameProxyOpt GAME_PLAYER_BUTTONS_PROXIES[] =
 };
 
 // Only works with the SVR STV addon.
+GameProxyOpt GAME_LOCAL_VELO_ESTIMATION_PROXIES[] =
+{
+    GameProxyOpt { SVR_IS_X64(), game_get_local_velo_estimation_proxy_0, { "client.dll" }, 0 },
+};
+
+// Only works with the SVR STV addon.
 GameOverrideOpt GAME_ADJUST_INTERPOLATION_AMOUNT_OVERRIDES[] =
 {
     GameOverrideOpt { SVR_IS_X64(), game_get_adjust_interpolation_amount_0, { "client.dll" }, 0 },
@@ -1234,6 +1258,9 @@ void game_search_fill_desc(GameSearchDesc* desc)
     // Input required:
     desc->player_buttons_proxy = SELECT_OPT(GAME_PLAYER_BUTTONS_PROXIES);
 
+    // STV addon required:
+    desc->patch_local_velo_estimation_proxy = SELECT_OPT(GAME_LOCAL_VELO_ESTIMATION_PROXIES);
+
     // Input constants. Maybe should scan for these instead.
     desc->in_attack = SVR_BIT(0);
     desc->in_jump = SVR_BIT(1);
@@ -1283,30 +1310,25 @@ void game_search_fill_desc(GameSearchDesc* desc)
         game_is_valid(desc->cvar_patch_restrict_proxy) &&
         game_is_valid(desc->engine_client_command_proxy) &&
         game_is_valid(desc->cmd_args_proxy) &&
-        true
-    ;
+        true;
 
     bool velo_base_required =
         game_is_valid(desc->entity_velocity_proxy) &&
-        true
-    ;
+        true;
 
     bool dumb_player_required =
         game_is_valid(desc->player_by_index_proxy) &&
         game_is_valid(desc->spec_target_proxy) &&
         game_is_valid(desc->local_player_proxy) &&
-        true
-    ;
+        true;
 
     bool smart_player_required =
         game_is_valid(desc->spec_target_or_local_player_proxy) &&
-        true
-    ;
+        true;
 
     bool input_required =
         game_is_valid(desc->player_buttons_proxy) &&
-        true
-    ;
+        true;
 
     bool audio_base_required =
         game_is_valid(desc->snd_paint_chans_override) &&
@@ -1314,51 +1336,47 @@ void game_search_fill_desc(GameSearchDesc* desc)
         desc->snd_sample_rate != 0 &&
         desc->snd_num_channels != 0 &&
         desc->snd_bit_depth != 0 &&
-        true
-    ;
+        true;
 
     bool audio_v1_required =
         audio_base_required &&
         game_is_valid(desc->snd_tx_stereo_override) &&
-        true
-    ;
+        true;
 
     bool audio_v1_5_required =
         audio_base_required &&
         game_is_valid(desc->snd_device_tx_samples_override) &&
         game_is_valid(desc->snd_paint_buffer_proxy) &&
         !(opt_caps & GAME_CAP_64_BIT_AUDIO_TIME) &&
-        true
-    ;
+        true;
 
     bool audio_v2_required =
         audio_base_required &&
         game_is_valid(desc->snd_device_tx_samples_override) &&
         game_is_valid(desc->snd_paint_buffer_proxy) &&
         opt_caps & GAME_CAP_64_BIT_AUDIO_TIME &&
-        true
-    ;
+        true;
 
     bool d3d9ex_required =
         game_is_valid(desc->d3d9ex_device_proxy) &&
-        true
-    ;
+        true;
 
     bool autostop_required =
         game_is_valid(desc->signon_state_proxy) &&
         desc->signon_state_none != desc->signon_state_full &&
-        true
-    ;
+        true;
 
     bool lagcomp_required =
         game_is_valid(desc->adjust_interpolation_amount_override) &&
-        true
-    ;
+        true;
 
     bool studio_required =
         game_is_valid(desc->demo_player_playback_tick_proxy) &&
-        true
-    ;
+        true;
+
+    bool stv_addon_required =
+        game_is_valid(desc->patch_local_velo_estimation_proxy) &&
+        true;
 
     // Determine caps.
 

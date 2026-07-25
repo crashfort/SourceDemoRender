@@ -75,6 +75,12 @@ struct GameFnProxy
     GameProxyFn proxy;
 };
 
+struct GameStoredPatch
+{
+    u8 orig_bytes[128];
+    s32 num_bytes;
+};
+
 // -----------------------------------------------
 // game_hook.cpp:
 
@@ -162,6 +168,9 @@ struct GameSearchDesc
 
     // Lag compensation required:
     GameFnOverride adjust_interpolation_amount_override;
+
+    // STV addon required:
+    GameFnProxy patch_local_velo_estimation_proxy;
 };
 
 void game_search_wait_for_libs();
@@ -203,6 +212,9 @@ struct GameState
     GameFnHook snd_device_tx_samples_hook;
 
     GameFnHook adjust_interpolation_amount_hook;
+
+    GameStoredPatch local_velo_estimation_orig_patch;
+    bool has_found_svr_stv_addon_demo;
 
     HWND wind_hwnd; // Main game window.
     char wind_def_title[256]; // Default title on start. Used to revert after recording.
@@ -264,7 +276,7 @@ void* game_get_virtual(void* ptr, s32 idx);
 void* game_get_export(const char* dll, const char* name);
 
 // Replace the bytes at the given address.
-void game_apply_patch(void* target, void* bytes, s32 num_bytes);
+void game_apply_patch(void* target, void* bytes, s32 num_bytes, GameStoredPatch* orig);
 
 // Used by game_search.cpp for the module validation arrays.
 bool game_is_valid(GameFnOverride ov);
@@ -273,6 +285,9 @@ bool game_is_valid(GameFnProxy px);
 // Follow relative addressing displacement.
 // Length is the number of bytes taken up by the instruction.
 void* game_follow_displacement(void* from, s32 length);
+
+// Get base address of loaded library.
+void* game_get_module_base(const char* dll);
 
 // -----------------------------------------------
 // game_overrides.cpp:
@@ -323,6 +338,7 @@ void game_cvar_restrict_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_d3d9ex_device_proxy_0(GameFnProxy* proxy, void* params, void* res);
 void game_d3d9ex_device_proxy_1(GameFnProxy* proxy, void* params, void* res);
 void game_demo_player_playback_tick_proxy_0(GameFnProxy* proxy, void* params, void* res);
+void game_local_velo_estimation_proxy_0(GameFnProxy* proxy, void* params, void* res);
 
 void game_engine_client_command(const char* cmd);
 const char* game_get_cmd_args(void* ptr);
@@ -338,6 +354,7 @@ s64 game_get_snd_paint_time_1();
 GameSndSample0* game_get_snd_paint_buffer_0();
 void* game_get_d3d9ex_device();
 s32 game_get_demo_player_playback_tick();
+void game_enable_local_velo_estimation(bool enable);
 
 void game_proxies_init();
 

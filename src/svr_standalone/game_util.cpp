@@ -3,7 +3,7 @@
 
 void* game_create_interface(const char* dll, const char* name)
 {
-    using CreateInterfaceFn = void*(__cdecl*)(const char* name, s32* code);
+    using CreateInterfaceFn = void* (__cdecl*)(const char* name, s32* code);
     CreateInterfaceFn fn = (CreateInterfaceFn)game_get_export(dll, "CreateInterface");
 
     s32 code;
@@ -29,8 +29,18 @@ void* game_get_export(const char* dll, const char* name)
     return GetProcAddress(module, name);
 }
 
-void game_apply_patch(void* target, void* bytes, s32 num_bytes)
+void game_apply_patch(void* target, void* bytes, s32 num_bytes, GameStoredPatch* orig)
 {
+    if (orig)
+    {
+        // Save original bytes so we can restore.
+
+        assert(num_bytes <= SVR_ARRAY_SIZE(GameStoredPatch::orig_bytes));
+
+        orig->num_bytes = num_bytes;
+        memcpy(orig->orig_bytes, target, orig->num_bytes);
+    }
+
     DWORD old_protect;
     VirtualProtect(target, num_bytes, PAGE_EXECUTE_READWRITE, &old_protect); // Make page writable.
     memcpy(target, bytes, num_bytes);
@@ -56,4 +66,17 @@ void* game_follow_displacement(void* from, s32 length)
     addr += length;
 
     return addr;
+}
+
+void* game_get_module_base(const char* dll)
+{
+    MODULEINFO info;
+
+    if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(dll), &info, sizeof(MODULEINFO)))
+    {
+        // Module is not loaded. Not an error because we allow fallthrough scanning of multiple patterns.
+        return NULL;
+    }
+
+    return info.lpBaseOfDll;
 }
