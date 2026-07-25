@@ -1,3 +1,16 @@
+Version 46, XX July 2026
+---------------------------
+
+* Added velo_fps to update the velo counter slower or faster.
+* Added velo text shadow as an alternative to border.
+* Updated SVR STV addon button proxy.
+* Removed half addition on the calculated speed (helps against jitter).
+* Added heuristic to determine if a demo has stored velo through SVR STV addon for exact velo without engine estimation.
+* A text message is now shown when starting rendering with SVR Studio.
+* Increased timeouts for all commands using SVR Studio. This fixes any command 1 timeout you may have encountered.
+* Lowered default rendering cl_interp for testing again.
+* Add angled events to SVR Studio.
+
 Version 45, 20 March 2026
 ---------------------------
 
