@@ -237,7 +237,9 @@ void ProcState::velo_draw()
 
 void ProcState::velo_give(SvrVec3 source)
 {
-    velo_accum_time += (1.0f / movie_profile.video_fps);
+    s32 game_rate = get_game_rate();
+
+    velo_accum_time += (1.0f / game_rate);
 
     float velo_fps_reciprocal = (1.0f / movie_profile.velo_fps);
 
