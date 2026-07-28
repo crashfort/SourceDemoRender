@@ -1,4 +1,4 @@
-Version 46, XX July 2026
+Version 46, 28 July 2026
 ---------------------------
 
 * Added velo_fps to update the velo counter slower or faster.
