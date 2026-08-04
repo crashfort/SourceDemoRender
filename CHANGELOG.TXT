@@ -1,3 +1,8 @@
+Version 47, 4 August 2026
+---------------------------
+
+* Add automated SVR Studio replay viewer support.
+
 Version 46, 28 July 2026
 ---------------------------
 
