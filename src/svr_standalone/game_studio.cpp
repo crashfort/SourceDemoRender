@@ -425,7 +425,8 @@ bool game_studio_find_replay_viewer()
 
     else
     {
-        svr_log("ERROR: Replay viewer shared memory not found. Replays will not play\n");
+        DWORD error = GetLastError();
+        svr_log("ERROR: Replay viewer shared memory not found. Replays will not play (%lu)\n", error);
     }
 
     return false;
