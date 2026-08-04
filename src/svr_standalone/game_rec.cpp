@@ -233,7 +233,18 @@ void game_rec_start_movie(void* cmd_args)
 
     // Restore this as we don't know what we are going to play next.
     game_state.has_found_svr_stv_addon_demo = false;
-    game_enable_local_velo_estimation(true);
+
+    // With replay viewer we already know the velo and do not need the game to get in our way.
+
+    if (game_has_studio_and_replay_viewer())
+    {
+        game_enable_local_velo_estimation(false);
+    }
+
+    else
+    {
+        game_enable_local_velo_estimation(true);
+    }
 
     // Ensure the game runs at a fixed rate.
 

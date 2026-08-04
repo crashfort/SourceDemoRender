@@ -187,6 +187,33 @@ enum // GameRecState
     GAME_REC_POSSIBLE,
 };
 
+// This is duplicated from Replay Viewer because these projects are too separated to reasonably share anything.
+// No synchronization is needed because all access to this is from the main thread.
+
+#define GAME_RV_STATE_IDLE 0
+#define GAME_RV_STATE_LOADED 1
+#define GAME_RV_STATE_PLAYING 2
+#define GAME_RV_STATE_FINISHED 3
+#define GAME_RV_STATE_ERROR 999
+
+struct GameReplayViewerSharedMem
+{
+    s32 state;
+    float velo[3];
+    u32 buttons;
+    char error[256];
+};
+
+using GameReplayViewerState = s32;
+
+enum // GameReplayViewerState
+{
+    GAME_RV_STATE_WAITING_FOR_MAP,
+    GAME_RV_STATE_WAITING_FOR_EXTENSION_READY,
+    GAME_RV_STATE_WAITING_FOR_REPLAY_LOADED,
+    GAME_RV_STATE_WAITING_FOR_REPLAY_FINISHED,
+};
+
 struct GameState
 {
     DWORD main_thread_id;
@@ -244,6 +271,9 @@ struct GameState
     s32 studio_spec_skips;
     s32 studio_next_spec_skip;
     bool studio_started_con_log;
+    HANDLE studio_rv_shared_mem_h;
+    GameReplayViewerSharedMem* studio_rv_shared_ptr;
+    GameReplayViewerState studio_rv_state;
 };
 
 extern GameState game_state;
@@ -403,6 +433,8 @@ void game_studio_update_pending_cmd();
 void game_studio_stop_recording();
 bool game_studio_active();
 void game_studio_movie_start_failed();
+bool game_studio_find_replay_viewer();
+bool game_has_studio_and_replay_viewer();
 
 // -----------------------------------------------
 // game_cfg.cpp:

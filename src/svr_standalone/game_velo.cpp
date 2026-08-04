@@ -7,6 +7,13 @@ void game_velo_frame()
         return;
     }
 
+    if (game_has_studio_and_replay_viewer())
+    {
+        // Easy case.
+        svr_give_velocity(game_state.studio_rv_shared_ptr->velo);
+        return;
+    }
+
     void* player = game_get_active_player();
 
     if (player)
