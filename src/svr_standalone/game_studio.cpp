@@ -191,6 +191,10 @@ void game_studio_update()
             // Returns when the replay starts.
             game_state.studio_pending_cmd = cmd_id;
 
+            game_state.studio_rv_state = GAME_RV_STATE_WAITING_FOR_MAP;
+
+            svr_log("Game (Studio): Loading replay %s for map %s\n", cmd->replay_name, cmd->map_name);
+
             // It's really stupid but SourceMod only loaded when a server is started so we can't check if replay viewer is loaded yet.
             game_engine_client_command(svr_va("map %s\n", cmd->map_name));
             break;
@@ -290,15 +294,23 @@ void game_studio_update_pending_cmd()
             {
                 if (state == game_state.search_desc.signon_state_full)
                 {
+                    svr_log("Game (Studio): Replay map loaded\n");
+
                     game_state.studio_rv_state = GAME_RV_STATE_WAITING_FOR_EXTENSION_READY;
 
                     // There might not be a way to detect this earlier because we don't know when exactly the replay viewer extension is loaded.
                     // It is pretty stupid that this has to be determined after starting everything up and loading a map.
-                    if (!game_studio_find_replay_viewer())
+                    if (game_studio_find_replay_viewer())
                     {
+                        svr_log("Game (Studio): Replay viewer found\n");
+                    }
+
+                    else
+                    {
+                        svr_log("Game (Studio): Replay viewer not found\n");
+
                         svr_copy_string("Game (Studio): Replay viewer not present", game_state.studio_peer->error, SVR_ARRAY_SIZE(StudioSharedPeer::error));
                         SetEvent((HANDLE)game_state.studio_peer->wake_studio_h);
-                        break;
                     }
                 }
             }
@@ -307,12 +319,14 @@ void game_studio_update_pending_cmd()
             {
                 if (game_state.studio_rv_shared_ptr->state == GAME_RV_STATE_LOADED)
                 {
+                    svr_log("Game (Studio): Replay viewer extension ready\n");
+
+                    game_state.studio_rv_state = GAME_RV_STATE_WAITING_FOR_REPLAY_LOADED;
+
                     // Dismiss the join team menu and join the spectate team (very sneaky).
 
                     game_engine_client_command("hidepanel all; spectate\n");
                     game_engine_client_command(svr_va("sm_load_replay \"%s\"\n", cmd->replay_name));
-
-                    game_state.studio_rv_state = GAME_RV_STATE_WAITING_FOR_REPLAY_LOADED;
                 }
             }
 
@@ -320,6 +334,8 @@ void game_studio_update_pending_cmd()
             {
                 if (game_state.studio_rv_shared_ptr->state == GAME_RV_STATE_LOADED)
                 {
+                    svr_log("Game (Studio): Replay loaded and ready\n");
+
                     game_state.studio_rv_state = GAME_RV_STATE_WAITING_FOR_REPLAY_FINISHED;
 
                     // Command finished.
