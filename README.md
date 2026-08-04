@@ -70,7 +70,20 @@ The default profile is used if no other is specified when starting the movie. Yo
 The default profile is always loaded first, and your custom profile is loaded on top. This allows you to override individual setting without copying the entire profile. To create your own profile, create a file with an `.ini` extension inside `data/profiles/`. You can now override settings in the default profile by putting in the settings you want to override.
 
 ## Studio
-SVR Studio is a Windows application to automatically manage render queues of events in demos. This is only supported for Counter-Strike Source 64-bit.
+SVR Studio is a Windows application to automatically manage render queues of events in demos and replays. This is only supported for Counter-Strike Source 64-bit.
+
+## Studio & replay viewer
+The [Replay Viewer](https://github.com/crashfort/ReplayViewer) SourceMod extension must be installed to automate rendering of replays. Additionally, since replays do not contain any information about the tickrate or map it must be provided.
+
+In Studio you can select the tickrate in the top bar.
+
+To inform which map the replay is for, you need to place the replays in a folder that is named after the map. Example:
+
+```
+surf_parc_colore/replay_css_1284_0_796085_1690611089.rec
+surf_parc_colore/replay_css_1287_0_898049_1757265767.rec
+surf_lt_omnific/replay_css_1454_0_319442_1763240823.rec
+```
 
 ## Motion blur demo
 In this demo an object is rotating 6 times per second. This is a fast moving object, so higher samples per second will remove banding at cost of slower recording times. For slower scenes you may get away with a lower sampling rate. Exposure is dependant on the type of content being made. The goal you should be aiming for is to reduce the banding that happens with lower samples per second. A smaller exposure will leave shorter trails of motion blur.
