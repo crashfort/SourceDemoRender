@@ -191,9 +191,10 @@ enum // GameRecState
 // No synchronization is needed because all access to this is from the main thread.
 
 #define GAME_RV_STATE_IDLE 0
-#define GAME_RV_STATE_LOADED 1
-#define GAME_RV_STATE_PLAYING 2
-#define GAME_RV_STATE_FINISHED 3
+#define GAME_RV_STATE_READY 1
+#define GAME_RV_STATE_LOADED 2
+#define GAME_RV_STATE_PLAYING 3
+#define GAME_RV_STATE_FINISHED 4
 #define GAME_RV_STATE_ERROR 999
 
 struct GameReplayViewerSharedMem
@@ -204,14 +205,15 @@ struct GameReplayViewerSharedMem
     char error[256];
 };
 
-using GameReplayViewerState = s32;
+using GameReplayViewerRecState = s32;
 
-enum // GameReplayViewerState
+enum // GameReplayViewerRecState
 {
-    GAME_RV_STATE_WAITING_FOR_MAP,
-    GAME_RV_STATE_WAITING_FOR_EXTENSION_READY,
-    GAME_RV_STATE_WAITING_FOR_REPLAY_LOADED,
-    GAME_RV_STATE_WAITING_FOR_REPLAY_FINISHED,
+    GAME_RV_REC_STATE_WAITING_FOR_MAP,
+    GAME_RV_REC_STATE_WAITING_FOR_EXTENSION_READY,
+    GAME_RV_REC_STATE_WAITING_FOR_REPLAY_LOADED,
+    GAME_RV_REC_STATE_WAITING_FOR_REPLAY_FINISHED,
+    GAME_RV_REC_STATE_ERROR,
 };
 
 struct GameState
@@ -273,7 +275,7 @@ struct GameState
     bool studio_started_con_log;
     HANDLE studio_rv_shared_mem_h;
     GameReplayViewerSharedMem* studio_rv_shared_ptr;
-    GameReplayViewerState studio_rv_state;
+    GameReplayViewerRecState studio_rv_rec_state;
 };
 
 extern GameState game_state;
