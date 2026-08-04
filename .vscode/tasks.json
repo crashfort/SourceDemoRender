@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "msbuild svr.slnx /t:Build /noLogo /clp:ErrorsOnly;Summary",
+            "command": "msbuild svr.slnx /t:Build /noLogo /clp:ErrorsOnly;Summary -p:Configuration=Debug",
             "group": {
                 "kind": "build",
                 "isDefault": true
