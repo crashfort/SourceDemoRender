@@ -1,3 +1,11 @@
+Version 48, XX September 2026
+---------------------------
+
+* Add support for version 3 replays using Replay Viewer and SVR Studio.
+* Automatically create destination replay map folder if not present during processing when using SVR Studio.
+* Add missing newline to Replay Viewer command when using SVR Studio.
+* Fix crash on exit in SVR Studio.
+
 Version 47, 4 August 2026
 ---------------------------
 
