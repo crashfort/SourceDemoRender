@@ -7,15 +7,11 @@ setlocal
 
 mkdir publish_temp\svr
 
-copy /Y ".\bin\svr_game.dll" "publish_temp\svr\"
 copy /Y ".\bin\svr_game64.dll" "publish_temp\svr\"
-copy /Y ".\bin\svr_standalone.dll" "publish_temp\svr\"
 copy /Y ".\bin\svr_standalone64.dll" "publish_temp\svr\"
-copy /Y ".\bin\svr_launcher.exe" "publish_temp\svr\"
 copy /Y ".\bin\svr_launcher64.exe" "publish_temp\svr\"
 copy /Y ".\bin\svr_encoder.exe" "publish_temp\svr\"
 copy /Y ".\bin\svr_studio64.exe" "publish_temp\svr\"
-copy /Y ".\bin\svr_shared.dll" "publish_temp\svr\"
 copy /Y ".\bin\svr_shared64.dll" "publish_temp\svr\"
 copy /Y ".\bin\avcodec-62.dll" "publish_temp\svr\"
 copy /Y ".\bin\avformat-62.dll" "publish_temp\svr\"
