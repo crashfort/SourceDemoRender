@@ -163,7 +163,7 @@ void game_studio_update()
 
             else
             {
-                game_engine_client_command("sm_start_replay");
+                game_engine_client_command("sm_start_replay\n");
             }
 
             game_engine_client_command(svr_va("startmovie %s timeout=%d profile=%s\n", cmd->movie_name, cmd->movie_length, cmd->profile));
