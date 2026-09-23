@@ -1,4 +1,4 @@
-Version 48, XX September 2026
+Version 48, 23 September 2026
 ---------------------------
 
 * Add support for version 3 replays using Replay Viewer and SVR Studio.
