@@ -5,6 +5,7 @@ Version 48, 23 September 2026
 * Automatically create destination replay map folder if not present during processing when using SVR Studio.
 * Add missing newline to Replay Viewer command when using SVR Studio.
 * Fix crash on exit in SVR Studio.
+* Removed support for 32 bit applications.
 
 Version 47, 4 August 2026
 ---------------------------
