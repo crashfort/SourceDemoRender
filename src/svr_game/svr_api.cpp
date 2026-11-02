@@ -342,6 +342,11 @@ void svr_frame()
     proc_state.studio_update();
 }
 
+bool svr_next_frame_in_exposure()
+{
+    return proc_state.next_frame_in_exposure();
+}
+
 bool svr_is_velo_enabled()
 {
     return proc_state.is_velo_enabled();

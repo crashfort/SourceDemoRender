@@ -101,6 +101,7 @@ struct ProcState
     bool start(const char* dest_file, const char* profile, ProcGameTexture* game_texture, SvrAudioParams* audio_params);
     void new_video_frame();
     void new_audio_samples(SvrWaveSample* samples, s32 num_samples);
+    bool next_frame_in_exposure();
     bool is_velo_enabled();
     bool is_input_enabled();
     bool is_audio_enabled();
@@ -243,6 +244,7 @@ struct ProcState
     bool mosample_start();
     void mosample_end();
     void mosample_process(float weight);
+    bool mosample_in_exposure(float remainder);
     void mosample_new_video_frame();
     void mosample_downsample_to_share_tex();
 

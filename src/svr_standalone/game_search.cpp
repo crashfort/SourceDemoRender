@@ -952,6 +952,20 @@ GameFnOverride game_get_adjust_interpolation_amount_0()
 
 // ----------------------------------------------------------------
 
+// For x64 CS:S.
+// View_Render in VClient017.
+GameFnOverride game_get_view_render_0()
+{
+    void* client = game_create_interface("client.dll", "VClient017");
+
+    GameFnOverride ov;
+    ov.target = game_get_virtual(client, 26);
+    ov.override = game_view_render_override_0;
+    return ov;
+}
+
+// ----------------------------------------------------------------
+
 struct GameOverrideOpt
 {
     bool cond; // Condition such as architecture.
@@ -1123,6 +1137,11 @@ GameProxyOpt GAME_LOCAL_VELO_ESTIMATION_PROXIES[] =
 GameOverrideOpt GAME_ADJUST_INTERPOLATION_AMOUNT_OVERRIDES[] =
 {
     GameOverrideOpt { SVR_IS_X64(), game_get_adjust_interpolation_amount_0, { "client.dll" }, 0 },
+};
+
+GameOverrideOpt GAME_VIEW_RENDER_OVERRIDES[] =
+{
+    GameOverrideOpt { SVR_IS_X64(), game_get_view_render_0, { "client.dll" }, 0 },
 };
 
 GameFnOverride game_select_opts(GameOverrideOpt* opts, s32 num, const char* array_name, GameCaps* append_caps)
@@ -1301,6 +1320,8 @@ void game_search_fill_desc(GameSearchDesc* desc)
 
     desc->adjust_interpolation_amount_override = SELECT_OPT(GAME_ADJUST_INTERPOLATION_AMOUNT_OVERRIDES);
 
+    desc->view_render_override = SELECT_OPT(GAME_VIEW_RENDER_OVERRIDES);
+
     // See what we actually got.
 
     bool core_required =
@@ -1378,6 +1399,10 @@ void game_search_fill_desc(GameSearchDesc* desc)
         game_is_valid(desc->patch_local_velo_estimation_proxy) &&
         true;
 
+    bool view_render_required =
+        game_is_valid(desc->view_render_override) &&
+        true;
+
     // Determine caps.
 
     desc->caps |= opt_caps;
@@ -1395,6 +1420,7 @@ void game_search_fill_desc(GameSearchDesc* desc)
         GameCondCaps { lagcomp_required, GAME_CAP_HAS_LAGCOMP },
         GameCondCaps { studio_required, GAME_CAP_HAS_STUDIO },
         GameCondCaps { input_required, GAME_CAP_HAS_INPUT },
+        GameCondCaps { view_render_required, GAME_CAP_HAS_VIEW_RENDER },
     };
 
     desc->caps |= SELECT_CAPS(caps);
