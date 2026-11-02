@@ -161,6 +161,22 @@ float __cdecl game_adjust_interpolation_amount_override_0(void* p, float base_in
 
 // ----------------------------------------------------------------
 
+void __cdecl game_view_render_override_0(void* p, void* rect)
+{
+    // Frames outside the motion blur exposure are not used so there is no need to render them.
+    // The game still runs these frames as normal.
+    if (game_state.rec_state == GAME_REC_POSSIBLE && svr_movie_active() && !svr_next_frame_in_exposure())
+    {
+        return;
+    }
+
+    using OrgFn = decltype(game_view_render_override_0)*;
+    OrgFn org_fn = (OrgFn)game_state.view_render_hook.original;
+    org_fn(p, rect);
+}
+
+// ----------------------------------------------------------------
+
 void game_overrides_init()
 {
     game_hook_create(&game_state.search_desc.start_movie_override, &game_state.start_movie_hook);
@@ -186,5 +202,10 @@ void game_overrides_init()
     {
         // Too inconsistent.
         // game_hook_create(&game_state.search_desc.adjust_interpolation_amount_override, &game_state.adjust_interpolation_amount_hook);
+    }
+
+    if (game_state.search_desc.caps & GAME_CAP_HAS_VIEW_RENDER)
+    {
+        game_hook_create(&game_state.search_desc.view_render_override, &game_state.view_render_hook);
     }
 }

@@ -23,6 +23,7 @@ enum // GameCaps
     GAME_CAP_HAS_LAGCOMP = SVR_BIT(12),
     GAME_CAP_HAS_STUDIO = SVR_BIT(13),
     GAME_CAP_HAS_INPUT = SVR_BIT(14),
+    GAME_CAP_HAS_VIEW_RENDER = SVR_BIT(15),
 };
 
 // -----------------------------------------------
@@ -169,6 +170,9 @@ struct GameSearchDesc
     // Lag compensation required:
     GameFnOverride adjust_interpolation_amount_override;
 
+    // Skipping renders outside the motion blur exposure required:
+    GameFnOverride view_render_override;
+
     // STV addon required:
     GameFnProxy patch_local_velo_estimation_proxy;
 };
@@ -241,6 +245,8 @@ struct GameState
     GameFnHook snd_device_tx_samples_hook;
 
     GameFnHook adjust_interpolation_amount_hook;
+
+    GameFnHook view_render_hook;
 
     GameStoredPatch local_velo_estimation_orig_patch;
     bool has_found_svr_stv_addon_demo;
@@ -342,6 +348,7 @@ bool __fastcall game_eng_filter_time_override_0(void* p, void* edx, float dt);
 bool __fastcall game_eng_filter_time_override_1(void* p, void* edx);
 #endif
 float __cdecl game_adjust_interpolation_amount_override_0(void* p, float base_interp);
+void __cdecl game_view_render_override_0(void* p, void* rect);
 
 void game_overrides_init();
 

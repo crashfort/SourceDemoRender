@@ -70,6 +70,16 @@ void ProcState::new_audio_samples(SvrWaveSample* samples, s32 num_samples)
     encoder_send_audio_samples(samples, num_samples);
 }
 
+bool ProcState::next_frame_in_exposure()
+{
+    if (!movie_profile.mosample_enabled)
+    {
+        return true;
+    }
+
+    return mosample_in_exposure(mosample_remainder + mosample_remainder_step);
+}
+
 bool ProcState::is_velo_enabled()
 {
     return movie_profile.velo_enabled;

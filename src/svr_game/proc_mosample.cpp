@@ -200,6 +200,12 @@ void ProcState::mosample_process(float weight)
     vid_d3d11_context->CSSetUnorderedAccessViews(0, 1, &null_uav, NULL);
 }
 
+// Frames before the exposure starts get no weight.
+bool ProcState::mosample_in_exposure(float remainder)
+{
+    return remainder > (1.0f - movie_profile.mosample_exposure);
+}
+
 void ProcState::mosample_new_video_frame()
 {
     float old_rem = mosample_remainder;
@@ -207,7 +213,7 @@ void ProcState::mosample_new_video_frame()
 
     mosample_remainder += mosample_remainder_step;
 
-    if (mosample_remainder <= (1.0f - exposure))
+    if (!mosample_in_exposure(mosample_remainder))
     {
     }
 

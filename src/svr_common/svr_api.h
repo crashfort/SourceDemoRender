@@ -148,6 +148,10 @@ SVR_API void svr_stop();
 // This must only be called if svr_movie_active returns true.
 SVR_API void svr_frame();
 
+// Returns true if the next game frame falls inside the motion blur exposure. Frames outside it are not used,
+// so the game does not need to render them. Must only be called after svr_start.
+SVR_API bool svr_next_frame_in_exposure();
+
 // Returns true if velo is enabled in the active profile.
 // You can use this to prevent extra work if it is not needed.
 // Must only be called after svr_start.
