@@ -243,10 +243,10 @@ void __cdecl game_override_view_override_0(void* p, void* view_setup)
     GameTraceResult tr = {};
     GameTraceWorldFilter filter;
 
-    // MASK_SOLID_BRUSHONLY.
+    // MASK_PLAYERSOLID.
     using TraceRayFn = void(__cdecl*)(void* p, GameTraceRay* ray, u32 mask, GameTraceWorldFilter* filter, GameTraceResult* tr);
     TraceRayFn trace_ray_fn = (TraceRayFn)game_get_virtual(game_state.search_desc.engine_trace, 4);
-    trace_ray_fn(game_state.search_desc.engine_trace, &ray, 0x400B, &filter, &tr);
+    trace_ray_fn(game_state.search_desc.engine_trace, &ray, 0x201400B, &filter, &tr);
 
     if (!(tr.fraction >= 0.0f && tr.fraction < 1.0f))
     {
