@@ -161,6 +161,103 @@ float __cdecl game_adjust_interpolation_amount_override_0(void* p, float base_in
 
 // ----------------------------------------------------------------
 
+// Ray_t, trace_t and ITraceFilter for tracing.
+
+struct alignas(16) GameTraceVector
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct GameTraceRay
+{
+    GameTraceVector start;
+    GameTraceVector delta;
+    GameTraceVector start_offset;
+    GameTraceVector extents;
+    bool is_ray;
+    bool is_swept;
+};
+
+struct GameTraceResult
+{
+    float start_pos[3];
+    float end_pos[3];
+    float plane_normal[3];
+    float plane_dist;
+    u8 plane_type;
+    u8 plane_signbits;
+    u8 plane_pad[2];
+    float fraction;
+    s32 contents;
+    u16 disp_flags;
+    bool all_solid;
+    bool start_solid;
+    float fraction_left_solid;
+    const char* surface_name;
+    s16 surface_props;
+    u16 surface_flags;
+    s32 hit_group;
+    s16 physics_bone;
+    void* entity;
+    s32 hitbox;
+};
+
+static_assert(sizeof(GameTraceRay) == 80);
+static_assert(offsetof(GameTraceResult, fraction) == 44);
+static_assert(sizeof(GameTraceResult) == 104);
+
+// Only hits the world.
+struct GameTraceWorldFilter
+{
+    virtual bool should_hit_entity(void* entity, s32 contents_mask) { return false; }
+    virtual s32 get_trace_type() { return 1; }
+};
+
+// The eye is 2 units above the top of the hull, so the view goes into the ceiling when the player hits their head.
+// Keep the view 12 units under anything above it.
+void __cdecl game_override_view_override_0(void* p, void* view_setup)
+{
+    using OrgFn = decltype(game_override_view_override_0)*;
+    OrgFn org_fn = (OrgFn)game_state.override_view_hook.original;
+    org_fn(p, view_setup);
+
+    if (!svr_movie_active())
+    {
+        return;
+    }
+
+    float* origin = (float*)((u8*)view_setup + 64);
+
+    // Trace a flat box from the top of the hull to 12 units above the eye.
+    // It's 1 unit narrower than the hull so walls next to the player don't hit.
+    GameTraceRay ray = {};
+    ray.start = { origin[0], origin[1], origin[2] - 2.0f, 0.0f };
+    ray.delta = { 0.0f, 0.0f, 14.0f, 0.0f };
+    ray.extents = { 15.0f, 15.0f, 0.0f, 0.0f };
+    ray.is_ray = false;
+    ray.is_swept = true;
+
+    GameTraceResult tr = {};
+    GameTraceWorldFilter filter;
+
+    // MASK_SOLID_BRUSHONLY.
+    using TraceRayFn = void(__cdecl*)(void* p, GameTraceRay* ray, u32 mask, GameTraceWorldFilter* filter, GameTraceResult* tr);
+    TraceRayFn trace_ray_fn = (TraceRayFn)game_get_virtual(game_state.search_desc.engine_trace, 4);
+    trace_ray_fn(game_state.search_desc.engine_trace, &ray, 0x400B, &filter, &tr);
+
+    if (!(tr.fraction >= 0.0f && tr.fraction < 1.0f))
+    {
+        return;
+    }
+
+    origin[2] = ray.start.z + tr.fraction * ray.delta.z - 12.0f;
+}
+
+// ----------------------------------------------------------------
+
 void game_overrides_init()
 {
     game_hook_create(&game_state.search_desc.start_movie_override, &game_state.start_movie_hook);
@@ -186,5 +283,10 @@ void game_overrides_init()
     {
         // Too inconsistent.
         // game_hook_create(&game_state.search_desc.adjust_interpolation_amount_override, &game_state.adjust_interpolation_amount_hook);
+    }
+
+    if (game_state.search_desc.caps & GAME_CAP_HAS_CEILING_CLEARANCE)
+    {
+        game_hook_create(&game_state.search_desc.override_view_override, &game_state.override_view_hook);
     }
 }

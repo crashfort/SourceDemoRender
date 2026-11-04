@@ -23,6 +23,7 @@ enum // GameCaps
     GAME_CAP_HAS_LAGCOMP = SVR_BIT(12),
     GAME_CAP_HAS_STUDIO = SVR_BIT(13),
     GAME_CAP_HAS_INPUT = SVR_BIT(14),
+    GAME_CAP_HAS_CEILING_CLEARANCE = SVR_BIT(15),
 };
 
 // -----------------------------------------------
@@ -169,6 +170,10 @@ struct GameSearchDesc
     // Lag compensation required:
     GameFnOverride adjust_interpolation_amount_override;
 
+    // Ceiling clearance required:
+    GameFnOverride override_view_override;
+    void* engine_trace;
+
     // STV addon required:
     GameFnProxy patch_local_velo_estimation_proxy;
 };
@@ -242,6 +247,8 @@ struct GameState
 
     GameFnHook adjust_interpolation_amount_hook;
 
+    GameFnHook override_view_hook;
+
     GameStoredPatch local_velo_estimation_orig_patch;
     bool has_found_svr_stv_addon_demo;
 
@@ -304,6 +311,9 @@ void* game_create_interface(const char* dll, const char* name);
 // Get a function from the virtual table by index.
 void* game_get_virtual(void* ptr, s32 idx);
 
+// Find the vtable of a class from its name.
+void** game_find_vtable(const char* dll, const char* class_name);
+
 // Get an exported function in a library.
 void* game_get_export(const char* dll, const char* name);
 
@@ -342,6 +352,7 @@ bool __fastcall game_eng_filter_time_override_0(void* p, void* edx, float dt);
 bool __fastcall game_eng_filter_time_override_1(void* p, void* edx);
 #endif
 float __cdecl game_adjust_interpolation_amount_override_0(void* p, float base_interp);
+void __cdecl game_override_view_override_0(void* p, void* view_setup);
 
 void game_overrides_init();
 
