@@ -21,6 +21,75 @@ void* game_get_virtual(void* ptr, s32 idx)
     return vtable[idx];
 }
 
+// Find bytes in the data sections of a dll.
+u8* game_find_in_data(u8* base, void* bytes, s32 size, s32 step)
+{
+    IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)(base + ((IMAGE_DOS_HEADER*)base)->e_lfanew);
+    IMAGE_SECTION_HEADER* section = IMAGE_FIRST_SECTION(nt);
+
+    for (s32 i = 0; i < nt->FileHeader.NumberOfSections; i++, section++)
+    {
+        if ((section->Characteristics & (IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_DISCARDABLE)) || !(section->Characteristics & IMAGE_SCN_MEM_READ))
+        {
+            continue;
+        }
+
+        u8* start = base + section->VirtualAddress;
+        u8* end = start + section->Misc.VirtualSize;
+
+        for (u8* addr = start; addr + size <= end; addr += step)
+        {
+            if (memcmp(addr, bytes, size) == 0)
+            {
+                return addr;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+void** game_find_vtable(const char* dll, const char* class_name)
+{
+    u8* base = (u8*)GetModuleHandleA(dll);
+
+    if (base == NULL)
+    {
+        return NULL;
+    }
+
+    // Find the class name, then the RTTI that points to the name, then the vtable that points to the RTTI.
+
+    char name[256];
+    StringCchPrintfA(name, SVR_ARRAY_SIZE(name), ".?AV%s@@", class_name);
+
+    u8* name_addr = game_find_in_data(base, name, (s32)strlen(name) + 1, 1);
+
+    if (name_addr == NULL)
+    {
+        return NULL;
+    }
+
+    // Start of the RTTI, ends with where the class name is.
+    u32 locator_start[4] = { 1, 0, 0, (u32)(name_addr - 16 - base) };
+
+    u8* locator = game_find_in_data(base, locator_start, sizeof(locator_start), 4);
+
+    if (locator == NULL)
+    {
+        return NULL;
+    }
+
+    u8* locator_ref = game_find_in_data(base, &locator, sizeof(locator), 8);
+
+    if (locator_ref == NULL)
+    {
+        return NULL;
+    }
+
+    return (void**)(locator_ref + 8);
+}
+
 void* game_get_export(const char* dll, const char* name)
 {
     HMODULE module = GetModuleHandleA(dll);

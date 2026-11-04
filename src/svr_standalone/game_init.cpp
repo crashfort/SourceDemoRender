@@ -131,6 +131,7 @@ void game_init_check_caps()
         CAP(GAME_CAP_LOCAL_PLAYER_DUMB),
         CAP(GAME_CAP_LOCAL_PLAYER_SMART),
         CAP(GAME_CAP_HAS_LAGCOMP),
+        CAP(GAME_CAP_HAS_CEILING_CLEARANCE),
         CAP(GAME_CAP_HAS_STUDIO),
     };
 

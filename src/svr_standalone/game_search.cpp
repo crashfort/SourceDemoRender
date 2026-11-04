@@ -952,6 +952,25 @@ GameFnOverride game_get_adjust_interpolation_amount_0()
 
 // ----------------------------------------------------------------
 
+// For x64 CS:S.
+GameFnOverride game_get_override_view_0()
+{
+    // Find vtable of ClientModeCSNormal, use OverrideView.
+    void** vtable = game_find_vtable("client.dll", "ClientModeCSNormal");
+
+    GameFnOverride ov = {};
+
+    if (vtable)
+    {
+        ov.target = vtable[16];
+        ov.override = game_override_view_override_0;
+    }
+
+    return ov;
+}
+
+// ----------------------------------------------------------------
+
 struct GameOverrideOpt
 {
     bool cond; // Condition such as architecture.
@@ -1123,6 +1142,11 @@ GameProxyOpt GAME_LOCAL_VELO_ESTIMATION_PROXIES[] =
 GameOverrideOpt GAME_ADJUST_INTERPOLATION_AMOUNT_OVERRIDES[] =
 {
     GameOverrideOpt { SVR_IS_X64(), game_get_adjust_interpolation_amount_0, { "client.dll" }, 0 },
+};
+
+GameOverrideOpt GAME_OVERRIDE_VIEW_OVERRIDES[] =
+{
+    GameOverrideOpt { SVR_IS_X64(), game_get_override_view_0, { "client.dll" }, 0 },
 };
 
 GameFnOverride game_select_opts(GameOverrideOpt* opts, s32 num, const char* array_name, GameCaps* append_caps)
@@ -1301,6 +1325,9 @@ void game_search_fill_desc(GameSearchDesc* desc)
 
     desc->adjust_interpolation_amount_override = SELECT_OPT(GAME_ADJUST_INTERPOLATION_AMOUNT_OVERRIDES);
 
+    desc->override_view_override = SELECT_OPT(GAME_OVERRIDE_VIEW_OVERRIDES);
+    desc->engine_trace = game_create_interface("engine.dll", "EngineTraceClient003");
+
     // See what we actually got.
 
     bool core_required =
@@ -1378,6 +1405,11 @@ void game_search_fill_desc(GameSearchDesc* desc)
         game_is_valid(desc->patch_local_velo_estimation_proxy) &&
         true;
 
+    bool ceiling_clearance_required =
+        game_is_valid(desc->override_view_override) &&
+        desc->engine_trace &&
+        true;
+
     // Determine caps.
 
     desc->caps |= opt_caps;
@@ -1395,6 +1427,7 @@ void game_search_fill_desc(GameSearchDesc* desc)
         GameCondCaps { lagcomp_required, GAME_CAP_HAS_LAGCOMP },
         GameCondCaps { studio_required, GAME_CAP_HAS_STUDIO },
         GameCondCaps { input_required, GAME_CAP_HAS_INPUT },
+        GameCondCaps { ceiling_clearance_required, GAME_CAP_HAS_CEILING_CLEARANCE },
     };
 
     desc->caps |= SELECT_CAPS(caps);
